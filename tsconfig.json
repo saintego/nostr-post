@@ -3,7 +3,7 @@
     "target": "ES2022",
     "module": "ESNext",
     "lib": ["ES2022"],
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -16,7 +16,12 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "isolatedModules": true,
+    "paths": {
+      "@nostr-post/core": ["./packages/core/src/types.ts"],
+      "@nostr-post/core/*": ["./packages/core/src/*"]
+    }
   },
   "exclude": ["node_modules", "dist", "build"]
 }
