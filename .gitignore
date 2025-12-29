@@ -14,7 +14,7 @@ build/
 
 # IDE
 .vscode/
-.vscode/
+.history/
 .idea/
 *.swp
 *.swo
