@@ -1,0 +1,53 @@
+{
+  "name": "nostr-post",
+  "version": "0.1.0",
+  "description": "A Plugin + Manifest Architecture for Creating and Viewing Complex Nostr Content",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm -r build",
+    "dev": "pnpm -r dev",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:watch": "pnpm -r test:watch",
+    "clean": "pnpm -r clean",
+    "preinstall": "npx only-allow pnpm"
+  },
+  "keywords": [
+    "nostr",
+    "plugin-system",
+    "manifest-driven",
+    "web-components",
+    "typescript",
+    "monorepo",
+    "functional-programming",
+    "headless-ui"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/nostr-post"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/nostr-post/issues"
+  },
+  "homepage": "https://github.com/yourusername/nostr-post#readme",
+  "devDependencies": {
+    "@biomejs/biome": "^1.9.4",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  },
+  "packageManager": "pnpm@9.14.4",
+  "pnpm": {
+    "overrides": {
+      "typescript": "^5.6.3"
+    }
+  }
+}
