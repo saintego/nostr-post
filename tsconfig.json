@@ -16,12 +16,7 @@
     "noUnusedParameters": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "allowSyntheticDefaultImports": true,
-    "isolatedModules": true,
-    "paths": {
-      "@nostr-post/core": ["./packages/core/src/types.ts"],
-      "@nostr-post/core/*": ["./packages/core/src/*"]
-    }
+    "allowSyntheticDefaultImports": true
   },
   "exclude": ["node_modules", "dist", "build"]
 }

@@ -3,9 +3,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "composite": true,
     "lib": ["ES2020", "DOM"]
   },
-  "include": ["src/**/*"],
-  "references": [{ "path": "../core" }]
+  "include": ["src/**/*"]
 }

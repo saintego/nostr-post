@@ -4,7 +4,12 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "experimentalDecorators": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"]
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@nostr-post/core/types": ["../core/dist/types.d.ts"],
+      "@nostr-post/core/manifest": ["../core/dist/manifest.d.ts"],
+      "@nostr-post/core/coordinator": ["../core/dist/coordinator.d.ts"]
+    }
   },
   "include": ["src/**/*"]
 }
