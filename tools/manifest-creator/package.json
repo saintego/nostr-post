@@ -2,19 +2,20 @@
   "name": "@nostr-post/manifest-creator",
   "version": "0.1.0",
   "description": "Visual manifest creator tool for nostr-post",
-  "type": "module",
   "private": true,
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "dev": "next dev --port 3001",
+    "build": "next build",
+    "start": "next start --port 3001"
   },
   "dependencies": {
     "@nostr-post/core": "workspace:*",
-    "@nostr-post/web": "workspace:*"
-  },
-  "devDependencies": {
-    "typescript": "^5.6.3",
-    "vite": "^5.4.11"
+    "@nostr-post/react": "workspace:*",
+    "next": "latest",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "typescript": "^5.0.0"
   }
 }

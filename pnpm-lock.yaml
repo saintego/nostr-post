@@ -174,16 +174,27 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@nostr-post/web':
+      '@nostr-post/react':
         specifier: workspace:*
-        version: link:../../packages/web
-    devDependencies:
+        version: link:../../packages/react
+      '@types/react':
+        specifier: ^18.0.0
+        version: 18.3.27
+      '@types/react-dom':
+        specifier: ^18.0.0
+        version: 18.3.7(@types/react@18.3.27)
+      next:
+        specifier: latest
+        version: 16.1.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      react:
+        specifier: ^18.0.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.0.0
+        version: 18.3.1(react@18.3.1)
       typescript:
         specifier: ^5.6.3
         version: 5.9.3
-      vite:
-        specifier: ^5.4.11
-        version: 5.4.21(@types/node@25.0.3)
 
 packages:
 
