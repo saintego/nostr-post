@@ -47,9 +47,9 @@ The engine automatically:
 | Package                 | Status          | Purpose                                                 |
 | ----------------------- | --------------- | ------------------------------------------------------- |
 | **@nostr-post/core**    | ✅ **Complete** | Headless logic: manifest validation, event coordination |
+| **@nostr-post/web**     | ✅ **Complete** | Universal Web Components + nostr-login integration      |
+| **@nostr-post/react**   | ✅ **Complete** | React hooks and components                              |
 | **@nostr-post/plugins** | 🚧 Next         | Framework-agnostic UI plugin definitions                |
-| **@nostr-post/web**     | 📋 Planned      | Universal Web Components                                |
-| **@nostr-post/react**   | 📋 Planned      | React hooks and components                              |
 
 ## 🚀 Quick Start
 
