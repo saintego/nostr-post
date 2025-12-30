@@ -4,6 +4,7 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "experimentalDecorators": true,
+    "useDefineForClassFields": false,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "paths": {
       "@nostr-post/core/types": ["../core/dist/types.d.ts"],

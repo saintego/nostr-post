@@ -1,0 +1,20 @@
+{
+  "name": "@nostr-post/manifest-creator",
+  "version": "0.1.0",
+  "description": "Visual manifest creator tool for nostr-post",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@nostr-post/core": "workspace:*",
+    "@nostr-post/web": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vite": "^5.4.11"
+  }
+}

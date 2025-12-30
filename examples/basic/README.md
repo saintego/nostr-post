@@ -1,15 +1,12 @@
-# nostr-post Example App
+# nostr-post Basic Example
 
-This is a demo application showcasing the nostr-post ecosystem with two main features:
+A simple demo showing how to create Kind 1 Nostr posts using `@nostr-post/web` components with nostr-login authentication.
 
 ## 🚀 Quick Start
 
 ```bash
 # From the monorepo root
 cd examples/basic
-
-# Install dependencies (if not already done)
-pnpm install
 
 # Start the development server
 pnpm dev
@@ -19,9 +16,7 @@ The app will be available at `http://localhost:3000`
 
 ## 📱 Features
 
-### 1. Main App (`/`)
-
-A fully functional Nostr client that demonstrates:
+This example demonstrates:
 
 - **Authentication** using [nostr-login](https://github.com/nostrband/nostr-login)
 - **Post Creation** with `<nostr-post-composer>` Web Component
@@ -30,26 +25,13 @@ A fully functional Nostr client that demonstrates:
 - **Live Updates** when creating posts
 
 **Try it:**
+
 1. Click "Connect with Nostr" and sign in
-2. Create a post using the composer
-3. See your post appear in the feed
+2. Write your post in the composer
+3. Submit and see your post appear in the feed
 4. Search through your posts
-
-### 2. Manifest Creator (`/manifest-creator.html`)
-
-An interactive tool for designing and testing manifests:
-
-- **Visual Builder** - Create manifests with a GUI
-- **JSON Editor** - Edit manifest JSON directly
-- **Examples** - Pre-built manifest templates
-- **Live Preview** - See your form render in real-time
-- **Export** - Download or copy your manifest
-
-**Try it:**
-1. Start with an example (Simple Post, Review, Article)
-2. Customize fields and settings
-3. See the live preview update
-4. Export your manifest JSON
+5. See the live preview update
+6. Export your manifest JSON
 
 ## 🏗️ Architecture
 
@@ -59,13 +41,13 @@ An interactive tool for designing and testing manifests:
 import '@nostr-post/web';
 
 // Composer for creating posts
-<nostr-post-composer 
+<nostr-post-composer
   manifest={myManifest}
   pubkey="..."
 />
 
 // Viewer for displaying posts
-<nostr-post-view 
+<nostr-post-view
   event={nostrEvent}
   showTags={true}
   showKind={true}
@@ -75,14 +57,14 @@ import '@nostr-post/web';
 ### Integration with nostr-login
 
 ```typescript
-import 'nostr-login';
+import "nostr-login";
 
 // Simple authentication
-<nl-auth bunkers="nsec.app"></nl-auth>
+<nl-auth bunkers="nsec.app"></nl-auth>;
 
 // Listen for auth events
-element.addEventListener('nlAuth', (e) => {
-  if (e.detail.type === 'login') {
+element.addEventListener("nlAuth", (e) => {
+  if (e.detail.type === "login") {
     // User logged in
   }
 });
@@ -164,9 +146,9 @@ examples/basic/
 3. Set it on the composer:
 
 ```typescript
-import myManifest from './manifests/my-manifest.json';
+import myManifest from "./manifests/my-manifest.json";
 
-const composer = document.getElementById('composer');
+const composer = document.getElementById("composer");
 composer.manifest = myManifest;
 ```
 
@@ -197,6 +179,7 @@ pnpm build
 ### nostr-login Issues
 
 If nostr-login doesn't load, check:
+
 - Your internet connection
 - Browser console for errors
 - Try refreshing the page
@@ -204,6 +187,7 @@ If nostr-login doesn't load, check:
 ### Manifest Validation Errors
 
 Common issues:
+
 - Missing required fields (`id`, `version`, `requiredKinds`)
 - Invalid kind numbers
 - Missing `mapTo` configuration

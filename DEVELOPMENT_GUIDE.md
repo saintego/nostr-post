@@ -23,6 +23,7 @@
 ### Package Responsibilities
 
 #### 1. **@nostr-post/core** (Headless Logic - COMPLETED ✓)
+
 - **Status:** Initial implementation complete
 - **Location:** `packages/core/`
 - **Purpose:** Pure TypeScript logic with zero UI dependencies
@@ -32,18 +33,21 @@
   - `coordinator.ts` - EventCoordinator for multi-event splitting
 
 **What's Implemented:**
+
 - ✅ Manifest type system with field-to-Nostr mapping
 - ✅ Validation functions for manifests and form data
 - ✅ EventCoordinator that produces unsigned event bundles
 - ✅ Support for NIP-01 (basic events) and NIP-78 (structured data)
 
 **Next Steps for Core:**
+
 - [ ] Add unit tests for all validation functions
 - [ ] Implement event ID generation (NIP-01)
 - [ ] Add cross-linking logic ('e' tags for related events)
 - [ ] Support for more field types (arrays, nested objects)
 
 #### 2. **@nostr-post/plugins** (Next Priority)
+
 - **Status:** Not yet created
 - **Purpose:** Atomic, framework-agnostic UI plugin system
 - **Key Concepts:**
@@ -52,6 +56,7 @@
   - Just interfaces and specifications
 
 **Recommended Structure:**
+
 ```
 packages/plugins/
 ├── package.json
@@ -65,21 +70,27 @@ packages/plugins/
 ```
 
 **Plugin Interface (from types.ts):**
+
 ```typescript
 export interface NostrUIPlugin {
   id: string;
   type: FieldType | FieldType[];
-  validate?: (value: unknown, field: PostField) => Result<void, ValidationError>;
+  validate?: (
+    value: unknown,
+    field: PostField
+  ) => Result<void, ValidationError>;
 }
 ```
 
 **To Implement:**
+
 - [ ] Expand NostrUIPlugin interface with render metadata
 - [ ] Create plugin registry/discovery system
 - [ ] Implement core plugins (stars, media, markdown)
 - [ ] Add plugin configuration schema
 
 #### 3. **@nostr-post/web** (Web Components Layer)
+
 - **Status:** Not yet created
 - **Purpose:** Universal, framework-independent UI using Web Components
 - **Key Components:**
@@ -88,6 +99,7 @@ export interface NostrUIPlugin {
   - `<nostr-post-field>` - Individual field renderer
 
 **Recommended Structure:**
+
 ```
 packages/web/
 ├── package.json
@@ -103,6 +115,7 @@ packages/web/
 ```
 
 **To Implement:**
+
 - [ ] Set up Lit or vanilla Web Components
 - [ ] Create base component classes
 - [ ] Integrate @nostr-post/core for logic
@@ -110,6 +123,7 @@ packages/web/
 - [ ] Add styling system (CSS variables, shadow DOM)
 
 #### 4. **@nostr-post/react** (React Bindings)
+
 - **Status:** Not yet created
 - **Purpose:** React hooks and components for Next.js/React apps
 - **Key Exports:**
@@ -119,6 +133,7 @@ packages/web/
   - `<NostrPostView>` - React view component
 
 **Recommended Structure:**
+
 ```
 packages/react/
 ├── package.json
@@ -136,10 +151,12 @@ packages/react/
 ## Technical Standards (CRITICAL)
 
 ### 1. File Size Limit: 500 Lines Max
+
 - If a file exceeds 500 lines, refactor into smaller modules
 - Use explicit subpath exports in package.json
 
 ### 2. No Barrel Files (index.ts)
+
 ```typescript
 // ❌ DON'T: Barrel file that re-exports everything
 export * from './types';
@@ -155,20 +172,26 @@ export * from './manifest';
 ```
 
 ### 3. Functional Programming Style
+
 ```typescript
 // ✅ DO: Pure functions, immutable data
-export const validateManifest = (manifest: NostrPostManifest): Result<void, ValidationError[]> => {
+export const validateManifest = (
+  manifest: NostrPostManifest
+): Result<void, ValidationError[]> => {
   // ...
 };
 
 // ❌ DON'T: Classes and mutable state
 class ManifestValidator {
   private errors: ValidationError[] = [];
-  validate(manifest: NostrPostManifest) { /* ... */ }
+  validate(manifest: NostrPostManifest) {
+    /* ... */
+  }
 }
 ```
 
 ### 4. Type Safety (Strict Mode)
+
 ```json
 // tsconfig.json
 {
@@ -181,6 +204,7 @@ class ManifestValidator {
 ```
 
 ### 5. Biome for Linting/Formatting
+
 ```bash
 # Format all files
 pnpm format
@@ -269,36 +293,36 @@ pnpm typecheck
 
 ```typescript
 const restaurantReviewManifest: NostrPostManifest = {
-  id: 'restaurant-review-v1',
-  version: '1.0.0',
+  id: "restaurant-review-v1",
+  version: "1.0.0",
   requiredKinds: [1, 30078],
   fields: [
     {
-      id: 'reviewText',
-      type: 'string',
-      uiPlugin: 'markdown',
-      mapTo: { kind: 1, target: 'content' },
+      id: "reviewText",
+      type: "string",
+      uiPlugin: "markdown",
+      mapTo: { kind: 1, target: "content" },
       required: true,
     },
     {
-      id: 'rating',
-      type: 'number',
-      uiPlugin: 'stars',
-      mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+      id: "rating",
+      type: "number",
+      uiPlugin: "stars",
+      mapTo: { kind: 1, target: "tag", tagName: "r" },
       required: true,
     },
     {
-      id: 'venueName',
-      type: 'string',
-      uiPlugin: 'text',
-      mapTo: { kind: 30078, target: 'content', path: 'venue.name' },
+      id: "venueName",
+      type: "string",
+      uiPlugin: "text",
+      mapTo: { kind: 30078, target: "content", path: "venue.name" },
       required: true,
     },
     {
-      id: 'location',
-      type: 'geo',
-      uiPlugin: 'map',
-      mapTo: { kind: 30078, target: 'content', path: 'venue.location' },
+      id: "location",
+      type: "geo",
+      uiPlugin: "map",
+      mapTo: { kind: 30078, target: "content", path: "venue.location" },
     },
   ],
 };
@@ -308,35 +332,35 @@ const restaurantReviewManifest: NostrPostManifest = {
 
 ```typescript
 const articleManifest: NostrPostManifest = {
-  id: 'article-v1',
-  version: '1.0.0',
+  id: "article-v1",
+  version: "1.0.0",
   requiredKinds: [30023, 1],
   fields: [
     {
-      id: 'title',
-      type: 'string',
-      uiPlugin: 'text',
-      mapTo: { kind: 30023, target: 'tag', tagName: 'title' },
+      id: "title",
+      type: "string",
+      uiPlugin: "text",
+      mapTo: { kind: 30023, target: "tag", tagName: "title" },
       required: true,
     },
     {
-      id: 'content',
-      type: 'string',
-      uiPlugin: 'markdown',
-      mapTo: { kind: 30023, target: 'content' },
+      id: "content",
+      type: "string",
+      uiPlugin: "markdown",
+      mapTo: { kind: 30023, target: "content" },
       required: true,
     },
     {
-      id: 'coverImage',
-      type: 'string',
-      uiPlugin: 'media',
-      mapTo: { kind: 30023, target: 'tag', tagName: 'image' },
+      id: "coverImage",
+      type: "string",
+      uiPlugin: "media",
+      mapTo: { kind: 30023, target: "tag", tagName: "image" },
     },
     {
-      id: 'socialText',
-      type: 'string',
-      uiPlugin: 'text',
-      mapTo: { kind: 1, target: 'content' },
+      id: "socialText",
+      type: "string",
+      uiPlugin: "text",
+      mapTo: { kind: 1, target: "content" },
     },
   ],
 };
@@ -345,23 +369,27 @@ const articleManifest: NostrPostManifest = {
 ## Testing Strategy
 
 ### Unit Tests (Per Package)
+
 - Test all validation functions
 - Test manifest parsing
 - Test event coordination logic
 - Use Vitest or Bun test
 
 ### Integration Tests
+
 - Test manifest → events → reconstruction flow
 - Test plugin loading and rendering
 - Test cross-package interactions
 
 ### E2E Tests
+
 - Test Web Components in real browser
 - Test React components in sample app
 
 ## Phase Implementation Order
 
 ### Phase 1: Core Engine ✓ (COMPLETED)
+
 - [x] Type definitions
 - [x] Manifest validation
 - [x] EventCoordinator
@@ -369,12 +397,14 @@ const articleManifest: NostrPostManifest = {
 - [ ] Documentation
 
 ### Phase 2: Plugin System (NEXT)
+
 - [ ] Define plugin interface
 - [ ] Create plugin registry
 - [ ] Implement core plugins (stars, media, markdown)
 - [ ] Plugin validation and loading
 
 ### Phase 3: Web Components
+
 - [ ] Set up Web Components infrastructure
 - [ ] Create composer component
 - [ ] Create view component
@@ -382,6 +412,7 @@ const articleManifest: NostrPostManifest = {
 - [ ] Styling system
 
 ### Phase 4: React Bindings
+
 - [ ] Create hooks
 - [ ] Create React components
 - [ ] Example Next.js app
@@ -405,16 +436,19 @@ const articleManifest: NostrPostManifest = {
 ## Next Steps
 
 1. **Add Tests to @nostr-post/core**
+
    - Set up Vitest
    - Write tests for validation functions
    - Test EventCoordinator
 
 2. **Create @nostr-post/plugins**
+
    - Define expanded plugin interface
    - Implement plugin registry
    - Create first 3 plugins (stars, media, markdown)
 
 3. **Create Sample Manifests**
+
    - Add manifest examples directory
    - Document common patterns
 

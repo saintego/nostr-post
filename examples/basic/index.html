@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>nostr-post Example</title>
+    <title>nostr-post Basic Example</title>
     <style>
       * {
         box-sizing: border-box;
@@ -53,6 +53,10 @@
 
       .login-section h2 {
         margin-bottom: 1rem;
+      }
+
+      #nostr-login-container {
+        min-height: 300px;
       }
 
       .main-content {
@@ -159,10 +163,11 @@
       <!-- Login Section -->
       <div class="login-section" id="login-section">
         <h2>Connect with Nostr</h2>
-        <p style="margin-bottom: 1rem; color: #6b7280;">
-          Sign in to create and view posts
+        <p style="margin-bottom: 1.5rem; color: #6b7280;">
+          Choose your preferred login method: extension, bunker, or create new account
         </p>
-        <div id="nostr-login-container"></div>
+        
+        <nl-auth></nl-auth>
       </div>
 
       <!-- Status Messages -->

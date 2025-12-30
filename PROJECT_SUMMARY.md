@@ -10,16 +10,20 @@ Successfully created the foundational monorepo structure for **nostr-post**, a P
 ### ✅ Completed Components
 
 #### 1. **Root Package Configuration**
+
 - [package.json](./package.json) - Monorepo root configuration with pnpm workspaces
   - Added comprehensive scripts (build, dev, lint, typecheck, test)
   - Enforces pnpm package manager
   - Includes repository metadata and keywords
 
 #### 2. **@nostr-post/core Package** (Headless Logic)
+
 Location: `packages/core/`
 
 **Files Created:**
+
 - [types.ts](./packages/core/src/types.ts) - Complete type system (163 lines)
+
   - `NostrTarget` - Defines where data is stored in Nostr events
   - `PostField` - Individual field definitions with UI plugin mapping
   - `NostrPostManifest` - The blueprint for content structure
@@ -28,6 +32,7 @@ Location: `packages/core/`
   - `NostrUIPlugin` - Plugin interface
 
 - [manifest.ts](./packages/core/src/manifest.ts) - Manifest validation (199 lines)
+
   - `validateNostrTarget()` - Validates Nostr target configuration
   - `validatePostField()` - Validates individual fields
   - `validateManifest()` - Complete manifest validation
@@ -44,13 +49,16 @@ Location: `packages/core/`
   - `setNestedValue()` - Handles JSON path-based data (NIP-78)
 
 #### 3. **Documentation**
+
 - [README.md](./README.md) - Comprehensive project overview
+
   - Architecture explanation
   - Quick start guide
   - Package status and roadmap
   - Contributing guidelines
 
 - [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) - Developer documentation
+
   - Technical standards (500 line limit, no barrel files, functional style)
   - Package structure and responsibilities
   - Implementation phases
@@ -63,6 +71,7 @@ Location: `packages/core/`
   - Utility function examples
 
 #### 4. **Tooling Configuration**
+
 - [biome.json](./biome.json) - Biome linting and formatting
 - [tsconfig.json](./tsconfig.json) - TypeScript strict mode configuration
 - [pnpm-workspace.yaml](./pnpm-workspace.yaml) - Workspace configuration
@@ -70,26 +79,31 @@ Location: `packages/core/`
 ## Key Technical Decisions
 
 ### 1. **Monorepo with pnpm Workspaces**
+
 - Clean separation of concerns
 - Shared TypeScript and Biome configuration
 - Efficient dependency management
 
 ### 2. **Functional Programming**
+
 - Pure functions only
 - Immutable data structures
 - `Result<T, E>` type for error handling (no exceptions)
 
 ### 3. **No Barrel Files**
+
 - Explicit subpath exports in package.json
 - Better tree-shaking
 - Clear import paths
 
 ### 4. **Strict TypeScript**
+
 - `strict: true` mode enabled
 - Full type safety
 - Comprehensive type definitions
 
 ### 5. **File Size Limits**
+
 - Maximum 500 lines per file
 - Current files:
   - types.ts: 163 lines ✅
@@ -111,6 +125,7 @@ Location: `packages/core/`
 ### What Each Package Does
 
 1. **@nostr-post/core** ✅
+
    - Pure TypeScript logic
    - Zero UI dependencies
    - Manifest parsing and validation
@@ -118,11 +133,13 @@ Location: `packages/core/`
    - Splits data across Nostr kinds (1, 30078, 30023, etc.)
 
 2. **@nostr-post/plugins** 🚧 (Next)
+
    - Framework-agnostic plugin definitions
    - Stars, media, markdown, geo plugins
    - Plugin registry system
 
 3. **@nostr-post/web** 📋
+
    - Web Components
    - `<nostr-post-composer>`, `<nostr-post-view>`
    - Works in any framework
@@ -137,6 +154,7 @@ Location: `packages/core/`
 ### The Manifest System
 
 A manifest defines:
+
 1. **What fields exist** (rating, location, images, etc.)
 2. **Where data is stored** (Kind 1 content, Kind 30078 JSON path, etc.)
 3. **Which UI plugin renders it** (stars, map, markdown)
@@ -146,16 +164,31 @@ A manifest defines:
 ```typescript
 // 1. Define manifest
 const manifest = {
-  id: 'restaurant-review-v1',
+  id: "restaurant-review-v1",
   fields: [
-    { id: 'rating', type: 'number', uiPlugin: 'stars', mapTo: { kind: 1, target: 'tag', tagName: 'r' } },
-    { id: 'text', type: 'string', uiPlugin: 'markdown', mapTo: { kind: 1, target: 'content' } },
-    { id: 'venueName', type: 'string', uiPlugin: 'text', mapTo: { kind: 30078, target: 'content', path: 'venue.name' } }
-  ]
+    {
+      id: "rating",
+      type: "number",
+      uiPlugin: "stars",
+      mapTo: { kind: 1, target: "tag", tagName: "r" },
+    },
+    {
+      id: "text",
+      type: "string",
+      uiPlugin: "markdown",
+      mapTo: { kind: 1, target: "content" },
+    },
+    {
+      id: "venueName",
+      type: "string",
+      uiPlugin: "text",
+      mapTo: { kind: 30078, target: "content", path: "venue.name" },
+    },
+  ],
 };
 
 // 2. Collect form data
-const formData = { rating: 5, text: 'Great pizza!', venueName: "Mario's" };
+const formData = { rating: 5, text: "Great pizza!", venueName: "Mario's" };
 
 // 3. Coordinate events
 const result = coordinateEvents(manifest, formData);
@@ -187,6 +220,7 @@ pnpm lint
 ### Package Exports Working
 
 The package.json exports are configured:
+
 ```json
 {
   "exports": {
@@ -198,10 +232,11 @@ The package.json exports are configured:
 ```
 
 Usage:
+
 ```typescript
-import type { NostrPostManifest } from '@nostr-post/core/types';
-import { validateManifest } from '@nostr-post/core/manifest';
-import { coordinateEvents } from '@nostr-post/core/coordinator';
+import type { NostrPostManifest } from "@nostr-post/core/types";
+import { validateManifest } from "@nostr-post/core/manifest";
+import { coordinateEvents } from "@nostr-post/core/coordinator";
 ```
 
 ## Next Steps (Phase 2)
@@ -209,16 +244,21 @@ import { coordinateEvents } from '@nostr-post/core/coordinator';
 ### Create @nostr-post/plugins Package
 
 1. **Define Plugin Interface**
+
    ```typescript
    interface NostrUIPlugin {
      id: string;
      type: FieldType | FieldType[];
      render: (value: unknown, config: PluginConfig) => RenderMetadata;
-     validate?: (value: unknown, field: PostField) => Result<void, ValidationError>;
+     validate?: (
+       value: unknown,
+       field: PostField
+     ) => Result<void, ValidationError>;
    }
    ```
 
 2. **Implement Core Plugins**
+
    - `plugin-stars` - Star rating (1-5)
    - `plugin-media` - Image/video upload
    - `plugin-markdown` - Rich text editor metadata
@@ -295,16 +335,19 @@ nostr-post/
 ## Future Enhancements
 
 ### Phase 2: Plugin System 🚧
+
 - Timeline: Next priority
 - Estimated complexity: Medium
 - Dependencies: None (uses @nostr-post/core types)
 
 ### Phase 3: Web Components 📋
+
 - Timeline: After plugins
 - Estimated complexity: High
 - Dependencies: @nostr-post/core, @nostr-post/plugins
 
 ### Phase 4: React Bindings 📋
+
 - Timeline: After Web Components
 - Estimated complexity: Medium
 - Dependencies: All previous packages

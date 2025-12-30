@@ -4,7 +4,12 @@
  * A plugin for geographic coordinates (latitude/longitude)
  */
 
-import type { NostrUIPlugin, PostField, Result, ValidationError } from './types';
+import type {
+  NostrUIPlugin,
+  PostField,
+  Result,
+  ValidationError,
+} from "./types";
 
 export interface GeoPluginConfig {
   defaultZoom?: number;
@@ -18,29 +23,32 @@ export interface GeoCoordinates {
 }
 
 export const geoPlugin: NostrUIPlugin = {
-  id: 'geo',
-  type: 'geo',
-  validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
-    if (typeof value !== 'object' || value === null) {
+  id: "geo",
+  type: "geo",
+  validate: (
+    value: unknown,
+    field: PostField
+  ): Result<void, ValidationError> => {
+    if (typeof value !== "object" || value === null) {
       return {
         success: false,
         error: {
           field: field.id,
-          message: 'Coordinates must be an object',
-          code: 'INVALID_TYPE',
+          message: "Coordinates must be an object",
+          code: "INVALID_TYPE",
         },
       };
     }
 
     const coords = value as GeoCoordinates;
 
-    if (typeof coords.lat !== 'number' || typeof coords.lon !== 'number') {
+    if (typeof coords.lat !== "number" || typeof coords.lon !== "number") {
       return {
         success: false,
         error: {
           field: field.id,
-          message: 'Latitude and longitude must be numbers',
-          code: 'INVALID_COORDS',
+          message: "Latitude and longitude must be numbers",
+          code: "INVALID_COORDS",
         },
       };
     }
@@ -50,8 +58,8 @@ export const geoPlugin: NostrUIPlugin = {
         success: false,
         error: {
           field: field.id,
-          message: 'Latitude must be between -90 and 90',
-          code: 'INVALID_LATITUDE',
+          message: "Latitude must be between -90 and 90",
+          code: "INVALID_LATITUDE",
         },
       };
     }
@@ -61,8 +69,8 @@ export const geoPlugin: NostrUIPlugin = {
         success: false,
         error: {
           field: field.id,
-          message: 'Longitude must be between -180 and 180',
-          code: 'INVALID_LONGITUDE',
+          message: "Longitude must be between -180 and 180",
+          code: "INVALID_LONGITUDE",
         },
       };
     }

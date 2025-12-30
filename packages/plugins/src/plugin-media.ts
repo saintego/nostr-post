@@ -4,7 +4,12 @@
  * A plugin for handling image and video uploads
  */
 
-import type { NostrUIPlugin, PostField, Result, ValidationError } from './types';
+import type {
+  NostrUIPlugin,
+  PostField,
+  Result,
+  ValidationError,
+} from "./types";
 
 export interface MediaPluginConfig {
   accept?: string[]; // File types: ['image/*', 'video/*']
@@ -13,16 +18,19 @@ export interface MediaPluginConfig {
 }
 
 export const mediaPlugin: NostrUIPlugin = {
-  id: 'media',
-  type: 'string',
-  validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
-    if (typeof value !== 'string') {
+  id: "media",
+  type: "string",
+  validate: (
+    value: unknown,
+    field: PostField
+  ): Result<void, ValidationError> => {
+    if (typeof value !== "string") {
       return {
         success: false,
         error: {
           field: field.id,
-          message: 'Media URL must be a string',
-          code: 'INVALID_TYPE',
+          message: "Media URL must be a string",
+          code: "INVALID_TYPE",
         },
       };
     }
@@ -35,8 +43,8 @@ export const mediaPlugin: NostrUIPlugin = {
         success: false,
         error: {
           field: field.id,
-          message: 'Invalid media URL',
-          code: 'INVALID_URL',
+          message: "Invalid media URL",
+          code: "INVALID_URL",
         },
       };
     }

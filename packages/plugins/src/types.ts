@@ -7,7 +7,13 @@
 
 // Re-export from core when available
 // For now, we define minimal types for compilation
-export type FieldType = 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref';
+export type FieldType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "enum"
+  | "geo"
+  | "ref";
 
 export interface PostField {
   id: string;
@@ -15,7 +21,7 @@ export interface PostField {
   uiPlugin: string;
   mapTo: {
     kind: number;
-    target: 'content' | 'tag';
+    target: "content" | "tag";
     tagName?: string;
     path?: string;
   };
@@ -30,10 +36,47 @@ export interface ValidationError {
   code: string;
 }
 
-export type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
+export type Result<T, E = Error> =
+  | { success: true; data: T }
+  | { success: false; error: E };
 
+/**
+ * Render context provided to plugins for rendering UI
+ */
+export interface RenderContext {
+  value: unknown;
+  field: PostField;
+  onChange: (value: unknown) => void;
+  onError?: (error: string) => void;
+}
+
+/**
+ * Plugin interface for framework-agnostic UI components
+ */
 export interface NostrUIPlugin {
   id: string;
   type: FieldType | FieldType[];
-  validate?: (value: unknown, field: PostField) => Result<void, ValidationError>;
+
+  /**
+   * Validate field value
+   */
+  validate?: (
+    value: unknown,
+    field: PostField
+  ) => Result<void, ValidationError>;
+
+  /**
+   * Render edit/input UI (returns HTML string or DOM element)
+   */
+  renderInput?: (ctx: RenderContext) => HTMLElement | string;
+
+  /**
+   * Render view/display UI (returns HTML string or DOM element)
+   */
+  renderView?: (value: unknown, field: PostField) => HTMLElement | string;
+
+  /**
+   * Filter/transform value for display
+   */
+  formatValue?: (value: unknown) => string;
 }

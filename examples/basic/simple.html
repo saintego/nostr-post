@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>nostr-post Demo</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: #f5f5f5;
+            color: #1f2937;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark {
+            background: #1f2937;
+            color: #f3f4f6;
+        }
+        h1 { display: flex; align-items: center; gap: 8px; }
+        .section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .dark .section {
+            background: #374151;
+            border-color: #4b5563;
+        }
+        .user-info {
+            background: #f3f4f6;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 12px 0;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .dark .user-info {
+            background: #4b5563;
+        }
+        button {
+            padding: 10px 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            background: white;
+            color: #1f2937;
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .dark button {
+            background: #374151;
+            border-color: #4b5563;
+            color: #f3f4f6;
+        }
+        .login-prompt {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .login-prompt p { color: #6b7280; }
+        #events-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+    </style>
+    <!-- nostr-login for authentication -->
+    <script src='https://unpkg.com/nostr-login@latest/dist/unpkg.js'
+        data-bunkers="nsec.app,highlighter.com"
+        data-perms="sign_event:1,sign_event:0"
+    ></script>
+</head>
+<body>
+    <h1>🚀 nostr-post Demo</h1>
+    <p>Create and view Nostr posts with manifest-driven Web Components</p>
+    
+    <!-- Login Prompt -->
+    <div id="login-section" class="login-prompt">
+        <h2>👆 Click the Nostr icon to login</h2>
+        <p>Use the floating button in the corner to connect</p>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-content" style="display: none;">
+        <div class="section">
+            <h2>Connected</h2>
+            <div class="user-info" id="user-info"></div>
+            <button onclick="handleLogout()">Logout</button>
+        </div>
+
+        <div class="section">
+            <h2>Create Post</h2>
+            <!-- The composer component - auto-publish handles signing + relay publishing -->
+            <nostr-post-composer id="composer" auto-publish></nostr-post-composer>
+        </div>
+
+        <div class="section">
+            <h2>Your Posts</h2>
+            <div id="events-list">
+                <div class="empty-state">No posts yet. Create your first post above!</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import nostr-post web components
+        import '../../packages/web/dist/index.js';
+
+        // Simple Kind 1 post manifest
+        const simplePostManifest = {
+            id: 'simple-post-v1',
+            version: '1.0.0',
+            requiredKinds: [1],
+            fields: [
+                {
+                    id: 'content',
+                    type: 'string',
+                    uiPlugin: 'textarea',
+                    mapTo: { kind: 1, target: 'content' },
+                    required: true,
+                },
+            ],
+            metadata: {
+                name: 'Simple Post',
+                description: 'Create a basic Nostr note (Kind 1)',
+            },
+        };
+
+        // State
+        const events = [];
+        const composer = document.getElementById('composer');
+
+        // Set manifest on composer
+        composer.manifest = simplePostManifest;
+
+        // Sync dark mode with nostr-login
+        function syncDarkMode() {
+            const isDark = localStorage.getItem('nl-dark-mode') === 'true' ||
+                          window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.body.classList.toggle('dark', isDark);
+        }
+        syncDarkMode();
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', syncDarkMode);
+        window.addEventListener('storage', (e) => {
+            if (e.key === 'nl-dark-mode') syncDarkMode();
+        });
+
+        // Handle nostr-login events
+        document.addEventListener('nlAuth', async (event) => {
+            const { type } = event.detail;
+            if (type === 'login' || type === 'signup') {
+                await handleLogin();
+            } else if (type === 'logout') {
+                handleLogout();
+            }
+        });
+
+        // Handle login
+        async function handleLogin() {
+            if (!window.nostr) return;
+
+            const pubkey = await window.nostr.getPublicKey();
+            document.getElementById('login-section').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('user-info').textContent = pubkey;
+        }
+
+        // Handle logout  
+        window.handleLogout = function() {
+            events.length = 0;
+            document.getElementById('login-section').style.display = 'block';
+            document.getElementById('main-content').style.display = 'none';
+            renderEvents();
+        }
+
+        // Listen for published events from composer
+        composer.addEventListener('nostr-post-published', (e) => {
+            console.log('✅ Published:', e.detail);
+            events.unshift(...e.detail.events);
+            renderEvents();
+        });
+
+        // Listen for errors
+        composer.addEventListener('nostr-post-error', (e) => {
+            console.error('❌ Error:', e.detail);
+            alert('Error: ' + e.detail.message);
+        });
+
+        // Render events using <nostr-post-view> components
+        function renderEvents() {
+            const eventsList = document.getElementById('events-list');
+            
+            if (events.length === 0) {
+                eventsList.innerHTML = '<div class="empty-state">No posts yet. Create your first post above!</div>';
+                return;
+            }
+
+            eventsList.innerHTML = '';
+            for (const event of events) {
+                const view = document.createElement('nostr-post-view');
+                view.event = event;
+                view.showTags = false;
+                eventsList.appendChild(view);
+            }
+        }
+    </script>
+</body>
+</html>

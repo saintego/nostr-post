@@ -8,7 +8,7 @@
  * Architecture: Pure functional approach using data transformation pipelines.
  */
 
-import { getFieldsByKind, validateManifest } from './manifest';
+import { getFieldsByKind, validateManifest } from "./manifest";
 import type {
   EventBundle,
   FormData,
@@ -18,7 +18,7 @@ import type {
   Result,
   UnsignedNostrEvent,
   ValidationError,
-} from './types';
+} from "./types";
 
 /**
  * Configuration for event coordination.
@@ -43,7 +43,7 @@ export const validateFormData = (
       errors.push({
         field: field.id,
         message: `Required field "${field.id}" is missing`,
-        code: 'MISSING_REQUIRED_FIELD',
+        code: "MISSING_REQUIRED_FIELD",
       });
     }
   }
@@ -56,7 +56,7 @@ export const validateFormData = (
       errors.push({
         field: fieldId,
         message: `Unknown field "${fieldId}" not in manifest`,
-        code: 'UNKNOWN_FIELD',
+        code: "UNKNOWN_FIELD",
       });
       continue;
     }
@@ -77,81 +77,86 @@ export const validateFormData = (
 /**
  * Validates a value against a field's type definition.
  */
-const validateFieldType = (field: PostField, value: unknown): Result<void, ValidationError> => {
+const validateFieldType = (
+  field: PostField,
+  value: unknown
+): Result<void, ValidationError> => {
   switch (field.type) {
-    case 'string':
-      if (typeof value !== 'string') {
+    case "string":
+      if (typeof value !== "string") {
         return {
           success: false,
           error: {
             field: field.id,
             message: `Field "${field.id}" must be a string`,
-            code: 'INVALID_TYPE',
+            code: "INVALID_TYPE",
           },
         };
       }
       break;
 
-    case 'number':
-      if (typeof value !== 'number' || Number.isNaN(value)) {
+    case "number":
+      if (typeof value !== "number" || Number.isNaN(value)) {
         return {
           success: false,
           error: {
             field: field.id,
             message: `Field "${field.id}" must be a valid number`,
-            code: 'INVALID_TYPE',
+            code: "INVALID_TYPE",
           },
         };
       }
       break;
 
-    case 'boolean':
-      if (typeof value !== 'boolean') {
+    case "boolean":
+      if (typeof value !== "boolean") {
         return {
           success: false,
           error: {
             field: field.id,
             message: `Field "${field.id}" must be a boolean`,
-            code: 'INVALID_TYPE',
+            code: "INVALID_TYPE",
           },
         };
       }
       break;
 
-    case 'enum':
-      if (typeof value !== 'string' || !field.options?.includes(value)) {
+    case "enum":
+      if (typeof value !== "string" || !field.options?.includes(value)) {
         return {
           success: false,
           error: {
             field: field.id,
-            message: `Field "${field.id}" must be one of: ${field.options?.join(', ')}`,
-            code: 'INVALID_ENUM_VALUE',
+            message: `Field "${field.id}" must be one of: ${field.options?.join(
+              ", "
+            )}`,
+            code: "INVALID_ENUM_VALUE",
           },
         };
       }
       break;
 
-    case 'geo':
+    case "geo":
       if (!isValidGeoValue(value)) {
         return {
           success: false,
           error: {
             field: field.id,
             message: `Field "${field.id}" must be a valid geo coordinate`,
-            code: 'INVALID_GEO',
+            code: "INVALID_GEO",
           },
         };
       }
       break;
 
-    case 'ref':
-      if (typeof value !== 'string' || value.trim() === '') {
+    case "ref":
+      if (typeof value !== "string" || value.trim() === "") {
         return {
           success: false,
           error: {
             field: field.id,
             message: `Field "${field.id}" must be a non-empty string reference`,
-            code: 'INVALID_REF',
+            code: "INVALID_REF",
           },
         };
       }
@@ -164,12 +169,14 @@ const validateFieldType = (field: PostField, value: unknown): Result<void, Valid
 /**
  * Type guard for geo coordinates.
  */
-const isValidGeoValue = (value: unknown): value is { lat: number; lon: number } => {
-  if (typeof value !== 'object' || value === null) return false;
+const isValidGeoValue = (
+  value: unknown
+): value is { lat: number; lon: number } => {
+  if (typeof value !== "object" || value === null) return false;
   const geo = value as Record<string, unknown>;
   return (
-    typeof geo.lat === 'number' &&
-    typeof geo.lon === 'number' &&
+    typeof geo.lat === "number" &&
+    typeof geo.lon === "number" &&
     geo.lat >= -90 &&
     geo.lat <= 90 &&
     geo.lon >= -180 &&
@@ -187,11 +194,11 @@ const createEventForKind = (
   config: CoordinatorConfig
 ): UnsignedNostrEvent => {
   const tags: NostrTag[] = [];
-  let content = '';
+  let content = "";
 
   // Separate fields by target type
-  const contentFields = fields.filter((f) => f.mapTo.target === 'content');
-  const tagFields = fields.filter((f) => f.mapTo.target === 'tag');
+  const contentFields = fields.filter((f) => f.mapTo.target === "content");
+  const tagFields = fields.filter((f) => f.mapTo.target === "tag");
 
   // Build content (for NIP-78, this will be JSON)
   if (contentFields.length > 0) {
@@ -215,7 +222,7 @@ const createEventForKind = (
       content = contentFields
         .map((f) => formData[f.id])
         .filter((v) => v !== undefined)
-        .join('\n');
+        .join("\n");
     }
   }
 
@@ -233,15 +240,19 @@ const createEventForKind = (
     created_at: config.createdAt || Math.floor(Date.now() / 1000),
     tags,
     content,
-    pubkey: config.pubkey || '',
+    pubkey: config.pubkey || "",
   };
 };
 
 /**
  * Sets a nested value in an object using dot notation path.
  */
-const setNestedValue = (obj: Record<string, unknown>, path: string, value: unknown): void => {
-  const parts = path.split('.');
+const setNestedValue = (
+  obj: Record<string, unknown>,
+  path: string,
+  value: unknown
+): void => {
+  const parts = path.split(".");
   let current = obj;
 
   for (let i = 0; i < parts.length - 1; i++) {

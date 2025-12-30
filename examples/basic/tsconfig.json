@@ -8,5 +8,8 @@
     "noEmit": true
   },
   "include": ["src/**/*"],
-  "references": [{ "path": "../../packages/core" }, { "path": "../../packages/web" }]
+  "references": [
+    { "path": "../../packages/core" },
+    { "path": "../../packages/web" }
+  ]
 }
