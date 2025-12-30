@@ -1,0 +1,9 @@
+# lefthook.yml
+pre-commit:
+  parallel: false
+  commands:
+    biome:
+      glob: "*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}"
+      run: |
+        ./node_modules/.bin/biome check --write --no-errors-on-unmatched {staged_files} || true
+        ./node_modules/.bin/biome format --write {staged_files} || true

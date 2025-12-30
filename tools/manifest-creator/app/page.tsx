@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
 import type { NostrPostManifest } from '@nostr-post/core/types';
+import { useState } from 'react';
 import { ManifestEditor } from '../components/ManifestEditor';
 import { PreviewPane } from '../components/PreviewPane';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
@@ -41,9 +41,7 @@ export default function Home() {
     <>
       <header style={styles.header}>
         <h1 style={styles.title}>🎨 Manifest Creator</h1>
-        <p style={styles.subtitle}>
-          Visual tool for creating and testing nostr-post manifests
-        </p>
+        <p style={styles.subtitle}>Visual tool for creating and testing nostr-post manifests</p>
       </header>
 
       <div style={styles.container}>

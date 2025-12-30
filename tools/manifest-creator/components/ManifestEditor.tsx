@@ -1,8 +1,9 @@
 'use client';
 
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
-import { FieldEditor } from './FieldEditor';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
+import { FieldEditor } from './FieldEditor';
+import { type } from '../.next/dev/types/routes';
 
 interface ManifestEditorProps {
   manifest: NostrPostManifest;
@@ -194,11 +195,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
         <label style={styles.label}>Load Example:</label>
         <div style={styles.buttonGroup}>
           {Object.keys(EXAMPLE_MANIFESTS).map((key) => (
-            <button
-              key={key}
-              style={styles.secondaryButton}
-              onClick={() => loadExample(key)}
-            >
+            <button key={key} style={styles.secondaryButton} onClick={() => loadExample(key)}>
               {EXAMPLE_MANIFESTS[key].metadata?.name || key}
             </button>
           ))}
@@ -253,7 +250,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       <div style={styles.section}>
         <div style={styles.panelHeader}>
           <h3 style={{ ...styles.panelTitle, fontSize: '1.125rem' }}>Fields</h3>
-          <button style={styles.button} onClick={addField}>
+          <button style={styles.button} type="button" onClick={addField}>
             + Add Field
           </button>
         </div>

@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import { NostrPostComposer, NostrPostFeed, NostrPostView } from '@nostr-post/react';
 import type { NostrPostManifest } from '@nostr-post/core/types';
+import { NostrPostComposer, NostrPostFeed, NostrPostView } from '@nostr-post/react';
 import type { SignedEvent } from '@nostr-post/react';
+import React, { useState } from 'react';
 
 interface PreviewPaneProps {
   manifest: NostrPostManifest;

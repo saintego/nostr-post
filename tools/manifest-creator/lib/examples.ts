@@ -3,7 +3,7 @@ import { DEFAULT_KIND1_MANIFEST } from '@nostr-post/core/types';
 
 export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   simple: DEFAULT_KIND1_MANIFEST,
-  
+
   review: {
     id: 'restaurant-review-v1',
     version: '1.0.0',
