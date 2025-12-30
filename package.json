@@ -14,7 +14,8 @@
     "test": "pnpm -r test",
     "test:watch": "pnpm -r test:watch",
     "clean": "pnpm -r clean",
-    "preinstall": "npx only-allow pnpm"
+    "preinstall": "npx only-allow pnpm",
+    "prepare": "husky install"
   },
   "keywords": [
     "nostr",
@@ -38,6 +39,8 @@
   "homepage": "https://github.com/saintego/nostr-post#readme",
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
     "typescript": "^5.6.3"
   },
   "engines": {
@@ -45,6 +48,9 @@
     "pnpm": ">=9.0.0"
   },
   "packageManager": "pnpm@9.14.4",
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,md}": "biome check --write"
+  },
   "pnpm": {
     "overrides": {
       "typescript": "^5.6.3"
