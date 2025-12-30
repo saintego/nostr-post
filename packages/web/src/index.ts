@@ -7,6 +7,7 @@
 // Components
 export { NostrPostComposer } from "./composer";
 export { NostrPostView } from "./view";
+export { NostrPostFeed } from "./feed";
 export { NostrPostElement } from "./base-component";
 
 // Theme (single source of truth for colors and styles)
