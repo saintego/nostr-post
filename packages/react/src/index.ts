@@ -27,6 +27,21 @@ export {
   type NostrPostFeedProps,
 } from "./components";
 
+// Theme and styling utilities
+export {
+  colors,
+  getColors,
+  isDarkMode,
+  containerStyles,
+  inputStyles,
+  buttonStyles,
+  secondaryButtonStyles,
+  errorStyles,
+  successStyles,
+  labelStyles,
+  type ColorScheme,
+} from "./theme";
+
 // Signer utilities
 export {
   signEvent,

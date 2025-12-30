@@ -6,8 +6,25 @@
 
 import type { CSSProperties } from "react";
 
+/** Color scheme interface */
+export interface ColorScheme {
+  bg: string;
+  inputBg: string;
+  text: string;
+  textSecondary: string;
+  border: string;
+  primary: string;
+  primaryHover: string;
+  error: string;
+  errorBorder: string;
+  errorBg: string;
+  successBg: string;
+  successBorder: string;
+  successText: string;
+}
+
 /** nostr-login color palette */
-export const colors = {
+export const colors: { light: ColorScheme; dark: ColorScheme } = {
   light: {
     bg: "#ffffff",
     inputBg: "#f9fafb",
@@ -38,9 +55,7 @@ export const colors = {
     successBorder: "#10b981",
     successText: "#6ee7b7",
   },
-} as const;
-
-export type ColorScheme = typeof colors.light;
+};
 
 /**
  * Detect if dark mode is preferred
@@ -65,7 +80,8 @@ export function getColors(dark?: boolean): ColorScheme {
  */
 export function containerStyles(c: ColorScheme): CSSProperties {
   return {
-    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+    fontFamily:
+      "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     fontSize: 14,
     lineHeight: 1.5,
     background: c.bg,
@@ -119,7 +135,10 @@ export function buttonStyles(c: ColorScheme, disabled = false): CSSProperties {
 /**
  * Create secondary button styles
  */
-export function secondaryButtonStyles(c: ColorScheme, disabled = false): CSSProperties {
+export function secondaryButtonStyles(
+  c: ColorScheme,
+  disabled = false
+): CSSProperties {
   return {
     display: "inline-flex",
     justifyContent: "center",

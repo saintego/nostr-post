@@ -9,6 +9,9 @@ export { NostrPostComposer } from "./composer";
 export { NostrPostView } from "./view";
 export { NostrPostElement } from "./base-component";
 
+// Theme (single source of truth for colors and styles)
+export { colors, baseStyles } from "./theme";
+
 // Signer and relay utilities
 export {
   signEvent,
