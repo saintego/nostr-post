@@ -1,9 +1,9 @@
 'use client';
 
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
+import { type } from '../.next/dev/types/routes';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
 import { FieldEditor } from './FieldEditor';
-import { type } from '../.next/dev/types/routes';
 
 interface ManifestEditorProps {
   manifest: NostrPostManifest;
