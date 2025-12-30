@@ -70,7 +70,6 @@ export default function App() {
                     </button>
                 )}
             </header>
-
             {/* Composer - works without manifest for simple Kind 1 notes */}
             <NostrPostComposer
                 onPublished={(events) => {
