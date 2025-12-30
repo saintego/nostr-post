@@ -198,22 +198,22 @@ export function fetchEventsFromRelay(
     const events: SignedEvent[] = [];
     const ws = new WebSocket(relayUrl);
     const subId = Math.random().toString(36).substring(7);
-    
+
     const timeout = setTimeout(() => {
       ws.close();
       resolve(events); // Return what we got
     }, 5000);
 
     ws.onopen = () => {
-      ws.send(JSON.stringify(['REQ', subId, filter]));
+      ws.send(JSON.stringify(["REQ", subId, filter]));
     };
 
     ws.onmessage = (msg) => {
       try {
         const data = JSON.parse(msg.data);
-        if (data[0] === 'EVENT' && data[1] === subId) {
+        if (data[0] === "EVENT" && data[1] === subId) {
           events.push(data[2] as SignedEvent);
-        } else if (data[0] === 'EOSE') {
+        } else if (data[0] === "EOSE") {
           clearTimeout(timeout);
           ws.close();
           resolve(events);
@@ -238,14 +238,14 @@ export async function fetchEvents(
   relays: string[] = DEFAULT_RELAYS
 ): Promise<SignedEvent[]> {
   const results = await Promise.allSettled(
-    relays.map(relay => fetchEventsFromRelay(relay, filter))
+    relays.map((relay) => fetchEventsFromRelay(relay, filter))
   );
 
   const allEvents: SignedEvent[] = [];
   const seenIds = new Set<string>();
 
   for (const result of results) {
-    if (result.status === 'fulfilled') {
+    if (result.status === "fulfilled") {
       for (const event of result.value) {
         if (!seenIds.has(event.id)) {
           seenIds.add(event.id);

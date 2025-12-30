@@ -24,4 +24,3 @@ export {
   type SignedEvent,
   type Nip07Provider,
 } from "./signer";
-
