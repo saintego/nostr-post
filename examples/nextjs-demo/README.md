@@ -15,11 +15,13 @@ This is a demo application showing how to use `@nostr-post/react` components in 
 ## Getting Started
 
 1. Install dependencies:
+
    ```bash
    pnpm install
    ```
 
 2. Run the development server:
+
    ```bash
    pnpm dev
    ```
@@ -47,6 +49,7 @@ The demo shows a complete Nostr posting interface:
 ## Configuration
 
 The feed is configured to show:
+
 - Posts from the logged-in user (`authors={[pubkey]}`)
 - Kind 1 events (text posts)
 - Limited to 20 posts
