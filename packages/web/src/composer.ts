@@ -9,11 +9,12 @@ import { html, css } from "lit";
 import { customElement, property, state } from "lit/decorators.js";
 import { coordinateEvents } from "@nostr-post/core/coordinator";
 import { validateManifest } from "@nostr-post/core/manifest";
-import type {
-  EventBundle,
-  FormData as NostrFormData,
-  NostrPostManifest,
-  PostField,
+import {
+  DEFAULT_KIND1_MANIFEST,
+  type EventBundle,
+  type FormData as NostrFormData,
+  type NostrPostManifest,
+  type PostField,
 } from "@nostr-post/core/types";
 import { NostrPostElement, baseStyles } from "./base-component";
 import {
@@ -22,22 +23,6 @@ import {
   getUserRelays,
   type SignedEvent,
 } from "./signer";
-
-/** Default Kind 1 (note) manifest - works out of the box */
-const DEFAULT_KIND1_MANIFEST: NostrPostManifest = {
-  id: "kind1-note",
-  version: "1.0.0",
-  requiredKinds: [1],
-  fields: [
-    {
-      id: "content",
-      type: "string",
-      uiPlugin: "textarea",
-      mapTo: { kind: 1, target: "content" },
-      required: true,
-    },
-  ],
-};
 
 /**
  * Composer Web Component

@@ -89,6 +89,9 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
+      '@nostr-post/signer':
+        specifier: workspace:*
+        version: link:../signer
     devDependencies:
       '@types/react':
         specifier: ^18.2.0
@@ -106,11 +109,24 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  packages/signer:
+    dependencies:
+      '@nostr-post/core':
+        specifier: workspace:*
+        version: link:../core
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/web:
     dependencies:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
+      '@nostr-post/signer':
+        specifier: workspace:*
+        version: link:../signer
       lit:
         specifier: ^3.2.1
         version: 3.3.2

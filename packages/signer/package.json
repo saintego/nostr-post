@@ -1,0 +1,31 @@
+{
+  "name": "@nostr-post/signer",
+  "version": "0.1.0",
+  "description": "Shared NIP-07 signing and relay utilities for nostr-post",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nostr-post/core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "~5.6.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

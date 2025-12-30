@@ -2,9 +2,10 @@
  * @nostr-post/react - NostrPostView component
  *
  * Displays a single Nostr event
+ * Styled to match nostr-login design system
  */
 
-
+import type { CSSProperties } from "react";
 import type { SignedEvent } from "../signer";
 
 export interface NostrPostViewProps {
@@ -18,113 +19,153 @@ export interface NostrPostViewProps {
     showId?: boolean;
     /** Custom class name */
     className?: string;
+    /** Dark mode (auto-detects from prefers-color-scheme if not set) */
+    dark?: boolean;
 }
 
+// nostr-login color palette (matches @nostr-post/web)
+const colors = {
+    light: {
+        bg: "#ffffff",
+        inputBg: "#f9fafb",
+        text: "#1f2937",
+        textSecondary: "#6b7280",
+        border: "#d1d5db",
+        primary: "#6366f1",
+    },
+    dark: {
+        bg: "#1f2937",
+        inputBg: "#374151",
+        text: "#f3f4f6",
+        textSecondary: "#9ca3af",
+        border: "#4b5563",
+        primary: "#4f46e5",
+    },
+};
+
 /**
- * View component for displaying Nostr events
- *
- * @example
- * ```tsx
- * <NostrPostView event={event} />
- * ```
+ * Display a single Nostr event
  */
 export function NostrPostView({
     event,
-    showKind = true,
+    showKind = false,
     showTags = false,
-    showId = true,
+    showId = false,
     className = "",
+    dark,
 }: NostrPostViewProps) {
-    const formatTimestamp = (ts: number) => new Date(ts * 1000).toLocaleString();
+    const isDark =
+        dark ??
+        (typeof window !== "undefined" &&
+            window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+    const c = isDark ? colors.dark : colors.light;
 
-    const truncatePubkey = (pk: string) =>
-        pk.length <= 16 ? pk : `${pk.slice(0, 8)}...${pk.slice(-8)}`;
+    const formatDate = (timestamp: number) => {
+        return new Date(timestamp * 1000).toLocaleString();
+    };
+
+    const styles: Record<string, CSSProperties> = {
+        container: {
+            fontFamily: "system-ui, -apple-system, sans-serif",
+            fontSize: 14,
+            background: c.bg,
+            borderRadius: 12,
+            padding: 16,
+            border: `1px solid ${c.border}`,
+        },
+        header: {
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: 12,
+        },
+        pubkey: {
+            fontFamily: "monospace",
+            fontSize: 12,
+            color: c.primary,
+            background: c.inputBg,
+            padding: "4px 8px",
+            borderRadius: 4,
+        },
+        time: {
+            fontSize: 12,
+            color: c.textSecondary,
+        },
+        content: {
+            color: c.text,
+            lineHeight: 1.6,
+            whiteSpace: "pre-wrap" as const,
+            wordBreak: "break-word" as const,
+        },
+        kindBadge: {
+            display: "inline-block",
+            background: c.primary,
+            color: "#ffffff",
+            fontSize: 11,
+            fontWeight: 600,
+            padding: "2px 8px",
+            borderRadius: 12,
+            marginRight: 8,
+        },
+        tags: {
+            marginTop: 12,
+            paddingTop: 12,
+            borderTop: `1px solid ${c.border}`,
+        },
+        tagLabel: {
+            fontSize: 11,
+            fontWeight: 600,
+            color: c.textSecondary,
+            textTransform: "uppercase" as const,
+            marginBottom: 8,
+        },
+        tag: {
+            display: "inline-block",
+            background: c.inputBg,
+            color: c.textSecondary,
+            fontSize: 11,
+            padding: "2px 6px",
+            borderRadius: 4,
+            marginRight: 4,
+            marginBottom: 4,
+            fontFamily: "monospace",
+        },
+        eventId: {
+            marginTop: 12,
+            fontSize: 11,
+            color: c.textSecondary,
+            fontFamily: "monospace",
+            wordBreak: "break-all" as const,
+        },
+    };
 
     return (
-        <div className={`np-view ${className}`}>
-            <div className="np-view-header">
-                {showKind && <span className="np-view-kind">Kind {event.kind}</span>}
-                <span className="np-view-pubkey" title={event.pubkey}>
-                    {truncatePubkey(event.pubkey)}
-                </span>
-                <span className="np-view-time">{formatTimestamp(event.created_at)}</span>
+        <div className={className} style={styles.container}>
+            <div style={styles.header}>
+                <span style={styles.pubkey}>{event.pubkey.slice(0, 16)}...</span>
+                <span style={styles.time}>{formatDate(event.created_at)}</span>
             </div>
 
-            <div className="np-view-content">{event.content || <em>No content</em>}</div>
+            {showKind && <span style={styles.kindBadge}>Kind {event.kind}</span>}
+
+            <div style={styles.content}>{event.content}</div>
 
             {showTags && event.tags.length > 0 && (
-                <div className="np-view-tags">
+                <div style={styles.tags}>
+                    <div style={styles.tagLabel}>Tags</div>
                     {event.tags.map((tag, i) => (
-                        <span key={i} className="np-tag">
-                            <strong>{tag[0]}:</strong> {tag.slice(1).join(", ")}
+                        <span key={i} style={styles.tag}>
+                            [{tag.join(", ")}]
                         </span>
                     ))}
                 </div>
             )}
 
-            {showId && <div className="np-view-id">ID: {event.id}</div>}
-
-            <style>{viewStyles}</style>
+            {showId && (
+                <div style={styles.eventId}>
+                    <strong>ID:</strong> {event.id}
+                </div>
+            )}
         </div>
     );
 }
-
-const viewStyles = `
-  .np-view {
-    font-family: system-ui, -apple-system, sans-serif;
-    font-size: 14px;
-    padding: 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    background: #f9fafb;
-  }
-  .np-view-header {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-    font-size: 12px;
-  }
-  .np-view-kind {
-    padding: 2px 8px;
-    background: #6366f1;
-    color: white;
-    border-radius: 4px;
-    font-weight: 600;
-  }
-  .np-view-pubkey {
-    font-family: monospace;
-    color: #6b7280;
-  }
-  .np-view-time {
-    color: #6b7280;
-    margin-left: auto;
-  }
-  .np-view-content {
-    white-space: pre-wrap;
-    word-break: break-word;
-    line-height: 1.6;
-    color: #1f2937;
-  }
-  .np-view-tags {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid #e5e7eb;
-  }
-  .np-tag {
-    display: inline-block;
-    padding: 2px 8px;
-    margin: 0.25rem 0.25rem 0.25rem 0;
-    background: #e5e7eb;
-    border-radius: 4px;
-    font-size: 12px;
-    color: #6b7280;
-  }
-  .np-view-id {
-    margin-top: 0.5rem;
-    font-size: 11px;
-    font-family: monospace;
-    color: #9ca3af;
-    word-break: break-all;
-  }
-`;

@@ -15,7 +15,7 @@
  */
 export type NostrTarget = {
   kind: number;
-  target: 'content' | 'tag';
+  target: "content" | "tag";
   tagName?: string;
   path?: string;
 };
@@ -24,7 +24,13 @@ export type NostrTarget = {
  * Supported field types for the manifest system.
  * Each type corresponds to a validation schema and UI plugin interface.
  */
-export type FieldType = 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref';
+export type FieldType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "enum"
+  | "geo"
+  | "ref";
 
 /**
  * Defines a single field in a post manifest.
@@ -125,7 +131,9 @@ export interface EventBundle {
  * Result type for operations that may fail.
  * Following functional programming patterns for error handling.
  */
-export type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
+export type Result<T, E = Error> =
+  | { success: true; data: T }
+  | { success: false; error: E };
 
 /**
  * Validation error with field-level details.
@@ -147,5 +155,27 @@ export interface ValidationError {
 export interface NostrUIPlugin {
   id: string;
   type: FieldType | FieldType[];
-  validate?: (value: unknown, field: PostField) => Result<void, ValidationError>;
+  validate?: (
+    value: unknown,
+    field: PostField
+  ) => Result<void, ValidationError>;
 }
+
+/**
+ * Default Kind 1 (note) manifest for simple text posts.
+ * Use this when you just need a basic text composer without custom fields.
+ */
+export const DEFAULT_KIND1_MANIFEST: NostrPostManifest = {
+  id: "kind1-note",
+  version: "1.0.0",
+  requiredKinds: [1],
+  fields: [
+    {
+      id: "content",
+      type: "string",
+      uiPlugin: "textarea",
+      mapTo: { kind: 1, target: "content" },
+      required: true,
+    },
+  ],
+};

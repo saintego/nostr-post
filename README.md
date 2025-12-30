@@ -32,8 +32,8 @@ The engine automatically:
 └──────────────────┬──────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────┐
-│  @nostr-post/plugins                        │  Framework-agnostic
-│  (Stars, Media, Markdown, Geo)              │  UI Plugins
+│  @nostr-post/signer                         │  Shared Utilities
+│  (NIP-07 signing, relay publishing)         │  Browser APIs
 └──────────────────┬──────────────────────────┘
                    │
 ┌──────────────────▼──────────────────────────┐
@@ -47,6 +47,7 @@ The engine automatically:
 | Package                 | Status          | Purpose                                                 |
 | ----------------------- | --------------- | ------------------------------------------------------- |
 | **@nostr-post/core**    | ✅ **Complete** | Headless logic: manifest validation, event coordination |
+| **@nostr-post/signer**  | ✅ **Complete** | NIP-07 signing, relay publish/fetch                     |
 | **@nostr-post/web**     | ✅ **Complete** | Universal Web Components + nostr-login integration      |
 | **@nostr-post/react**   | ✅ **Complete** | React hooks and components                              |
 | **@nostr-post/plugins** | 🚧 Next         | Framework-agnostic UI plugin definitions                |

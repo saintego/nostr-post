@@ -6,29 +6,17 @@
 
 import { useState, useCallback } from "react";
 import { coordinateEvents } from "@nostr-post/core/coordinator";
-import type { NostrPostManifest, FormData } from "@nostr-post/core/types";
+import {
+  DEFAULT_KIND1_MANIFEST,
+  type NostrPostManifest,
+  type FormData,
+} from "@nostr-post/core/types";
 import {
   signAndPublish,
   getPublicKey,
   DEFAULT_RELAYS,
   type SignedEvent,
 } from "../signer";
-
-/** Default Kind 1 manifest */
-const DEFAULT_KIND1_MANIFEST: NostrPostManifest = {
-  id: "kind1-note",
-  version: "1.0.0",
-  requiredKinds: [1],
-  fields: [
-    {
-      id: "content",
-      type: "string",
-      uiPlugin: "textarea",
-      mapTo: { kind: 1, target: "content" },
-      required: true,
-    },
-  ],
-};
 
 export interface UseNostrPublishOptions {
   manifest?: NostrPostManifest;
