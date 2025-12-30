@@ -23,6 +23,22 @@ import {
   type SignedEvent,
 } from "./signer";
 
+/** Default Kind 1 (note) manifest - works out of the box */
+const DEFAULT_KIND1_MANIFEST: NostrPostManifest = {
+  id: "kind1-note",
+  version: "1.0.0",
+  requiredKinds: [1],
+  fields: [
+    {
+      id: "content",
+      type: "string",
+      uiPlugin: "textarea",
+      mapTo: { kind: 1, target: "content" },
+      required: true,
+    },
+  ],
+};
+
 /**
  * Composer Web Component
  *
@@ -51,47 +67,57 @@ export class NostrPostComposer extends NostrPostElement {
   static styles = [
     baseStyles,
     css`
-      :host {
-        --nostr-post-primary: #8b5cf6;
-        --nostr-post-primary-hover: #7c3aed;
-      }
-
       .composer {
         padding: 1rem;
-        border: 1px solid var(--nostr-post-border, #e5e7eb);
-        border-radius: 0.5rem;
-        background: var(--nostr-post-bg, white);
+        border: 1px solid var(--nl-border, #e5e7eb);
+        border-radius: 8px;
+        background: var(--nl-bg, white);
+      }
+
+      :host-context(.dark) .composer {
+        background: #374151;
+        border-color: #4b5563;
       }
 
       .composer-header {
-        margin-bottom: 1.5rem;
+        margin-bottom: 1rem;
       }
 
       .composer-title {
-        font-size: 1.25rem;
+        font-size: 1.125rem;
         font-weight: 600;
-        margin: 0 0 0.5rem 0;
-        color: var(--nostr-post-text-primary, #111827);
+        margin: 0 0 0.25rem 0;
+        color: var(--nl-text, #111827);
+      }
+
+      :host-context(.dark) .composer-title {
+        color: #f3f4f6;
       }
 
       .composer-description {
-        color: var(--nostr-post-text-secondary, #6b7280);
+        color: var(--nl-text-secondary, #6b7280);
         margin: 0;
       }
 
       .composer-actions {
         display: flex;
         gap: 0.5rem;
-        margin-top: 1.5rem;
+        margin-top: 1rem;
       }
 
       .success-message {
         padding: 0.75rem;
-        background: var(--nostr-post-success-bg, #d1fae5);
-        border: 1px solid var(--nostr-post-success-border, #6ee7b7);
-        border-radius: 0.375rem;
-        color: var(--nostr-post-success-color, #065f46);
+        background: #d1fae5;
+        border: 1px solid #6ee7b7;
+        border-radius: 8px;
+        color: #065f46;
         margin-bottom: 1rem;
+      }
+
+      :host-context(.dark) .success-message {
+        background: #064e3b;
+        border-color: #059669;
+        color: #6ee7b7;
       }
     `,
   ];
@@ -154,13 +180,11 @@ export class NostrPostComposer extends NostrPostElement {
     this.successMessage = "";
     this.errors = {};
 
-    if (!this.manifest) {
-      this.showError("No manifest provided");
-      return;
-    }
+    // Use default Kind 1 manifest if none provided
+    const manifest = this.manifest || DEFAULT_KIND1_MANIFEST;
 
     // Validate manifest
-    const manifestValidation = validateManifest(this.manifest);
+    const manifestValidation = validateManifest(manifest);
     if (!manifestValidation.success) {
       const errorMessages = manifestValidation.error
         .map((err) => `${err.field}: ${err.message}`)
@@ -185,7 +209,7 @@ export class NostrPostComposer extends NostrPostElement {
 
       // Coordinate events
       const result = coordinateEvents(
-        this.manifest,
+        manifest,
         this.formData as NostrFormData,
         {
           pubkey,
@@ -347,13 +371,9 @@ export class NostrPostComposer extends NostrPostElement {
   }
 
   render() {
-    if (!this.manifest) {
-      return html`<div class="error">
-        No manifest provided. Please set the manifest property.
-      </div>`;
-    }
-
-    const { metadata } = this.manifest;
+    // Use default Kind 1 manifest if none provided
+    const manifest = this.manifest || DEFAULT_KIND1_MANIFEST;
+    const { metadata } = manifest;
 
     return html`
       <div class="composer">
@@ -376,7 +396,7 @@ export class NostrPostComposer extends NostrPostElement {
           : ""}
 
         <form @submit=${this.handleSubmit}>
-          ${this.manifest.fields.map((field) => this.renderField(field))}
+          ${manifest.fields.map((field) => this.renderField(field))}
 
           <div class="composer-actions">
             <button

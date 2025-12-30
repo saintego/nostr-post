@@ -17,7 +17,11 @@ export {
   publishToRelays,
   getPublicKey,
   getUserRelays,
+  getDefaultRelays,
   hasNostrSigner,
+  fetchEvents,
+  fetchEventsFromRelay,
   type SignedEvent,
   type Nip07Provider,
 } from "./signer";
+

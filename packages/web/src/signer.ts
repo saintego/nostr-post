@@ -179,3 +179,82 @@ export async function getUserRelays(): Promise<string[]> {
     return DEFAULT_RELAYS;
   }
 }
+
+/**
+ * Get default relays
+ */
+export function getDefaultRelays(): string[] {
+  return [...DEFAULT_RELAYS];
+}
+
+/**
+ * Fetch events from a relay
+ */
+export function fetchEventsFromRelay(
+  relayUrl: string,
+  filter: { kinds?: number[]; authors?: string[]; limit?: number }
+): Promise<SignedEvent[]> {
+  return new Promise((resolve, reject) => {
+    const events: SignedEvent[] = [];
+    const ws = new WebSocket(relayUrl);
+    const subId = Math.random().toString(36).substring(7);
+    
+    const timeout = setTimeout(() => {
+      ws.close();
+      resolve(events); // Return what we got
+    }, 5000);
+
+    ws.onopen = () => {
+      ws.send(JSON.stringify(['REQ', subId, filter]));
+    };
+
+    ws.onmessage = (msg) => {
+      try {
+        const data = JSON.parse(msg.data);
+        if (data[0] === 'EVENT' && data[1] === subId) {
+          events.push(data[2] as SignedEvent);
+        } else if (data[0] === 'EOSE') {
+          clearTimeout(timeout);
+          ws.close();
+          resolve(events);
+        }
+      } catch {
+        // Ignore parse errors
+      }
+    };
+
+    ws.onerror = () => {
+      clearTimeout(timeout);
+      reject(new Error(`Failed to connect to ${relayUrl}`));
+    };
+  });
+}
+
+/**
+ * Fetch events from multiple relays and deduplicate
+ */
+export async function fetchEvents(
+  filter: { kinds?: number[]; authors?: string[]; limit?: number },
+  relays: string[] = DEFAULT_RELAYS
+): Promise<SignedEvent[]> {
+  const results = await Promise.allSettled(
+    relays.map(relay => fetchEventsFromRelay(relay, filter))
+  );
+
+  const allEvents: SignedEvent[] = [];
+  const seenIds = new Set<string>();
+
+  for (const result of results) {
+    if (result.status === 'fulfilled') {
+      for (const event of result.value) {
+        if (!seenIds.has(event.id)) {
+          seenIds.add(event.id);
+          allEvents.push(event);
+        }
+      }
+    }
+  }
+
+  // Sort by created_at descending
+  return allEvents.sort((a, b) => b.created_at - a.created_at);
+}
