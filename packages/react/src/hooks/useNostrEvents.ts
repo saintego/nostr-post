@@ -41,7 +41,9 @@ export interface UseNostrEventsReturn {
  * }
  * ```
  */
-export function useNostrEvents(options: UseNostrEventsOptions = {}): UseNostrEventsReturn {
+export function useNostrEvents(
+  options: UseNostrEventsOptions = {}
+): UseNostrEventsReturn {
   const {
     kinds = [1],
     authors,

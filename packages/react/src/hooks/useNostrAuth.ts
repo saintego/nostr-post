@@ -78,7 +78,9 @@ export function useNostrAuth(): UseNostrAuthReturn {
 
     try {
       if (!hasNostrSigner()) {
-        throw new Error("No Nostr signer available. Please install a browser extension or use nostr-login.");
+        throw new Error(
+          "No Nostr signer available. Please install a browser extension or use nostr-login."
+        );
       }
 
       const pubkey = await getPublicKey();

@@ -35,9 +35,13 @@ export const DEFAULT_RELAYS = [
 /**
  * Sign an event using NIP-07
  */
-export async function signEvent(event: UnsignedNostrEvent): Promise<SignedEvent> {
+export async function signEvent(
+  event: UnsignedNostrEvent
+): Promise<SignedEvent> {
   if (!window.nostr) {
-    throw new Error("No Nostr signer available. Please install a browser extension or use nostr-login.");
+    throw new Error(
+      "No Nostr signer available. Please install a browser extension or use nostr-login."
+    );
   }
   return window.nostr.signEvent(event);
 }
@@ -62,7 +66,10 @@ export function hasNostrSigner(): boolean {
 /**
  * Publish a signed event to a relay
  */
-export function publishToRelay(event: SignedEvent, relayUrl: string): Promise<boolean> {
+export function publishToRelay(
+  event: SignedEvent,
+  relayUrl: string
+): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(relayUrl);
     const timeout = setTimeout(() => {
@@ -121,7 +128,10 @@ export async function publishToRelays(
 export async function signAndPublish(
   event: UnsignedNostrEvent,
   relays: string[] = DEFAULT_RELAYS
-): Promise<{ signedEvent: SignedEvent; publishResults: { success: number; failed: number } }> {
+): Promise<{
+  signedEvent: SignedEvent;
+  publishResults: { success: number; failed: number };
+}> {
   const signedEvent = await signEvent(event);
   const publishResults = await publishToRelays(signedEvent, relays);
   return { signedEvent, publishResults };

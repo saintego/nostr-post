@@ -69,7 +69,9 @@ export interface UseNostrPublishReturn {
  * }
  * ```
  */
-export function useNostrPublish(options: UseNostrPublishOptions = {}): UseNostrPublishReturn {
+export function useNostrPublish(
+  options: UseNostrPublishOptions = {}
+): UseNostrPublishReturn {
   const {
     manifest = DEFAULT_KIND1_MANIFEST,
     relays = DEFAULT_RELAYS,
@@ -101,7 +103,10 @@ export function useNostrPublish(options: UseNostrPublishOptions = {}): UseNostrP
         const signedEvents: SignedEvent[] = [];
 
         for (const unsignedEvent of result.data.events) {
-          const { signedEvent, publishResults } = await signAndPublish(unsignedEvent, relays);
+          const { signedEvent, publishResults } = await signAndPublish(
+            unsignedEvent,
+            relays
+          );
 
           if (publishResults.success === 0) {
             throw new Error("Failed to publish to any relay");
@@ -113,7 +118,8 @@ export function useNostrPublish(options: UseNostrPublishOptions = {}): UseNostrP
         onSuccess?.(signedEvents);
         return signedEvents;
       } catch (err) {
-        const errorObj = err instanceof Error ? err : new Error("Unknown error");
+        const errorObj =
+          err instanceof Error ? err : new Error("Unknown error");
         setError(errorObj.message);
         onError?.(errorObj);
         throw errorObj;

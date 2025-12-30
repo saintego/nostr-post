@@ -8,16 +8,16 @@
 import type { SignedEvent } from "../signer";
 
 export interface NostrPostViewProps {
-  /** The event to display */
-  event: SignedEvent;
-  /** Show event kind badge */
-  showKind?: boolean;
-  /** Show tags */
-  showTags?: boolean;
-  /** Show event ID */
-  showId?: boolean;
-  /** Custom class name */
-  className?: string;
+    /** The event to display */
+    event: SignedEvent;
+    /** Show event kind badge */
+    showKind?: boolean;
+    /** Show tags */
+    showTags?: boolean;
+    /** Show event ID */
+    showId?: boolean;
+    /** Custom class name */
+    className?: string;
 }
 
 /**
@@ -29,44 +29,44 @@ export interface NostrPostViewProps {
  * ```
  */
 export function NostrPostView({
-  event,
-  showKind = true,
-  showTags = false,
-  showId = true,
-  className = "",
+    event,
+    showKind = true,
+    showTags = false,
+    showId = true,
+    className = "",
 }: NostrPostViewProps) {
-  const formatTimestamp = (ts: number) => new Date(ts * 1000).toLocaleString();
+    const formatTimestamp = (ts: number) => new Date(ts * 1000).toLocaleString();
 
-  const truncatePubkey = (pk: string) =>
-    pk.length <= 16 ? pk : `${pk.slice(0, 8)}...${pk.slice(-8)}`;
+    const truncatePubkey = (pk: string) =>
+        pk.length <= 16 ? pk : `${pk.slice(0, 8)}...${pk.slice(-8)}`;
 
-  return (
-    <div className={`np-view ${className}`}>
-      <div className="np-view-header">
-        {showKind && <span className="np-view-kind">Kind {event.kind}</span>}
-        <span className="np-view-pubkey" title={event.pubkey}>
-          {truncatePubkey(event.pubkey)}
-        </span>
-        <span className="np-view-time">{formatTimestamp(event.created_at)}</span>
-      </div>
+    return (
+        <div className={`np-view ${className}`}>
+            <div className="np-view-header">
+                {showKind && <span className="np-view-kind">Kind {event.kind}</span>}
+                <span className="np-view-pubkey" title={event.pubkey}>
+                    {truncatePubkey(event.pubkey)}
+                </span>
+                <span className="np-view-time">{formatTimestamp(event.created_at)}</span>
+            </div>
 
-      <div className="np-view-content">{event.content || <em>No content</em>}</div>
+            <div className="np-view-content">{event.content || <em>No content</em>}</div>
 
-      {showTags && event.tags.length > 0 && (
-        <div className="np-view-tags">
-          {event.tags.map((tag, i) => (
-            <span key={i} className="np-tag">
-              <strong>{tag[0]}:</strong> {tag.slice(1).join(", ")}
-            </span>
-          ))}
+            {showTags && event.tags.length > 0 && (
+                <div className="np-view-tags">
+                    {event.tags.map((tag, i) => (
+                        <span key={i} className="np-tag">
+                            <strong>{tag[0]}:</strong> {tag.slice(1).join(", ")}
+                        </span>
+                    ))}
+                </div>
+            )}
+
+            {showId && <div className="np-view-id">ID: {event.id}</div>}
+
+            <style>{viewStyles}</style>
         </div>
-      )}
-
-      {showId && <div className="np-view-id">ID: {event.id}</div>}
-
-      <style>{viewStyles}</style>
-    </div>
-  );
+    );
 }
 
 const viewStyles = `

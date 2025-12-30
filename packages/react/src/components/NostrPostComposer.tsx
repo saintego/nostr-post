@@ -11,37 +11,37 @@ import type { SignedEvent } from "../signer";
 
 /** Default Kind 1 manifest */
 const DEFAULT_KIND1_MANIFEST: NostrPostManifest = {
-  id: "kind1-note",
-  version: "1.0.0",
-  requiredKinds: [1],
-  fields: [
-    {
-      id: "content",
-      type: "string",
-      uiPlugin: "textarea",
-      mapTo: { kind: 1, target: "content" },
-      required: true,
-    },
-  ],
+    id: "kind1-note",
+    version: "1.0.0",
+    requiredKinds: [1],
+    fields: [
+        {
+            id: "content",
+            type: "string",
+            uiPlugin: "textarea",
+            mapTo: { kind: 1, target: "content" },
+            required: true,
+        },
+    ],
 };
 
 export interface NostrPostComposerProps {
-  /** Manifest defining the form fields (defaults to Kind 1 note) */
-  manifest?: NostrPostManifest;
-  /** Relay URLs to publish to */
-  relays?: string[];
-  /** Called after successful publish */
-  onPublished?: (events: SignedEvent[]) => void;
-  /** Called on error */
-  onError?: (error: Error) => void;
-  /** Custom class name */
-  className?: string;
-  /** Placeholder text for content field */
-  placeholder?: string;
-  /** Submit button text */
-  submitText?: string;
-  /** Submitting button text */
-  submittingText?: string;
+    /** Manifest defining the form fields (defaults to Kind 1 note) */
+    manifest?: NostrPostManifest;
+    /** Relay URLs to publish to */
+    relays?: string[];
+    /** Called after successful publish */
+    onPublished?: (events: SignedEvent[]) => void;
+    /** Called on error */
+    onError?: (error: Error) => void;
+    /** Custom class name */
+    className?: string;
+    /** Placeholder text for content field */
+    placeholder?: string;
+    /** Submit button text */
+    submitText?: string;
+    /** Submitting button text */
+    submittingText?: string;
 }
 
 /**
@@ -57,159 +57,159 @@ export interface NostrPostComposerProps {
  * ```
  */
 export function NostrPostComposer({
-  manifest = DEFAULT_KIND1_MANIFEST,
-  relays,
-  onPublished,
-  onError,
-  className = "",
-  placeholder = "What's on your mind?",
-  submitText = "Post",
-  submittingText = "Posting...",
-}: NostrPostComposerProps) {
-  const [formData, setFormData] = useState<FormData>({});
-  const [successMessage, setSuccessMessage] = useState("");
-
-  const { publish, isPublishing, error } = useNostrPublish({
-    manifest,
+    manifest = DEFAULT_KIND1_MANIFEST,
     relays,
-    onSuccess: (events) => {
-      setFormData({});
-      setSuccessMessage("Posted successfully!");
-      setTimeout(() => setSuccessMessage(""), 3000);
-      onPublished?.(events);
-    },
+    onPublished,
     onError,
-  });
+    className = "",
+    placeholder = "What's on your mind?",
+    submitText = "Post",
+    submittingText = "Posting...",
+}: NostrPostComposerProps) {
+    const [formData, setFormData] = useState<FormData>({});
+    const [successMessage, setSuccessMessage] = useState("");
 
-  const handleFieldChange = useCallback((fieldId: string, value: unknown) => {
-    setFormData((prev) => ({ ...prev, [fieldId]: value }));
-  }, []);
+    const { publish, isPublishing, error } = useNostrPublish({
+        manifest,
+        relays,
+        onSuccess: (events) => {
+            setFormData({});
+            setSuccessMessage("Posted successfully!");
+            setTimeout(() => setSuccessMessage(""), 3000);
+            onPublished?.(events);
+        },
+        onError,
+    });
 
-  const handleSubmit = useCallback(
-    async (e: FormEvent) => {
-      e.preventDefault();
-      setSuccessMessage("");
-      try {
-        await publish(formData);
-      } catch {
-        // Error handled by hook
-      }
-    },
-    [formData, publish]
-  );
+    const handleFieldChange = useCallback((fieldId: string, value: unknown) => {
+        setFormData((prev) => ({ ...prev, [fieldId]: value }));
+    }, []);
 
-  const renderField = (field: PostField) => {
-    const value = formData[field.id] ?? "";
+    const handleSubmit = useCallback(
+        async (e: FormEvent) => {
+            e.preventDefault();
+            setSuccessMessage("");
+            try {
+                await publish(formData);
+            } catch {
+                // Error handled by hook
+            }
+        },
+        [formData, publish]
+    );
 
-    switch (field.type) {
-      case "string":
-        if (field.uiPlugin === "textarea" || field.uiPlugin === "markdown") {
-          return (
-            <textarea
-              value={String(value)}
-              onChange={(e) => handleFieldChange(field.id, e.target.value)}
-              placeholder={field.id === "content" ? placeholder : `Enter ${field.id}...`}
-              disabled={isPublishing}
-              rows={4}
-              className="np-textarea"
-            />
-          );
+    const renderField = (field: PostField) => {
+        const value = formData[field.id] ?? "";
+
+        switch (field.type) {
+            case "string":
+                if (field.uiPlugin === "textarea" || field.uiPlugin === "markdown") {
+                    return (
+                        <textarea
+                            value={String(value)}
+                            onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                            placeholder={field.id === "content" ? placeholder : `Enter ${field.id}...`}
+                            disabled={isPublishing}
+                            rows={4}
+                            className="np-textarea"
+                        />
+                    );
+                }
+                return (
+                    <input
+                        type="text"
+                        value={String(value)}
+                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                        placeholder={`Enter ${field.id}...`}
+                        disabled={isPublishing}
+                        className="np-input"
+                    />
+                );
+
+            case "number":
+                return (
+                    <input
+                        type="number"
+                        value={String(value)}
+                        onChange={(e) => handleFieldChange(field.id, parseFloat(e.target.value))}
+                        disabled={isPublishing}
+                        className="np-input"
+                    />
+                );
+
+            case "boolean":
+                return (
+                    <input
+                        type="checkbox"
+                        checked={Boolean(value)}
+                        onChange={(e) => handleFieldChange(field.id, e.target.checked)}
+                        disabled={isPublishing}
+                        className="np-checkbox"
+                    />
+                );
+
+            case "enum":
+                return (
+                    <select
+                        value={String(value)}
+                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                        disabled={isPublishing}
+                        className="np-select"
+                    >
+                        <option value="">Select...</option>
+                        {field.options?.map((opt) => (
+                            <option key={opt} value={opt}>
+                                {opt}
+                            </option>
+                        ))}
+                    </select>
+                );
+
+            default:
+                return (
+                    <input
+                        type="text"
+                        value={String(value)}
+                        onChange={(e) => handleFieldChange(field.id, e.target.value)}
+                        disabled={isPublishing}
+                        className="np-input"
+                    />
+                );
         }
-        return (
-          <input
-            type="text"
-            value={String(value)}
-            onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            placeholder={`Enter ${field.id}...`}
-            disabled={isPublishing}
-            className="np-input"
-          />
-        );
+    };
 
-      case "number":
-        return (
-          <input
-            type="number"
-            value={String(value)}
-            onChange={(e) => handleFieldChange(field.id, parseFloat(e.target.value))}
-            disabled={isPublishing}
-            className="np-input"
-          />
-        );
-
-      case "boolean":
-        return (
-          <input
-            type="checkbox"
-            checked={Boolean(value)}
-            onChange={(e) => handleFieldChange(field.id, e.target.checked)}
-            disabled={isPublishing}
-            className="np-checkbox"
-          />
-        );
-
-      case "enum":
-        return (
-          <select
-            value={String(value)}
-            onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            disabled={isPublishing}
-            className="np-select"
-          >
-            <option value="">Select...</option>
-            {field.options?.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-        );
-
-      default:
-        return (
-          <input
-            type="text"
-            value={String(value)}
-            onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            disabled={isPublishing}
-            className="np-input"
-          />
-        );
-    }
-  };
-
-  return (
-    <div className={`np-composer ${className}`}>
-      {manifest.metadata?.name && (
-        <h3 className="np-composer-title">{manifest.metadata.name}</h3>
-      )}
-      {manifest.metadata?.description && (
-        <p className="np-composer-description">{manifest.metadata.description}</p>
-      )}
-
-      {successMessage && <div className="np-success">{successMessage}</div>}
-      {error && <div className="np-error">{error}</div>}
-
-      <form onSubmit={handleSubmit}>
-        {manifest.fields.map((field) => (
-          <div key={field.id} className="np-field">
-            {manifest.fields.length > 1 && (
-              <label className={field.required ? "np-required" : ""}>
-                {field.id}
-              </label>
+    return (
+        <div className={`np-composer ${className}`}>
+            {manifest.metadata?.name && (
+                <h3 className="np-composer-title">{manifest.metadata.name}</h3>
             )}
-            {renderField(field)}
-          </div>
-        ))}
+            {manifest.metadata?.description && (
+                <p className="np-composer-description">{manifest.metadata.description}</p>
+            )}
 
-        <button type="submit" disabled={isPublishing} className="np-button np-button-primary">
-          {isPublishing ? submittingText : submitText}
-        </button>
-      </form>
+            {successMessage && <div className="np-success">{successMessage}</div>}
+            {error && <div className="np-error">{error}</div>}
 
-      <style>{composerStyles}</style>
-    </div>
-  );
+            <form onSubmit={handleSubmit}>
+                {manifest.fields.map((field) => (
+                    <div key={field.id} className="np-field">
+                        {manifest.fields.length > 1 && (
+                            <label className={field.required ? "np-required" : ""}>
+                                {field.id}
+                            </label>
+                        )}
+                        {renderField(field)}
+                    </div>
+                ))}
+
+                <button type="submit" disabled={isPublishing} className="np-button np-button-primary">
+                    {isPublishing ? submittingText : submitText}
+                </button>
+            </form>
+
+            <style>{composerStyles}</style>
+        </div>
+    );
 }
 
 const composerStyles = `

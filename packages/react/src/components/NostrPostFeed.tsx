@@ -9,20 +9,20 @@ import { useNostrEvents, type UseNostrEventsOptions } from "../hooks/useNostrEve
 import { NostrPostView } from "./NostrPostView";
 
 export interface NostrPostFeedProps extends UseNostrEventsOptions {
-  /** Show loading state */
-  showLoading?: boolean;
-  /** Custom loading component */
-  loadingComponent?: React.ReactNode;
-  /** Custom empty state component */
-  emptyComponent?: React.ReactNode;
-  /** Show event kind badge */
-  showKind?: boolean;
-  /** Show tags */
-  showTags?: boolean;
-  /** Show event ID */
-  showId?: boolean;
-  /** Custom class name */
-  className?: string;
+    /** Show loading state */
+    showLoading?: boolean;
+    /** Custom loading component */
+    loadingComponent?: React.ReactNode;
+    /** Custom empty state component */
+    emptyComponent?: React.ReactNode;
+    /** Show event kind badge */
+    showKind?: boolean;
+    /** Show tags */
+    showTags?: boolean;
+    /** Show event ID */
+    showId?: boolean;
+    /** Custom class name */
+    className?: string;
 }
 
 /**
@@ -34,53 +34,53 @@ export interface NostrPostFeedProps extends UseNostrEventsOptions {
  * ```
  */
 export function NostrPostFeed({
-  kinds,
-  authors,
-  limit,
-  relays,
-  enabled = true,
-  showLoading = true,
-  loadingComponent,
-  emptyComponent,
-  showKind = true,
-  showTags = false,
-  showId = true,
-  className = "",
-}: NostrPostFeedProps) {
-  const { events, isLoading, error } = useNostrEvents({
     kinds,
     authors,
     limit,
     relays,
-    enabled,
-  });
+    enabled = true,
+    showLoading = true,
+    loadingComponent,
+    emptyComponent,
+    showKind = true,
+    showTags = false,
+    showId = true,
+    className = "",
+}: NostrPostFeedProps) {
+    const { events, isLoading, error } = useNostrEvents({
+        kinds,
+        authors,
+        limit,
+        relays,
+        enabled,
+    });
 
-  if (isLoading && showLoading) {
-    return loadingComponent ?? <div className="np-loading">Loading posts...</div>;
-  }
+    if (isLoading && showLoading) {
+        return loadingComponent ?? <div className="np-loading">Loading posts...</div>;
+    }
 
-  if (error) {
-    return <div className="np-feed-error">Error: {error}</div>;
-  }
+    if (error) {
+        return <div className="np-feed-error">Error: {error}</div>;
+    }
 
-  if (events.length === 0) {
-    return emptyComponent ?? <div className="np-empty">No posts yet.</div>;
-  }
+    if (events.length === 0) {
+        return emptyComponent ?? <div className="np-empty">No posts yet.</div>;
+    }
 
-  return (
-    <div className={`np-feed ${className}`}>
-      {events.map((event) => (
-        <NostrPostView
-          key={event.id}
-          event={event}
-          showKind={showKind}
-          showTags={showTags}
-          showId={showId}
-        />
-      ))}
-      <style>{feedStyles}</style>
-    </div>
-  );
+    return (
+        <div className={`np-feed ${className}`}>
+            {events.map((event) => (
+                <NostrPostView
+                    key={event.id}
+                    event={event}
+                    showKind={showKind}
+                    showTags={showTags}
+                    showId={showId}
+                />
+            ))}
+            <style>{feedStyles}</style>
+        </div>
+    );
 }
 
 const feedStyles = `
