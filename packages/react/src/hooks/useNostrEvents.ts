@@ -4,8 +4,8 @@
  * Fetches and manages Nostr events
  */
 
-import { useState, useEffect, useCallback } from "react";
-import { fetchEvents, DEFAULT_RELAYS, type SignedEvent } from "../signer";
+import { useCallback, useEffect, useState } from 'react';
+import { DEFAULT_RELAYS, type SignedEvent, fetchEvents } from '../signer';
 
 export interface UseNostrEventsOptions {
   kinds?: number[];
@@ -41,16 +41,8 @@ export interface UseNostrEventsReturn {
  * }
  * ```
  */
-export function useNostrEvents(
-  options: UseNostrEventsOptions = {}
-): UseNostrEventsReturn {
-  const {
-    kinds = [1],
-    authors,
-    limit = 20,
-    relays = DEFAULT_RELAYS,
-    enabled = true,
-  } = options;
+export function useNostrEvents(options: UseNostrEventsOptions = {}): UseNostrEventsReturn {
+  const { kinds = [1], authors, limit = 20, relays = DEFAULT_RELAYS, enabled = true } = options;
 
   const [events, setEvents] = useState<SignedEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -75,7 +67,7 @@ export function useNostrEvents(
       const fetchedEvents = await fetchEvents(filter, relays);
       setEvents(fetchedEvents);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch events");
+      setError(err instanceof Error ? err.message : 'Failed to fetch events');
     } finally {
       setIsLoading(false);
     }

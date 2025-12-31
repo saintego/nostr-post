@@ -4,11 +4,11 @@
  * A universal viewer for displaying Nostr events
  */
 
-import { html, css } from "lit";
-import { customElement, property } from "lit/decorators.js";
-import type { UnsignedNostrEvent } from "@nostr-post/core/types";
-import type { SignedEvent } from "./signer";
-import { NostrPostElement, baseStyles } from "./base-component";
+import type { UnsignedNostrEvent } from '@nostr-post/core/types';
+import { css, html } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+import { NostrPostElement, baseStyles } from './base-component';
+import type { SignedEvent } from './signer';
 
 /** Event type that can be either unsigned or signed */
 export type DisplayableEvent = UnsignedNostrEvent | SignedEvent;
@@ -25,7 +25,7 @@ export type DisplayableEvent = UnsignedNostrEvent | SignedEvent;
  * </script>
  * ```
  */
-@customElement("nostr-post-view")
+@customElement('nostr-post-view')
 export class NostrPostView extends NostrPostElement {
   static styles = [
     baseStyles,
@@ -149,7 +149,7 @@ export class NostrPostView extends NostrPostElement {
    * Truncate pubkey for display
    */
   private truncatePubkey(pubkey: string): string {
-    if (!pubkey) return "Unknown";
+    if (!pubkey) return 'Unknown';
     if (pubkey.length <= 16) return pubkey;
     return `${pubkey.slice(0, 8)}...${pubkey.slice(-8)}`;
   }
@@ -167,14 +167,12 @@ export class NostrPostView extends NostrPostElement {
     const tags = event.tags;
     const content = event.content;
     const pubkey = event.pubkey;
-    const eventId = "id" in event ? (event as SignedEvent).id : undefined;
+    const eventId = 'id' in event ? (event as SignedEvent).id : undefined;
 
     return html`
       <div class="view">
         <div class="view-header">
-          ${this.showKind
-            ? html`<span class="view-kind">Kind ${kind}</span>`
-            : ""}
+          ${this.showKind ? html`<span class="view-kind">Kind ${kind}</span>` : ''}
           <span class="view-pubkey" title=${pubkey}
             >${this.truncatePubkey(pubkey)}</span
           >
@@ -185,21 +183,23 @@ export class NostrPostView extends NostrPostElement {
 
         <div class="view-content">${content || html`<em>No content</em>`}</div>
 
-        ${this.showTags && tags.length > 0
-          ? html`
+        ${
+          this.showTags && tags.length > 0
+            ? html`
               <div class="view-tags">
                 ${tags.map(
                   (tag: string[]) => html`
                     <span class="tag">
                       <span class="tag-name">${tag[0]}:</span>
-                      ${tag.slice(1).join(", ")}
+                      ${tag.slice(1).join(', ')}
                     </span>
                   `
                 )}
               </div>
             `
-          : ""}
-        ${eventId ? html`<div class="view-id">ID: ${eventId}</div>` : ""}
+            : ''
+        }
+        ${eventId ? html`<div class="view-id">ID: ${eventId}</div>` : ''}
       </div>
     `;
   }
@@ -207,6 +207,6 @@ export class NostrPostView extends NostrPostElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "nostr-post-view": NostrPostView;
+    'nostr-post-view': NostrPostView;
   }
 }

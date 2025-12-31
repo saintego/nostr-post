@@ -7,13 +7,7 @@
 
 // Re-export from core when available
 // For now, we define minimal types for compilation
-export type FieldType =
-  | "string"
-  | "number"
-  | "boolean"
-  | "enum"
-  | "geo"
-  | "ref";
+export type FieldType = 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref';
 
 export interface PostField {
   id: string;
@@ -21,7 +15,7 @@ export interface PostField {
   uiPlugin: string;
   mapTo: {
     kind: number;
-    target: "content" | "tag";
+    target: 'content' | 'tag';
     tagName?: string;
     path?: string;
   };
@@ -36,9 +30,7 @@ export interface ValidationError {
   code: string;
 }
 
-export type Result<T, E = Error> =
-  | { success: true; data: T }
-  | { success: false; error: E };
+export type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
 
 /**
  * Render context provided to plugins for rendering UI
@@ -60,10 +52,7 @@ export interface NostrUIPlugin {
   /**
    * Validate field value
    */
-  validate?: (
-    value: unknown,
-    field: PostField
-  ) => Result<void, ValidationError>;
+  validate?: (value: unknown, field: PostField) => Result<void, ValidationError>;
 
   /**
    * Render edit/input UI (returns HTML string or DOM element)

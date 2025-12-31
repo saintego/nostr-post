@@ -25,13 +25,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "keywords": [
-    "nostr",
-    "manifest",
-    "validation",
-    "event-coordination",
-    "headless"
-  ],
+  "keywords": ["nostr", "manifest", "validation", "event-coordination", "headless"],
   "author": "",
   "license": "MIT",
   "devDependencies": {

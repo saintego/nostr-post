@@ -4,7 +4,7 @@
  * Shared signing/publishing code for @nostr-post/web and @nostr-post/react
  */
 
-import type { UnsignedNostrEvent } from "@nostr-post/core/types";
+import type { UnsignedNostrEvent } from '@nostr-post/core/types';
 
 /** Signed Nostr event with id and sig */
 export interface SignedEvent extends UnsignedNostrEvent {
@@ -26,21 +26,15 @@ declare global {
 }
 
 /** Default relays to publish to */
-export const DEFAULT_RELAYS = [
-  "wss://relay.damus.io",
-  "wss://nos.lol",
-  "wss://relay.nostr.band",
-];
+export const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 
 /**
  * Sign an event using NIP-07 (window.nostr)
  */
-export async function signEvent(
-  event: UnsignedNostrEvent
-): Promise<SignedEvent> {
+export async function signEvent(event: UnsignedNostrEvent): Promise<SignedEvent> {
   if (!window.nostr) {
     throw new Error(
-      "No Nostr signer available. Please install a browser extension like Alby or use nostr-login."
+      'No Nostr signer available. Please install a browser extension like Alby or use nostr-login.'
     );
   }
   return window.nostr.signEvent(event);
@@ -51,7 +45,7 @@ export async function signEvent(
  */
 export async function getPublicKey(): Promise<string> {
   if (!window.nostr) {
-    throw new Error("No Nostr signer available.");
+    throw new Error('No Nostr signer available.');
   }
   return window.nostr.getPublicKey();
 }
@@ -60,16 +54,13 @@ export async function getPublicKey(): Promise<string> {
  * Check if a signer is available
  */
 export function hasNostrSigner(): boolean {
-  return typeof window !== "undefined" && !!window.nostr;
+  return typeof window !== 'undefined' && !!window.nostr;
 }
 
 /**
  * Publish a signed event to a single relay
  */
-export function publishToRelay(
-  event: SignedEvent,
-  relayUrl: string
-): Promise<boolean> {
+export function publishToRelay(event: SignedEvent, relayUrl: string): Promise<boolean> {
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(relayUrl);
     const timeout = setTimeout(() => {
@@ -78,19 +69,19 @@ export function publishToRelay(
     }, 10000);
 
     ws.onopen = () => {
-      ws.send(JSON.stringify(["EVENT", event]));
+      ws.send(JSON.stringify(['EVENT', event]));
     };
 
     ws.onmessage = (msg) => {
       try {
         const data = JSON.parse(msg.data);
-        if (data[0] === "OK") {
+        if (data[0] === 'OK') {
           clearTimeout(timeout);
           ws.close();
           if (data[2] === true) {
             resolve(true);
           } else {
-            reject(new Error(data[3] || "Relay rejected event"));
+            reject(new Error(data[3] || 'Relay rejected event'));
           }
         }
       } catch {
@@ -134,9 +125,7 @@ export async function publishToRelays(
   );
 
   const finalResults = results.map((r) =>
-    r.status === "fulfilled"
-      ? r.value
-      : { relay: "unknown", ok: false, error: "Unknown error" }
+    r.status === 'fulfilled' ? r.value : { relay: 'unknown', ok: false, error: 'Unknown error' }
   );
 
   return {
@@ -167,8 +156,8 @@ export interface FetchFilter {
   limit?: number;
   since?: number;
   until?: number;
-  "#e"?: string[];
-  "#p"?: string[];
+  '#e'?: string[];
+  '#p'?: string[];
 }
 
 /**
@@ -189,17 +178,17 @@ export function fetchEventsFromRelay(
     }, 10000);
 
     ws.onopen = () => {
-      ws.send(JSON.stringify(["REQ", subId, filter]));
+      ws.send(JSON.stringify(['REQ', subId, filter]));
     };
 
     ws.onmessage = (msg) => {
       try {
         const data = JSON.parse(msg.data);
-        if (data[0] === "EVENT" && data[1] === subId) {
+        if (data[0] === 'EVENT' && data[1] === subId) {
           events.push(data[2] as SignedEvent);
-        } else if (data[0] === "EOSE") {
+        } else if (data[0] === 'EOSE') {
           clearTimeout(timeout);
-          ws.send(JSON.stringify(["CLOSE", subId]));
+          ws.send(JSON.stringify(['CLOSE', subId]));
           ws.close();
           resolve(events);
         }
@@ -230,7 +219,7 @@ export async function fetchEvents(
   const seenIds = new Set<string>();
 
   for (const result of results) {
-    if (result.status === "fulfilled") {
+    if (result.status === 'fulfilled') {
       for (const event of result.value) {
         if (!seenIds.has(event.id)) {
           seenIds.add(event.id);

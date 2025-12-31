@@ -45,6 +45,9 @@ importers:
       '@nostr-post/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@nostr-post/web':
+        specifier: workspace:*
+        version: link:../../packages/web
       '@types/react':
         specifier: ^18.0.0
         version: 18.3.27
@@ -76,6 +79,9 @@ importers:
       '@nostr-post/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@nostr-post/web':
+        specifier: workspace:*
+        version: link:../../packages/web
       react:
         specifier: ^18.3.1
         version: 18.3.1
@@ -174,6 +180,9 @@ importers:
       '@nostr-post/react':
         specifier: workspace:*
         version: link:../../packages/react
+      '@nostr-post/web':
+        specifier: workspace:*
+        version: link:../../packages/web
       '@types/react':
         specifier: ^18.0.0
         version: 18.3.27

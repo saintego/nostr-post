@@ -4,12 +4,12 @@
  * Displays a list of Nostr events
  */
 
-import { html, css } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { NostrPostElement, baseStyles } from "./base-component";
-import { fetchEvents } from "@nostr-post/signer";
-import type { SignedEvent } from "./signer";
-import "./view";
+import { fetchEvents } from '@nostr-post/signer';
+import { css, html } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
+import { NostrPostElement, baseStyles } from './base-component';
+import type { SignedEvent } from './signer';
+import './view';
 
 /**
  * Feed Web Component for displaying a list of Nostr events
@@ -23,7 +23,7 @@ import "./view";
  * ></nostr-post-feed>
  * ```
  */
-@customElement("nostr-post-feed")
+@customElement('nostr-post-feed')
 export class NostrPostFeed extends NostrPostElement {
   static styles = [
     baseStyles,
@@ -93,10 +93,10 @@ export class NostrPostFeed extends NostrPostElement {
 
   updated(changedProperties: Map<string, unknown>) {
     if (
-      changedProperties.has("authors") ||
-      changedProperties.has("kinds") ||
-      changedProperties.has("limit") ||
-      changedProperties.has("relays")
+      changedProperties.has('authors') ||
+      changedProperties.has('kinds') ||
+      changedProperties.has('limit') ||
+      changedProperties.has('relays')
     ) {
       if (this.shouldLoad()) {
         this.loadEvents();
@@ -126,7 +126,7 @@ export class NostrPostFeed extends NostrPostElement {
       );
       this.events = events;
     } catch (error) {
-      console.error("Failed to load events:", error);
+      console.error('Failed to load events:', error);
       this.events = [];
     } finally {
       this.isLoading = false;
@@ -170,6 +170,6 @@ export class NostrPostFeed extends NostrPostElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "nostr-post-feed": NostrPostFeed;
+    'nostr-post-feed': NostrPostFeed;
   }
 }

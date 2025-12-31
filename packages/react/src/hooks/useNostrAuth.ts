@@ -4,8 +4,8 @@
  * Manages authentication state with nostr-login or NIP-07 extensions
  */
 
-import { useState, useEffect, useCallback } from "react";
-import { getPublicKey, hasNostrSigner } from "../signer";
+import { useCallback, useEffect, useState } from 'react';
+import { getPublicKey, hasNostrSigner } from '../signer';
 
 export interface NostrAuthState {
   pubkey: string | null;
@@ -79,7 +79,7 @@ export function useNostrAuth(): UseNostrAuthReturn {
     try {
       if (!hasNostrSigner()) {
         throw new Error(
-          "No Nostr signer available. Please install a browser extension or use nostr-login."
+          'No Nostr signer available. Please install a browser extension or use nostr-login.'
         );
       }
 
@@ -94,7 +94,7 @@ export function useNostrAuth(): UseNostrAuthReturn {
       setState((prev) => ({
         ...prev,
         isLoading: false,
-        error: err instanceof Error ? err.message : "Login failed",
+        error: err instanceof Error ? err.message : 'Login failed',
       }));
     }
   }, []);
@@ -112,20 +112,20 @@ export function useNostrAuth(): UseNostrAuthReturn {
   useEffect(() => {
     const handleAuth = (event: Event) => {
       const detail = (event as CustomEvent).detail;
-      if (detail?.type === "login" || detail?.type === "signup") {
+      if (detail?.type === 'login' || detail?.type === 'signup') {
         checkAuth();
-      } else if (detail?.type === "logout") {
+      } else if (detail?.type === 'logout') {
         logout();
       }
     };
 
-    document.addEventListener("nlAuth", handleAuth);
+    document.addEventListener('nlAuth', handleAuth);
 
     // Check initial auth state
     checkAuth();
 
     return () => {
-      document.removeEventListener("nlAuth", handleAuth);
+      document.removeEventListener('nlAuth', handleAuth);
     };
   }, [checkAuth, logout]);
 

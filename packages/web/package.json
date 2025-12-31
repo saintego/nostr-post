@@ -23,13 +23,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "keywords": [
-    "nostr",
-    "web-components",
-    "lit",
-    "custom-elements",
-    "ui"
-  ],
+  "keywords": ["nostr", "web-components", "lit", "custom-elements", "ui"],
   "author": "",
   "license": "MIT",
   "dependencies": {

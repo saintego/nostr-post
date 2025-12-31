@@ -19,13 +19,13 @@ export {
   signAndPublish,
   fetchEventsFromRelay,
   fetchEvents,
-} from "@nostr-post/signer";
+} from '@nostr-post/signer';
 
 /**
  * Get user's preferred relays from NIP-07 provider
  */
 export async function getUserRelays(): Promise<string[]> {
-  const { DEFAULT_RELAYS } = await import("@nostr-post/signer");
+  const { DEFAULT_RELAYS } = await import('@nostr-post/signer');
 
   if (!window.nostr?.getRelays) {
     return DEFAULT_RELAYS;
@@ -46,5 +46,5 @@ export async function getUserRelays(): Promise<string[]> {
  * Get default relays
  */
 export function getDefaultRelays(): string[] {
-  return ["wss://relay.damus.io", "wss://nos.lol", "wss://relay.nostr.band"];
+  return ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 }

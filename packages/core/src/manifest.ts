@@ -5,27 +5,19 @@
  * All functions are immutable and side-effect free.
  */
 
-import type {
-  NostrPostManifest,
-  NostrTarget,
-  PostField,
-  Result,
-  ValidationError,
-} from "./types";
+import type { NostrPostManifest, NostrTarget, PostField, Result, ValidationError } from './types';
 
 /**
  * Validates that a NostrTarget is properly configured.
  */
-export const validateNostrTarget = (
-  target: NostrTarget
-): Result<void, ValidationError> => {
-  if (target.target === "tag" && !target.tagName) {
+export const validateNostrTarget = (target: NostrTarget): Result<void, ValidationError> => {
+  if (target.target === 'tag' && !target.tagName) {
     return {
       success: false,
       error: {
-        field: "tagName",
+        field: 'tagName',
         message: 'tagName is required when target is "tag"',
-        code: "MISSING_TAG_NAME",
+        code: 'MISSING_TAG_NAME',
       },
     };
   }
@@ -34,9 +26,9 @@ export const validateNostrTarget = (
     return {
       success: false,
       error: {
-        field: "kind",
-        message: "kind must be between 0 and 65535",
-        code: "INVALID_KIND",
+        field: 'kind',
+        message: 'kind must be between 0 and 65535',
+        code: 'INVALID_KIND',
       },
     };
   }
@@ -47,27 +39,25 @@ export const validateNostrTarget = (
 /**
  * Validates a single PostField definition.
  */
-export const validatePostField = (
-  field: PostField
-): Result<void, ValidationError> => {
-  if (!field.id || field.id.trim() === "") {
+export const validatePostField = (field: PostField): Result<void, ValidationError> => {
+  if (!field.id || field.id.trim() === '') {
     return {
       success: false,
       error: {
-        field: "id",
-        message: "Field id is required and cannot be empty",
-        code: "MISSING_FIELD_ID",
+        field: 'id',
+        message: 'Field id is required and cannot be empty',
+        code: 'MISSING_FIELD_ID',
       },
     };
   }
 
-  if (!field.uiPlugin || field.uiPlugin.trim() === "") {
+  if (!field.uiPlugin || field.uiPlugin.trim() === '') {
     return {
       success: false,
       error: {
-        field: "uiPlugin",
-        message: "uiPlugin is required and cannot be empty",
-        code: "MISSING_UI_PLUGIN",
+        field: 'uiPlugin',
+        message: 'uiPlugin is required and cannot be empty',
+        code: 'MISSING_UI_PLUGIN',
       },
     };
   }
@@ -77,13 +67,13 @@ export const validatePostField = (
     return targetValidation;
   }
 
-  if (field.type === "enum" && (!field.options || field.options.length === 0)) {
+  if (field.type === 'enum' && (!field.options || field.options.length === 0)) {
     return {
       success: false,
       error: {
-        field: "options",
-        message: "Enum fields must have at least one option",
-        code: "MISSING_ENUM_OPTIONS",
+        field: 'options',
+        message: 'Enum fields must have at least one option',
+        code: 'MISSING_ENUM_OPTIONS',
       },
     };
   }
@@ -94,40 +84,38 @@ export const validatePostField = (
 /**
  * Validates an entire NostrPostManifest.
  */
-export const validateManifest = (
-  manifest: NostrPostManifest
-): Result<void, ValidationError[]> => {
+export const validateManifest = (manifest: NostrPostManifest): Result<void, ValidationError[]> => {
   const errors: ValidationError[] = [];
 
-  if (!manifest.id || manifest.id.trim() === "") {
+  if (!manifest.id || manifest.id.trim() === '') {
     errors.push({
-      field: "id",
-      message: "Manifest id is required",
-      code: "MISSING_MANIFEST_ID",
+      field: 'id',
+      message: 'Manifest id is required',
+      code: 'MISSING_MANIFEST_ID',
     });
   }
 
-  if (!manifest.version || manifest.version.trim() === "") {
+  if (!manifest.version || manifest.version.trim() === '') {
     errors.push({
-      field: "version",
-      message: "Manifest version is required",
-      code: "MISSING_VERSION",
+      field: 'version',
+      message: 'Manifest version is required',
+      code: 'MISSING_VERSION',
     });
   }
 
   if (!manifest.requiredKinds || manifest.requiredKinds.length === 0) {
     errors.push({
-      field: "requiredKinds",
-      message: "Manifest must specify at least one required kind",
-      code: "MISSING_REQUIRED_KINDS",
+      field: 'requiredKinds',
+      message: 'Manifest must specify at least one required kind',
+      code: 'MISSING_REQUIRED_KINDS',
     });
   }
 
   if (!manifest.fields || manifest.fields.length === 0) {
     errors.push({
-      field: "fields",
-      message: "Manifest must have at least one field",
-      code: "MISSING_FIELDS",
+      field: 'fields',
+      message: 'Manifest must have at least one field',
+      code: 'MISSING_FIELDS',
     });
   }
 
@@ -149,7 +137,7 @@ export const validateManifest = (
       errors.push({
         field: `fields.${field.id}`,
         message: `Duplicate field id: ${field.id}`,
-        code: "DUPLICATE_FIELD_ID",
+        code: 'DUPLICATE_FIELD_ID',
       });
     }
     fieldIds.add(field.id);
@@ -160,9 +148,9 @@ export const validateManifest = (
   for (const kind of manifest.requiredKinds || []) {
     if (!usedKinds.has(kind)) {
       errors.push({
-        field: "requiredKinds",
+        field: 'requiredKinds',
         message: `Required kind ${kind} is not used in any field mapping`,
-        code: "UNUSED_REQUIRED_KIND",
+        code: 'UNUSED_REQUIRED_KIND',
       });
     }
   }
@@ -177,10 +165,7 @@ export const validateManifest = (
 /**
  * Gets all fields that map to a specific Nostr kind.
  */
-export const getFieldsByKind = (
-  manifest: NostrPostManifest,
-  kind: number
-): PostField[] => {
+export const getFieldsByKind = (manifest: NostrPostManifest, kind: number): PostField[] => {
   return manifest.fields.filter((field) => field.mapTo.kind === kind);
 };
 

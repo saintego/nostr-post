@@ -18,4 +18,4 @@ export {
   signAndPublish,
   fetchEventsFromRelay,
   fetchEvents,
-} from "@nostr-post/signer";
+} from '@nostr-post/signer';

@@ -4,10 +4,10 @@
  * Shared functionality for all nostr-post Web Components
  */
 
-import { LitElement } from "lit";
+import { LitElement } from 'lit';
 
 // Re-export theme
-export { colors, baseStyles } from "./theme";
+export { colors, baseStyles } from './theme';
 
 /**
  * Base class for all nostr-post Web Components
@@ -30,6 +30,6 @@ export class NostrPostElement extends LitElement {
    * Show error state
    */
   protected showError(message: string): void {
-    this.dispatchCustomEvent("nostr-post-error", { message });
+    this.dispatchCustomEvent('nostr-post-error', { message });
   }
 }

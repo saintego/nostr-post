@@ -31,12 +31,7 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "keywords": [
-    "nostr",
-    "plugins",
-    "ui",
-    "framework-agnostic"
-  ],
+  "keywords": ["nostr", "plugins", "ui", "framework-agnostic"],
   "author": "",
   "license": "MIT",
   "dependencies": {

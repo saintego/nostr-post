@@ -4,41 +4,41 @@
  * Single source of truth for colors matching nostr-login design system
  */
 
-import { css, unsafeCSS } from "lit";
+import { css, unsafeCSS } from 'lit';
 
 /**
  * Color values - single source of truth
  */
 export const colors = {
   light: {
-    bg: "#ffffff",
-    inputBg: "#f9fafb",
-    text: "#1f2937",
-    textSecondary: "#6b7280",
-    border: "#d1d5db",
-    primary: "#6366f1",
-    primaryHover: "#4f46e5",
-    error: "#dc2626",
-    errorBorder: "#fca5a5",
-    errorBg: "#fef2f2",
-    successBg: "#d1fae5",
-    successBorder: "#6ee7b7",
-    successText: "#065f46",
+    bg: '#ffffff',
+    inputBg: '#f9fafb',
+    text: '#1f2937',
+    textSecondary: '#6b7280',
+    border: '#d1d5db',
+    primary: '#6366f1',
+    primaryHover: '#4f46e5',
+    error: '#dc2626',
+    errorBorder: '#fca5a5',
+    errorBg: '#fef2f2',
+    successBg: '#d1fae5',
+    successBorder: '#6ee7b7',
+    successText: '#065f46',
   },
   dark: {
-    bg: "#1f2937",
-    inputBg: "#374151",
-    text: "#f3f4f6",
-    textSecondary: "#9ca3af",
-    border: "#4b5563",
-    primary: "#4f46e5",
-    primaryHover: "#4338ca",
-    error: "#fca5a5",
-    errorBorder: "#dc2626",
-    errorBg: "#450a0a",
-    successBg: "#064e3b",
-    successBorder: "#059669",
-    successText: "#6ee7b7",
+    bg: '#1f2937',
+    inputBg: '#374151',
+    text: '#f3f4f6',
+    textSecondary: '#9ca3af',
+    border: '#4b5563',
+    primary: '#4f46e5',
+    primaryHover: '#4338ca',
+    error: '#fca5a5',
+    errorBorder: '#dc2626',
+    errorBg: '#450a0a',
+    successBg: '#064e3b',
+    successBorder: '#059669',
+    successText: '#6ee7b7',
   },
 } as const;
 

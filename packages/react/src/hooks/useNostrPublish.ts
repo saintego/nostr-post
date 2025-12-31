@@ -4,19 +4,14 @@
  * Handles signing and publishing Nostr events
  */
 
-import { useState, useCallback } from "react";
-import { coordinateEvents } from "@nostr-post/core/coordinator";
+import { coordinateEvents } from '@nostr-post/core/coordinator';
 import {
   DEFAULT_KIND1_MANIFEST,
-  type NostrPostManifest,
   type FormData,
-} from "@nostr-post/core/types";
-import {
-  signAndPublish,
-  getPublicKey,
-  DEFAULT_RELAYS,
-  type SignedEvent,
-} from "../signer";
+  type NostrPostManifest,
+} from '@nostr-post/core/types';
+import { useCallback, useState } from 'react';
+import { DEFAULT_RELAYS, type SignedEvent, getPublicKey, signAndPublish } from '../signer';
 
 export interface UseNostrPublishOptions {
   manifest?: NostrPostManifest;
@@ -57,9 +52,7 @@ export interface UseNostrPublishReturn {
  * }
  * ```
  */
-export function useNostrPublish(
-  options: UseNostrPublishOptions = {}
-): UseNostrPublishReturn {
+export function useNostrPublish(options: UseNostrPublishOptions = {}): UseNostrPublishReturn {
   const {
     manifest = DEFAULT_KIND1_MANIFEST,
     relays = DEFAULT_RELAYS,
@@ -84,20 +77,17 @@ export function useNostrPublish(
         });
 
         if (!result.success) {
-          const errorMsg = result.error.map((e) => e.message).join(", ");
+          const errorMsg = result.error.map((e) => e.message).join(', ');
           throw new Error(errorMsg);
         }
 
         const signedEvents: SignedEvent[] = [];
 
         for (const unsignedEvent of result.data.events) {
-          const { signedEvent, publishResults } = await signAndPublish(
-            unsignedEvent,
-            relays
-          );
+          const { signedEvent, publishResults } = await signAndPublish(unsignedEvent, relays);
 
           if (publishResults.success === 0) {
-            throw new Error("Failed to publish to any relay");
+            throw new Error('Failed to publish to any relay');
           }
 
           signedEvents.push(signedEvent);
@@ -106,8 +96,7 @@ export function useNostrPublish(
         onSuccess?.(signedEvents);
         return signedEvents;
       } catch (err) {
-        const errorObj =
-          err instanceof Error ? err : new Error("Unknown error");
+        const errorObj = err instanceof Error ? err : new Error('Unknown error');
         setError(errorObj.message);
         onError?.(errorObj);
         throw errorObj;

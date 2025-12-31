@@ -4,12 +4,7 @@
  * A plugin for rich text editing with Markdown
  */
 
-import type {
-  NostrUIPlugin,
-  PostField,
-  Result,
-  ValidationError,
-} from "./types";
+import type { NostrUIPlugin, PostField, Result, ValidationError } from './types';
 
 export interface MarkdownPluginConfig {
   minLength?: number;
@@ -18,19 +13,16 @@ export interface MarkdownPluginConfig {
 }
 
 export const markdownPlugin: NostrUIPlugin = {
-  id: "markdown",
-  type: "string",
-  validate: (
-    value: unknown,
-    field: PostField
-  ): Result<void, ValidationError> => {
-    if (typeof value !== "string") {
+  id: 'markdown',
+  type: 'string',
+  validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
+    if (typeof value !== 'string') {
       return {
         success: false,
         error: {
           field: field.id,
-          message: "Content must be a string",
-          code: "INVALID_TYPE",
+          message: 'Content must be a string',
+          code: 'INVALID_TYPE',
         },
       };
     }
@@ -43,7 +35,7 @@ export const markdownPlugin: NostrUIPlugin = {
         error: {
           field: field.id,
           message: `Content must be at least ${config.minLength} characters`,
-          code: "TOO_SHORT",
+          code: 'TOO_SHORT',
         },
       };
     }
@@ -54,7 +46,7 @@ export const markdownPlugin: NostrUIPlugin = {
         error: {
           field: field.id,
           message: `Content must not exceed ${config.maxLength} characters`,
-          code: "TOO_LONG",
+          code: 'TOO_LONG',
         },
       };
     }
