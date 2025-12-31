@@ -7,3 +7,4 @@ pre-commit:
       run: |
         ./node_modules/.bin/biome check --write --no-errors-on-unmatched {staged_files} || true
         ./node_modules/.bin/biome format --write {staged_files} || true
+        git add {staged_files}
