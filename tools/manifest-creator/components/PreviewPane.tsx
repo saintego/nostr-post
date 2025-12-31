@@ -1,9 +1,19 @@
 'use client';
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { NostrPostComposer, NostrPostFeed, NostrPostView } from '@nostr-post/react';
+import { NostrPostView } from '@nostr-post/react';
 import type { SignedEvent } from '@nostr-post/react';
+import '@nostr-post/web'; // Import web components
 import React, { useState } from 'react';
+
+// TypeScript declarations for web components
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'nostr-post-composer': any;
+    }
+  }
+}
 
 interface PreviewPaneProps {
   manifest: NostrPostManifest;
@@ -126,12 +136,12 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
         <div>
           <div style={styles.composerContainer}>
             <h3 style={styles.feedHeader}>Composer</h3>
-            <NostrPostComposer
-              manifest={manifest}
-              onPublished={handlePublished}
-              onError={(error) => {
-                console.error('Error:', error);
-                alert(`Error: ${error.message}`);
+            <nostr-post-composer
+              manifest={JSON.stringify(manifest)}
+              onPublished={(e: any) => handlePublished(e.detail)}
+              onError={(e: any) => {
+                console.error('Error:', e.detail);
+                alert(`Error: ${e.detail.message}`);
               }}
             />
           </div>

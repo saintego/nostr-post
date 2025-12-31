@@ -1,17 +1,28 @@
-"use client";
+'use client';
 
-import { NostrPostComposer, NostrPostFeed, useNostrAuth } from "@nostr-post/react";
+import { useNostrAuth } from '@nostr-post/react';
+import '@nostr-post/web'; // Import web components
+
+// TypeScript declarations for web components
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'nostr-post-composer': any;
+      'nostr-post-feed': any;
+    }
+  }
+}
 
 const styles = {
   container: {
     maxWidth: 600,
-    margin: "0 auto",
+    margin: '0 auto',
     padding: 20,
   },
   header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 24,
   },
   title: {
@@ -19,23 +30,23 @@ const styles = {
     fontSize: 24,
   },
   loginBtn: {
-    padding: "8px 16px",
+    padding: '8px 16px',
     borderRadius: 8,
-    border: "none",
-    background: "#6366f1",
-    color: "white",
-    cursor: "pointer",
+    border: 'none',
+    background: '#6366f1',
+    color: 'white',
+    cursor: 'pointer',
     fontSize: 14,
   },
   userInfo: {
-    display: "flex",
-    alignItems: "center",
+    display: 'flex',
+    alignItems: 'center',
     gap: 12,
   },
   pubkey: {
     fontSize: 12,
     opacity: 0.7,
-    fontFamily: "monospace",
+    fontFamily: 'monospace',
   },
   section: {
     marginTop: 32,
@@ -52,7 +63,7 @@ export default function Home() {
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1 style={styles.title}>🚀 NostrPost Next.js Demo</h1>
+        <h1 style={styles.title}>🚀 NostrPost Web Components (in Next.js)</h1>
         {isLoading ? (
           <span>Loading...</span>
         ) : isLoggedIn ? (
@@ -70,11 +81,16 @@ export default function Home() {
       </header>
 
       {/* Composer - works without manifest for simple Kind 1 notes */}
-      <div style={{ marginBottom: "40px" }}>
-        <NostrPostComposer
-          onPublished={(events) => {
-            console.log("Published events:", events);
-            alert(`Published ${events.length} event(s)!`);
+      <div style={{ marginBottom: '40px' }}>
+        <nostr-post-composer
+          auto-publish
+          onPublished={(e: any) => {
+            console.log('Published events:', e.detail);
+            alert(`Published ${e.detail.length} event(s)!`);
+          }}
+          onError={(e: any) => {
+            console.error('Error:', e.detail);
+            alert(`Error: ${e.detail.message}`);
           }}
         />
       </div>
@@ -83,7 +99,7 @@ export default function Home() {
       {pubkey && (
         <div style={styles.section}>
           <h2 style={styles.sectionTitle}>Your Posts</h2>
-          <NostrPostFeed authors={[pubkey]} kinds={[1]} limit={10} />
+          <nostr-post-feed authors={`["${pubkey}"]`} kinds="[1]" limit="10" />
         </div>
       )}
     </div>

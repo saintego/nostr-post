@@ -11,6 +11,7 @@
   "dependencies": {
     "@nostr-post/core": "workspace:*",
     "@nostr-post/react": "workspace:*",
+    "@nostr-post/web": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
