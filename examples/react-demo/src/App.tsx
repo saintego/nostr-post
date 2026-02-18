@@ -97,13 +97,13 @@ export default function App() {
         <div style={styles.section}>
           <h2 style={styles.sectionTitle}>Your Posts</h2>
           {/* Use pubkey as key to ensure feed persists across re-renders */}
-          <NostrPostFeed 
+          <NostrPostFeed
             key={pubkey}
-            ref={feedRef} 
-            authors={[pubkey]} 
-            kinds={[1]} 
-            limit={10} 
-            dark={isDark} 
+            ref={feedRef}
+            authors={[pubkey]}
+            kinds={[1]}
+            limit={10}
+            dark={isDark}
           />
         </div>
       )}

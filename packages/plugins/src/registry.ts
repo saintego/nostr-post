@@ -4,11 +4,11 @@
  * Central registry for discovering and loading plugins
  */
 
-import { geoPlugin } from './plugin-geo';
-import { markdownPlugin } from './plugin-markdown';
-import { mediaPlugin } from './plugin-media';
-import { starsPlugin } from './plugin-stars';
-import type { FieldType, NostrUIPlugin } from './types';
+import { geoPlugin } from "./plugin-geo";
+import { markdownPlugin } from "./plugin-markdown";
+import { mediaPlugin } from "./plugin-media";
+import { starsPlugin } from "./plugin-stars";
+import type { FieldType, NostrUIPlugin } from "./types";
 
 /**
  * Plugin registry singleton

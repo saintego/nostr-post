@@ -121,7 +121,7 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
   const handlePublished = useCallback(
     (eventDetail: unknown) => {
       console.log('Published event detail:', eventDetail);
-      
+
       // Handle different event detail formats
       let events: SignedEvent[] = [];
       if (Array.isArray(eventDetail)) {
@@ -132,7 +132,7 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
         console.error('Unexpected event detail format:', eventDetail);
         return;
       }
-      
+
       console.log('Extracted events:', events);
       console.log('Current publishedEvents before:', publishedEvents);
       setPublishedEvents((prev) => {

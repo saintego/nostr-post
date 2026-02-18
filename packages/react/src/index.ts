@@ -2,7 +2,7 @@
  * @nostr-post/react
  *
  * React hooks and components for Nostr posts
- * 
+ *
  * This package provides React-friendly wrappers around the universal
  * web components from @nostr-post/web, ensuring consistent styling
  * and behavior across all frameworks.
@@ -19,7 +19,7 @@ export {
   type UseNostrEventsReturn,
   type UseNostrPublishOptions,
   type UseNostrPublishReturn,
-} from './hooks';
+} from "./hooks";
 
 // Components (React wrappers around web components)
 export {
@@ -30,7 +30,7 @@ export {
   type NostrPostViewProps,
   type NostrPostFeedProps,
   type NostrPostFeedRef,
-} from './components';
+} from "./components";
 
 // Re-export web component utilities for convenience
 export {
@@ -38,7 +38,7 @@ export {
   type Nip07Provider,
   colors,
   baseStyles,
-} from '@nostr-post/web';
+} from "@nostr-post/web";
 
 // Signer utilities (re-exported from @nostr-post/signer)
 export {
@@ -51,4 +51,4 @@ export {
   fetchEventsFromRelay,
   hasNostrSigner,
   DEFAULT_RELAYS,
-} from './signer';
+} from "./signer";

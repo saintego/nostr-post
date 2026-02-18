@@ -50,7 +50,7 @@ const styles = {
 export default function Home() {
   const { pubkey, isLoggedIn, isLoading, login, logout } = useNostrAuth();
   const feedRef = useRef<NostrPostFeedRef>(null);
-  
+
   // Initialize dark mode from system preferences (lazy initializer)
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
