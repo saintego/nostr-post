@@ -1,17 +1,7 @@
 'use client';
 
-import { useNostrAuth } from '@nostr-post/react';
-import '@nostr-post/web'; // Import web components
-
-// TypeScript declarations for web components
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'nostr-post-composer': any;
-      'nostr-post-feed': any;
-    }
-  }
-}
+import { NostrPostComposer, NostrPostFeed, useNostrAuth, type NostrPostFeedRef } from '@nostr-post/react';
+import { useEffect, useRef, useState } from 'react';
 
 const styles = {
   container: {
@@ -59,22 +49,40 @@ const styles = {
 
 export default function Home() {
   const { pubkey, isLoggedIn, isLoading, login, logout } = useNostrAuth();
+  const feedRef = useRef<NostrPostFeedRef>(null);
+  
+  // Initialize dark mode from system preferences (lazy initializer)
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
 
+  // Listen for dark mode changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
+  console.log('isDark:', isDark)
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1 style={styles.title}>🚀 NostrPost Web Components (in Next.js)</h1>
+        <h1 style={styles.title}>🚀 NostrPost (in Next.js)</h1>
         {isLoading ? (
           <span>Loading...</span>
         ) : isLoggedIn ? (
           <div style={styles.userInfo}>
             <span style={styles.pubkey}>{pubkey?.slice(0, 12)}...</span>
-            <button style={styles.loginBtn} onClick={logout}>
+            <button type="button" style={styles.loginBtn} onClick={logout}>
               Logout
             </button>
           </div>
         ) : (
-          <button style={styles.loginBtn} onClick={login}>
+          <button type="button" style={styles.loginBtn} onClick={login}>
             Login with Nostr
           </button>
         )}
@@ -82,15 +90,15 @@ export default function Home() {
 
       {/* Composer - works without manifest for simple Kind 1 notes */}
       <div style={{ marginBottom: '40px' }}>
-        <nostr-post-composer
-          auto-publish
-          onPublished={(e: any) => {
-            console.log('Published events:', e.detail);
-            alert(`Published ${e.detail.length} event(s)!`);
-          }}
-          onError={(e: any) => {
-            console.error('Error:', e.detail);
-            alert(`Error: ${e.detail.message}`);
+        <NostrPostComposer
+          dark={isDark}
+          onPublished={async (events) => {
+            console.log('Published events:', events);
+            // Refresh the feed to show the new post
+            if (feedRef.current?.refresh) {
+              await feedRef.current.refresh();
+            }
+            alert(`Published ${events.length} event(s)!`);
           }}
         />
       </div>
@@ -99,7 +107,15 @@ export default function Home() {
       {pubkey && (
         <div style={styles.section}>
           <h2 style={styles.sectionTitle}>Your Posts</h2>
-          <nostr-post-feed authors={`["${pubkey}"]`} kinds="[1]" limit="10" />
+          {/* Use pubkey as key to ensure feed persists across re-renders */}
+          <NostrPostFeed
+            key={pubkey}
+            ref={feedRef}
+            authors={[pubkey]}
+            kinds={[1]}
+            limit={10}
+            dark={isDark}
+          />
         </div>
       )}
     </div>

@@ -87,6 +87,26 @@ export const validatePostField = (field: PostField): Result<void, ValidationErro
 export const validateManifest = (manifest: NostrPostManifest): Result<void, ValidationError[]> => {
   const errors: ValidationError[] = [];
 
+  // Basic manifest validation
+  validateManifestBasics(manifest, errors);
+
+  // Field validation
+  validateManifestFields(manifest, errors);
+
+  // Cross-field validation
+  validateFieldRelationships(manifest, errors);
+
+  if (errors.length > 0) {
+    return { success: false, error: errors };
+  }
+
+  return { success: true, data: undefined };
+};
+
+/**
+ * Validates basic manifest properties.
+ */
+const validateManifestBasics = (manifest: NostrPostManifest, errors: ValidationError[]): void => {
   if (!manifest.id || manifest.id.trim() === '') {
     errors.push({
       field: 'id',
@@ -118,8 +138,12 @@ export const validateManifest = (manifest: NostrPostManifest): Result<void, Vali
       code: 'MISSING_FIELDS',
     });
   }
+};
 
-  // Validate each field
+/**
+ * Validates individual fields in the manifest.
+ */
+const validateManifestFields = (manifest: NostrPostManifest, errors: ValidationError[]): void => {
   for (const field of manifest.fields || []) {
     const fieldValidation = validatePostField(field);
     if (!fieldValidation.success) {
@@ -129,7 +153,15 @@ export const validateManifest = (manifest: NostrPostManifest): Result<void, Vali
       });
     }
   }
+};
 
+/**
+ * Validates relationships between fields and other manifest properties.
+ */
+const validateFieldRelationships = (
+  manifest: NostrPostManifest,
+  errors: ValidationError[]
+): void => {
   // Check for duplicate field IDs
   const fieldIds = new Set<string>();
   for (const field of manifest.fields || []) {
@@ -154,12 +186,6 @@ export const validateManifest = (manifest: NostrPostManifest): Result<void, Vali
       });
     }
   }
-
-  if (errors.length > 0) {
-    return { success: false, error: errors };
-  }
-
-  return { success: true, data: undefined };
 };
 
 /**

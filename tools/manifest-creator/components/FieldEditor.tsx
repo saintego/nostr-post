@@ -103,15 +103,18 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
     <div style={styles.fieldItem}>
       <div style={styles.fieldHeader}>
         <span style={styles.fieldTitle}>{label}</span>
-        <button style={styles.deleteButton} onClick={onDelete}>
+        <button type="button" style={styles.deleteButton} onClick={onDelete}>
           Delete
         </button>
       </div>
 
       <div style={styles.grid}>
         <div style={styles.formGroup}>
-          <label style={styles.label}>Field ID:</label>
+          <label style={styles.label} htmlFor="field-id">
+            Field ID:
+          </label>
           <input
+            id="field-id"
             style={styles.input}
             type="text"
             value={field.id}
@@ -121,8 +124,11 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
         </div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Label:</label>
+          <label style={styles.label} htmlFor="field-label">
+            Label:
+          </label>
           <input
+            id="field-label"
             style={styles.input}
             type="text"
             value={label}
@@ -132,8 +138,11 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
         </div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Type:</label>
+          <label style={styles.label} htmlFor="field-type">
+            Type:
+          </label>
           <select
+            id="field-type"
             style={styles.select}
             value={field.type}
             onChange={(e) => update('type', e.target.value)}
@@ -145,8 +154,11 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
         </div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>UI Plugin:</label>
+          <label style={styles.label} htmlFor="field-ui-plugin">
+            UI Plugin:
+          </label>
           <select
+            id="field-ui-plugin"
             style={styles.select}
             value={field.uiPlugin || 'text'}
             onChange={(e) => update('uiPlugin', e.target.value)}
@@ -161,8 +173,11 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
         </div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Map To Kind:</label>
+          <label style={styles.label} htmlFor="field-map-kind">
+            Map To Kind:
+          </label>
           <select
+            id="field-map-kind"
             style={styles.select}
             value={field.mapTo.kind}
             onChange={(e) => updateMapTo('kind', Number(e.target.value))}
@@ -176,8 +191,11 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
         </div>
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Target:</label>
+          <label style={styles.label} htmlFor="field-target">
+            Target:
+          </label>
           <select
+            id="field-target"
             style={styles.select}
             value={field.mapTo.target}
             onChange={(e) => updateMapTo('target', e.target.value)}
@@ -189,8 +207,11 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
 
         {field.mapTo.target === 'tag' && (
           <div style={styles.formGroup}>
-            <label style={styles.label}>Tag Name:</label>
+            <label style={styles.label} htmlFor="field-tag-name">
+              Tag Name:
+            </label>
             <input
+              id="field-tag-name"
               style={styles.input}
               type="text"
               value={field.mapTo.tagName || ''}
@@ -201,8 +222,11 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
         )}
 
         <div style={styles.formGroup}>
-          <label style={styles.label}>Placeholder:</label>
+          <label style={styles.label} htmlFor="field-placeholder">
+            Placeholder:
+          </label>
           <input
+            id="field-placeholder"
             style={styles.input}
             type="text"
             value={placeholder || ''}

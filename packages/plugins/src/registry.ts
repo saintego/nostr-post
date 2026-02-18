@@ -8,7 +8,7 @@ import { geoPlugin } from './plugin-geo';
 import { markdownPlugin } from './plugin-markdown';
 import { mediaPlugin } from './plugin-media';
 import { starsPlugin } from './plugin-stars';
-import type { NostrUIPlugin } from './types';
+import type { FieldType, NostrUIPlugin } from './types';
 
 /**
  * Plugin registry singleton
@@ -61,7 +61,7 @@ class PluginRegistry {
   getByType(type: string): NostrUIPlugin[] {
     return this.getAll().filter((plugin) => {
       if (Array.isArray(plugin.type)) {
-        return plugin.type.includes(type as any);
+        return plugin.type.includes(type as FieldType);
       }
       return plugin.type === type;
     });

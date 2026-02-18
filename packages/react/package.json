@@ -32,7 +32,8 @@
   },
   "dependencies": {
     "@nostr-post/core": "workspace:*",
-    "@nostr-post/signer": "workspace:*"
+    "@nostr-post/signer": "workspace:*",
+    "@nostr-post/web": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^18.2.0",

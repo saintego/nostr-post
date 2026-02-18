@@ -224,13 +224,7 @@ export class NostrPostComposer extends NostrPostElement {
         }
 
         // Dispatch published event
-        this.dispatchCustomEvent<{
-          events: SignedEvent[];
-          bundle: EventBundle;
-        }>('nostr-post-published', {
-          events: signedEvents,
-          bundle,
-        });
+        this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
 
         this.successMessage = `Published to ${signedEvents.length} event(s)!`;
       } else {

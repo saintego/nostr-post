@@ -9,7 +9,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <head>
-        <script src="https://unpkg.com/nostr-login@latest/dist/unpkg.js"></script>
+        <script src="https://unpkg.com/nostr-login@latest/dist/unpkg.js" />
       </head>
       <body
         style={{

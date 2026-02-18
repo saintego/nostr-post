@@ -129,6 +129,9 @@ importers:
       '@nostr-post/signer':
         specifier: workspace:*
         version: link:../signer
+      '@nostr-post/web':
+        specifier: workspace:*
+        version: link:../web
     devDependencies:
       '@types/react':
         specifier: ^18.2.0

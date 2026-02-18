@@ -1,13 +1,41 @@
 /**
  * @nostr-post/react - NostrPostFeed component
  *
- * Displays a list of Nostr events
+ * React wrapper around the <nostr-post-feed> web component
  */
 
-import type { CSSProperties } from 'react';
-import { useNostrEvents } from '../hooks/useNostrEvents';
-import { getColors } from '../theme';
-import { NostrPostView } from './NostrPostView';
+import '@nostr-post/web'; // Register web components
+import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+
+// Extend HTMLElement for the web component
+interface NostrPostFeedElement extends HTMLElement {
+  authors?: string[];
+  kinds?: number[];
+  limit?: number;
+  relays?: string[];
+  showKind?: boolean;
+  showTags?: boolean;
+  refresh?: () => Promise<void>;
+}
+
+// Declare the custom element for TypeScript/JSX
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'nostr-post-feed': React.DetailedHTMLProps<
+        React.HTMLAttributes<NostrPostFeedElement>,
+        NostrPostFeedElement
+      > & {
+        authors?: string;
+        kinds?: string;
+        limit?: string;
+        relays?: string;
+        'show-kind'?: boolean;
+        'show-tags'?: boolean;
+      };
+    }
+  }
+}
 
 export interface NostrPostFeedProps {
   /** Filter by authors (pubkeys) */
@@ -29,70 +57,69 @@ export interface NostrPostFeedProps {
 }
 
 /**
- * Display a feed of Nostr events
+ * Ref type for NostrPostFeed component
+ * Exposes the refresh method from the underlying web component
  */
-export function NostrPostFeed({
-  authors,
-  kinds = [1],
-  limit = 20,
-  relays,
-  showKind = false,
-  showTags = false,
-  className = '',
-  dark,
-}: NostrPostFeedProps) {
-  const c = getColors(dark);
+export type NostrPostFeedRef = NostrPostFeedElement;
 
-  const { events, isLoading } = useNostrEvents({
-    authors,
-    kinds,
-    limit,
-    relays,
-    enabled: true,
-  });
+/**
+ * Display a feed of Nostr events
+ * 
+ * React wrapper around <nostr-post-feed> web component
+ */
+export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps>(
+  function NostrPostFeed(
+    {
+      authors,
+      kinds = [1],
+      limit = 20,
+      relays,
+      showKind = false,
+      showTags = false,
+      className = '',
+      dark,
+    },
+    forwardedRef
+  ) {
+    const elementRef = useRef<NostrPostFeedElement>(null);
 
-  const styles: Record<string, CSSProperties> = {
-    container: {
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-    },
-    loading: {
-      textAlign: 'center' as const,
-      padding: 24,
-      color: c.textSecondary,
-    },
-    empty: {
-      textAlign: 'center' as const,
-      padding: 24,
-      color: c.textSecondary,
-    },
-    eventItem: {
-      marginBottom: 12,
-    },
-  };
+    // Build wrapper class for dark mode
+    const wrapperClassName = dark ? 'dark' : '';
 
-  if (isLoading) {
+    // Expose the web component's methods via ref
+    useImperativeHandle(forwardedRef, () => elementRef.current as NostrPostFeedElement, []);
+
+    // Set properties on the web component
+    useEffect(() => {
+      const element = elementRef.current;
+      if (!element) return;
+
+      // Set all properties
+      if (authors) {
+        element.authors = authors;
+      } else {
+        element.authors = undefined;
+      }
+      element.kinds = kinds;
+      element.limit = limit;
+      if (relays) {
+        element.relays = relays;
+      }
+      element.showKind = showKind;
+      element.showTags = showTags;
+    }, [authors, kinds, limit, relays, showKind, showTags]);
+
+    // Don't pass authors/kinds/relays as attributes since we're setting them as properties
+    // This prevents conflicts and re-renders
     return (
-      <div className={className} style={styles.container}>
-        <div style={styles.loading}>Loading...</div>
+      <div className={wrapperClassName}>
+        <nostr-post-feed
+          ref={elementRef as React.RefObject<HTMLElement>}
+          className={className}
+          show-kind={showKind}
+          show-tags={showTags}
+        />
       </div>
     );
   }
-
-  if (events.length === 0) {
-    return (
-      <div className={className} style={styles.container}>
-        <div style={styles.empty}>No posts yet</div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={className} style={styles.container}>
-      {events.map((event) => (
-        <div key={event.id} style={styles.eventItem}>
-          <NostrPostView event={event} showKind={showKind} showTags={showTags} dark={dark} />
-        </div>
-      ))}
-    </div>
-  );
-}
+);

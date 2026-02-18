@@ -133,6 +133,16 @@ export class NostrPostFeed extends NostrPostElement {
     }
   }
 
+  /**
+   * Public method to refresh the feed
+   * Useful for reloading after publishing new events
+   */
+  public async refresh(): Promise<void> {
+    if (this.shouldLoad()) {
+      await this.loadEvents();
+    }
+  }
+
   render() {
     if (this.isLoading) {
       return html`

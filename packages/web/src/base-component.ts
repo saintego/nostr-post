@@ -17,6 +17,7 @@ export class NostrPostElement extends LitElement {
    * Dispatch a custom event with detail
    */
   protected dispatchCustomEvent<T>(eventName: string, detail: T): void {
+    // Dispatch the full event name
     this.dispatchEvent(
       new CustomEvent(eventName, {
         detail,

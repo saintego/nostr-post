@@ -180,10 +180,10 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       <div style={styles.panelHeader}>
         <h2 style={styles.panelTitle}>Manifest Editor</h2>
         <div style={styles.buttonGroup}>
-          <button style={styles.secondaryButton} onClick={exportJSON}>
+          <button type="button" style={styles.secondaryButton} onClick={exportJSON}>
             Export JSON
           </button>
-          <button style={styles.secondaryButton} onClick={importJSON}>
+          <button type="button" style={styles.secondaryButton} onClick={importJSON}>
             Import JSON
           </button>
         </div>
@@ -191,10 +191,15 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
 
       {/* Examples */}
       <div style={styles.section}>
-        <label style={styles.label}>Load Example:</label>
+        <h3 style={{ ...styles.label, margin: 0, fontSize: '1.1em' }}>Load Example:</h3>
         <div style={styles.buttonGroup}>
           {Object.keys(EXAMPLE_MANIFESTS).map((key) => (
-            <button key={key} style={styles.secondaryButton} onClick={() => loadExample(key)}>
+            <button
+              key={key}
+              type="button"
+              style={styles.secondaryButton}
+              onClick={() => loadExample(key)}
+            >
               {EXAMPLE_MANIFESTS[key].metadata?.name || key}
             </button>
           ))}
@@ -203,8 +208,11 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
 
       {/* Basic Info */}
       <div style={styles.section}>
-        <label style={styles.label}>Manifest ID:</label>
+        <label style={styles.label} htmlFor="manifest-id">
+          Manifest ID:
+        </label>
         <input
+          id="manifest-id"
           style={styles.input}
           type="text"
           value={manifest.id}
@@ -214,8 +222,11 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       </div>
 
       <div style={styles.section}>
-        <label style={styles.label}>Version:</label>
+        <label style={styles.label} htmlFor="manifest-version">
+          Version:
+        </label>
         <input
+          id="manifest-version"
           style={styles.input}
           type="text"
           value={manifest.version}
@@ -225,8 +236,11 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       </div>
 
       <div style={styles.section}>
-        <label style={styles.label}>Name:</label>
+        <label style={styles.label} htmlFor="manifest-name">
+          Name:
+        </label>
         <input
+          id="manifest-name"
           style={styles.input}
           type="text"
           value={manifest.metadata?.name || ''}
@@ -236,8 +250,11 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       </div>
 
       <div style={styles.section}>
-        <label style={styles.label}>Description:</label>
+        <label style={styles.label} htmlFor="manifest-description">
+          Description:
+        </label>
         <textarea
+          id="manifest-description"
           style={styles.textarea}
           value={manifest.metadata?.description || ''}
           onChange={(e) => updateMetadata('description', e.target.value)}

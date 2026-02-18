@@ -1,18 +1,33 @@
 'use client';
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { NostrPostView } from '@nostr-post/react';
 import type { SignedEvent } from '@nostr-post/react';
 import '@nostr-post/web'; // Import web components
-import React, { useState } from 'react';
+import type React from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // TypeScript declarations for web components
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'nostr-post-composer': any;
+      'nostr-post-composer': React.DetailedHTMLProps<
+        React.HTMLAttributes<HTMLElement>,
+        HTMLElement
+      > & {
+        'auto-publish'?: boolean;
+        onError?: (event: CustomEvent) => void;
+      };
+      'nostr-post-view': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
+        event?: SignedEvent;
+        'show-kind'?: boolean;
+        'show-tags'?: boolean;
+      };
     }
   }
+}
+
+interface NostrPostComposerElement extends HTMLElement {
+  manifest: NostrPostManifest;
 }
 
 interface PreviewPaneProps {
@@ -101,12 +116,60 @@ const styles = {
 export function PreviewPane({ manifest }: PreviewPaneProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'json'>('preview');
   const [publishedEvents, setPublishedEvents] = useState<SignedEvent[]>([]);
+  const composerRef = useRef<NostrPostComposerElement>(null);
 
-  const handlePublished = (events: SignedEvent[]) => {
-    console.log('Published events:', events);
-    setPublishedEvents((prev) => [...events, ...prev]);
-    alert(`Published ${events.length} event(s)!`);
-  };
+  const handlePublished = useCallback(
+    (eventDetail: unknown) => {
+      console.log('Published event detail:', eventDetail);
+      
+      // Handle different event detail formats
+      let events: SignedEvent[] = [];
+      if (Array.isArray(eventDetail)) {
+        events = eventDetail;
+      } else if (eventDetail && typeof eventDetail === 'object' && 'events' in eventDetail && Array.isArray(eventDetail.events)) {
+        events = eventDetail.events;
+      } else {
+        console.error('Unexpected event detail format:', eventDetail);
+        return;
+      }
+      
+      console.log('Extracted events:', events);
+      console.log('Current publishedEvents before:', publishedEvents);
+      setPublishedEvents((prev) => {
+        const newEvents = [...events, ...prev];
+        console.log('New publishedEvents:', newEvents);
+        return newEvents;
+      });
+      alert(`Published ${events.length} event(s)!`);
+    },
+    [publishedEvents]
+  );
+
+  // Update manifest when it changes
+  useEffect(() => {
+    if (composerRef.current && activeTab === 'preview') {
+      composerRef.current.manifest = manifest;
+    }
+  }, [manifest, activeTab]);
+
+  // Add event listener for published events
+  useEffect(() => {
+    const composer = composerRef.current;
+    if (composer) {
+      const handlePublishedEvent = (e: Event) => {
+        const customEvent = e as CustomEvent;
+        console.log('Received published event:', customEvent.detail);
+        handlePublished(customEvent.detail);
+      };
+
+      // Only listen to the full event name
+      composer.addEventListener('nostr-post-published', handlePublishedEvent);
+
+      return () => {
+        composer.removeEventListener('nostr-post-published', handlePublishedEvent);
+      };
+    }
+  }, [handlePublished]);
 
   return (
     <div style={styles.panel}>
@@ -133,15 +196,15 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
       </div>
 
       {activeTab === 'preview' ? (
-        <div>
+        <div key="preview-content">
           <div style={styles.composerContainer}>
             <h3 style={styles.feedHeader}>Composer</h3>
             <nostr-post-composer
-              manifest={JSON.stringify(manifest)}
-              onPublished={(e: any) => handlePublished(e.detail)}
-              onError={(e: any) => {
-                console.error('Error:', e.detail);
-                alert(`Error: ${e.detail.message}`);
+              ref={composerRef}
+              auto-publish
+              onError={(e) => {
+                console.error('Error:', (e as CustomEvent).detail);
+                alert(`Error: ${(e as CustomEvent).detail.message}`);
               }}
             />
           </div>
@@ -155,7 +218,7 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
             ) : (
               publishedEvents.map((event) => (
                 <div key={event.id}>
-                  <NostrPostView event={event} showKind showTags />
+                  <nostr-post-view event={event} show-kind show-tags />
                 </div>
               ))
             )}
