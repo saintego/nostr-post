@@ -7,10 +7,6 @@ window.nostr = {
   getPublicKey: vi.fn(),
   signEvent: vi.fn(),
   getRelays: vi.fn(),
-  nip04: {
-    encrypt: vi.fn(),
-    decrypt: vi.fn(),
-  },
 };
 
 // Mock localStorage
