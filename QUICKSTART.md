@@ -34,37 +34,37 @@ Plugins register when imported. Add them at the top of your script:
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Nostr Post Example</title>
-  <script type="module">
-    // Import plugins FIRST
-    import '@nostr-post/plugin-geo';
-    import '@nostr-post/plugin-media';
-    import '@nostr-post/plugin-markdown';
-    import '@nostr-post/plugin-hashtag';
-    import '@nostr-post/plugin-stars';
-    
-    // Then import components
-    import '@nostr-post/web';
-  </script>
-</head>
-<body>
-  <h1>My Nostr App</h1>
-  
-  <!-- Composer for creating posts -->
-  <nostr-post-composer></nostr-post-composer>
-  
-  <!-- Feed for viewing posts -->
-  <nostr-post-feed kinds="1" limit="20"></nostr-post-feed>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Nostr Post Example</title>
+    <script type="module">
+      // Import plugins FIRST
+      import "@nostr-post/plugin-geo";
+      import "@nostr-post/plugin-media";
+      import "@nostr-post/plugin-markdown";
+      import "@nostr-post/plugin-hashtag";
+      import "@nostr-post/plugin-stars";
 
-  <script>
-    const composer = document.querySelector('nostr-post-composer');
-    composer.addEventListener('nostr-post-submit', (e) => {
-      console.log('Published:', e.detail.events);
-    });
-  </script>
-</body>
+      // Then import components
+      import "@nostr-post/web";
+    </script>
+  </head>
+  <body>
+    <h1>My Nostr App</h1>
+
+    <!-- Composer for creating posts -->
+    <nostr-post-composer></nostr-post-composer>
+
+    <!-- Feed for viewing posts -->
+    <nostr-post-feed kinds="1" limit="20"></nostr-post-feed>
+
+    <script>
+      const composer = document.querySelector("nostr-post-composer");
+      composer.addEventListener("nostr-post-submit", (e) => {
+        console.log("Published:", e.detail.events);
+      });
+    </script>
+  </body>
 </html>
 ```
 
@@ -93,14 +93,18 @@ Plugins must be imported to register. Add at the top of your App:
 
 ```tsx
 // App.tsx
-import { NostrPostComposer, NostrPostFeed, useNostrAuth } from '@nostr-post/react';
+import {
+  NostrPostComposer,
+  NostrPostFeed,
+  useNostrAuth,
+} from "@nostr-post/react";
 
 // REQUIRED: Import plugins you want to use
-import '@nostr-post/plugin-geo';
-import '@nostr-post/plugin-media';
-import '@nostr-post/plugin-markdown';
-import '@nostr-post/plugin-hashtag';
-import '@nostr-post/plugin-stars';
+import "@nostr-post/plugin-geo";
+import "@nostr-post/plugin-media";
+import "@nostr-post/plugin-markdown";
+import "@nostr-post/plugin-hashtag";
+import "@nostr-post/plugin-stars";
 
 function App() {
   const { pubkey, login, logout, isLoading } = useNostrAuth();
@@ -110,24 +114,20 @@ function App() {
   return (
     <div>
       <h1>My Nostr App</h1>
-      
+
       {!pubkey ? (
         <button onClick={login}>Login with Nostr</button>
       ) : (
         <>
           <button onClick={logout}>Logout</button>
           <p>Connected: {pubkey.slice(0, 8)}...</p>
-          
-          <NostrPostComposer 
+
+          <NostrPostComposer
             pubkey={pubkey}
-            onPublish={(events) => console.log('Published!', events)}
+            onPublish={(events) => console.log("Published!", events)}
           />
-          
-          <NostrPostFeed 
-            authors={[pubkey]}
-            kinds={[1]}
-            limit={20}
-          />
+
+          <NostrPostFeed authors={[pubkey]} kinds={[1]} limit={20} />
         </>
       )}
     </div>
@@ -140,16 +140,16 @@ export default App;
 ### With Custom Manifest
 
 ```tsx
-import { NostrPostComposer } from '@nostr-post/react';
-import type { NostrPostManifest } from '@nostr-post/core/types';
-import '@nostr-post/plugin-markdown';
-import '@nostr-post/plugin-geo';
-import '@nostr-post/plugin-media';
+import { NostrPostComposer } from "@nostr-post/react";
+import type { NostrPostManifest } from "@nostr-post/core/types";
+import "@nostr-post/plugin-markdown";
+import "@nostr-post/plugin-geo";
+import "@nostr-post/plugin-media";
 
 const articleManifest: NostrPostManifest = {
   id: "article-v1",
   version: "1.0.0",
-  requiredKinds: [30023],  // Long-form article
+  requiredKinds: [30023], // Long-form article
   fields: [
     {
       id: "title",
@@ -182,7 +182,7 @@ const articleManifest: NostrPostManifest = {
       type: "string",
       visibility: {
         edit: "visible",
-        view: "hidden"  // Hidden from viewers
+        view: "hidden", // Hidden from viewers
       },
       mapTo: { kind: 30023, target: "draft" },
     },
@@ -194,7 +194,7 @@ function ArticlePublisher({ pubkey }: { pubkey: string }) {
     <NostrPostComposer
       pubkey={pubkey}
       manifest={articleManifest}
-      onPublish={(events) => alert('Article published!')}
+      onPublish={(events) => alert("Article published!")}
     />
   );
 }
@@ -208,11 +208,11 @@ export default ArticlePublisher;
 <NostrPostComposer
   pubkey={pubkey}
   manifest={manifest}
-  excludeFields={["internal-notes", "admin-tag"]}  // Hide these fields
-  readonlyFields={["author-name"]}                 // Allow view but not edit
+  excludeFields={["internal-notes", "admin-tag"]} // Hide these fields
+  readonlyFields={["author-name"]} // Allow view but not edit
   prefill={{
     "author-name": "Alice",
-    "date-created": new Date().toISOString()
+    "date-created": new Date().toISOString(),
   }}
 />
 ```
@@ -236,16 +236,16 @@ npm install @nostr-post/plugin-geo @nostr-post/plugin-media @nostr-post/plugin-m
 
 ```tsx
 // app/layout.tsx
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
+import { ReactNode } from "react";
 
 // Import plugins ONCE at top level
-import '@nostr-post/plugin-geo';
-import '@nostr-post/plugin-media';
-import '@nostr-post/plugin-markdown';
-import '@nostr-post/plugin-hashtag';
-import '@nostr-post/plugin-stars';
+import "@nostr-post/plugin-geo";
+import "@nostr-post/plugin-media";
+import "@nostr-post/plugin-markdown";
+import "@nostr-post/plugin-hashtag";
+import "@nostr-post/plugin-stars";
 
 export default function Layout({ children }: { children: ReactNode }) {
   return (
@@ -258,9 +258,13 @@ export default function Layout({ children }: { children: ReactNode }) {
 
 ```tsx
 // app/page.tsx
-'use client';
+"use client";
 
-import { NostrPostComposer, NostrPostFeed, useNostrAuth } from '@nostr-post/react';
+import {
+  NostrPostComposer,
+  NostrPostFeed,
+  useNostrAuth,
+} from "@nostr-post/react";
 
 export default function Home() {
   const { pubkey, login, logout, isLoading } = useNostrAuth();
@@ -270,18 +274,18 @@ export default function Home() {
   return (
     <main className="container mx-auto p-4">
       <h1>Nostr Post Demo</h1>
-      
+
       {!pubkey ? (
         <button onClick={login}>Login with Nostr</button>
       ) : (
         <>
           <button onClick={logout}>Logout</button>
-          
+
           <section className="my-8">
             <h2>Create a Post</h2>
             <NostrPostComposer pubkey={pubkey} />
           </section>
-          
+
           <section className="my-8">
             <h2>Your Posts</h2>
             <NostrPostFeed authors={[pubkey]} kinds={[1]} limit={20} />
@@ -338,17 +342,21 @@ if (!validation.success) {
 }
 
 // 3. Coordinate events from form data
-const result = coordinateEvents(manifest, {
-  content: "Hello, Nostr!"
-}, {
-  pubkey: "your-public-key-hex",
-  createdAt: Math.floor(Date.now() / 1000),
-});
+const result = coordinateEvents(
+  manifest,
+  {
+    content: "Hello, Nostr!",
+  },
+  {
+    pubkey: "your-public-key-hex",
+    createdAt: Math.floor(Date.now() / 1000),
+  },
+);
 
 if (result.success) {
   const { events } = result.data;
   console.log("Generated events:", events);
-  
+
   // Now sign and publish with your preferred library
   // (NDK, nostr-tools, etc.)
 }
@@ -357,18 +365,14 @@ if (result.success) {
 ### With NIP-78 Manifest Linking
 
 ```typescript
-const result = coordinateEvents(
-  manifest,
-  formData,
-  {
-    pubkey,
-    createdAt: Math.floor(Date.now() / 1000),
-    manifestRef: {
-      kind: 30078,
-      dTag: "my-manifest-v1"
-    }
-  }
-);
+const result = coordinateEvents(manifest, formData, {
+  pubkey,
+  createdAt: Math.floor(Date.now() / 1000),
+  manifestRef: {
+    kind: 30078,
+    dTag: "my-manifest-v1",
+  },
+});
 
 if (result.success) {
   // events[0]: Kind 1 (social post)
@@ -428,8 +432,8 @@ pnpm dev
 ### Pattern 1: Feed with Auto-Refresh
 
 ```tsx
-import { useRef } from 'react';
-import { NostrPostFeed } from '@nostr-post/react';
+import { useRef } from "react";
+import { NostrPostFeed } from "@nostr-post/react";
 
 function MyFeed() {
   const feedRef = useRef<any>(null);
@@ -451,7 +455,7 @@ function MyFeed() {
 
 ```tsx
 const [draft, setDraft] = useState(() => {
-  const saved = localStorage.getItem('draft');
+  const saved = localStorage.getItem("draft");
   return saved ? JSON.parse(saved) : {};
 });
 
@@ -460,12 +464,12 @@ const [draft, setDraft] = useState(() => {
   prefill={draft}
   onChange={(data) => {
     setDraft(data);
-    localStorage.setItem('draft', JSON.stringify(data));
+    localStorage.setItem("draft", JSON.stringify(data));
   }}
   onPublish={() => {
-    localStorage.removeItem('draft');
+    localStorage.removeItem("draft");
   }}
-/>
+/>;
 ```
 
 ### Pattern 3: Field Visibility Controls
@@ -479,19 +483,19 @@ const manifest: NostrPostManifest = {
     {
       id: "public-content",
       type: "string",
-      visibility: { edit: "visible", view: "visible" }
+      visibility: { edit: "visible", view: "visible" },
     },
     {
       id: "private-notes",
       type: "string",
-      visibility: { edit: "visible", view: "hidden" }  // ← Hidden from viewers
+      visibility: { edit: "visible", view: "hidden" }, // ← Hidden from viewers
     },
     {
       id: "author",
       type: "string",
-      visibility: { edit: "readonly", view: "visible" } // ← Can't edit
-    }
-  ]
+      visibility: { edit: "readonly", view: "visible" }, // ← Can't edit
+    },
+  ],
 };
 ```
 

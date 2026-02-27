@@ -355,14 +355,16 @@ pnpm format
 
 ## 📚 Documentation
 
-See the guides above for complete documentation:
-
-- **[QUICKSTART.md](./QUICKSTART.md)** - Setup for Web Components, React, Next.js
-- **[USAGE_GUIDE.md](./USAGE_GUIDE.md)** - Complete API reference
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Design decisions and NIP support
-- **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** - Contributing and building
-- **[EXAMPLES.md](./EXAMPLES.md)** - Real-world code examples
-- **[PLUGINS.md](./PLUGINS.md)** - Creating custom plugins
+| Guide | Purpose |
+|-------|---------|
+| **[QUICKSTART.md](./QUICKSTART.md)** | Setup for Web Components, React, Next.js |
+| **[USAGE_GUIDE.md](./USAGE_GUIDE.md)** | Complete API reference for all packages |
+| **[ARCHITECTURE.md](./ARCHITECTURE.md)** | Design decisions, NIP support, patterns |
+| **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** | Contributing, technical standards |
+| **[EXAMPLES.md](./EXAMPLES.md)** | Real-world code examples |
+| **[PLUGINS.md](./PLUGINS.md)** | Creating custom UI plugins |
+| **[INTEGRATION.md](./INTEGRATION.md)** | Using in other projects, Vercel deployment, venue review app example |
+| **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** | Technical implementation summary |
 
 ## 🤝 Contributing
 

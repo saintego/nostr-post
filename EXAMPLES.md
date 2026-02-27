@@ -114,7 +114,14 @@ const restaurantReviewManifest: NostrPostManifest = {
       type: "enum",
       uiPlugin: "select",
       mapTo: { kind: 30078, target: "content", path: "venue.cuisine" },
-      options: ["Italian", "Japanese", "Mexican", "American", "French", "Other"],
+      options: [
+        "Italian",
+        "Japanese",
+        "Mexican",
+        "American",
+        "French",
+        "Other",
+      ],
     },
   ],
 };
@@ -200,42 +207,42 @@ The `@nostr-post/web` package provides framework-independent Web Components.
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Nostr Post Demo</title>
-</head>
-<body>
-  <h1>Create a Post</h1>
-  <nostr-post-composer></nostr-post-composer>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Nostr Post Demo</title>
+  </head>
+  <body>
+    <h1>Create a Post</h1>
+    <nostr-post-composer></nostr-post-composer>
 
-  <h1>View Posts</h1>
-  <nostr-post-feed kinds="1" limit="10"></nostr-post-feed>
+    <h1>View Posts</h1>
+    <nostr-post-feed kinds="1" limit="10"></nostr-post-feed>
 
-  <script type="module">
-    import '@nostr-post/web';
+    <script type="module">
+      import "@nostr-post/web";
 
-    const composer = document.querySelector('nostr-post-composer');
-    
-    // Listen for published events
-    composer.addEventListener('nostr-post-submit', (e) => {
-      console.log('Published events:', e.detail.events);
-      alert('Post published successfully!');
-    });
+      const composer = document.querySelector("nostr-post-composer");
 
-    // Listen for errors
-    composer.addEventListener('nostr-post-error', (e) => {
-      console.error('Error:', e.detail.error);
-      alert('Error: ' + e.detail.error);
-    });
-  </script>
-</body>
+      // Listen for published events
+      composer.addEventListener("nostr-post-submit", (e) => {
+        console.log("Published events:", e.detail.events);
+        alert("Post published successfully!");
+      });
+
+      // Listen for errors
+      composer.addEventListener("nostr-post-error", (e) => {
+        console.error("Error:", e.detail.error);
+        alert("Error: " + e.detail.error);
+      });
+    </script>
+  </body>
 </html>
 ```
 
 ### Example 2: Composer with Custom Theme
 
 ```html
-<nostr-post-composer 
+<nostr-post-composer
   id="my-composer"
   theme-primary-color="#8b5cf6"
   theme-background-color="#ffffff"
@@ -243,10 +250,10 @@ The `@nostr-post/web` package provides framework-independent Web Components.
 ></nostr-post-composer>
 
 <script type="module">
-  import '@nostr-post/web';
+  import "@nostr-post/web";
 
-  const composer = document.getElementById('my-composer');
-  
+  const composer = document.getElementById("my-composer");
+
   // Set manifest programmatically
   const manifest = {
     id: "custom-post-v1",
@@ -259,10 +266,10 @@ The `@nostr-post/web` package provides framework-independent Web Components.
         uiPlugin: "textarea",
         mapTo: { kind: 1, target: "content" },
         required: true,
-      }
-    ]
+      },
+    ],
   };
-  
+
   composer.manifest = manifest;
 </script>
 ```
@@ -271,27 +278,27 @@ The `@nostr-post/web` package provides framework-independent Web Components.
 
 ```html
 <!-- Show posts from specific authors -->
-<nostr-post-feed 
+<nostr-post-feed
   authors='["pubkey1", "pubkey2"]'
   kinds="1"
   limit="20"
 ></nostr-post-feed>
 
 <!-- Show posts with specific hashtags -->
-<nostr-post-feed 
+<nostr-post-feed
   kinds="1"
   tags='{"t": ["nostr", "bitcoin"]}'
   limit="10"
 ></nostr-post-feed>
 
 <script type="module">
-  import '@nostr-post/web';
+  import "@nostr-post/web";
 
-  const feed = document.querySelector('nostr-post-feed');
-  
+  const feed = document.querySelector("nostr-post-feed");
+
   // Listen for events loaded
-  feed.addEventListener('nostr-feed-loaded', (e) => {
-    console.log('Loaded events:', e.detail.events);
+  feed.addEventListener("nostr-feed-loaded", (e) => {
+    console.log("Loaded events:", e.detail.events);
   });
 </script>
 ```
@@ -299,17 +306,17 @@ The `@nostr-post/web` package provides framework-independent Web Components.
 ### Example 4: View Single Event
 
 ```html
-<nostr-post-view 
+<nostr-post-view
   id="event-viewer"
   show-tags="true"
   show-kind="true"
 ></nostr-post-view>
 
 <script type="module">
-  import '@nostr-post/web';
+  import "@nostr-post/web";
 
-  const viewer = document.getElementById('event-viewer');
-  
+  const viewer = document.getElementById("event-viewer");
+
   // Set event to display
   viewer.event = {
     id: "event-id-hex",
@@ -318,7 +325,7 @@ The `@nostr-post/web` package provides framework-independent Web Components.
     created_at: 1703865600,
     tags: [["t", "nostr"]],
     content: "Hello, Nostr!",
-    sig: "signature-hex"
+    sig: "signature-hex",
   };
 </script>
 ```
@@ -332,7 +339,7 @@ The `@nostr-post/react` package provides React hooks and components.
 ### Example 1: Basic Authentication and Posting
 
 ```tsx
-import { NostrPostComposer, useNostrAuth } from '@nostr-post/react';
+import { NostrPostComposer, useNostrAuth } from "@nostr-post/react";
 
 function App() {
   const { pubkey, login, logout, isLoading } = useNostrAuth();
@@ -344,23 +351,23 @@ function App() {
   return (
     <div>
       <h1>My Nostr App</h1>
-      
+
       {!pubkey ? (
         <button onClick={login}>Login with Nostr</button>
       ) : (
         <>
           <p>Connected as: {pubkey.slice(0, 8)}...</p>
           <button onClick={logout}>Logout</button>
-          
-          <NostrPostComposer 
+
+          <NostrPostComposer
             pubkey={pubkey}
             onPublish={(events) => {
-              console.log('Published:', events);
-              alert('Post published successfully!');
+              console.log("Published:", events);
+              alert("Post published successfully!");
             }}
             onError={(error) => {
-              console.error('Error:', error);
-              alert('Error: ' + error);
+              console.error("Error:", error);
+              alert("Error: " + error);
             }}
           />
         </>
@@ -375,8 +382,8 @@ export default App;
 ### Example 2: Feed with Custom Manifest
 
 ```tsx
-import { NostrPostFeed, NostrPostComposer } from '@nostr-post/react';
-import type { NostrPostManifest } from '@nostr-post/core/types';
+import { NostrPostFeed, NostrPostComposer } from "@nostr-post/react";
+import type { NostrPostManifest } from "@nostr-post/core/types";
 
 const customManifest: NostrPostManifest = {
   id: "blog-post-v1",
@@ -405,15 +412,12 @@ function BlogApp({ pubkey }: { pubkey: string }) {
     <div>
       <section>
         <h2>Create Blog Post</h2>
-        <NostrPostComposer 
-          pubkey={pubkey} 
-          manifest={customManifest}
-        />
+        <NostrPostComposer pubkey={pubkey} manifest={customManifest} />
       </section>
-      
+
       <section>
         <h2>Your Blog Posts</h2>
-        <NostrPostFeed 
+        <NostrPostFeed
           authors={[pubkey]}
           kinds={[1]}
           limit={20}
@@ -428,23 +432,23 @@ function BlogApp({ pubkey }: { pubkey: string }) {
 ### Example 3: Custom Styling
 
 ```tsx
-import { NostrPostComposer } from '@nostr-post/react';
+import { NostrPostComposer } from "@nostr-post/react";
 
 function StyledComposer({ pubkey }: { pubkey: string }) {
   return (
     <NostrPostComposer
       pubkey={pubkey}
       theme={{
-        primaryColor: '#8b5cf6',
-        backgroundColor: '#ffffff',
-        textColor: '#1f2937',
-        borderRadius: '12px',
-        borderColor: '#e5e7eb',
+        primaryColor: "#8b5cf6",
+        backgroundColor: "#ffffff",
+        textColor: "#1f2937",
+        borderRadius: "12px",
+        borderColor: "#e5e7eb",
       }}
       style={{
-        maxWidth: '600px',
-        margin: '0 auto',
-        padding: '20px',
+        maxWidth: "600px",
+        margin: "0 auto",
+        padding: "20px",
       }}
     />
   );
@@ -454,13 +458,13 @@ function StyledComposer({ pubkey }: { pubkey: string }) {
 ### Example 4: Using Hooks Directly
 
 ```tsx
-import { useNostrAuth, useNostrSigner } from '@nostr-post/react';
-import { coordinateEvents } from '@nostr-post/core/coordinator';
+import { useNostrAuth, useNostrSigner } from "@nostr-post/react";
+import { coordinateEvents } from "@nostr-post/core/coordinator";
 
 function CustomPostForm() {
   const { pubkey } = useNostrAuth();
   const { signEvent, publishEvent } = useNostrSigner();
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -468,26 +472,32 @@ function CustomPostForm() {
     if (!pubkey) return;
 
     setIsPublishing(true);
-    
+
     try {
       // Create unsigned event
       const manifest = {
         id: "simple-post-v1",
         version: "1.0.0",
         requiredKinds: [1],
-        fields: [{
-          id: "content",
-          type: "string",
-          uiPlugin: "textarea",
-          mapTo: { kind: 1, target: "content" },
-          required: true,
-        }],
+        fields: [
+          {
+            id: "content",
+            type: "string",
+            uiPlugin: "textarea",
+            mapTo: { kind: 1, target: "content" },
+            required: true,
+          },
+        ],
       };
 
-      const result = coordinateEvents(manifest, { content }, {
-        pubkey,
-        createdAt: Math.floor(Date.now() / 1000),
-      });
+      const result = coordinateEvents(
+        manifest,
+        { content },
+        {
+          pubkey,
+          createdAt: Math.floor(Date.now() / 1000),
+        },
+      );
 
       if (!result.success) {
         throw new Error(result.error);
@@ -496,12 +506,12 @@ function CustomPostForm() {
       // Sign and publish
       const signedEvent = await signEvent(result.data.events[0]);
       await publishEvent(signedEvent);
-      
-      alert('Post published!');
-      setContent('');
+
+      alert("Post published!");
+      setContent("");
     } catch (error) {
-      console.error('Error publishing:', error);
-      alert('Failed to publish post');
+      console.error("Error publishing:", error);
+      alert("Failed to publish post");
     } finally {
       setIsPublishing(false);
     }
@@ -516,7 +526,7 @@ function CustomPostForm() {
         disabled={isPublishing}
       />
       <button type="submit" disabled={!pubkey || isPublishing}>
-        {isPublishing ? 'Publishing...' : 'Publish'}
+        {isPublishing ? "Publishing..." : "Publish"}
       </button>
     </form>
   );
@@ -531,9 +541,13 @@ function CustomPostForm() {
 
 ```tsx
 // ReviewApp.tsx
-import { useState } from 'react';
-import { NostrPostComposer, NostrPostFeed, useNostrAuth } from '@nostr-post/react';
-import type { NostrPostManifest } from '@nostr-post/core/types';
+import { useState } from "react";
+import {
+  NostrPostComposer,
+  NostrPostFeed,
+  useNostrAuth,
+} from "@nostr-post/react";
+import type { NostrPostManifest } from "@nostr-post/core/types";
 
 const reviewManifest: NostrPostManifest = {
   id: "product-review-v1",
@@ -567,7 +581,7 @@ const reviewManifest: NostrPostManifest = {
 
 export function ReviewApp() {
   const { pubkey, login, logout } = useNostrAuth();
-  const [view, setView] = useState<'create' | 'browse'>('browse');
+  const [view, setView] = useState<"create" | "browse">("browse");
 
   if (!pubkey) {
     return (
@@ -583,24 +597,24 @@ export function ReviewApp() {
       <header>
         <h1>Product Reviews</h1>
         <nav>
-          <button onClick={() => setView('browse')}>Browse</button>
-          <button onClick={() => setView('create')}>Create Review</button>
+          <button onClick={() => setView("browse")}>Browse</button>
+          <button onClick={() => setView("create")}>Create Review</button>
           <button onClick={logout}>Logout</button>
         </nav>
       </header>
 
       <main>
-        {view === 'create' ? (
-          <NostrPostComposer 
+        {view === "create" ? (
+          <NostrPostComposer
             pubkey={pubkey}
             manifest={reviewManifest}
             onPublish={() => {
-              alert('Review published!');
-              setView('browse');
+              alert("Review published!");
+              setView("browse");
             }}
           />
         ) : (
-          <NostrPostFeed 
+          <NostrPostFeed
             kinds={[1, 30078]}
             limit={50}
             manifest={reviewManifest}
@@ -616,9 +630,9 @@ export function ReviewApp() {
 
 ```tsx
 // App.tsx
-import { useState } from 'react';
-import { NostrPostComposer, useNostrAuth } from '@nostr-post/react';
-import type { NostrPostManifest } from '@nostr-post/core/types';
+import { useState } from "react";
+import { NostrPostComposer, useNostrAuth } from "@nostr-post/react";
+import type { NostrPostManifest } from "@nostr-post/core/types";
 
 const manifests: Record<string, NostrPostManifest> = {
   simplePost: {
@@ -660,7 +674,7 @@ const manifests: Record<string, NostrPostManifest> = {
 
 export function App() {
   const { pubkey, login } = useNostrAuth();
-  const [selectedManifest, setSelectedManifest] = useState('simplePost');
+  const [selectedManifest, setSelectedManifest] = useState("simplePost");
 
   if (!pubkey) {
     return <button onClick={login}>Login</button>;
@@ -668,8 +682,8 @@ export function App() {
 
   return (
     <div>
-      <select 
-        value={selectedManifest} 
+      <select
+        value={selectedManifest}
         onChange={(e) => setSelectedManifest(e.target.value)}
       >
         <option value="simplePost">Simple Post</option>
@@ -691,13 +705,13 @@ export function App() {
 
 // 3. Coordinate events
 const result = coordinateEvents(restaurantReviewManifest, formData, {
-  pubkey: "YOUR_PUBLIC_KEY_HERE",
-  createdAt: Math.floor(Date.now() / 1000),
+pubkey: "YOUR_PUBLIC_KEY_HERE",
+createdAt: Math.floor(Date.now() / 1000),
 });
 
 if (!result.success) {
-  console.error("Validation errors:", result.error);
-  process.exit(1);
+console.error("Validation errors:", result.error);
+process.exit(1);
 }
 
 // 4. Get the event bundle
@@ -708,26 +722,27 @@ console.log(JSON.stringify(events, null, 2));
 
 // Events[0] - Kind 1 (Social note)
 // {
-//   "kind": 1,
-//   "created_at": 1703865600,
-//   "tags": [["r", "5"]],
-//   "content": "# Amazing Pizza!\n\nBest pizza in town. The crust was perfect!",
-//   "pubkey": "YOUR_PUBLIC_KEY_HERE"
+// "kind": 1,
+// "created_at": 1703865600,
+// "tags": [["r", "5"]],
+// "content": "# Amazing Pizza!\n\nBest pizza in town. The crust was perfect!",
+// "pubkey": "YOUR_PUBLIC_KEY_HERE"
 // }
 
 // Events[1] - Kind 30078 (Structured data)
 // {
-//   "kind": 30078,
-//   "created_at": 1703865600,
-//   "tags": [],
-//   "content": "{\"venue\":{\"name\":\"Mario's Pizzeria\",\"address\":\"123 Main St, New York, NY\",\"location\":{\"lat\":40.7128,\"lon\":-74.006},\"cuisine\":\"Italian\"}}",
-//   "pubkey": "YOUR_PUBLIC_KEY_HERE"
+// "kind": 30078,
+// "created_at": 1703865600,
+// "tags": [],
+// "content": "{\"venue\":{\"name\":\"Mario's Pizzeria\",\"address\":\"123 Main St, New York, NY\",\"location\":{\"lat\":40.7128,\"lon\":-74.006},\"cuisine\":\"Italian\"}}",
+// "pubkey": "YOUR_PUBLIC_KEY_HERE"
 // }
 
 // 5. Sign and publish (using your preferred Nostr library)
 // const signedEvents = await signEvents(events, privateKey);
 // await publishEvents(signedEvents, relays);
-```
+
+````
 
 ## Example 2: Simple Article
 
@@ -777,7 +792,7 @@ export const articleManifest: NostrPostManifest = {
     tags: ["article", "blog", "writing"],
   },
 };
-```
+````
 
 ### Usage
 
@@ -902,7 +917,10 @@ if (!validation.success) {
 import { getRequiredFields } from "@nostr-post/core/manifest";
 
 const requiredFields = getRequiredFields(restaurantReviewManifest);
-console.log("Required fields:", requiredFields.map(f => f.id));
+console.log(
+  "Required fields:",
+  requiredFields.map((f) => f.id),
+);
 // Output: ['reviewText', 'rating', 'venueName']
 ```
 
@@ -912,11 +930,17 @@ console.log("Required fields:", requiredFields.map(f => f.id));
 import { getFieldsByKind } from "@nostr-post/core/manifest";
 
 const kind1Fields = getFieldsByKind(restaurantReviewManifest, 1);
-console.log("Kind 1 fields:", kind1Fields.map(f => f.id));
+console.log(
+  "Kind 1 fields:",
+  kind1Fields.map((f) => f.id),
+);
 // Output: ['reviewText', 'rating']
 
 const kind30078Fields = getFieldsByKind(restaurantReviewManifest, 30078);
-console.log("Kind 30078 fields:", kind30078Fields.map(f => f.id));
+console.log(
+  "Kind 30078 fields:",
+  kind30078Fields.map((f) => f.id),
+);
 // Output: ['venueName', 'venueAddress', 'location', 'cuisine']
 ```
 
@@ -947,12 +971,14 @@ console.log(venueName); // "Mario's Pizzeria"
 Location: `examples/basic/`
 
 Features:
+
 - Vanilla Web Components with nostr-login
 - Composer with live preview
 - Feed with search and filtering
 - Manifest creator tool
 
 Run it:
+
 ```bash
 cd examples/basic
 pnpm install
@@ -964,12 +990,14 @@ pnpm dev
 Location: `examples/react-demo/`
 
 Features:
+
 - React with Vite
 - useNostrAuth hook
 - NostrPostComposer and NostrPostFeed components
 - Responsive design
 
 Run it:
+
 ```bash
 cd examples/react-demo
 pnpm install
@@ -981,12 +1009,14 @@ pnpm dev
 Location: `examples/nextjs-demo/`
 
 Features:
+
 - Next.js 14 with App Router
 - Server and client components
 - Tailwind CSS styling
 - Full authentication flow
 
 Run it:
+
 ```bash
 cd examples/nextjs-demo
 pnpm install
@@ -1000,9 +1030,9 @@ pnpm dev
 ### Pattern 1: Multi-Step Form
 
 ```tsx
-import { useState } from 'react';
-import { coordinateEvents } from '@nostr-post/core/coordinator';
-import { useNostrSigner } from '@nostr-post/react';
+import { useState } from "react";
+import { coordinateEvents } from "@nostr-post/core/coordinator";
+import { useNostrSigner } from "@nostr-post/react";
 
 function MultiStepForm({ pubkey }: { pubkey: string }) {
   const [step, setStep] = useState(1);
@@ -1019,8 +1049,20 @@ function MultiStepForm({ pubkey }: { pubkey: string }) {
 
   return (
     <div>
-      {step === 1 && <Step1 data={formData} onChange={setFormData} onNext={() => setStep(2)} />}
-      {step === 2 && <Step2 data={formData} onChange={setFormData} onNext={() => setStep(3)} />}
+      {step === 1 && (
+        <Step1
+          data={formData}
+          onChange={setFormData}
+          onNext={() => setStep(2)}
+        />
+      )}
+      {step === 2 && (
+        <Step2
+          data={formData}
+          onChange={setFormData}
+          onNext={() => setStep(3)}
+        />
+      )}
       {step === 3 && <Step3 data={formData} onSubmit={handleComplete} />}
     </div>
   );
@@ -1030,15 +1072,15 @@ function MultiStepForm({ pubkey }: { pubkey: string }) {
 ### Pattern 2: Draft Saving
 
 ```tsx
-import { useState, useEffect } from 'react';
-import { NostrPostComposer } from '@nostr-post/react';
+import { useState, useEffect } from "react";
+import { NostrPostComposer } from "@nostr-post/react";
 
 function DraftComposer({ pubkey }: { pubkey: string }) {
   const [draft, setDraft] = useState<Record<string, unknown>>({});
 
   // Load draft from localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('nostr-draft');
+    const saved = localStorage.getItem("nostr-draft");
     if (saved) {
       setDraft(JSON.parse(saved));
     }
@@ -1047,11 +1089,11 @@ function DraftComposer({ pubkey }: { pubkey: string }) {
   // Save draft periodically
   const handleChange = (data: Record<string, unknown>) => {
     setDraft(data);
-    localStorage.setItem('nostr-draft', JSON.stringify(data));
+    localStorage.setItem("nostr-draft", JSON.stringify(data));
   };
 
   const handlePublish = () => {
-    localStorage.removeItem('nostr-draft');
+    localStorage.removeItem("nostr-draft");
   };
 
   return (
@@ -1068,7 +1110,7 @@ function DraftComposer({ pubkey }: { pubkey: string }) {
 ### Pattern 3: Event Validation Before Publishing
 
 ```tsx
-import { coordinateEvents, validateManifest } from '@nostr-post/core';
+import { coordinateEvents, validateManifest } from "@nostr-post/core";
 
 async function publishWithValidation(manifest, formData, pubkey) {
   // 1. Validate manifest
@@ -1087,13 +1129,13 @@ async function publishWithValidation(manifest, formData, pubkey) {
   const { events } = result.data;
   for (const event of events) {
     if (event.content.length > 10000) {
-      throw new Error('Content too long');
+      throw new Error("Content too long");
     }
   }
 
   // 4. Sign and publish
   // ... your signing/publishing logic
-  
+
   return events;
 }
 ```
