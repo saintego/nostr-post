@@ -28,6 +28,17 @@ export interface CoordinatorConfig {
   createdAt?: number; // Unix timestamp (defaults to now)
   /** Optional per-field tag serializer. Called with (value, field) before the default serializer. */
   tagSerializer?: (value: unknown, field: PostField) => string | undefined;
+  /**
+   * Optional manifest reference (`a` tag value) to embed in produced events.
+   * Format: "30078:<pubkey>:nostr-post:<manifest-id>"
+   * When set, each event gets an `["a", "<ref>"]` tag so viewers can auto-fetch the manifest.
+   */
+  manifestRef?: string;
+  /**
+   * Optional `d` tag value for parameterized replaceable events (kinds 30000-39999).
+   * If not set, an empty string is used as default per NIP-01.
+   */
+  dTag?: string;
 }
 
 /**
@@ -195,6 +206,18 @@ const createEventForKind = (
   const contentFields = fields.filter((f) => f.mapTo.target === 'content');
   const tagFields = fields.filter((f) => f.mapTo.target === 'tag');
 
+  // For parameterized replaceable events (kinds 30000-39999), auto-add `d` tag
+  if (kind >= 30000 && kind < 40000) {
+    // Use manifest id as the d-tag identifier if no explicit d tag exists in the fields
+    const hasDTag = tagFields.some((f) => f.mapTo.tagName === 'd');
+    if (!hasDTag && config.dTag !== undefined) {
+      tags.push(['d', config.dTag]);
+    } else if (!hasDTag) {
+      // Default d-tag: empty string (NIP-01 spec requires it for addressable events)
+      tags.push(['d', '']);
+    }
+  }
+
   // Build content (for NIP-78, this will be JSON)
   if (contentFields.length > 0) {
     if (kind === 30078 || kind === 30079) {
@@ -230,6 +253,11 @@ const createEventForKind = (
       const stringValue = custom !== undefined ? custom : serializeTagValue(value);
       tags.push([field.mapTo.tagName, stringValue]);
     }
+  }
+
+  // Add manifest reference tag if configured
+  if (config.manifestRef) {
+    tags.push(['a', config.manifestRef]);
   }
 
   return {
@@ -310,13 +338,17 @@ export const coordinateEvents = (
     return formValidation as Result<EventBundle, ValidationError[]>;
   }
 
+  // If the manifest opts out of linking, strip the manifestRef from config
+  const effectiveConfig =
+    manifest.linkManifest === false ? { ...config, manifestRef: undefined } : config;
+
   // Create events for each required kind
   const events: UnsignedNostrEvent[] = [];
 
   for (const kind of manifest.requiredKinds) {
     const fieldsForKind = getFieldsByKind(manifest, kind);
     if (fieldsForKind.length > 0) {
-      const event = createEventForKind(kind, fieldsForKind, formData, config);
+      const event = createEventForKind(kind, fieldsForKind, formData, effectiveConfig);
       events.push(event);
     }
   }

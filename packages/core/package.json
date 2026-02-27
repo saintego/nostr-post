@@ -17,6 +17,10 @@
     "./coordinator": {
       "types": "./dist/coordinator.d.ts",
       "import": "./dist/coordinator.js"
+    },
+    "./nip78": {
+      "types": "./dist/nip78.d.ts",
+      "import": "./dist/nip78.js"
     }
   },
   "scripts": {

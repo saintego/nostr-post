@@ -1,17 +1,22 @@
 /**
  * @nostr-post/web - <nostr-post-view> Web Component
  *
- * A universal viewer for displaying Nostr events
+ * A universal viewer for displaying Nostr events.
+ * Supports multi-event posts: a primary event (e.g. kind 1) with linked
+ * secondary events (e.g. kind 30078 NIP-78 structured data) shown as one post.
  */
 
+import { NIP78_KIND, eventToManifest, parseManifestATag } from '@nostr-post/core/nip78';
 import type { NostrPostManifest, PostField, UnsignedNostrEvent } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { css, html } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { html } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { NostrPostElement, baseStyles } from './base-component';
 import type { SignedEvent } from './signer';
+import { renderLinkedEvents } from './viewLinked';
+import { viewStyle } from './viewStyle';
 
 /** Event type that can be either unsigned or signed */
 export type DisplayableEvent = UnsignedNostrEvent | SignedEvent;
@@ -30,101 +35,7 @@ export type DisplayableEvent = UnsignedNostrEvent | SignedEvent;
  */
 @customElement('nostr-post-view')
 export class NostrPostView extends NostrPostElement {
-  static styles = [
-    baseStyles,
-    css`
-      .view {
-        padding: 1rem;
-        border: 1px solid var(--nl-border, #e5e7eb);
-        border-radius: 8px;
-        background: var(--nl-card-bg, #f9fafb);
-      }
-
-      :host-context(.dark) .view {
-        background: #374151;
-        border-color: #4b5563;
-      }
-
-      .view-header {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        margin-bottom: 0.75rem;
-        font-size: 12px;
-      }
-
-      .view-pubkey {
-        font-family: monospace;
-        color: var(--nl-text-secondary, #6b7280);
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .view-timestamp {
-        color: var(--nl-text-secondary, #6b7280);
-        margin-left: auto;
-      }
-
-      .view-content {
-        white-space: pre-wrap;
-        word-break: break-word;
-        line-height: 1.6;
-        color: var(--nl-text, #1f2937);
-      }
-
-      :host-context(.dark) .view-content {
-        color: #f3f4f6;
-      }
-
-      .view-tags {
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
-        border-top: 1px solid var(--nl-border, #e5e7eb);
-      }
-
-      :host-context(.dark) .view-tags {
-        border-color: #4b5563;
-      }
-
-      .tag {
-        display: inline-block;
-        padding: 2px 8px;
-        margin: 0.25rem 0.25rem 0.25rem 0;
-        background: var(--nl-tag-bg, #e5e7eb);
-        border-radius: 4px;
-        font-size: 12px;
-        color: var(--nl-text-secondary, #6b7280);
-      }
-
-      :host-context(.dark) .tag {
-        background: #4b5563;
-        color: #d1d5db;
-      }
-
-      .tag-name {
-        font-weight: 600;
-        margin-right: 0.25rem;
-      }
-
-      .view-kind {
-        display: inline-block;
-        padding: 2px 8px;
-        background: var(--nl-primary, #6366f1);
-        color: white;
-        border-radius: 4px;
-        font-size: 12px;
-        font-weight: 600;
-      }
-
-      .view-id {
-        margin-top: 0.5rem;
-        font-size: 11px;
-        font-family: monospace;
-        color: var(--nl-text-secondary, #9ca3af);
-        word-break: break-all;
-      }
-    `,
-  ];
+  static styles = [baseStyles, viewStyle];
 
   @property({ type: Object })
   event?: DisplayableEvent;
@@ -132,16 +43,175 @@ export class NostrPostView extends NostrPostElement {
   @property({ type: Object })
   manifest?: NostrPostManifest;
 
+  /** Linked events that are part of this multi-event post (e.g. NIP-78 data) */
+  @property({ type: Array })
+  linkedEvents?: DisplayableEvent[];
+
   @property({ type: Boolean })
   showTags?: boolean;
 
   @property({ type: Boolean })
   showKind?: boolean;
 
+  /** Manifest resolved via auto-fetch from NIP-78 `a` tag */
+  @state()
+  private _resolvedManifest?: NostrPostManifest;
+
+  /** Linked events fetched from relays */
+  @state()
+  private _fetchedLinkedEvents?: DisplayableEvent[];
+
+  /** Track which `a` tag value we've already fetched for */
+  private _lastFetchedATag?: string;
+
+  /** Track which event ID we've fetched linked events for */
+  private _lastFetchedLinkedId?: string;
+
+  /** Static cache of fetched manifests by `a` tag */
+  private static _manifestCache = new Map<string, NostrPostManifest>();
+
+  /** Static cache of fetched linked events by primary event id */
+  private static _linkedEventsCache = new Map<string, DisplayableEvent[]>();
+
   constructor() {
     super();
     this.showTags = true;
     this.showKind = true;
+  }
+
+  /**
+   * The effective manifest: explicit prop takes priority, then auto-fetched.
+   */
+  private get effectiveManifest(): NostrPostManifest | undefined {
+    return this.manifest ?? this._resolvedManifest;
+  }
+
+  /**
+   * All linked events: explicit prop takes priority, then auto-fetched.
+   */
+  private get allLinkedEvents(): DisplayableEvent[] {
+    return this.linkedEvents ?? this._fetchedLinkedEvents ?? [];
+  }
+
+  updated(changedProperties: Map<string, unknown>) {
+    super.updated(changedProperties);
+
+    if ((changedProperties.has('event') || changedProperties.has('manifest')) && this.event) {
+      // Auto-fetch manifest when no explicit manifest is set
+      if (!this.manifest) {
+        this._tryFetchManifest();
+      }
+      // Auto-fetch linked events when manifest has multiple kinds
+      if (!this.linkedEvents) {
+        this._tryFetchLinkedEvents();
+      }
+    }
+  }
+
+  /**
+   * Find an `a` tag in the event that references a nostr-post manifest
+   * and fetch it from relays if not already cached.
+   */
+  private async _tryFetchManifest() {
+    if (!this.event) return;
+
+    // Look for an `a` tag referencing a NIP-78 manifest
+    const aTag = this.event.tags.find((t) => {
+      if (t[0] !== 'a') return false;
+      const ref = parseManifestATag(t[1]);
+      return !!ref;
+    });
+
+    if (!aTag) return;
+
+    const aTagValue = aTag[1];
+
+    // Skip if we already fetched this one
+    if (this._lastFetchedATag === aTagValue) return;
+    this._lastFetchedATag = aTagValue;
+
+    // Check static cache first
+    const cached = NostrPostView._manifestCache.get(aTagValue);
+    if (cached) {
+      this._resolvedManifest = cached;
+      return;
+    }
+
+    // Parse the reference
+    const ref = parseManifestATag(aTagValue);
+    if (!ref) return;
+
+    try {
+      const { fetchEvents } = await import('./signer');
+
+      const events = await fetchEvents({
+        kinds: [NIP78_KIND],
+        authors: [ref.pubkey],
+        '#d': [ref.dTag],
+        limit: 1,
+      });
+
+      if (events.length > 0) {
+        const stored = eventToManifest(events[0]);
+        if (stored) {
+          NostrPostView._manifestCache.set(aTagValue, stored.manifest);
+          this._resolvedManifest = stored.manifest;
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to auto-fetch manifest from relay:', err);
+    }
+  }
+
+  /**
+   * Auto-fetch linked events (e.g. NIP-78 data) that reference this event.
+   * Only fetches when the manifest specifies multiple kinds.
+   */
+  private async _tryFetchLinkedEvents() {
+    if (!this.event) return;
+
+    const eventId = 'id' in this.event ? (this.event as SignedEvent).id : undefined;
+    if (!eventId) return;
+
+    // Only fetch if the manifest has kinds beyond the primary event's kind
+    const m = this.effectiveManifest;
+    if (!m || m.requiredKinds.length <= 1) return;
+
+    // Skip if we already fetched for this event
+    if (this._lastFetchedLinkedId === eventId) return;
+    this._lastFetchedLinkedId = eventId;
+
+    // Check cache
+    const cached = NostrPostView._linkedEventsCache.get(eventId);
+    if (cached) {
+      this._fetchedLinkedEvents = cached;
+      return;
+    }
+
+    const eventKind = this.event?.kind;
+    const eventPubkey = this.event?.pubkey;
+    if (!eventKind || !eventPubkey) return;
+
+    const otherKinds = m.requiredKinds.filter((k) => k !== eventKind);
+    if (otherKinds.length === 0) return;
+
+    try {
+      const { fetchEvents } = await import('./signer');
+
+      const events = await fetchEvents({
+        kinds: otherKinds,
+        '#e': [eventId],
+        authors: [eventPubkey],
+        limit: 10,
+      });
+
+      if (events.length > 0) {
+        NostrPostView._linkedEventsCache.set(eventId, events);
+        this._fetchedLinkedEvents = events;
+      }
+    } catch (err) {
+      console.warn('Failed to fetch linked events:', err);
+    }
   }
 
   /**
@@ -192,6 +262,8 @@ export class NostrPostView extends NostrPostElement {
           ${this.renderTagPlugins(tags)}
         </div>
 
+        ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
+
         ${
           this.showTags && tags.length > 0
             ? html`
@@ -218,8 +290,9 @@ export class NostrPostView extends NostrPostElement {
    */
   private getTagFieldMap(): Map<string, PostField> {
     const map = new Map<string, PostField>();
-    if (this.manifest) {
-      for (const field of this.manifest.fields) {
+    const m = this.effectiveManifest;
+    if (m) {
+      for (const field of m.fields) {
         if (field.mapTo.target === 'tag' && field.mapTo.tagName) {
           map.set(field.mapTo.tagName, field);
         }

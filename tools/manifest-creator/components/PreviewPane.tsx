@@ -1,6 +1,7 @@
 'use client';
 
 import { coordinateEvents } from '@nostr-post/core/coordinator';
+import { parseManifestATag } from '@nostr-post/core/nip78';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import type { SignedEvent } from '@nostr-post/react';
@@ -10,30 +11,33 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface NostrPostComposerElement extends HTMLElement {
   manifest: NostrPostManifest;
+  manifestRef?: string;
 }
 
 interface PreviewPaneProps {
   manifest: NostrPostManifest;
+  /** Optional `a` tag value referencing a manifest on Nostr */
+  manifestRef?: string;
 }
 
 const STORAGE_KEY = 'nostr-post-manifest-creator-events';
 
-function loadCachedEvents(): SignedEvent[] {
+const loadCachedEvents = (): SignedEvent[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
-}
+};
 
-function cacheEvents(events: SignedEvent[]) {
+const cacheEvents = (events: SignedEvent[]) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
   } catch {
     // Ignore storage errors
   }
-}
+};
 
 const styles = {
   panel: {
@@ -140,8 +144,58 @@ const styles = {
   },
 } as const;
 
-export function PreviewPane({ manifest }: PreviewPaneProps) {
-  const [activeTab, setActiveTab] = useState<'preview' | 'events' | 'manifest'>('preview');
+/**
+ * Group flat list of events into "posts" — a primary event + its linked events.
+ * Linked events have an `e` tag referencing the primary event (with marker "root").
+ * Events without links are treated as standalone primary events.
+ */
+const groupEventPosts = (
+  events: SignedEvent[]
+): { primary: SignedEvent; linked: SignedEvent[] }[] => {
+  const primaryIds = new Set<string>();
+  const linkedByPrimary = new Map<string, SignedEvent[]>();
+  const primaries: SignedEvent[] = [];
+
+  // First pass: identify linked events (have an `e` tag with "root" marker)
+  for (const event of events) {
+    const rootTag = event.tags.find((t) => t[0] === 'e' && t.length >= 4 && t[3] === 'root');
+    if (rootTag) {
+      const primaryId = rootTag[1];
+      if (!linkedByPrimary.has(primaryId)) {
+        linkedByPrimary.set(primaryId, []);
+      }
+      const arr = linkedByPrimary.get(primaryId);
+      if (arr) {
+        arr.push(event);
+      }
+    }
+  }
+
+  // Second pass: collect primary events (not linked to anything)
+  for (const event of events) {
+    const isLinked = event.tags.some((t) => t[0] === 'e' && t.length >= 4 && t[3] === 'root');
+    if (!isLinked && !primaryIds.has(event.id)) {
+      primaryIds.add(event.id);
+      primaries.push(event);
+    }
+  }
+
+  return primaries.map((primary) => ({
+    primary,
+    linked: linkedByPrimary.get(primary.id) ?? [],
+  }));
+};
+
+/**
+ * Check if an event has an `a` tag that references a nostr-post manifest.
+ * When present, the view component can auto-fetch the manifest from relays.
+ */
+const hasManifestATag = (event: SignedEvent): boolean => {
+  return event.tags.some((t) => t[0] === 'a' && parseManifestATag(t[1]) !== undefined);
+};
+
+export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
+  const [activeTab, setActiveTab] = useState<'preview' | 'events'>('preview');
   const [publishedEvents, setPublishedEvents] = useState<SignedEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [liveEventJson, setLiveEventJson] = useState<string>('');
@@ -215,6 +269,7 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
       const result = coordinateEvents(manifest, data, {
         pubkey: '<pubkey>',
         createdAt: Math.floor(Date.now() / 1000),
+        manifestRef,
         tagSerializer: (value, field) => {
           const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
           return plugin?.serializeValue?.(value, field);
@@ -227,7 +282,7 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
 
     composer.addEventListener('nostr-post-form-change', handleFormChange);
     return () => composer.removeEventListener('nostr-post-form-change', handleFormChange);
-  }, [manifest]);
+  }, [manifest, manifestRef]);
 
   const handlePublished = useCallback((eventDetail: unknown) => {
     let events: SignedEvent[] = [];
@@ -245,15 +300,18 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
       return;
     }
 
+    // Store the entire group of events together as a "post"
+    // The first event is the primary, the rest are linked
     setPublishedEvents((prev) => [...events, ...prev]);
   }, []);
 
-  // Update manifest on the composer element
+  // Update manifest and manifestRef on the composer element
   useEffect(() => {
     if (composerRef.current) {
       composerRef.current.manifest = manifest;
+      composerRef.current.manifestRef = manifestRef;
     }
-  }, [manifest]);
+  }, [manifest, manifestRef]);
 
   // Add event listener for published events
   useEffect(() => {
@@ -298,13 +356,6 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
         >
           Event JSON
         </button>
-        <button
-          type="button"
-          style={activeTab === 'manifest' ? styles.activeTab : styles.tab}
-          onClick={() => setActiveTab('manifest')}
-        >
-          Manifest JSON
-        </button>
       </div>
 
       {/* 
@@ -335,9 +386,15 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
               )}
             </div>
           ) : (
-            publishedEvents.map((event) => (
-              <div key={event.id}>
-                <NostrPostView event={event} manifest={manifest} showKind showTags />
+            groupEventPosts(publishedEvents).map((post) => (
+              <div key={post.primary.id} style={{ marginBottom: '0.75rem' }}>
+                <NostrPostView
+                  event={post.primary}
+                  linkedEvents={post.linked}
+                  manifest={hasManifestATag(post.primary) ? undefined : manifest}
+                  showKind
+                  showTags
+                />
               </div>
             ))
           )}
@@ -375,10 +432,6 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
           )}
         </div>
       )}
-
-      {activeTab === 'manifest' && (
-        <pre style={styles.codeBlock}>{JSON.stringify(manifest, null, 2)}</pre>
-      )}
     </div>
   );
-}
+};

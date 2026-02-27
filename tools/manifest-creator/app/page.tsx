@@ -3,6 +3,7 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { useState } from 'react';
 import { ManifestEditor } from '../components/ManifestEditor';
+import { ManifestNostrPanel } from '../components/ManifestNostrPanel';
 import { PreviewPane } from '../components/PreviewPane';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
 
@@ -36,6 +37,8 @@ const styles = {
 
 export default function Home() {
   const [manifest, setManifest] = useState<NostrPostManifest>(EXAMPLE_MANIFESTS.simple);
+  /** The `a` tag reference to the currently active manifest on Nostr */
+  const [manifestRef, setManifestRef] = useState<string | undefined>();
 
   return (
     <>
@@ -46,8 +49,15 @@ export default function Home() {
 
       <div style={styles.container}>
         <div style={styles.grid}>
-          <ManifestEditor manifest={manifest} onChange={setManifest} />
-          <PreviewPane manifest={manifest} />
+          <div>
+            <ManifestEditor manifest={manifest} onChange={setManifest} />
+            <ManifestNostrPanel
+              manifest={manifest}
+              onChange={setManifest}
+              onManifestRef={setManifestRef}
+            />
+          </div>
+          <PreviewPane manifest={manifest} manifestRef={manifestRef} />
         </div>
       </div>
     </>

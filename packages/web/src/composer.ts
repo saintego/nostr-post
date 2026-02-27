@@ -110,6 +110,10 @@ export class NostrPostComposer extends NostrPostElement {
   @property({ type: String })
   pubkey?: string;
 
+  /** Reference to the manifest event on Nostr (a-tag value, e.g. '30078:<pubkey>:<d-tag>') */
+  @property({ type: String, attribute: 'manifest-ref' })
+  manifestRef?: string;
+
   /** Auto-sign and publish events (uses NIP-07 window.nostr) */
   @property({ type: Boolean, attribute: 'auto-publish' })
   autoPublish = false;
@@ -206,6 +210,7 @@ export class NostrPostComposer extends NostrPostElement {
       const result = coordinateEvents(manifest, this._formData as NostrFormData, {
         pubkey,
         createdAt: Math.floor(Date.now() / 1000),
+        manifestRef: this.manifestRef,
         tagSerializer: (value, field) => {
           const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
           return plugin?.serializeValue?.(value, field);
@@ -225,26 +230,8 @@ export class NostrPostComposer extends NostrPostElement {
       const bundle = result.data;
 
       if (this.autoPublish) {
-        // Auto-sign and publish
-        const relays = this.relays || (await getUserRelays());
-        const signedEvents: SignedEvent[] = [];
-
-        for (const unsignedEvent of bundle.events) {
-          const { signedEvent, publishResults } = await signAndPublish(unsignedEvent, relays);
-          signedEvents.push(signedEvent);
-
-          if (publishResults.success === 0) {
-            throw new Error(
-              `Failed to publish to any relay: ${publishResults.results
-                .map((r) => r.error)
-                .join(', ')}`
-            );
-          }
-        }
-
-        // Dispatch published event
+        const signedEvents = await this.signAndPublishBundle(bundle);
         this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
-
         this.successMessage = `Published to ${signedEvents.length} event(s)!`;
       } else {
         // Manual mode - just dispatch submit event
@@ -260,6 +247,41 @@ export class NostrPostComposer extends NostrPostElement {
     } finally {
       this.isSubmitting = false;
     }
+  }
+
+  /**
+   * Sign and publish all events in a bundle, cross-linking secondary events
+   * back to the primary event via an `e` tag with "root" marker.
+   */
+  private async signAndPublishBundle(bundle: EventBundle): Promise<SignedEvent[]> {
+    const relays = this.relays || (await getUserRelays());
+    const signedEvents: SignedEvent[] = [];
+    let primaryEventId: string | undefined;
+
+    for (let i = 0; i < bundle.events.length; i++) {
+      const unsignedEvent = bundle.events[i];
+
+      // For non-primary events, add `e` tag linking back to the primary event
+      if (i > 0 && primaryEventId) {
+        unsignedEvent.tags = [...unsignedEvent.tags, ['e', primaryEventId, '', 'root']];
+      }
+
+      const { signedEvent, publishResults } = await signAndPublish(unsignedEvent, relays);
+      signedEvents.push(signedEvent);
+
+      // First signed event becomes the primary (its ID is now known)
+      if (i === 0) {
+        primaryEventId = signedEvent.id;
+      }
+
+      if (publishResults.success === 0) {
+        throw new Error(
+          `Failed to publish to any relay: ${publishResults.results.map((r) => r.error).join(', ')}`
+        );
+      }
+    }
+
+    return signedEvents;
   }
 
   /**

@@ -12,6 +12,7 @@ import { useEffect, useRef } from 'react';
 interface NostrPostViewElement extends HTMLElement {
   event?: SignedEvent;
   manifest?: import('@nostr-post/core/types').NostrPostManifest;
+  linkedEvents?: SignedEvent[];
   showKind?: boolean;
   showTags?: boolean;
   showId?: boolean;
@@ -34,10 +35,12 @@ declare global {
 }
 
 export interface NostrPostViewProps {
-  /** The event to display */
+  /** The primary event to display */
   event: SignedEvent;
   /** Manifest for plugin-aware rendering */
   manifest?: import('@nostr-post/core/types').NostrPostManifest;
+  /** Linked events (e.g. NIP-78 data) that are part of this multi-event post */
+  linkedEvents?: SignedEvent[];
   /** Show event kind badge */
   showKind?: boolean;
   /** Show tags */
@@ -58,6 +61,7 @@ export interface NostrPostViewProps {
 export function NostrPostView({
   event,
   manifest,
+  linkedEvents,
   showKind = false,
   showTags = false,
   showId = false,
@@ -76,10 +80,11 @@ export function NostrPostView({
 
     element.event = event;
     element.manifest = manifest;
+    element.linkedEvents = linkedEvents;
     element.showKind = showKind;
     element.showTags = showTags;
     element.showId = showId;
-  }, [event, manifest, showKind, showTags, showId]);
+  }, [event, manifest, linkedEvents, showKind, showTags, showId]);
 
   return (
     <div className={wrapperClassName}>

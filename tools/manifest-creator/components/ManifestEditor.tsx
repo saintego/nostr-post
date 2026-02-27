@@ -236,6 +236,124 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       </div>
 
       <div style={styles.section}>
+        <label
+          style={{
+            ...styles.label,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            cursor: 'pointer',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={manifest.linkManifest !== false}
+            onChange={(e) => onChange({ ...manifest, linkManifest: e.target.checked })}
+          />
+          Link manifest in posts
+        </label>
+        <span
+          style={{ fontSize: '0.75rem', color: '#9ca3af', display: 'block', marginTop: '-0.25rem' }}
+        >
+          When enabled, published events include an &lsquo;a&rsquo; tag so any client can auto-fetch
+          this manifest to render posts correctly. Disable for manifests that only provide a
+          predefined editing experience.
+        </span>
+      </div>
+
+      <div style={styles.section}>
+        <label style={styles.label}>Required Kinds:</label>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+          {manifest.requiredKinds.map((kind, i) => (
+            <span
+              key={kind}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.25rem 0.5rem',
+                background: '#ede9fe',
+                borderRadius: '0.375rem',
+                fontSize: '0.875rem',
+                color: '#6d28d9',
+                fontWeight: 500,
+              }}
+            >
+              {kind === 1
+                ? '1 (Note)'
+                : kind === 30023
+                  ? '30023 (Article)'
+                  : kind === 30078
+                    ? '30078 (NIP-78)'
+                    : kind}
+              <button
+                type="button"
+                onClick={() => {
+                  const newKinds = manifest.requiredKinds.filter((_, idx) => idx !== i);
+                  if (newKinds.length > 0) updateBasic('requiredKinds', newKinds);
+                }}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#6d28d9',
+                  padding: '0 2px',
+                  fontSize: '1rem',
+                  lineHeight: 1,
+                }}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          <select
+            id="add-kind"
+            style={{ ...styles.input, width: 'auto', flex: 1 }}
+            defaultValue=""
+            onChange={(e) => {
+              const kind = Number(e.target.value);
+              if (kind && !manifest.requiredKinds.includes(kind)) {
+                updateBasic('requiredKinds', [...manifest.requiredKinds, kind]);
+              }
+              e.target.value = '';
+            }}
+          >
+            <option value="" disabled>
+              Add kind...
+            </option>
+            {[1, 30023, 30078]
+              .filter((k) => !manifest.requiredKinds.includes(k))
+              .map((k) => (
+                <option key={k} value={k}>
+                  {k === 1
+                    ? '1 — Note'
+                    : k === 30023
+                      ? '30023 — Article (NIP-23)'
+                      : '30078 — App Data (NIP-78)'}
+                </option>
+              ))}
+          </select>
+          <input
+            style={{ ...styles.input, width: '100px' }}
+            type="number"
+            placeholder="Custom"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                const kind = Number((e.target as HTMLInputElement).value);
+                if (kind > 0 && !manifest.requiredKinds.includes(kind)) {
+                  updateBasic('requiredKinds', [...manifest.requiredKinds, kind]);
+                  (e.target as HTMLInputElement).value = '';
+                }
+              }
+            }}
+          />
+        </div>
+      </div>
+
+      <div style={styles.section}>
         <label style={styles.label} htmlFor="manifest-name">
           Name:
         </label>

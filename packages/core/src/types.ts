@@ -66,6 +66,13 @@ export interface NostrPostManifest {
   version: string;
   requiredKinds: number[];
   fields: PostField[];
+  /**
+   * Whether to embed an `a` tag referencing this manifest in published events.
+   * When true (default), viewers can auto-fetch the manifest to render posts correctly.
+   * Set to false for manifests that only provide a predefined editing experience
+   * (e.g., preset tags/hashtags) without requiring a custom view.
+   */
+  linkManifest?: boolean;
   metadata?: {
     name?: string;
     description?: string;

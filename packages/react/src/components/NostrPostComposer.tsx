@@ -12,6 +12,7 @@ import { useEffect, useRef } from 'react';
 // Extend HTMLElement for the web component
 interface NostrPostComposerElement extends HTMLElement {
   manifest?: NostrPostManifest;
+  manifestRef?: string;
   autoPublish?: boolean;
   relays?: string[];
 }
@@ -33,6 +34,8 @@ declare global {
 export interface NostrPostComposerProps {
   /** Manifest defining the form fields (defaults to Kind 1 note) */
   manifest?: NostrPostManifest;
+  /** Reference to the manifest on Nostr (a-tag value, e.g. '30078:<pubkey>:<d-tag>') */
+  manifestRef?: string;
   /** Relay URLs to publish to */
   relays?: string[];
   /** Auto-publish events (uses NIP-07 window.nostr) */
@@ -51,11 +54,12 @@ export interface NostrPostComposerProps {
 
 /**
  * Composer component for creating Nostr posts
- * 
+ *
  * React wrapper around <nostr-post-composer> web component
  */
 export function NostrPostComposer({
   manifest,
+  manifestRef,
   relays,
   autoPublish = true,
   onPublished,
@@ -77,11 +81,12 @@ export function NostrPostComposer({
     if (manifest) {
       element.manifest = manifest;
     }
+    element.manifestRef = manifestRef;
     if (relays) {
       element.relays = relays;
     }
     element.autoPublish = autoPublish;
-  }, [manifest, relays, autoPublish]);
+  }, [manifest, manifestRef, relays, autoPublish]);
 
   // Attach event listeners
   useEffect(() => {

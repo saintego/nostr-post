@@ -158,6 +158,8 @@ export interface FetchFilter {
   until?: number;
   '#e'?: string[];
   '#p'?: string[];
+  '#d'?: string[];
+  '#t'?: string[];
 }
 
 /**

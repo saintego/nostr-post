@@ -226,4 +226,123 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
       description: 'Share a photo with caption and optional location',
     },
   },
+
+  'cafe-review': {
+    id: 'cafe-review-v1',
+    version: '1.0.0',
+    requiredKinds: [1, 30078],
+    fields: [
+      // Kind 1: the main review text (visible to all Nostr clients)
+      {
+        id: 'review',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 1, target: 'content' },
+        required: true,
+        metadata: {
+          label: 'Review',
+          placeholder: 'Share your cafe experience...',
+        },
+      },
+      {
+        id: 'cafeName',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'venue' },
+        required: true,
+        metadata: {
+          label: 'Cafe Name',
+          placeholder: 'Name of the cafe',
+        },
+      },
+      {
+        id: 'overallRating',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
+        required: true,
+        metadata: {
+          label: 'Overall Rating',
+          max: 5,
+        },
+      },
+      {
+        id: 'location',
+        type: 'geo',
+        uiPlugin: 'geo',
+        mapTo: { kind: 1, target: 'tag', tagName: 'geo' },
+        metadata: {
+          label: 'Location',
+          defaultZoom: 15,
+        },
+      },
+      // Kind 30078: structured aspect ratings (for advanced search/filtering)
+      {
+        id: 'wifiRating',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 30078, target: 'content', path: 'ratings.wifi' },
+        metadata: {
+          label: 'WiFi Quality',
+          max: 5,
+        },
+      },
+      {
+        id: 'laptopFriendly',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 30078, target: 'content', path: 'ratings.laptopFriendly' },
+        metadata: {
+          label: 'Laptop Friendly',
+          max: 5,
+        },
+      },
+      {
+        id: 'coffeeQuality',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 30078, target: 'content', path: 'ratings.coffee' },
+        metadata: {
+          label: 'Coffee Quality',
+          max: 5,
+        },
+      },
+      {
+        id: 'foodQuality',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 30078, target: 'content', path: 'ratings.food' },
+        metadata: {
+          label: 'Food Quality',
+          max: 5,
+        },
+      },
+      {
+        id: 'vibeRating',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 30078, target: 'content', path: 'ratings.vibe' },
+        metadata: {
+          label: 'Vibe & Atmosphere',
+          max: 5,
+        },
+      },
+      {
+        id: 'noiseLevel',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 30078, target: 'content', path: 'ratings.quietness' },
+        metadata: {
+          label: 'Quietness',
+          max: 5,
+        },
+      },
+    ],
+    metadata: {
+      name: 'Cafe Review',
+      description:
+        'Multi-event cafe review: main review as Kind 1 (visible everywhere) + detailed aspect ratings in NIP-78 (wifi, laptop-friendly, coffee, food, vibe) for advanced discovery',
+      tags: ['cafe', 'review', 'coworking'],
+    },
+  },
 };

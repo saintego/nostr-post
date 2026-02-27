@@ -150,6 +150,9 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
             <option value="string">string</option>
             <option value="number">number</option>
             <option value="boolean">boolean</option>
+            <option value="enum">enum</option>
+            <option value="geo">geo</option>
+            <option value="ref">ref</option>
           </select>
         </div>
 
@@ -184,7 +187,13 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
           >
             {kinds.map((kind) => (
               <option key={kind} value={kind}>
-                {kind}
+                {kind === 1
+                  ? '1 (Note)'
+                  : kind === 30023
+                    ? '30023 (Article)'
+                    : kind === 30078
+                      ? '30078 (NIP-78)'
+                      : kind}
               </option>
             ))}
           </select>
@@ -217,6 +226,22 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
               value={field.mapTo.tagName || ''}
               onChange={(e) => updateMapTo('tagName', e.target.value)}
               placeholder="tagName"
+            />
+          </div>
+        )}
+
+        {field.mapTo.kind === 30078 && field.mapTo.target === 'content' && (
+          <div style={styles.formGroup}>
+            <label style={styles.label} htmlFor="field-path">
+              JSON Path:
+            </label>
+            <input
+              id="field-path"
+              style={styles.input}
+              type="text"
+              value={field.mapTo.path || ''}
+              onChange={(e) => updateMapTo('path', e.target.value || undefined)}
+              placeholder="e.g. ratings.wifi"
             />
           </div>
         )}
