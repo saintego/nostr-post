@@ -60,6 +60,23 @@ export interface NostrUIPlugin {
   deserializeValue?: (raw: string, field: PostField) => unknown;
 
   /**
+   * Imperative DOM render for input — used when plugins are loaded directly
+   * (not as web components). Receives a context with the current value,
+   * field definition, and an onChange callback.
+   */
+  renderInput?: (ctx: {
+    value: unknown;
+    field: PostField;
+    onChange: (value: unknown) => void;
+  }) => HTMLElement;
+
+  /**
+   * Imperative DOM render for view — used when plugins are loaded directly
+   * (not as web components).
+   */
+  renderView?: (value: unknown, field?: PostField) => HTMLElement;
+
+  /**
    * Custom element tag name for the input component.
    * Set automatically when the plugin's /web entrypoint is imported.
    * The element must accept .value and .field properties

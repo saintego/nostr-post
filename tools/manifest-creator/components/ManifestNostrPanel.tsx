@@ -197,10 +197,39 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
     getPubkey();
   }, []);
 
-  const showStatus = (type: 'success' | 'error', text: string) => {
+  const showStatus = useCallback((type: 'success' | 'error', text: string) => {
     setStatus({ type, text });
     setTimeout(() => setStatus(null), 5000);
-  };
+  }, []);
+
+  /** Load the current user's published manifests */
+  const loadMyManifests = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { fetchEvents, getPublicKey } = await import('@nostr-post/signer');
+      const pubkey = await getPublicKey();
+      setCurrentPubkey(pubkey);
+
+      const events = await fetchEvents({
+        kinds: [NIP78_KIND],
+        authors: [pubkey],
+        '#t': ['nostr-post'],
+        limit: 50,
+      });
+
+      const manifests: StoredManifest[] = [];
+      for (const ev of events) {
+        const stored = eventToManifest(ev);
+        if (stored) manifests.push(stored);
+      }
+
+      setMyManifests(manifests);
+    } catch (err) {
+      showStatus('error', `Failed to load: ${(err as Error).message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [showStatus]);
 
   /** Publish or update the current manifest on Nostr relays */
   const publishManifest = useCallback(async () => {
@@ -236,7 +265,7 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
     } finally {
       setIsPublishing(false);
     }
-  }, [manifest, onManifestRef]);
+  }, [manifest, onManifestRef, showStatus, loadMyManifests]);
 
   /** Delete a manifest from relays */
   const deleteManifest = useCallback(
@@ -268,37 +297,8 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
         setIsPublishing(false);
       }
     },
-    [onManifestRef]
+    [onManifestRef, showStatus, loadMyManifests]
   );
-
-  /** Load the current user's published manifests */
-  const loadMyManifests = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { fetchEvents, getPublicKey } = await import('@nostr-post/signer');
-      const pubkey = await getPublicKey();
-      setCurrentPubkey(pubkey);
-
-      const events = await fetchEvents({
-        kinds: [NIP78_KIND],
-        authors: [pubkey],
-        '#t': ['nostr-post'],
-        limit: 50,
-      });
-
-      const manifests: StoredManifest[] = [];
-      for (const ev of events) {
-        const stored = eventToManifest(ev);
-        if (stored) manifests.push(stored);
-      }
-
-      setMyManifests(manifests);
-    } catch (err) {
-      showStatus('error', `Failed to load: ${(err as Error).message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   /** Browse manifests from all users */
   const browseAllManifests = useCallback(async () => {
@@ -324,7 +324,7 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [showStatus]);
 
   // Auto-load when switching tabs
   useEffect(() => {

@@ -5,18 +5,18 @@
  * Features:
  *   - Click on map to place/move marker
  *   - Search box with Nominatim geocoding
- *   - Lat/lon inputs that sync with the map
+ *   - Geohash + lat/lon display that syncs with the map
  *   - "Use my location" button (Geolocation API)
  *
- * Accepts .value ({ lat, lon } | null) and .field (PostField).
- * Dispatches 'np-value-changed' with { detail: { value: { lat, lon } } }.
+ * Accepts .value (geohash string | null) and .field (PostField).
+ * Dispatches 'np-value-changed' with { detail: { value: geohash_string } }.
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
 import L from 'leaflet';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { GeoCoordinates, GeoPluginConfig } from '../core';
+import { type GeoCoordinates, type GeoPluginConfig, decodeGeohash, encodeGeohash } from '../core';
 
 // Fix Leaflet default marker icons (broken by bundlers)
 // biome-ignore lint/performance/noDelete: Leaflet internals require delete
@@ -202,13 +202,28 @@ export class NpGeoInput extends LitElement {
       color: #9ca3af;
       text-align: center;
     }
+
+    .geohash-display {
+      font-family: monospace;
+      font-size: 0.875rem;
+      color: #374151;
+      background: #f3f4f6;
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
   `;
 
-  @property({ type: Object })
-  value: GeoCoordinates | null = null;
+  /** Geohash string (external value) */
+  @property({ type: String })
+  value: string | null = null;
 
   @property({ type: Object })
   field: PostField | null = null;
+
+  /** Decoded coordinates for internal map display */
+  @state() private coords: GeoCoordinates | null = null;
 
   @state() private searchQuery = '';
   @state() private searching = false;
@@ -220,6 +235,10 @@ export class NpGeoInput extends LitElement {
 
   private get config(): GeoPluginConfig {
     return (this.field?.metadata as GeoPluginConfig) || {};
+  }
+
+  private get precision(): number {
+    return this.config.precision ?? 6;
   }
 
   disconnectedCallback() {
@@ -238,9 +257,10 @@ export class NpGeoInput extends LitElement {
     if (!this._mapInitialized) {
       this.initMap();
     }
-    // If value changed externally, update marker
+    // If value changed externally, decode and update marker
     if (changed.has('value') && this.map && this.value) {
-      this.updateMarker(this.value.lat, this.value.lon, false);
+      this.coords = decodeGeohash(this.value);
+      this.updateMarker(this.coords.lat, this.coords.lon, false);
     }
   }
 
@@ -250,9 +270,13 @@ export class NpGeoInput extends LitElement {
 
     this._mapInitialized = true;
 
-    const defaultLat = this.value?.lat ?? 48.8566;
-    const defaultLon = this.value?.lon ?? 2.3522;
-    const zoom = this.config.defaultZoom ?? (this.value ? 13 : 3);
+    // Decode geohash for initial position
+    if (this.value) {
+      this.coords = decodeGeohash(this.value);
+    }
+    const defaultLat = this.coords?.lat ?? 48.8566;
+    const defaultLon = this.coords?.lon ?? 2.3522;
+    const zoom = this.config.defaultZoom ?? (this.coords ? 13 : 3);
 
     this.map = L.map(mapEl, {
       attributionControl: true,
@@ -265,8 +289,8 @@ export class NpGeoInput extends LitElement {
     }).addTo(this.map);
 
     // Place initial marker if value exists
-    if (this.value) {
-      this.marker = L.marker([this.value.lat, this.value.lon]).addTo(this.map);
+    if (this.coords) {
+      this.marker = L.marker([this.coords.lat, this.coords.lon]).addTo(this.map);
     }
 
     // Click to place marker
@@ -293,17 +317,17 @@ export class NpGeoInput extends LitElement {
   }
 
   private setCoords(lat: number, lon: number) {
-    const rounded: GeoCoordinates = {
-      lat: Math.round(lat * 100000) / 100000,
-      lon: Math.round(lon * 100000) / 100000,
-    };
+    const roundedLat = Math.round(lat * 100000) / 100000;
+    const roundedLon = Math.round(lon * 100000) / 100000;
 
-    this.updateMarker(rounded.lat, rounded.lon);
+    this.coords = { lat: roundedLat, lon: roundedLon };
+    this.updateMarker(roundedLat, roundedLon);
 
-    this.value = rounded;
+    const geohash = encodeGeohash(roundedLat, roundedLon, this.precision);
+    this.value = geohash;
     this.dispatchEvent(
       new CustomEvent('np-value-changed', {
-        detail: { value: rounded },
+        detail: { value: geohash },
         bubbles: true,
         composed: true,
       })
@@ -449,11 +473,11 @@ export class NpGeoInput extends LitElement {
               min="-90"
               max="90"
               placeholder="48.8566"
-              .value=${this.value?.lat != null ? String(this.value.lat) : ''}
+              .value=${this.coords?.lat != null ? String(this.coords.lat) : ''}
               @change=${(e: Event) => {
                 const lat = Number.parseFloat((e.target as HTMLInputElement).value);
                 if (!Number.isNaN(lat)) {
-                  this.setCoords(lat, this.value?.lon ?? 0);
+                  this.setCoords(lat, this.coords?.lon ?? 0);
                 }
               }}
             />
@@ -467,16 +491,18 @@ export class NpGeoInput extends LitElement {
               min="-180"
               max="180"
               placeholder="2.3522"
-              .value=${this.value?.lon != null ? String(this.value.lon) : ''}
+              .value=${this.coords?.lon != null ? String(this.coords.lon) : ''}
               @change=${(e: Event) => {
                 const lon = Number.parseFloat((e.target as HTMLInputElement).value);
                 if (!Number.isNaN(lon)) {
-                  this.setCoords(this.value?.lat ?? 0, lon);
+                  this.setCoords(this.coords?.lat ?? 0, lon);
                 }
               }}
             />
           </div>
         </div>
+
+        ${this.value ? html`<div class="geohash-display">Geohash: ${this.value}</div>` : nothing}
 
         <div class="hint">Click on the map or search to set location</div>
       </div>

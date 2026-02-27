@@ -263,7 +263,6 @@ export class NostrPostView extends NostrPostElement {
         </div>
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
-
         ${
           this.showTags && tags.length > 0
             ? html`
@@ -303,29 +302,47 @@ export class NostrPostView extends NostrPostElement {
 
   /**
    * Render tag values using registered plugin view components.
+   * Aggregates multi-value tags (hashtags, media) into arrays.
    * Falls back gracefully when no plugin or no viewTagName is registered.
    */
   private renderTagPlugins(tags: string[][]) {
     const tagFieldMap = this.getTagFieldMap();
     if (tagFieldMap.size === 0) return '';
 
-    const results = [];
+    // Group tags by tag name
+    const tagGroups = new Map<string, string[]>();
     for (const tag of tags) {
       const [tagName, rawValue] = tag;
-      if (!rawValue) continue;
+      if (!rawValue || !tagFieldMap.has(tagName)) continue;
+      const existing = tagGroups.get(tagName) ?? [];
+      existing.push(rawValue);
+      tagGroups.set(tagName, existing);
+    }
 
+    const results = [];
+    for (const [tagName, values] of tagGroups) {
       const field = tagFieldMap.get(tagName);
       if (!field) continue;
 
       const plugin = pluginRegistry.get(field.uiPlugin);
       if (!plugin?.viewTagName) continue;
 
-      // Deserialize the raw tag string to a typed value
-      let value: unknown = rawValue;
-      if (plugin.deserializeValue) {
-        value = plugin.deserializeValue(rawValue, field);
-      } else if (field.type === 'number') {
-        value = Number(rawValue);
+      // Multi-value tags (hashtag, media) → pass as array
+      // NIP-52 geohash prefix tags → pick the most precise (longest) value
+      let value: unknown;
+      if (field.uiPlugin === 'geo') {
+        value = values.reduce((a, b) => (a.length >= b.length ? a : b));
+      } else if (values.length > 1 || field.uiPlugin === 'hashtag' || field.uiPlugin === 'media') {
+        value = values;
+      } else {
+        const rawValue = values[0];
+        if (plugin.deserializeValue) {
+          value = plugin.deserializeValue(rawValue, field);
+        } else if (field.type === 'number') {
+          value = Number(rawValue);
+        } else {
+          value = rawValue;
+        }
       }
 
       const viewTag = unsafeStatic(plugin.viewTagName);

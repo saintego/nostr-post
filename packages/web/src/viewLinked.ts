@@ -59,6 +59,8 @@ const renderLinkedTagField = (tag: string[], field: PostField) => {
 
 /**
  * Render tag-based fields from a linked event using plugins.
+ * For array-type plugins (hashtag, media), aggregates all tags with the same
+ * tag name into a single array value before rendering.
  */
 const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
   const fieldByTag = new Map<string, PostField>();
@@ -66,13 +68,68 @@ const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
     if (f.mapTo.tagName) fieldByTag.set(f.mapTo.tagName, f);
   }
 
-  return tags
-    .filter((tag) => tag[1] && fieldByTag.has(tag[0]))
-    .map((tag) => {
-      const field = fieldByTag.get(tag[0]);
-      if (!field) return '';
-      return renderLinkedTagField(tag, field);
-    });
+  // Group tags by tag name for aggregation
+  const tagGroups = new Map<string, string[][]>();
+  for (const tag of tags) {
+    if (!tag[1] || !fieldByTag.has(tag[0])) continue;
+    const existing = tagGroups.get(tag[0]) ?? [];
+    existing.push(tag);
+    tagGroups.set(tag[0], existing);
+  }
+
+  const results: unknown[] = [];
+  for (const [tagName, group] of tagGroups) {
+    const field = fieldByTag.get(tagName);
+    if (!field) continue;
+
+    if (field.uiPlugin === 'geo' && group.length > 1) {
+      // NIP-52 geohash prefix tags: pick the most precise (longest) value
+      const label = (field.metadata?.label as string) || field.id;
+      const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
+      const bestValue = group.map((t) => t[1]).reduce((a, b) => (a.length >= b.length ? a : b));
+      if (plugin?.viewTagName) {
+        const viewTag = unsafeStatic(plugin.viewTagName);
+        results.push(html`
+          <div class="linked-field">
+            <span class="linked-field-label">${label}:</span>
+            ${staticHtml`<${viewTag} .value=${bestValue} .field=${field}></${viewTag}>`}
+          </div>
+        `);
+      } else {
+        results.push(html`
+          <div class="linked-field">
+            <span class="linked-field-label">${label}:</span>
+            <span>${bestValue}</span>
+          </div>
+        `);
+      }
+    } else if (group.length > 1 || field.uiPlugin === 'hashtag' || field.uiPlugin === 'media') {
+      // Aggregate: pass array of values to the plugin
+      const label = (field.metadata?.label as string) || field.id;
+      const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
+      const values = group.map((t) => t[1]);
+
+      if (plugin?.viewTagName) {
+        const viewTag = unsafeStatic(plugin.viewTagName);
+        results.push(html`
+          <div class="linked-field">
+            <span class="linked-field-label">${label}:</span>
+            ${staticHtml`<${viewTag} .value=${values} .field=${field}></${viewTag}>`}
+          </div>
+        `);
+      } else {
+        results.push(html`
+          <div class="linked-field">
+            <span class="linked-field-label">${label}:</span>
+            <span>${values.join(', ')}</span>
+          </div>
+        `);
+      }
+    } else {
+      results.push(renderLinkedTagField(group[0], field));
+    }
+  }
+  return results;
 };
 
 /**

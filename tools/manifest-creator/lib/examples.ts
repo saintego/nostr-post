@@ -80,17 +80,38 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         id: 'location',
         type: 'geo',
         uiPlugin: 'geo',
-        mapTo: { kind: 1, target: 'tag', tagName: 'geo' },
-        required: false,
+        mapTo: { kind: 1, target: 'tag', tagName: 'g' },
+        required: true,
         metadata: {
           label: 'Location',
-          defaultZoom: 13,
+          precision: 6,
+        },
+      },
+      {
+        id: 'photos',
+        type: 'string',
+        uiPlugin: 'media',
+        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        metadata: {
+          label: 'Photos',
+          accept: ['image/*'],
+          maxFiles: 5,
+        },
+      },
+      {
+        id: 'tags',
+        type: 'string',
+        uiPlugin: 'hashtag',
+        mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        metadata: {
+          label: 'Tags',
+          suggestions: ['restaurant', 'cafe', 'bar', 'park', 'museum', 'hotel'],
         },
       },
     ],
     metadata: {
       name: 'Location Review',
-      description: 'Review a place with star rating and map location',
+      description: 'Review a place with star rating, map location, photos, and hashtags',
     },
   },
 
@@ -214,10 +235,10 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         id: 'location',
         type: 'geo',
         uiPlugin: 'geo',
-        mapTo: { kind: 1, target: 'tag', tagName: 'geo' },
+        mapTo: { kind: 1, target: 'tag', tagName: 'g' },
         metadata: {
           label: 'Location',
-          defaultZoom: 13,
+          precision: 6,
         },
       },
     ],
@@ -270,10 +291,20 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         id: 'location',
         type: 'geo',
         uiPlugin: 'geo',
-        mapTo: { kind: 1, target: 'tag', tagName: 'geo' },
+        mapTo: { kind: 1, target: 'tag', tagName: 'g' },
         metadata: {
           label: 'Location',
-          defaultZoom: 15,
+          precision: 7,
+        },
+      },
+      {
+        id: 'tags',
+        type: 'string',
+        uiPlugin: 'hashtag',
+        mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        metadata: {
+          label: 'Tags',
+          suggestions: ['cafe', 'coffee', 'coworking', 'wifi', 'food'],
         },
       },
       // Kind 30078: structured aspect ratings (for advanced search/filtering)
@@ -291,7 +322,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         id: 'laptopFriendly',
         type: 'number',
         uiPlugin: 'stars',
-        mapTo: { kind: 30078, target: 'content', path: 'ratings.laptopFriendly' },
+        mapTo: {
+          kind: 30078,
+          target: 'content',
+          path: 'ratings.laptopFriendly',
+        },
         metadata: {
           label: 'Laptop Friendly',
           max: 5,

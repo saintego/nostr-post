@@ -76,12 +76,6 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@nostr-post/plugin-geo':
-        specifier: workspace:*
-        version: link:../../packages/plugin-geo
-      '@nostr-post/plugin-stars':
-        specifier: workspace:*
-        version: link:../../packages/plugin-stars
       '@nostr-post/react':
         specifier: workspace:*
         version: link:../../packages/react
@@ -132,6 +126,19 @@ importers:
       '@types/leaflet':
         specifier: ^1.9.12
         version: 1.9.21
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
+  packages/plugin-hashtag:
+    dependencies:
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      lit:
+        specifier: ^3.2.1
+        version: 3.3.2
+    devDependencies:
       typescript:
         specifier: ^5.6.3
         version: 5.9.3
@@ -250,6 +257,9 @@ importers:
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../../packages/plugin-geo
+      '@nostr-post/plugin-hashtag':
+        specifier: workspace:*
+        version: link:../../packages/plugin-hashtag
       '@nostr-post/plugin-markdown':
         specifier: workspace:*
         version: link:../../packages/plugin-markdown

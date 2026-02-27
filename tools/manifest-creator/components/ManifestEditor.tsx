@@ -261,8 +261,8 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
         </span>
       </div>
 
-      <div style={styles.section}>
-        <label style={styles.label}>Required Kinds:</label>
+      <fieldset style={{ ...styles.section, border: 'none', margin: 0, padding: 0 }}>
+        <legend style={styles.label}>Required Kinds:</legend>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
           {manifest.requiredKinds.map((kind, i) => (
             <span
@@ -351,7 +351,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
             }}
           />
         </div>
-      </div>
+      </fieldset>
 
       <div style={styles.section}>
         <label style={styles.label} htmlFor="manifest-name">

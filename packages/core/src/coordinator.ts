@@ -93,12 +93,23 @@ export const validateFormData = (
 const validateFieldType = (field: PostField, value: unknown): Result<void, ValidationError> => {
   switch (field.type) {
     case 'string':
-      if (typeof value !== 'string') {
+      // Allow string[] for array-based plugins (media, hashtag)
+      if (typeof value !== 'string' && !Array.isArray(value)) {
         return {
           success: false,
           error: {
             field: field.id,
-            message: `Field "${field.id}" must be a string`,
+            message: `Field "${field.id}" must be a string or string array`,
+            code: 'INVALID_TYPE',
+          },
+        };
+      }
+      if (Array.isArray(value) && value.some((v) => typeof v !== 'string')) {
+        return {
+          success: false,
+          error: {
+            field: field.id,
+            message: `Field "${field.id}" array must contain only strings`,
             code: 'INVALID_TYPE',
           },
         };
@@ -145,12 +156,12 @@ const validateFieldType = (field: PostField, value: unknown): Result<void, Valid
       break;
 
     case 'geo':
-      if (!isValidGeoValue(value)) {
+      if (!isValidGeohash(value)) {
         return {
           success: false,
           error: {
             field: field.id,
-            message: `Field "${field.id}" must be a valid geo coordinate`,
+            message: `Field "${field.id}" must be a valid geohash string`,
             code: 'INVALID_GEO',
           },
         };
@@ -174,20 +185,18 @@ const validateFieldType = (field: PostField, value: unknown): Result<void, Valid
   return { success: true, data: undefined };
 };
 
+/** Base32 alphabet used by geohash encoding. */
+const GEOHASH_BASE32 = '0123456789bcdefghjkmnpqrstuvwxyz';
+
 /**
- * Type guard for geo coordinates.
+ * Type guard for geohash strings.
  */
-const isValidGeoValue = (value: unknown): value is { lat: number; lon: number } => {
-  if (typeof value !== 'object' || value === null) return false;
-  const geo = value as Record<string, unknown>;
-  return (
-    typeof geo.lat === 'number' &&
-    typeof geo.lon === 'number' &&
-    geo.lat >= -90 &&
-    geo.lat <= 90 &&
-    geo.lon >= -180 &&
-    geo.lon <= 180
-  );
+const isValidGeohash = (value: unknown): value is string => {
+  if (typeof value !== 'string' || value.length === 0) return false;
+  for (const ch of value) {
+    if (!GEOHASH_BASE32.includes(ch)) return false;
+  }
+  return true;
 };
 
 /**
@@ -248,10 +257,41 @@ const createEventForKind = (
   for (const field of tagFields) {
     const value = formData[field.id];
     if (value !== undefined && field.mapTo.tagName) {
-      // Use custom serializer if provided, fall back to default
-      const custom = config.tagSerializer?.(value, field);
-      const stringValue = custom !== undefined ? custom : serializeTagValue(value);
-      tags.push([field.mapTo.tagName, stringValue]);
+      // Array values → one tag per element (hashtags, media URLs, etc.)
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          const custom = config.tagSerializer?.(item, field);
+          const stringValue = custom !== undefined ? custom : serializeTagValue(item);
+          tags.push([field.mapTo.tagName, stringValue]);
+        }
+      } else if (field.mapTo.tagName === 'g' && isValidGeohash(value)) {
+        // NIP-52: emit geohash at all prefix lengths for relay-side filtering
+        // e.g. "u09tvw" → ["g","u09tvw"], ["g","u09tv"], ["g","u09t"], ["g","u09"], ["g","u0"]
+        const gh = value as string;
+        for (let len = gh.length; len >= 2; len--) {
+          tags.push(['g', gh.slice(0, len)]);
+        }
+      } else {
+        const custom = config.tagSerializer?.(value, field);
+        const stringValue = custom !== undefined ? custom : serializeTagValue(value);
+        tags.push([field.mapTo.tagName, stringValue]);
+      }
+    }
+  }
+
+  // Auto-extract #hashtags from content into `t` tags (NIP-12)
+  if (content && kind === 1) {
+    const hashtagMatches = content.match(/#[\w\u0080-\uffff][\w\u0080-\uffff-]*/g);
+    if (hashtagMatches) {
+      // Collect existing `t` tags to avoid duplicates
+      const existingT = new Set(tags.filter((t) => t[0] === 't').map((t) => t[1]));
+      for (const match of hashtagMatches) {
+        const tag = match.slice(1).toLowerCase();
+        if (tag && !existingT.has(tag)) {
+          tags.push(['t', tag]);
+          existingT.add(tag);
+        }
+      }
     }
   }
 
@@ -271,18 +311,12 @@ const createEventForKind = (
 
 /**
  * Serializes a form value into a string suitable for a Nostr tag.
- * Handles primitive types and known object shapes (e.g., geo {lat, lon}).
+ * Handles primitive types; objects are JSON-serialized as fallback.
  */
 const serializeTagValue = (value: unknown): string => {
   if (typeof value === 'string') return value;
   if (typeof value === 'number' || typeof value === 'boolean') return String(value);
   if (typeof value === 'object' && value !== null) {
-    const obj = value as Record<string, unknown>;
-    // Geo coordinates: { lat, lon }
-    if ('lat' in obj && 'lon' in obj) {
-      return `${obj.lat},${obj.lon}`;
-    }
-    // Fallback: JSON for unknown objects
     return JSON.stringify(value);
   }
   return String(value);
