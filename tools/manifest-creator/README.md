@@ -20,6 +20,38 @@ pnpm dev
 
 Visit http://localhost:3000/ to access the tool.
 
+## Testing
+
+The manifest-creator includes comprehensive testing:
+
+### Run Tests
+
+```bash
+# Run all tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test:watch
+
+# Run tests with UI
+pnpm test:ui
+
+# Generate coverage report
+pnpm test:coverage
+```
+
+### Test Structure
+
+- **Unit Tests**: Located in `tests/unit/`
+  - `examples.test.ts` - Validates example manifests
+  - `FieldEditor.test.tsx` - Component tests for field editor
+
+- **E2E Tests**: Located in `tests/e2e/`
+  - `manifest-workflow.test.ts` - Complete manifest creation workflows
+  - `nostr-publishing.test.ts` - Mock Nostr integration tests
+
+All tests use mocked Nostr functionality to avoid requiring a real Nostr extension or relay connections.
+
 ## Creating a Manifest
 
 1. **Add Fields**: Click "Add Field" and configure:

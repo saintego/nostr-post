@@ -27,6 +27,9 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
     "clean": "rm -rf dist"
   },
   "keywords": ["nostr", "manifest", "validation", "event-coordination", "headless"],

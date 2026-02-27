@@ -17,6 +17,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
   "keywords": ["nostr", "plugin", "geo", "location", "map", "leaflet"],

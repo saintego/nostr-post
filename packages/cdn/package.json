@@ -1,0 +1,27 @@
+{
+  "name": "@nostr-post/cdn",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "CDN bundle — a single JS file that includes all nostr-post packages and registers custom elements",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --watch",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@nostr-post/web": "workspace:*",
+    "@nostr-post/core": "workspace:*",
+    "@nostr-post/plugins": "workspace:*",
+    "@nostr-post/signer": "workspace:*",
+    "@nostr-post/plugin-stars": "workspace:*",
+    "@nostr-post/plugin-geo": "workspace:*",
+    "@nostr-post/plugin-venue": "workspace:*",
+    "@nostr-post/plugin-media": "workspace:*",
+    "@nostr-post/plugin-markdown": "workspace:*",
+    "@nostr-post/plugin-hashtag": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}
