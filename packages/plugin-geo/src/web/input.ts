@@ -406,52 +406,52 @@ export class NpGeoInput extends LitElement {
           this.hideSearch
             ? nothing
             : html`<div class="search-row">
-          <input
-            class="search-input"
-            type="text"
-            placeholder="Search for a place..."
-            .value=${this.searchQuery}
-            @input=${(e: Event) => {
-              this.searchQuery = (e.target as HTMLInputElement).value;
-            }}
-            @keypress=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                this.handleSearch();
-              }
-            }}
-          />
-          <button
-            class="btn btn-primary"
-            type="button"
-            @click=${this.handleSearch}
-            ?disabled=${this.searching}
-          >
-            ${this.searching ? 'Searching...' : 'Search'}
-          </button>
-        </div>
-
-        <!-- Search results -->
-        ${
-          this.searchResults.length > 0
-            ? html`
-              <div class="search-results">
-                <ul class="results-list">
-                  ${this.searchResults.map(
-                    (r) => html`
-                      <li
-                        class="result-item"
-                        @click=${() => this.selectSearchResult(r)}
-                      >
-                        ${r.display_name}
-                      </li>
-                    `
-                  )}
-                </ul>
+                <input
+                  class="search-input"
+                  type="text"
+                  placeholder="Search for a place..."
+                  .value=${this.searchQuery}
+                  @input=${(e: Event) => {
+                    this.searchQuery = (e.target as HTMLInputElement).value;
+                  }}
+                  @keypress=${(e: KeyboardEvent) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      this.handleSearch();
+                    }
+                  }}
+                />
+                <button
+                  class="btn btn-primary"
+                  type="button"
+                  @click=${this.handleSearch}
+                  ?disabled=${this.searching}
+                >
+                  ${this.searching ? 'Searching...' : 'Search'}
+                </button>
               </div>
-            `
-            : nothing
-        }`
+
+              <!-- Search results -->
+              ${
+                this.searchResults.length > 0
+                  ? html`
+                    <div class="search-results">
+                      <ul class="results-list">
+                        ${this.searchResults.map(
+                          (r) => html`
+                            <li
+                              class="result-item"
+                              @click=${() => this.selectSearchResult(r)}
+                            >
+                              ${r.display_name}
+                            </li>
+                          `
+                        )}
+                      </ul>
+                    </div>
+                  `
+                  : nothing
+              }`
         }
 
         <!-- Map -->

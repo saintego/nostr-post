@@ -277,7 +277,11 @@ export class NpVenueInput extends LitElement {
   private clearVenue() {
     if (this.value) {
       // Clear only venue metadata, keep the pin
-      this.emitValue({ geohash: this.value.geohash, lat: this.value.lat, lon: this.value.lon });
+      this.emitValue({
+        geohash: this.value.geohash,
+        lat: this.value.lat,
+        lon: this.value.lon,
+      });
     }
   }
 
@@ -315,13 +319,16 @@ export class NpVenueInput extends LitElement {
             if (this.searchResults.length > 0) this.showResults = true;
           }}
         />
-        <button class="btn" @click=${() => this.doSearch()} ?disabled=${this.isSearching}>
+        <button
+          class="btn"
+          @click=${() => this.doSearch()}
+          ?disabled=${this.isSearching}
+        >
           ${this.isSearching ? 'Searching…' : '🔍 Search'}
         </button>
       </div>
 
       ${this.isSearching ? html`<div class="loading">Searching…</div>` : nothing}
-
       ${
         this.showResults && this.searchResults.length > 0
           ? html`
@@ -330,7 +337,9 @@ export class NpVenueInput extends LitElement {
                 (r) => html`
                   <div class="result-item" @click=${() => this.selectResult(r)}>
                     ${r.display_name}
-                    <div class="result-type">${r.class}/${r.type} · ${r.osm_type}:${r.osm_id}</div>
+                    <div class="result-type">
+                      ${r.class}/${r.type} · ${r.osm_type}:${r.osm_id}
+                    </div>
                   </div>
                 `
               )}
@@ -351,13 +360,19 @@ export class NpVenueInput extends LitElement {
         <div class="venue-meta">
           ${
             v.osmType && v.osmId
-              ? html`<a href="${osmUrl(v.osmType, v.osmId)}" target="_blank" rel="noopener">
+              ? html`<a
+                href="${osmUrl(v.osmType, v.osmId)}"
+                target="_blank"
+                rel="noopener"
+              >
                 OSM ${v.osmType}:${v.osmId} ↗
               </a>`
               : nothing
           }
         </div>
-        <button class="clear-btn" @click=${this.clearVenue}>Clear venue info</button>
+        <button class="clear-btn" @click=${this.clearVenue}>
+          Clear venue info
+        </button>
       </div>
     `;
   }

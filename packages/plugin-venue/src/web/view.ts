@@ -108,7 +108,10 @@ export class NpVenueView extends LitElement {
 
     // If value is a plain string (geohash), fallback to geo view
     if (typeof this.value === 'string') {
-      return html`<np-geo-view .value=${this.value} .field=${this.field}></np-geo-view>`;
+      return html`<np-geo-view
+        .value=${this.value}
+        .field=${this.field}
+      ></np-geo-view>`;
     }
 
     const v = this.value as VenueData;
