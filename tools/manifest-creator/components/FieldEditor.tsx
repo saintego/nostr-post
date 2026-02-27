@@ -263,6 +263,80 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
         </div>
 
         <div style={styles.formGroup}>
+          <label style={styles.label} htmlFor="field-default">
+            Default Value:
+          </label>
+          <input
+            id="field-default"
+            style={styles.input}
+            type="text"
+            value={
+              field.defaultValue !== undefined
+                ? Array.isArray(field.defaultValue)
+                  ? (field.defaultValue as string[]).join(', ')
+                  : String(field.defaultValue)
+                : ''
+            }
+            onChange={(e) => {
+              const raw = e.target.value;
+              if (!raw) {
+                update('defaultValue', undefined);
+              } else if (field.uiPlugin === 'hashtag') {
+                update('defaultValue', raw.split(/[,\s]+/).filter(Boolean));
+              } else if (field.type === 'number') {
+                update('defaultValue', Number(raw));
+              } else {
+                update('defaultValue', raw);
+              }
+            }}
+            placeholder={field.uiPlugin === 'hashtag' ? 'tag1, tag2, ...' : 'Default value'}
+          />
+        </div>
+
+        <div style={styles.formGroup}>
+          <label style={styles.label} htmlFor="field-edit-vis">
+            Edit Visibility:
+          </label>
+          <select
+            id="field-edit-vis"
+            style={styles.select}
+            value={field.visibility?.edit || 'visible'}
+            onChange={(e) => {
+              const val = e.target.value;
+              update('visibility', {
+                ...field.visibility,
+                edit: val === 'visible' ? undefined : val,
+              });
+            }}
+          >
+            <option value="visible">visible</option>
+            <option value="hidden">hidden</option>
+            <option value="readonly">readonly</option>
+          </select>
+        </div>
+
+        <div style={styles.formGroup}>
+          <label style={styles.label} htmlFor="field-view-vis">
+            View Visibility:
+          </label>
+          <select
+            id="field-view-vis"
+            style={styles.select}
+            value={field.visibility?.view || 'visible'}
+            onChange={(e) => {
+              const val = e.target.value;
+              update('visibility', {
+                ...field.visibility,
+                view: val === 'visible' ? undefined : val,
+              });
+            }}
+          >
+            <option value="visible">visible</option>
+            <option value="hidden">hidden</option>
+          </select>
+        </div>
+
+        <div style={styles.formGroup}>
           <label style={{ ...styles.label, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <input
               style={styles.checkbox}

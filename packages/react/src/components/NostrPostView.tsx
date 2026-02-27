@@ -16,6 +16,7 @@ interface NostrPostViewElement extends HTMLElement {
   showKind?: boolean;
   showTags?: boolean;
   showId?: boolean;
+  excludeFields?: string[];
 }
 
 // Declare the custom element for TypeScript/JSX
@@ -47,6 +48,8 @@ export interface NostrPostViewProps {
   showTags?: boolean;
   /** Show event ID */
   showId?: boolean;
+  /** Field IDs to exclude from the rendered view */
+  excludeFields?: string[];
   /** Custom class name */
   className?: string;
   /** Dark mode */
@@ -65,6 +68,7 @@ export function NostrPostView({
   showKind = false,
   showTags = false,
   showId = false,
+  excludeFields,
   className = '',
   dark,
 }: NostrPostViewProps) {
@@ -84,7 +88,8 @@ export function NostrPostView({
     element.showKind = showKind;
     element.showTags = showTags;
     element.showId = showId;
-  }, [event, manifest, linkedEvents, showKind, showTags, showId]);
+    element.excludeFields = excludeFields;
+  }, [event, manifest, linkedEvents, showKind, showTags, showId, excludeFields]);
 
   return (
     <div className={wrapperClassName}>

@@ -7,6 +7,11 @@
 
 export type FieldType = 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref';
 
+export interface FieldVisibility {
+  edit?: 'visible' | 'hidden' | 'readonly';
+  view?: 'visible' | 'hidden';
+}
+
 export interface PostField {
   id: string;
   type: FieldType;
@@ -20,6 +25,8 @@ export interface PostField {
   required?: boolean;
   options?: string[];
   metadata?: Record<string, unknown>;
+  defaultValue?: unknown;
+  visibility?: FieldVisibility;
 }
 
 export interface ValidationError {

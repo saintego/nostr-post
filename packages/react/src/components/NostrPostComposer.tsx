@@ -15,6 +15,9 @@ interface NostrPostComposerElement extends HTMLElement {
   manifestRef?: string;
   autoPublish?: boolean;
   relays?: string[];
+  excludeFields?: string[];
+  readonlyFields?: string[];
+  prefill?: Record<string, unknown>;
 }
 
 // Declare the custom element for TypeScript/JSX
@@ -40,6 +43,12 @@ export interface NostrPostComposerProps {
   relays?: string[];
   /** Auto-publish events (uses NIP-07 window.nostr) */
   autoPublish?: boolean;
+  /** Field IDs to completely exclude from the composer */
+  excludeFields?: string[];
+  /** Field IDs to show as read-only */
+  readonlyFields?: string[];
+  /** Pre-filled values keyed by field ID */
+  prefill?: Record<string, unknown>;
   /** Called after successful publish */
   onPublished?: (events: SignedEvent[]) => void;
   /** Called on submit (before signing) */
@@ -62,6 +71,9 @@ export function NostrPostComposer({
   manifestRef,
   relays,
   autoPublish = true,
+  excludeFields,
+  readonlyFields,
+  prefill,
   onPublished,
   onSubmit,
   onError,
@@ -86,7 +98,10 @@ export function NostrPostComposer({
       element.relays = relays;
     }
     element.autoPublish = autoPublish;
-  }, [manifest, manifestRef, relays, autoPublish]);
+    element.excludeFields = excludeFields;
+    element.readonlyFields = readonlyFields;
+    element.prefill = prefill;
+  }, [manifest, manifestRef, relays, autoPublish, excludeFields, readonlyFields, prefill]);
 
   // Attach event listeners
   useEffect(() => {

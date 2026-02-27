@@ -96,6 +96,16 @@ export class NostrPostComposer extends NostrPostElement {
         margin-bottom: 1rem;
       }
 
+      .field-readonly {
+        opacity: 0.75;
+        pointer-events: none;
+      }
+
+      .readonly-value {
+        font-size: 0.875rem;
+        color: #6b7280;
+      }
+
       :host-context(.dark) .success-message {
         background: #064e3b;
         border-color: #059669;
@@ -122,6 +132,18 @@ export class NostrPostComposer extends NostrPostElement {
   @property({ type: Array })
   relays?: string[];
 
+  /** Field IDs to completely exclude from the composer */
+  @property({ type: Array, attribute: 'exclude-fields' })
+  excludeFields?: string[];
+
+  /** Field IDs to show as read-only (value visible but not editable) */
+  @property({ type: Array, attribute: 'readonly-fields' })
+  readonlyFields?: string[];
+
+  /** Pre-filled values keyed by field ID (merged with field defaultValue, prefill wins) */
+  @property({ type: Object })
+  prefill?: Record<string, unknown>;
+
   @state()
   private _formData!: Record<string, unknown>;
 
@@ -145,6 +167,50 @@ export class NostrPostComposer extends NostrPostElement {
     this.errors = {};
     this.isSubmitting = false;
     this.successMessage = '';
+  }
+
+  /**
+   * When the manifest or prefill changes, seed _formData with defaults.
+   */
+  updated(changed: Map<string, unknown>) {
+    super.updated(changed);
+    if (changed.has('manifest') || changed.has('prefill')) {
+      this.initDefaults();
+    }
+  }
+
+  private initDefaults() {
+    const manifest = this.manifest || DEFAULT_KIND1_MANIFEST;
+    const defaults: Record<string, unknown> = {};
+    for (const field of manifest.fields) {
+      if (field.defaultValue !== undefined) {
+        defaults[field.id] = field.defaultValue;
+      }
+    }
+    // Prefill overrides field-level defaults
+    if (this.prefill) {
+      Object.assign(defaults, this.prefill);
+    }
+    // Merge with existing form data (user edits take priority)
+    this._formData = { ...defaults, ...this._formData };
+  }
+
+  /**
+   * Check if a field should be excluded from rendering.
+   */
+  private isFieldExcluded(field: PostField): boolean {
+    if (this.excludeFields?.includes(field.id)) return true;
+    if (field.visibility?.edit === 'hidden') return true;
+    return false;
+  }
+
+  /**
+   * Check if a field is read-only.
+   */
+  private isFieldReadonly(field: PostField): boolean {
+    if (this.readonlyFields?.includes(field.id)) return true;
+    if (field.visibility?.edit === 'readonly') return true;
+    return false;
   }
 
   /**
@@ -292,11 +358,13 @@ export class NostrPostComposer extends NostrPostElement {
    * Render a single form field based on its type
    */
   private renderField(field: PostField) {
-    const value = this._formData[field.id] ?? '';
+    const value = this._formData[field.id] ?? field.defaultValue ?? '';
     const error = this.errors[field.id];
     const isRequired = field.required === true;
+    const readonly = this.isFieldReadonly(field);
 
     const handleInput = (e: Event) => {
+      if (readonly) return;
       const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
       let fieldValue: unknown = target.value;
 
@@ -313,12 +381,26 @@ export class NostrPostComposer extends NostrPostElement {
     const label = (field.metadata?.label as string) || field.id;
 
     return html`
-      <div class="field">
+      <div class="field ${readonly ? 'field-readonly' : ''}">
         <label class="${isRequired ? 'required' : ''}">${label}</label>
-        ${this.renderFieldInput(field, value, handleInput)}
+        ${readonly ? this.renderFieldView(field, value) : this.renderFieldInput(field, value, handleInput)}
         ${error ? html`<div class="field-error">${error}</div>` : ''}
       </div>
     `;
+  }
+
+  /**
+   * Render a field in read-only mode using the view plugin.
+   */
+  private renderFieldView(field: PostField, value: unknown) {
+    if (field.uiPlugin) {
+      const plugin = pluginRegistry.get(field.uiPlugin);
+      if (plugin?.viewTagName) {
+        const tag = unsafeStatic(plugin.viewTagName);
+        return staticHtml`<${tag} .value=${value} .field=${field}></${tag}>`;
+      }
+    }
+    return html`<span class="readonly-value">${String(value)}</span>`;
   }
 
   /**
@@ -420,7 +502,7 @@ export class NostrPostComposer extends NostrPostElement {
         }
 
         <form @submit=${this.handleSubmit}>
-          ${manifest.fields.map((field) => this.renderField(field))}
+          ${manifest.fields.filter((f) => !this.isFieldExcluded(f)).map((field) => this.renderField(field))}
 
           <div class="composer-actions">
             <button

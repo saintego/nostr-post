@@ -82,6 +82,9 @@ const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
     const field = fieldByTag.get(tagName);
     if (!field) continue;
 
+    // Skip fields hidden in view
+    if (field.visibility?.view === 'hidden') continue;
+
     const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
     const label = (field.metadata?.label as string) || field.id;
 
@@ -157,6 +160,9 @@ const renderNip78Fields = (fields: PostField[], data: Record<string, unknown>) =
   const results = [];
 
   for (const field of fields) {
+    // Skip fields hidden in view
+    if (field.visibility?.view === 'hidden') continue;
+
     // Resolve value from JSON data (supports dot-notation paths)
     let value: unknown;
     if (field.mapTo.path) {

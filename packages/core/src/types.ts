@@ -37,6 +37,17 @@ export type FieldType = 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref'
  * @property options - For enum types, the allowed values
  * @property metadata - Additional plugin-specific configuration
  */
+/**
+ * Controls whether a field is shown in the composer (edit) and/or the viewer.
+ * Defaults to visible everywhere when omitted.
+ */
+export interface FieldVisibility {
+  /** Show in composer? 'visible' (default), 'hidden', or 'readonly' (shown but not editable). */
+  edit?: 'visible' | 'hidden' | 'readonly';
+  /** Show in viewer? Defaults to 'visible'. */
+  view?: 'visible' | 'hidden';
+}
+
 export interface PostField {
   id: string;
   type: FieldType;
@@ -45,6 +56,10 @@ export interface PostField {
   required?: boolean;
   options?: string[];
   metadata?: Record<string, unknown>;
+  /** Default value to prefill in the composer. For hashtags: string[], for geo: geohash, etc. */
+  defaultValue?: unknown;
+  /** Controls field visibility in the composer and viewer. */
+  visibility?: FieldVisibility;
 }
 
 /**

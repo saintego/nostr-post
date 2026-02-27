@@ -1,23 +1,21 @@
 /**
  * @nostr-post/plugin-venue - <np-venue-view>
  *
- * Read-only venue display. Shows:
- *   - Venue name / address
- *   - Geohash + decoded coordinates
- *   - OSM link (if osmId present)
- *   - Google Maps link (coordinates or place ID)
+ * Thin wrapper around <np-geo-view>. Adds:
+ *   - Venue name
+ *   - OSM entity link (by ID)
+ *   - Google Maps link (by place ID)
  *
- * Accepts .value (VenueData object) resolved via resolveFromTags.
- * When no venue data is available, falls back to geohash-only display
- * by embedding <np-geo-view>.
+ * When no venue metadata is present (plain geohash string),
+ * delegates entirely to <np-geo-view>.
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import { type VenueData, googleMapsPlaceUrl, googleMapsUrl, osmUrl } from '../core';
+import { type VenueData, googleMapsPlaceUrl, osmUrl } from '../core';
 
-// Ensure <np-geo-view> is defined for fallback rendering
+// Ensure <np-geo-view> is defined
 import '@nostr-post/plugin-geo/web';
 
 @customElement('np-venue-view')
@@ -27,13 +25,6 @@ export class NpVenueView extends LitElement {
       display: block;
     }
 
-    .venue-view {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      padding: 0.5rem 0;
-    }
-
     .venue-name {
       font-weight: 600;
       font-size: 0.9375rem;
@@ -41,35 +32,13 @@ export class NpVenueView extends LitElement {
       display: flex;
       align-items: center;
       gap: 0.375rem;
+      margin-bottom: 0.125rem;
     }
 
-    .venue-details {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.8125rem;
-      color: #6b7280;
-    }
-
-    .geohash {
-      font-family: monospace;
-      font-size: 0.8125rem;
-      color: #374151;
-      background: #f3f4f6;
-      padding: 0.125rem 0.375rem;
-      border-radius: 4px;
-    }
-
-    .coords {
-      font-family: monospace;
-      font-size: 0.8125rem;
-      color: #6b7280;
-    }
-
-    .links {
+    .venue-links {
       display: flex;
       gap: 0.75rem;
+      margin-top: 0.125rem;
     }
 
     .venue-link {
@@ -101,71 +70,60 @@ export class NpVenueView extends LitElement {
   field: PostField | null = null;
 
   render() {
-    // No value at all
     if (!this.value) {
       return html`<span>No location</span>`;
     }
 
-    // If value is a plain string (geohash), fallback to geo view
+    // Plain geohash string → delegate entirely to geo view
     if (typeof this.value === 'string') {
-      return html`<np-geo-view
-        .value=${this.value}
-        .field=${this.field}
-      ></np-geo-view>`;
+      return html`<np-geo-view .value=${this.value} .field=${this.field}></np-geo-view>`;
     }
 
     const v = this.value as VenueData;
 
     return html`
-      <div class="venue-view">
-        ${v.name ? html`<div class="venue-name">📍 ${v.name}</div>` : nothing}
+      ${v.name ? html`<div class="venue-name">📍 ${v.name}</div>` : nothing}
+      ${
+        v.osmType && v.osmId
+          ? html`<span class="osm-badge">OSM ${v.osmType}:${v.osmId}</span>`
+          : nothing
+      }
 
-        <div class="venue-details">
-          <span class="geohash">${v.geohash}</span>
-          <span class="coords">(${v.lat.toFixed(5)}, ${v.lon.toFixed(5)})</span>
-          ${
-            v.osmType && v.osmId
-              ? html`<span class="osm-badge">OSM ${v.osmType}:${v.osmId}</span>`
-              : nothing
-          }
-        </div>
+      <np-geo-view .value=${v.geohash} .field=${this.field}></np-geo-view>
 
-        <div class="links">
-          ${
-            v.osmType && v.osmId
-              ? html`<a
-                class="venue-link"
-                href="${osmUrl(v.osmType, v.osmId)}"
-                target="_blank"
-                rel="noopener"
-                >View on OSM ↗</a
-              >`
-              : html`<a
-                class="venue-link"
-                href="https://www.openstreetmap.org/?mlat=${v.lat}&mlon=${v.lon}#map=15/${v.lat}/${v.lon}"
-                target="_blank"
-                rel="noopener"
-                >OSM ↗</a
-              >`
-          }
-          ${
-            v.googlePlaceId
-              ? html`<a
-                class="venue-link"
-                href="${googleMapsPlaceUrl(v.googlePlaceId)}"
-                target="_blank"
-                rel="noopener"
-                >Google Maps ↗</a
-              >`
-              : html`<a
-                class="venue-link"
-                href="${googleMapsUrl(v.lat, v.lon)}"
-                target="_blank"
-                rel="noopener"
-                >Google Maps ↗</a
-              >`
-          }
-        </div>
+      ${this.renderVenueLinks(v)}
+    `;
+  }
+
+  private renderVenueLinks(v: VenueData) {
+    const hasOsmLink = v.osmType && v.osmId;
+    const hasGooglePlaceLink = v.googlePlaceId;
+    if (!hasOsmLink && !hasGooglePlaceLink) return nothing;
+
+    return html`
+      <div class="venue-links">
+        ${
+          hasOsmLink
+            ? html`<a
+              class="venue-link"
+              href="${osmUrl(v.osmType!, v.osmId!)}"
+              target="_blank"
+              rel="noopener"
+              >View on OSM ↗</a
+            >`
+            : nothing
+        }
+        ${
+          hasGooglePlaceLink
+            ? html`<a
+              class="venue-link"
+              href="${googleMapsPlaceUrl(v.googlePlaceId!)}"
+              target="_blank"
+              rel="noopener"
+              >Google Maps ↗</a
+            >`
+            : nothing
+        }
       </div>
     `;
   }

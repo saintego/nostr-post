@@ -53,6 +53,10 @@ export class NostrPostView extends NostrPostElement {
   @property({ type: Boolean })
   showKind?: boolean;
 
+  /** Field IDs to exclude from the rendered view */
+  @property({ type: Array, attribute: 'exclude-fields' })
+  excludeFields?: string[];
+
   /** Manifest resolved via auto-fetch from NIP-78 `a` tag */
   @state()
   private _resolvedManifest?: NostrPostManifest;
@@ -323,6 +327,10 @@ export class NostrPostView extends NostrPostElement {
     for (const [tagName, values] of tagGroups) {
       const field = tagFieldMap.get(tagName);
       if (!field) continue;
+
+      // Skip fields hidden via visibility or excludeFields
+      if (field.visibility?.view === 'hidden') continue;
+      if (this.excludeFields?.includes(field.id)) continue;
 
       const plugin = pluginRegistry.get(field.uiPlugin);
       if (!plugin?.viewTagName) continue;
