@@ -51,30 +51,31 @@ Manifest-driven UI engine for complex structured Nostr content (Reviews, Article
 
 ### Packages & Plugins Status
 
-| Package                   | Status          | Purpose                                                  |
-|---------------------------|-----------------|----------------------------------------------------------|
-| **@nostr-post/core**      | ✅ **Complete** | Manifest validation, event coordination, NIP-78 storage |
-| **@nostr-post/signer**    | ✅ **Complete** | NIP-07 signing, relay publish/fetch                     |
-| **@nostr-post/plugins**   | ✅ **Complete** | Plugin registry + types (extraTags, resolveFromTags)    |
-| **@nostr-post/web**       | ✅ **Complete** | Lit web components (composer, view, feed)               |
-| **@nostr-post/react**     | ✅ **Complete** | React hooks + wrapper components                        |
-| **plugin-stars**          | ✅ **Complete** | Star rating (1-5 scale, customizable)                   |
-| **plugin-geo**            | ✅ **Complete** | Geohash location picker with NIP-52 prefix tags         |
-| **plugin-venue**          | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo      |
-| **plugin-media**          | ✅ **Complete** | Multi-file upload with NIP-98 auth to nostr.build       |
-| **plugin-markdown**       | ✅ **Complete** | Markdown editor with live preview                       |
-| **plugin-hashtag**        | ✅ **Complete** | Hashtag array input with auto-extraction from content   |
+| Package                 | Status          | Purpose                                                 |
+| ----------------------- | --------------- | ------------------------------------------------------- |
+| **@nostr-post/core**    | ✅ **Complete** | Manifest validation, event coordination, NIP-78 storage |
+| **@nostr-post/signer**  | ✅ **Complete** | NIP-07 signing, relay publish/fetch                     |
+| **@nostr-post/plugins** | ✅ **Complete** | Plugin registry + types (extraTags, resolveFromTags)    |
+| **@nostr-post/web**     | ✅ **Complete** | Lit web components (composer, view, feed)               |
+| **@nostr-post/react**   | ✅ **Complete** | React hooks + wrapper components                        |
+| **plugin-stars**        | ✅ **Complete** | Star rating (1-5 scale, customizable)                   |
+| **plugin-geo**          | ✅ **Complete** | Geohash location picker with NIP-52 prefix tags         |
+| **plugin-venue**        | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo      |
+| **plugin-media**        | ✅ **Complete** | Multi-file upload with NIP-98 auth to nostr.build       |
+| **plugin-markdown**     | ✅ **Complete** | Markdown editor with live preview                       |
+| **plugin-hashtag**      | ✅ **Complete** | Hashtag array input with auto-extraction from content   |
 
 ## � Key Features
 
 ### 1. **Manifest-Driven Architecture**
+
 Define content structure once, deploy everywhere:
 
 ```typescript
 const manifest: NostrPostManifest = {
   id: "blog-v1",
   version: "1.0.0",
-  requiredKinds: [30023],  // Long-form articles
+  requiredKinds: [30023], // Long-form articles
   fields: [
     {
       id: "title",
@@ -95,6 +96,7 @@ const manifest: NostrPostManifest = {
 ```
 
 ### 2. **Multi-Event Coordination**
+
 Automatically splits data across event kinds and links them via NIP-78:
 
 ```typescript
@@ -103,6 +105,7 @@ const result = coordinateEvents(manifest, formData, { pubkey });
 ```
 
 ### 3. **6 Production Plugins**
+
 Ready-to-use UI components via Web Components or React:
 
 - **plugin-geo** - Location picker (Leaflet map + geohash, NIP-52)
@@ -113,6 +116,7 @@ Ready-to-use UI components via Web Components or React:
 - **plugin-stars** - Customizable rating (1-5 scale)
 
 ### 4. **Field-Level Controls**
+
 Visibility, defaults, prefill, readonly, exclusion:
 
 ```typescript
@@ -128,6 +132,7 @@ Visibility, defaults, prefill, readonly, exclusion:
 ```
 
 ### 5. **Plugin Composition**
+
 Plugins emit custom tags and reconstruct from tags:
 
 ```typescript
@@ -137,17 +142,18 @@ Plugins emit custom tags and reconstruct from tags:
 ```
 
 ### 6. **NIP Support**
+
 Built on standardized Nostr Improvement Proposals:
 
-| NIP | Feature | Example |
-|-----|---------|---------|
-| **NIP-01** | Base protocol | All events build on this |
-| **NIP-07** | Browser extension signing | `window.nostr.signEvent()` |
-| **NIP-23** | Kind 30023 (articles) | Long-form content |
-| **NIP-52** | Geohash prefix tags | Relay-side location filtering |
-| **NIP-73** | External identity tags | OSM place IDs |
-| **NIP-78** | Manifest storage | Kind 30078 structured data |
-| **NIP-98** | HTTP file server auth | nostr.build upload |
+| NIP        | Feature                   | Example                       |
+| ---------- | ------------------------- | ----------------------------- |
+| **NIP-01** | Base protocol             | All events build on this      |
+| **NIP-07** | Browser extension signing | `window.nostr.signEvent()`    |
+| **NIP-23** | Kind 30023 (articles)     | Long-form content             |
+| **NIP-52** | Geohash prefix tags       | Relay-side location filtering |
+| **NIP-73** | External identity tags    | OSM place IDs                 |
+| **NIP-78** | Manifest storage          | Kind 30078 structured data    |
+| **NIP-98** | HTTP file server auth     | nostr.build upload            |
 
 ## 🏃 Quick Start
 
@@ -156,25 +162,25 @@ Built on standardized Nostr Improvement Proposals:
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-  <script type="module">
-    import '@nostr-post/web';
-  </script>
-</head>
-<body>
-  <nostr-post-composer></nostr-post-composer>
-</body>
+  <head>
+    <script type="module">
+      import "@nostr-post/web";
+    </script>
+  </head>
+  <body>
+    <nostr-post-composer></nostr-post-composer>
+  </body>
 </html>
 ```
 
 ### React
 
 ```tsx
-import { NostrPostComposer, useNostrAuth } from '@nostr-post/react';
+import { NostrPostComposer, useNostrAuth } from "@nostr-post/react";
 
 export default function App() {
   const { pubkey, login } = useNostrAuth();
-  
+
   return !pubkey ? (
     <button onClick={login}>Login with Nostr</button>
   ) : (
@@ -209,8 +215,9 @@ await signer.signEvent(event);
 **Status:** Complete
 
 Framework-agnostic plugin definitions and registry. Includes plugins for:
+
 - Stars (ratings)
-- Media (images/videos) 
+- Media (images/videos)
 - Markdown
 - Geo (location)
 - Hashtags
@@ -241,7 +248,11 @@ Universal Web Components that work in any framework or vanilla HTML.
 React hooks and components for Next.js/React apps.
 
 ```tsx
-import { NostrPostComposer, NostrPostFeed, useNostrAuth } from "@nostr-post/react";
+import {
+  NostrPostComposer,
+  NostrPostFeed,
+  useNostrAuth,
+} from "@nostr-post/react";
 
 function App() {
   const { pubkey, login } = useNostrAuth();
@@ -333,6 +344,7 @@ nostr-post/
 ### Phase 1: Core Engine ✅ (Complete)
 
 - [x] Type definitions
+
 ## 🚀 Getting Started
 
 ```bash
@@ -355,16 +367,16 @@ pnpm format
 
 ## 📚 Documentation
 
-| Guide | Purpose |
-|-------|---------|
-| **[QUICKSTART.md](./QUICKSTART.md)** | Setup for Web Components, React, Next.js |
-| **[USAGE_GUIDE.md](./USAGE_GUIDE.md)** | Complete API reference for all packages |
-| **[ARCHITECTURE.md](./ARCHITECTURE.md)** | Design decisions, NIP support, patterns |
-| **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** | Contributing, technical standards |
-| **[EXAMPLES.md](./EXAMPLES.md)** | Real-world code examples |
-| **[PLUGINS.md](./PLUGINS.md)** | Creating custom UI plugins |
-| **[INTEGRATION.md](./INTEGRATION.md)** | Using in other projects, Vercel deployment, venue review app example |
-| **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)** | Technical implementation summary |
+| Guide                                              | Purpose                                                              |
+| -------------------------------------------------- | -------------------------------------------------------------------- |
+| **[QUICKSTART.md](./QUICKSTART.md)**               | Setup for Web Components, React, Next.js                             |
+| **[USAGE_GUIDE.md](./USAGE_GUIDE.md)**             | Complete API reference for all packages                              |
+| **[ARCHITECTURE.md](./ARCHITECTURE.md)**           | Design decisions, NIP support, patterns                              |
+| **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** | Contributing, technical standards                                    |
+| **[EXAMPLES.md](./EXAMPLES.md)**                   | Real-world code examples                                             |
+| **[PLUGINS.md](./PLUGINS.md)**                     | Creating custom UI plugins                                           |
+| **[INTEGRATION.md](./INTEGRATION.md)**             | Using in other projects, Vercel deployment, venue review app example |
+| **[PROJECT_SUMMARY.md](./PROJECT_SUMMARY.md)**     | Technical implementation summary                                     |
 
 ## 🤝 Contributing
 
