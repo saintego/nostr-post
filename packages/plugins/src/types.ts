@@ -1,12 +1,10 @@
 /**
  * @nostr-post/plugins - Type definitions
  *
- * Types needed for plugin development (re-exported from @nostr-post/core)
- * These will resolve to the core package types at runtime
+ * Core types for the plugin system. Each plugin is a separate package
+ * that registers itself with the shared PluginRegistry.
  */
 
-// Re-export from core when available
-// For now, we define minimal types for compilation
 export type FieldType = 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref';
 
 export interface PostField {
@@ -33,39 +31,46 @@ export interface ValidationError {
 export type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
 
 /**
- * Render context provided to plugins for rendering UI
- */
-export interface RenderContext {
-  value: unknown;
-  field: PostField;
-  onChange: (value: unknown) => void;
-  onError?: (error: string) => void;
-}
-
-/**
- * Plugin interface for framework-agnostic UI components
+ * Plugin interface.
+ *
+ * Plugins register core logic (validate, formatValue) and optionally
+ * web component tag names for input/view rendering.
+ *
+ * The /web entrypoint of each plugin package defines the Lit custom elements
+ * and sets inputTagName/viewTagName on the registry entry.
+ *
+ * To swap a plugin's UI (e.g. use Google Maps instead of OSM for geo),
+ * import a different package that registers the same plugin ID with
+ * different tag names.
  */
 export interface NostrUIPlugin {
   id: string;
   type: FieldType | FieldType[];
 
-  /**
-   * Validate field value
-   */
+  /** Validate field value */
   validate?: (value: unknown, field: PostField) => Result<void, ValidationError>;
 
-  /**
-   * Render edit/input UI (returns HTML string or DOM element)
-   */
-  renderInput?: (ctx: RenderContext) => HTMLElement | string;
-
-  /**
-   * Render view/display UI (returns HTML string or DOM element)
-   */
-  renderView?: (value: unknown, field: PostField) => HTMLElement | string;
-
-  /**
-   * Filter/transform value for display
-   */
+  /** Format value for display as plain text */
   formatValue?: (value: unknown) => string;
+
+  /** Serialize complex value to string for Nostr tag storage */
+  serializeValue?: (value: unknown, field?: PostField) => string;
+
+  /** Deserialize string from Nostr tag back to typed value */
+  deserializeValue?: (raw: string, field: PostField) => unknown;
+
+  /**
+   * Custom element tag name for the input component.
+   * Set automatically when the plugin's /web entrypoint is imported.
+   * The element must accept .value and .field properties
+   * and dispatch 'np-value-changed' CustomEvent with { detail: { value } }.
+   */
+  inputTagName?: string;
+
+  /**
+   * Custom element tag name for the view component.
+   * Set automatically when the plugin's /web entrypoint is imported.
+   * The element must accept .value and .field properties.
+   */
+  viewTagName?: string;
 }

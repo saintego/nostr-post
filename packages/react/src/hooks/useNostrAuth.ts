@@ -121,8 +121,24 @@ export function useNostrAuth(): UseNostrAuthReturn {
 
     document.addEventListener('nlAuth', handleAuth);
 
-    // Check initial auth state
-    checkAuth();
+    // Check initial auth state, retrying briefly for NIP-07 extension injection
+    let retries = 0;
+    const maxRetries = 10;
+    const retryInterval = 200; // ms
+
+    const tryCheckAuth = () => {
+      if (hasNostrSigner()) {
+        checkAuth();
+      } else if (retries < maxRetries) {
+        retries++;
+        setTimeout(tryCheckAuth, retryInterval);
+      } else {
+        // Give up waiting - mark as not loading
+        checkAuth();
+      }
+    };
+
+    tryCheckAuth();
 
     return () => {
       document.removeEventListener('nlAuth', handleAuth);

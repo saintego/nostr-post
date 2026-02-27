@@ -5,24 +5,21 @@
  * Supports automatic signing and publishing via NIP-07
  */
 
-import { coordinateEvents } from "@nostr-post/core/coordinator";
-import { validateManifest } from "@nostr-post/core/manifest";
+import { coordinateEvents } from '@nostr-post/core/coordinator';
+import { validateManifest } from '@nostr-post/core/manifest';
 import {
   DEFAULT_KIND1_MANIFEST,
   type EventBundle,
   type FormData as NostrFormData,
   type NostrPostManifest,
   type PostField,
-} from "@nostr-post/core/types";
-import { css, html } from "lit";
-import { customElement, property, state } from "lit/decorators.js";
-import { NostrPostElement, baseStyles } from "./base-component";
-import {
-  type SignedEvent,
-  getPublicKey,
-  getUserRelays,
-  signAndPublish,
-} from "./signer";
+} from '@nostr-post/core/types';
+import { pluginRegistry } from '@nostr-post/plugins/registry';
+import { css, html } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
+import { NostrPostElement, baseStyles } from './base-component';
+import { type SignedEvent, getPublicKey, getUserRelays, signAndPublish } from './signer';
 
 /**
  * Composer Web Component
@@ -47,7 +44,7 @@ import {
  * </script>
  * ```
  */
-@customElement("nostr-post-composer")
+@customElement('nostr-post-composer')
 export class NostrPostComposer extends NostrPostElement {
   static styles = [
     baseStyles,
@@ -114,7 +111,7 @@ export class NostrPostComposer extends NostrPostElement {
   pubkey?: string;
 
   /** Auto-sign and publish events (uses NIP-07 window.nostr) */
-  @property({ type: Boolean, attribute: "auto-publish" })
+  @property({ type: Boolean, attribute: 'auto-publish' })
   autoPublish = false;
 
   /** Custom relay URLs (defaults to popular relays) */
@@ -122,7 +119,12 @@ export class NostrPostComposer extends NostrPostElement {
   relays?: string[];
 
   @state()
-  private formData!: Record<string, unknown>;
+  private _formData!: Record<string, unknown>;
+
+  /** Current form data (read-only accessor for external consumers) */
+  get formData(): Record<string, unknown> {
+    return this._formData;
+  }
 
   @state()
   private errors!: Record<string, string>;
@@ -135,18 +137,18 @@ export class NostrPostComposer extends NostrPostElement {
 
   constructor() {
     super();
-    this.formData = {};
+    this._formData = {};
     this.errors = {};
     this.isSubmitting = false;
-    this.successMessage = "";
+    this.successMessage = '';
   }
 
   /**
    * Handle form field changes
    */
   private handleFieldChange(fieldId: string, value: unknown): void {
-    this.formData = {
-      ...this.formData,
+    this._formData = {
+      ...this._formData,
       [fieldId]: value,
     };
     // Clear field error on change
@@ -155,6 +157,14 @@ export class NostrPostComposer extends NostrPostElement {
       delete newErrors[fieldId];
       this.errors = newErrors;
     }
+    // Dispatch event for external consumers (live event preview)
+    this.dispatchEvent(
+      new CustomEvent('nostr-post-form-change', {
+        detail: { formData: this._formData },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   /**
@@ -162,7 +172,7 @@ export class NostrPostComposer extends NostrPostElement {
    */
   private async handleSubmit(e: Event): Promise<void> {
     e.preventDefault();
-    this.successMessage = "";
+    this.successMessage = '';
     this.errors = {};
 
     // Use default Kind 1 manifest if none provided
@@ -173,7 +183,7 @@ export class NostrPostComposer extends NostrPostElement {
     if (!manifestValidation.success) {
       const errorMessages = manifestValidation.error
         .map((err) => `${err.field}: ${err.message}`)
-        .join(", ");
+        .join(', ');
       this.showError(`Invalid manifest: ${errorMessages}`);
       return;
     }
@@ -188,19 +198,19 @@ export class NostrPostComposer extends NostrPostElement {
       }
 
       if (!pubkey) {
-        this.showError("No pubkey provided. Please login first.");
+        this.showError('No pubkey provided. Please login first.');
         return;
       }
 
       // Coordinate events
-      const result = coordinateEvents(
-        manifest,
-        this.formData as NostrFormData,
-        {
-          pubkey,
-          createdAt: Math.floor(Date.now() / 1000),
+      const result = coordinateEvents(manifest, this._formData as NostrFormData, {
+        pubkey,
+        createdAt: Math.floor(Date.now() / 1000),
+        tagSerializer: (value, field) => {
+          const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
+          return plugin?.serializeValue?.(value, field);
         },
-      );
+      });
 
       if (!result.success) {
         // Show field-level errors
@@ -220,41 +230,33 @@ export class NostrPostComposer extends NostrPostElement {
         const signedEvents: SignedEvent[] = [];
 
         for (const unsignedEvent of bundle.events) {
-          const { signedEvent, publishResults } = await signAndPublish(
-            unsignedEvent,
-            relays,
-          );
+          const { signedEvent, publishResults } = await signAndPublish(unsignedEvent, relays);
           signedEvents.push(signedEvent);
 
           if (publishResults.success === 0) {
             throw new Error(
               `Failed to publish to any relay: ${publishResults.results
                 .map((r) => r.error)
-                .join(", ")}`,
+                .join(', ')}`
             );
           }
         }
 
         // Dispatch published event
-        this.dispatchCustomEvent<SignedEvent[]>(
-          "nostr-post-published",
-          signedEvents,
-        );
+        this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
 
         this.successMessage = `Published to ${signedEvents.length} event(s)!`;
       } else {
         // Manual mode - just dispatch submit event
-        this.dispatchCustomEvent<{ bundle: EventBundle }>("nostr-post-submit", {
+        this.dispatchCustomEvent<{ bundle: EventBundle }>('nostr-post-submit', {
           bundle,
         });
-        this.successMessage = "Post created successfully!";
+        this.successMessage = 'Post created successfully!';
       }
 
-      this.formData = {}; // Reset form
+      this._formData = {}; // Reset form
     } catch (error) {
-      this.showError(
-        error instanceof Error ? error.message : "Unknown error occurred",
-      );
+      this.showError(error instanceof Error ? error.message : 'Unknown error occurred');
     } finally {
       this.isSubmitting = false;
     }
@@ -264,47 +266,59 @@ export class NostrPostComposer extends NostrPostElement {
    * Render a single form field based on its type
    */
   private renderField(field: PostField) {
-    const value = this.formData[field.id] ?? "";
+    const value = this._formData[field.id] ?? '';
     const error = this.errors[field.id];
     const isRequired = field.required === true;
 
     const handleInput = (e: Event) => {
-      const target = e.target as
-        | HTMLInputElement
-        | HTMLTextAreaElement
-        | HTMLSelectElement;
+      const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
       let fieldValue: unknown = target.value;
 
       // Type conversion
-      if (field.type === "number") {
+      if (field.type === 'number') {
         fieldValue = Number.parseFloat(target.value);
-      } else if (field.type === "boolean") {
+      } else if (field.type === 'boolean') {
         fieldValue = (target as HTMLInputElement).checked;
       }
 
       this.handleFieldChange(field.id, fieldValue);
     };
 
+    const label = (field.metadata?.label as string) || field.id;
+
     return html`
       <div class="field">
-        <label class="${isRequired ? "required" : ""}">${field.id}</label>
+        <label class="${isRequired ? 'required' : ''}">${label}</label>
         ${this.renderFieldInput(field, value, handleInput)}
-        ${error ? html`<div class="field-error">${error}</div>` : ""}
+        ${error ? html`<div class="field-error">${error}</div>` : ''}
       </div>
     `;
   }
 
   /**
    * Render the appropriate input element for a field
+   * Uses plugin system if uiPlugin is specified
    */
-  private renderFieldInput(
-    field: PostField,
-    value: unknown,
-    handleInput: (e: Event) => void,
-  ) {
+  private renderFieldInput(field: PostField, value: unknown, handleInput: (e: Event) => void) {
+    // Try to use registered plugin web component
+    if (field.uiPlugin) {
+      const plugin = pluginRegistry.get(field.uiPlugin);
+      if (plugin?.inputTagName) {
+        const tag = unsafeStatic(plugin.inputTagName);
+        return staticHtml`<${tag}
+          .value=${value}
+          .field=${field}
+          @np-value-changed=${(e: CustomEvent) => {
+            this.handleFieldChange(field.id, e.detail.value);
+          }}
+        ></${tag}>`;
+      }
+    }
+
+    // Fallback to basic inputs
     switch (field.type) {
-      case "string":
-        if (field.uiPlugin === "textarea" || field.uiPlugin === "markdown") {
+      case 'string':
+        if (field.uiPlugin === 'textarea' || field.uiPlugin === 'markdown') {
           return html`<textarea
             @input=${handleInput}
             .value=${String(value)}
@@ -316,21 +330,21 @@ export class NostrPostComposer extends NostrPostElement {
           .value=${String(value)}
         />`;
 
-      case "number":
+      case 'number':
         return html`<input
           type="number"
           @input=${handleInput}
           .value=${String(value)}
         />`;
 
-      case "boolean":
+      case 'boolean':
         return html`<input
           type="checkbox"
           @change=${handleInput}
           .checked=${Boolean(value)}
         />`;
 
-      case "enum":
+      case 'enum':
         return html`
           <select @change=${handleInput}>
             <option value="">Select...</option>
@@ -338,7 +352,7 @@ export class NostrPostComposer extends NostrPostElement {
               (opt) =>
                 html`<option value=${opt} ?selected=${value === opt}>
                   ${opt}
-                </option>`,
+                </option>`
             )}
           </select>
         `;
@@ -359,23 +373,25 @@ export class NostrPostComposer extends NostrPostElement {
 
     return html`
       <div class="composer">
-        ${metadata?.name || metadata?.description
-          ? html`
+        ${
+          metadata?.name || metadata?.description
+            ? html`
               <div class="composer-header">
-                ${metadata.name
-                  ? html`<h2 class="composer-title">${metadata.name}</h2>`
-                  : ""}
-                ${metadata.description
-                  ? html`<p class="composer-description">
+                ${metadata.name ? html`<h2 class="composer-title">${metadata.name}</h2>` : ''}
+                ${
+                  metadata.description
+                    ? html`<p class="composer-description">
                       ${metadata.description}
                     </p>`
-                  : ""}
+                    : ''
+                }
               </div>
             `
-          : ""}
-        ${this.successMessage
-          ? html`<div class="success-message">${this.successMessage}</div>`
-          : ""}
+            : ''
+        }
+        ${
+          this.successMessage ? html`<div class="success-message">${this.successMessage}</div>` : ''
+        }
 
         <form @submit=${this.handleSubmit}>
           ${manifest.fields.map((field) => this.renderField(field))}
@@ -386,7 +402,7 @@ export class NostrPostComposer extends NostrPostElement {
               class="primary"
               ?disabled=${this.isSubmitting}
             >
-              ${this.isSubmitting ? "Creating..." : "Create Post"}
+              ${this.isSubmitting ? 'Creating...' : 'Create Post'}
             </button>
           </div>
         </form>
@@ -397,6 +413,6 @@ export class NostrPostComposer extends NostrPostElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    "nostr-post-composer": NostrPostComposer;
+    'nostr-post-composer': NostrPostComposer;
   }
 }

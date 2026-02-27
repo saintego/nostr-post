@@ -11,6 +11,7 @@ import { useEffect, useRef } from 'react';
 // Extend HTMLElement for the web component
 interface NostrPostViewElement extends HTMLElement {
   event?: SignedEvent;
+  manifest?: import('@nostr-post/core/types').NostrPostManifest;
   showKind?: boolean;
   showTags?: boolean;
   showId?: boolean;
@@ -35,6 +36,8 @@ declare global {
 export interface NostrPostViewProps {
   /** The event to display */
   event: SignedEvent;
+  /** Manifest for plugin-aware rendering */
+  manifest?: import('@nostr-post/core/types').NostrPostManifest;
   /** Show event kind badge */
   showKind?: boolean;
   /** Show tags */
@@ -49,11 +52,12 @@ export interface NostrPostViewProps {
 
 /**
  * Display a single Nostr event
- * 
+ *
  * React wrapper around <nostr-post-view> web component
  */
 export function NostrPostView({
   event,
+  manifest,
   showKind = false,
   showTags = false,
   showId = false,
@@ -71,10 +75,11 @@ export function NostrPostView({
     if (!element) return;
 
     element.event = event;
+    element.manifest = manifest;
     element.showKind = showKind;
     element.showTags = showTags;
     element.showId = showId;
-  }, [event, showKind, showTags, showId]);
+  }, [event, manifest, showKind, showTags, showId]);
 
   return (
     <div className={wrapperClassName}>

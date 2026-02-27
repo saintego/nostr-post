@@ -1,28 +1,22 @@
 /**
  * @nostr-post/plugins - Plugin Registry
  *
- * Central registry for discovering and loading plugins
+ * Central registry for discovering and loading plugins.
+ * Empty by default — each plugin package registers itself when imported.
+ *
+ * Usage:
+ *   import '@nostr-post/plugin-stars/web'; // auto-registers stars plugin
+ *   import '@nostr-post/plugin-geo/web';   // auto-registers geo plugin
  */
 
-import { geoPlugin } from "./plugin-geo";
-import { markdownPlugin } from "./plugin-markdown";
-import { mediaPlugin } from "./plugin-media";
-import { starsPlugin } from "./plugin-stars";
-import type { FieldType, NostrUIPlugin } from "./types";
+import type { FieldType, NostrUIPlugin } from './types';
 
 /**
- * Plugin registry singleton
+ * Plugin registry singleton.
+ * Plugin packages register themselves here on import.
  */
 class PluginRegistry {
   private plugins = new Map<string, NostrUIPlugin>();
-
-  constructor() {
-    // Register core plugins
-    this.register(starsPlugin);
-    this.register(mediaPlugin);
-    this.register(markdownPlugin);
-    this.register(geoPlugin);
-  }
 
   /**
    * Register a plugin
@@ -87,6 +81,3 @@ export const pluginRegistry = new PluginRegistry();
 
 // Export for custom registries
 export { PluginRegistry };
-
-// Re-export plugins
-export { starsPlugin, mediaPlugin, markdownPlugin, geoPlugin };

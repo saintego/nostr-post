@@ -13,6 +13,7 @@ interface NostrPostFeedElement extends HTMLElement {
   kinds?: number[];
   limit?: number;
   relays?: string[];
+  manifest?: import('@nostr-post/core/types').NostrPostManifest;
   showKind?: boolean;
   showTags?: boolean;
   refresh?: () => Promise<void>;
@@ -46,6 +47,8 @@ export interface NostrPostFeedProps {
   limit?: number;
   /** Custom relay URLs */
   relays?: string[];
+  /** Manifest for plugin-aware rendering */
+  manifest?: import('@nostr-post/core/types').NostrPostManifest;
   /** Show event kind badge */
   showKind?: boolean;
   /** Show tags */
@@ -64,7 +67,7 @@ export type NostrPostFeedRef = NostrPostFeedElement;
 
 /**
  * Display a feed of Nostr events
- * 
+ *
  * React wrapper around <nostr-post-feed> web component
  */
 export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps>(
@@ -74,6 +77,7 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       kinds = [1],
       limit = 20,
       relays,
+      manifest,
       showKind = false,
       showTags = false,
       className = '',
@@ -105,9 +109,10 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       if (relays) {
         element.relays = relays;
       }
+      element.manifest = manifest;
       element.showKind = showKind;
       element.showTags = showTags;
-    }, [authors, kinds, limit, relays, showKind, showTags]);
+    }, [authors, kinds, limit, relays, manifest, showKind, showTags]);
 
     // Don't pass authors/kinds/relays as attributes since we're setting them as properties
     // This prevents conflicts and re-renders

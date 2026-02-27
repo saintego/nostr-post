@@ -1,0 +1,34 @@
+{
+  "name": "@nostr-post/plugin-geo",
+  "version": "0.1.0",
+  "description": "Geographic location plugin for nostr-post (Leaflet/OSM map selector)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["nostr", "plugin", "geo", "location", "map", "leaflet"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nostr-post/plugins": "workspace:*",
+    "leaflet": "^1.9.4",
+    "lit": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/leaflet": "^1.9.12",
+    "typescript": "^5.6.3"
+  }
+}

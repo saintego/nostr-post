@@ -44,13 +44,13 @@ The engine automatically:
 
 ### Package Responsibilities
 
-| Package                 | Status          | Purpose                                                 |
-| ----------------------- | --------------- | ------------------------------------------------------- |
-| **@nostr-post/core**    | ✅ **Complete** | Headless logic: manifest validation, event coordination |
-| **@nostr-post/signer**  | ✅ **Complete** | NIP-07 signing, relay publish/fetch                     |
-| **@nostr-post/web**     | ✅ **Complete** | Universal Web Components + nostr-login integration      |
-| **@nostr-post/react**   | ✅ **Complete** | React hooks and components                              |
-| **@nostr-post/plugins** | 🚧 Next         | Framework-agnostic UI plugin definitions                |
+| Package                 | Status          | Purpose                                                   |
+| ----------------------- | --------------- | --------------------------------------------------------- |
+| **@nostr-post/core**    | ✅ **Complete** | Headless logic: manifest validation, event coordination   |
+| **@nostr-post/signer**  | ✅ **Complete** | NIP-07 signing, relay publish/fetch                       |
+| **@nostr-post/plugins** | ✅ **Complete** | Framework-agnostic UI plugins (stars, media, markdown, geo) |
+| **@nostr-post/web**     | ✅ **Complete** | Universal Web Components with automatic plugin loading    |
+| **@nostr-post/react**   | ✅ **Complete** | React hooks and wrapper components                        |
 
 ## 🚀 Quick Start
 

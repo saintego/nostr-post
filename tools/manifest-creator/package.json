@@ -10,7 +10,13 @@
   },
   "dependencies": {
     "@nostr-post/core": "workspace:*",
+    "@nostr-post/plugin-geo": "workspace:*",
+    "@nostr-post/plugin-markdown": "workspace:*",
+    "@nostr-post/plugin-media": "workspace:*",
+    "@nostr-post/plugin-stars": "workspace:*",
+    "@nostr-post/plugins": "workspace:*",
     "@nostr-post/react": "workspace:*",
+    "@nostr-post/signer": "workspace:*",
     "@nostr-post/web": "workspace:*",
     "next": "latest",
     "react": "^18.0.0",

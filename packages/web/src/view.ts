@@ -4,9 +4,12 @@
  * A universal viewer for displaying Nostr events
  */
 
-import type { UnsignedNostrEvent } from '@nostr-post/core/types';
+import type { NostrPostManifest, PostField, UnsignedNostrEvent } from '@nostr-post/core/types';
+import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
+import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { NostrPostElement, baseStyles } from './base-component';
 import type { SignedEvent } from './signer';
 
@@ -126,6 +129,9 @@ export class NostrPostView extends NostrPostElement {
   @property({ type: Object })
   event?: DisplayableEvent;
 
+  @property({ type: Object })
+  manifest?: NostrPostManifest;
+
   @property({ type: Boolean })
   showTags?: boolean;
 
@@ -181,7 +187,10 @@ export class NostrPostView extends NostrPostElement {
           >
         </div>
 
-        <div class="view-content">${content || html`<em>No content</em>`}</div>
+        <div class="view-content">
+          ${content ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>` : ''}
+          ${this.renderTagPlugins(tags)}
+        </div>
 
         ${
           this.showTags && tags.length > 0
@@ -202,6 +211,84 @@ export class NostrPostView extends NostrPostElement {
         ${eventId ? html`<div class="view-id">ID: ${eventId}</div>` : ''}
       </div>
     `;
+  }
+
+  /**
+   * Build a map from tag name -> manifest field for plugin lookup.
+   */
+  private getTagFieldMap(): Map<string, PostField> {
+    const map = new Map<string, PostField>();
+    if (this.manifest) {
+      for (const field of this.manifest.fields) {
+        if (field.mapTo.target === 'tag' && field.mapTo.tagName) {
+          map.set(field.mapTo.tagName, field);
+        }
+      }
+    }
+    return map;
+  }
+
+  /**
+   * Render tag values using registered plugin view components.
+   * Falls back gracefully when no plugin or no viewTagName is registered.
+   */
+  private renderTagPlugins(tags: string[][]) {
+    const tagFieldMap = this.getTagFieldMap();
+    if (tagFieldMap.size === 0) return '';
+
+    const results = [];
+    for (const tag of tags) {
+      const [tagName, rawValue] = tag;
+      if (!rawValue) continue;
+
+      const field = tagFieldMap.get(tagName);
+      if (!field) continue;
+
+      const plugin = pluginRegistry.get(field.uiPlugin);
+      if (!plugin?.viewTagName) continue;
+
+      // Deserialize the raw tag string to a typed value
+      let value: unknown = rawValue;
+      if (plugin.deserializeValue) {
+        value = plugin.deserializeValue(rawValue, field);
+      } else if (field.type === 'number') {
+        value = Number(rawValue);
+      }
+
+      const viewTag = unsafeStatic(plugin.viewTagName);
+      results.push(staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`);
+    }
+    return results;
+  }
+
+  private formatMarkdown(text: string): string {
+    if (!text) return '';
+    let html = text;
+    // Bold
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    // Italic
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    // Code
+    html = html.replace(
+      /`([^`]+)`/g,
+      '<code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px; font-family: monospace;">$1</code>'
+    );
+    // Headings
+    html = html.replace(
+      /^### (.*?)$/gm,
+      '<h4 style="margin: 1rem 0 0.5rem 0; font-size: 1rem;">$1</h4>'
+    );
+    html = html.replace(
+      /^## (.*?)$/gm,
+      '<h3 style="margin: 1rem 0 0.5rem 0; font-size: 1.1rem;">$1</h3>'
+    );
+    html = html.replace(
+      /^# (.*?)$/gm,
+      '<h2 style="margin: 1rem 0 0.5rem 0; font-size: 1.25rem;">$1</h2>'
+    );
+    // Line breaks
+    html = html.replace(/\n/g, '<br>');
+    return html;
   }
 }
 

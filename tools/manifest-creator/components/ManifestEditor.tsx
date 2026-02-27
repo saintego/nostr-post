@@ -283,6 +283,31 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
           ))}
         </div>
       </div>
+      {/* Manifest JSON */}
+      <div style={styles.section}>
+        <details>
+          <summary
+            style={{ cursor: 'pointer', fontWeight: 500, color: '#374151', marginBottom: '0.5rem' }}
+          >
+            Manifest JSON
+          </summary>
+          <pre
+            style={{
+              background: '#1f2937',
+              color: '#e5e7eb',
+              padding: '1rem',
+              borderRadius: '0.375rem',
+              fontFamily: 'monospace',
+              fontSize: '0.875rem',
+              overflowX: 'auto',
+              maxHeight: '400px',
+              overflowY: 'auto',
+            }}
+          >
+            {JSON.stringify(manifest, null, 2)}
+          </pre>
+        </details>
+      </div>
     </div>
   );
 }

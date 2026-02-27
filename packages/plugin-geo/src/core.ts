@@ -1,10 +1,11 @@
 /**
- * @nostr-post/plugins - Geo location plugin
+ * @nostr-post/plugin-geo - Core
  *
- * A plugin for geographic coordinates (latitude/longitude)
+ * Geographic location plugin: validation, serialization.
+ * No DOM dependencies — safe for SSR/Node.
  */
 
-import type { NostrUIPlugin, PostField, Result, ValidationError } from './types';
+import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
 
 export interface GeoPluginConfig {
   defaultZoom?: number;
@@ -14,19 +15,19 @@ export interface GeoPluginConfig {
 export interface GeoCoordinates {
   lat: number;
   lon: number;
-  alt?: number; // Altitude in meters
 }
 
 export const geoPlugin: NostrUIPlugin = {
   id: 'geo',
   type: 'geo',
+
   validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
     if (typeof value !== 'object' || value === null) {
       return {
         success: false,
         error: {
           field: field.id,
-          message: 'Coordinates must be an object',
+          message: 'Coordinates must be an object with lat and lon',
           code: 'INVALID_TYPE',
         },
       };
@@ -68,5 +69,29 @@ export const geoPlugin: NostrUIPlugin = {
     }
 
     return { success: true, data: undefined };
+  },
+
+  formatValue: (value: unknown): string => {
+    if (typeof value !== 'object' || value === null) return 'Unknown location';
+    const { lat, lon } = value as GeoCoordinates;
+    return `${lat.toFixed(5)}, ${lon.toFixed(5)}`;
+  },
+
+  serializeValue: (value: unknown): string => {
+    if (typeof value !== 'object' || value === null) return '0,0';
+    const { lat, lon } = value as GeoCoordinates;
+    return `${lat},${lon}`;
+  },
+
+  deserializeValue: (raw: string): unknown => {
+    const parts = raw.split(',');
+    if (parts.length >= 2) {
+      const lat = Number.parseFloat(parts[0]);
+      const lon = Number.parseFloat(parts[1]);
+      if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+        return { lat, lon } as GeoCoordinates;
+      }
+    }
+    return null;
   },
 };

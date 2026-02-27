@@ -1,28 +1,20 @@
 {
   "name": "@nostr-post/plugins",
-  "version": "0.1.0",
-  "description": "Framework-agnostic UI plugin definitions for nostr-post",
+  "version": "0.2.0",
+  "description": "Plugin type definitions and registry for nostr-post",
   "type": "module",
   "exports": {
-    "./stars": {
-      "types": "./dist/plugin-stars.d.ts",
-      "import": "./dist/plugin-stars.js"
-    },
-    "./media": {
-      "types": "./dist/plugin-media.d.ts",
-      "import": "./dist/plugin-media.js"
-    },
-    "./markdown": {
-      "types": "./dist/plugin-markdown.d.ts",
-      "import": "./dist/plugin-markdown.js"
-    },
-    "./geo": {
-      "types": "./dist/plugin-geo.d.ts",
-      "import": "./dist/plugin-geo.js"
+    ".": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
     },
     "./registry": {
       "types": "./dist/registry.d.ts",
       "import": "./dist/registry.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
     }
   },
   "scripts": {

@@ -26,6 +26,8 @@ import type {
 export interface CoordinatorConfig {
   pubkey?: string; // Public key for the events (can be added later)
   createdAt?: number; // Unix timestamp (defaults to now)
+  /** Optional per-field tag serializer. Called with (value, field) before the default serializer. */
+  tagSerializer?: (value: unknown, field: PostField) => string | undefined;
 }
 
 /**
@@ -223,7 +225,9 @@ const createEventForKind = (
   for (const field of tagFields) {
     const value = formData[field.id];
     if (value !== undefined && field.mapTo.tagName) {
-      const stringValue = String(value);
+      // Use custom serializer if provided, fall back to default
+      const custom = config.tagSerializer?.(value, field);
+      const stringValue = custom !== undefined ? custom : serializeTagValue(value);
       tags.push([field.mapTo.tagName, stringValue]);
     }
   }
@@ -235,6 +239,25 @@ const createEventForKind = (
     content,
     pubkey: config.pubkey || '',
   };
+};
+
+/**
+ * Serializes a form value into a string suitable for a Nostr tag.
+ * Handles primitive types and known object shapes (e.g., geo {lat, lon}).
+ */
+const serializeTagValue = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+  if (typeof value === 'object' && value !== null) {
+    const obj = value as Record<string, unknown>;
+    // Geo coordinates: { lat, lon }
+    if ('lat' in obj && 'lon' in obj) {
+      return `${obj.lat},${obj.lon}`;
+    }
+    // Fallback: JSON for unknown objects
+    return JSON.stringify(value);
+  }
+  return String(value);
 };
 
 /**

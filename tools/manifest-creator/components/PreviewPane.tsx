@@ -1,30 +1,12 @@
 'use client';
 
+import { coordinateEvents } from '@nostr-post/core/coordinator';
 import type { NostrPostManifest } from '@nostr-post/core/types';
+import { pluginRegistry } from '@nostr-post/plugins/registry';
 import type { SignedEvent } from '@nostr-post/react';
-import '@nostr-post/web'; // Import web components
-import type React from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { NostrPostView } from '@nostr-post/react';
 
-// TypeScript declarations for web components
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      'nostr-post-composer': React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement>,
-        HTMLElement
-      > & {
-        'auto-publish'?: boolean;
-        onError?: (event: CustomEvent) => void;
-      };
-      'nostr-post-view': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
-        event?: SignedEvent;
-        'show-kind'?: boolean;
-        'show-tags'?: boolean;
-      };
-    }
-  }
-}
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface NostrPostComposerElement extends HTMLElement {
   manifest: NostrPostManifest;
@@ -32,6 +14,25 @@ interface NostrPostComposerElement extends HTMLElement {
 
 interface PreviewPaneProps {
   manifest: NostrPostManifest;
+}
+
+const STORAGE_KEY = 'nostr-post-manifest-creator-events';
+
+function loadCachedEvents(): SignedEvent[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function cacheEvents(events: SignedEvent[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+  } catch {
+    // Ignore storage errors
+  }
 }
 
 const styles = {
@@ -90,6 +91,8 @@ const styles = {
     overflowX: 'auto' as const,
     maxHeight: '600px',
     overflowY: 'auto' as const,
+    whiteSpace: 'pre-wrap' as const,
+    wordBreak: 'break-word' as const,
   },
   composerContainer: {
     maxHeight: '600px',
@@ -111,46 +114,146 @@ const styles = {
     padding: '2rem',
     color: '#6b7280',
   },
+  clearButton: {
+    padding: '0.375rem 0.75rem',
+    background: 'none',
+    border: '1px solid #e5e7eb',
+    borderRadius: '0.375rem',
+    cursor: 'pointer',
+    fontSize: '0.75rem',
+    color: '#6b7280',
+    marginLeft: '0.5rem',
+  },
+  headerRow: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  hidden: {
+    display: 'none',
+  },
+  eventPreviewLabel: {
+    fontSize: '0.75rem',
+    color: '#9ca3af',
+    marginBottom: '0.5rem',
+    fontStyle: 'italic' as const,
+  },
 } as const;
 
 export function PreviewPane({ manifest }: PreviewPaneProps) {
-  const [activeTab, setActiveTab] = useState<'preview' | 'json'>('preview');
+  const [activeTab, setActiveTab] = useState<'preview' | 'events' | 'manifest'>('preview');
   const [publishedEvents, setPublishedEvents] = useState<SignedEvent[]>([]);
+  const [isLoadingEvents, setIsLoadingEvents] = useState(false);
+  const [liveEventJson, setLiveEventJson] = useState<string>('');
   const composerRef = useRef<NostrPostComposerElement>(null);
 
-  const handlePublished = useCallback(
-    (eventDetail: unknown) => {
-      console.log('Published event detail:', eventDetail);
-
-      // Handle different event detail formats
-      let events: SignedEvent[] = [];
-      if (Array.isArray(eventDetail)) {
-        events = eventDetail;
-      } else if (eventDetail && typeof eventDetail === 'object' && 'events' in eventDetail && Array.isArray(eventDetail.events)) {
-        events = eventDetail.events;
-      } else {
-        console.error('Unexpected event detail format:', eventDetail);
-        return;
-      }
-
-      console.log('Extracted events:', events);
-      console.log('Current publishedEvents before:', publishedEvents);
-      setPublishedEvents((prev) => {
-        const newEvents = [...events, ...prev];
-        console.log('New publishedEvents:', newEvents);
-        return newEvents;
-      });
-      alert(`Published ${events.length} event(s)!`);
-    },
-    [publishedEvents]
-  );
-
-  // Update manifest when it changes
+  // Dynamically import web components and plugins (client-only, avoids SSR "window is not defined")
   useEffect(() => {
-    if (composerRef.current && activeTab === 'preview') {
+    import('@nostr-post/web');
+    import('@nostr-post/plugin-stars/web');
+    import('@nostr-post/plugin-geo/web');
+    import('@nostr-post/plugin-media/web');
+    import('@nostr-post/plugin-markdown/web');
+  }, []);
+
+  // Load events: show cache immediately, then fetch from relays
+  useEffect(() => {
+    // Show cached events first for instant display
+    const cached = loadCachedEvents();
+    if (cached.length > 0) {
+      setPublishedEvents(cached);
+    }
+
+    // Then fetch from Nostr relays
+    const loadFromRelays = async () => {
+      try {
+        const { getPublicKey, fetchEvents } = await import('@nostr-post/signer');
+
+        // Try to get logged-in user's pubkey
+        let pubkey: string | undefined;
+        try {
+          pubkey = await getPublicKey();
+        } catch {
+          // Not logged in — that's fine, skip relay load
+          return;
+        }
+
+        if (!pubkey) return;
+
+        setIsLoadingEvents(true);
+        const kinds = manifest.requiredKinds ?? [1];
+        const events = await fetchEvents({ authors: [pubkey], kinds, limit: 20 });
+
+        if (events.length > 0) {
+          setPublishedEvents(events);
+          cacheEvents(events);
+        }
+      } catch (err) {
+        console.warn('Failed to load events from relays:', err);
+      } finally {
+        setIsLoadingEvents(false);
+      }
+    };
+
+    loadFromRelays();
+  }, [manifest.requiredKinds]);
+
+  // Cache events to localStorage whenever they change
+  useEffect(() => {
+    cacheEvents(publishedEvents);
+  }, [publishedEvents]);
+
+  // Listen to form changes on the composer for live event preview
+  useEffect(() => {
+    const composer = composerRef.current;
+    if (!composer) return;
+
+    const handleFormChange = (e: Event) => {
+      const { formData: data } = (e as CustomEvent).detail;
+      if (!data || Object.keys(data).length === 0) return;
+
+      const result = coordinateEvents(manifest, data, {
+        pubkey: '<pubkey>',
+        createdAt: Math.floor(Date.now() / 1000),
+        tagSerializer: (value, field) => {
+          const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
+          return plugin?.serializeValue?.(value, field);
+        },
+      });
+      if (result.success) {
+        setLiveEventJson(JSON.stringify(result.data.events, null, 2));
+      }
+    };
+
+    composer.addEventListener('nostr-post-form-change', handleFormChange);
+    return () => composer.removeEventListener('nostr-post-form-change', handleFormChange);
+  }, [manifest]);
+
+  const handlePublished = useCallback((eventDetail: unknown) => {
+    let events: SignedEvent[] = [];
+    if (Array.isArray(eventDetail)) {
+      events = eventDetail;
+    } else if (
+      eventDetail &&
+      typeof eventDetail === 'object' &&
+      'events' in eventDetail &&
+      Array.isArray(eventDetail.events)
+    ) {
+      events = eventDetail.events;
+    } else {
+      console.error('Unexpected event detail format:', eventDetail);
+      return;
+    }
+
+    setPublishedEvents((prev) => [...events, ...prev]);
+  }, []);
+
+  // Update manifest on the composer element
+  useEffect(() => {
+    if (composerRef.current) {
       composerRef.current.manifest = manifest;
     }
-  }, [manifest, activeTab]);
+  }, [manifest]);
 
   // Add event listener for published events
   useEffect(() => {
@@ -158,18 +261,20 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
     if (composer) {
       const handlePublishedEvent = (e: Event) => {
         const customEvent = e as CustomEvent;
-        console.log('Received published event:', customEvent.detail);
         handlePublished(customEvent.detail);
       };
 
-      // Only listen to the full event name
       composer.addEventListener('nostr-post-published', handlePublishedEvent);
-
       return () => {
         composer.removeEventListener('nostr-post-published', handlePublishedEvent);
       };
     }
   }, [handlePublished]);
+
+  const clearEvents = () => {
+    setPublishedEvents([]);
+    cacheEvents([]);
+  };
 
   return (
     <div style={styles.panel}>
@@ -188,43 +293,90 @@ export function PreviewPane({ manifest }: PreviewPaneProps) {
         </button>
         <button
           type="button"
-          style={activeTab === 'json' ? styles.activeTab : styles.tab}
-          onClick={() => setActiveTab('json')}
+          style={activeTab === 'events' ? styles.activeTab : styles.tab}
+          onClick={() => setActiveTab('events')}
         >
-          JSON
+          Event JSON
+        </button>
+        <button
+          type="button"
+          style={activeTab === 'manifest' ? styles.activeTab : styles.tab}
+          onClick={() => setActiveTab('manifest')}
+        >
+          Manifest JSON
         </button>
       </div>
 
-      {activeTab === 'preview' ? (
-        <div key="preview-content">
-          <div style={styles.composerContainer}>
-            <h3 style={styles.feedHeader}>Composer</h3>
-            <nostr-post-composer
-              ref={composerRef}
-              auto-publish
-              onError={(e) => {
-                console.error('Error:', (e as CustomEvent).detail);
-                alert(`Error: ${(e as CustomEvent).detail.message}`);
-              }}
-            />
-          </div>
+      {/* 
+        Composer is ALWAYS rendered but hidden when not on the preview tab.
+        This preserves its internal state (form values) across tab switches.
+      */}
+      <div style={activeTab !== 'preview' ? styles.hidden : undefined}>
+        <div style={styles.composerContainer}>
+          <h3 style={styles.feedHeader}>Composer</h3>
+          <nostr-post-composer ref={composerRef} auto-publish />
+        </div>
 
-          <div style={styles.divider}>
-            <h3 style={styles.feedHeader}>Published Events Preview</h3>
-            {publishedEvents.length === 0 ? (
-              <div style={styles.emptyState}>
-                <p>Publish an event above to see a preview here</p>
-              </div>
-            ) : (
-              publishedEvents.map((event) => (
-                <div key={event.id}>
-                  <nostr-post-view event={event} show-kind show-tags />
-                </div>
-              ))
+        <div style={styles.divider}>
+          <div style={styles.headerRow}>
+            <h3 style={styles.feedHeader}>Published Events</h3>
+            {publishedEvents.length > 0 && (
+              <button type="button" style={styles.clearButton} onClick={clearEvents}>
+                Clear all
+              </button>
             )}
           </div>
+          {publishedEvents.length === 0 ? (
+            <div style={styles.emptyState}>
+              {isLoadingEvents ? (
+                <p>Loading events from relays...</p>
+              ) : (
+                <p>No events yet. Publish one above or log in to load from relays.</p>
+              )}
+            </div>
+          ) : (
+            publishedEvents.map((event) => (
+              <div key={event.id}>
+                <NostrPostView event={event} manifest={manifest} showKind showTags />
+              </div>
+            ))
+          )}
         </div>
-      ) : (
+      </div>
+
+      {activeTab === 'events' && (
+        <div>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <div style={styles.headerRow}>
+              <h3 style={{ ...styles.feedHeader, marginBottom: '0.25rem' }}>Live Event Preview</h3>
+            </div>
+            <p style={styles.eventPreviewLabel}>
+              Updates as you type in the composer — shows what the unsigned event will look like
+            </p>
+            {liveEventJson ? (
+              <pre style={styles.codeBlock}>{liveEventJson}</pre>
+            ) : (
+              <div style={styles.emptyState}>
+                <p>Start typing in the composer to see a live event preview</p>
+              </div>
+            )}
+          </div>
+
+          {publishedEvents.length > 0 && (
+            <div>
+              <div style={styles.headerRow}>
+                <h3 style={styles.feedHeader}>Published Events ({publishedEvents.length})</h3>
+                <button type="button" style={styles.clearButton} onClick={clearEvents}>
+                  Clear all
+                </button>
+              </div>
+              <pre style={styles.codeBlock}>{JSON.stringify(publishedEvents, null, 2)}</pre>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'manifest' && (
         <pre style={styles.codeBlock}>{JSON.stringify(manifest, null, 2)}</pre>
       )}
     </div>
