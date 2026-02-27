@@ -172,6 +172,7 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
             <option value="stars">stars</option>
             <option value="media">media</option>
             <option value="geo">geo</option>
+            <option value="venue">venue</option>
             <option value="hashtag">hashtag</option>
           </select>
         </div>

@@ -327,10 +327,13 @@ export class NostrPostView extends NostrPostElement {
       const plugin = pluginRegistry.get(field.uiPlugin);
       if (!plugin?.viewTagName) continue;
 
-      // Multi-value tags (hashtag, media) → pass as array
-      // NIP-52 geohash prefix tags → pick the most precise (longest) value
+      // If plugin defines resolveFromTags, let it build a rich value from ALL event tags
+      // (e.g. venue plugin reads g + i + location tags together)
       let value: unknown;
-      if (field.uiPlugin === 'geo') {
+      if (plugin.resolveFromTags) {
+        value = plugin.resolveFromTags(tags, field);
+      } else if (field.uiPlugin === 'geo') {
+        // NIP-52 geohash prefix tags → pick the most precise (longest) value
         value = values.reduce((a, b) => (a.length >= b.length ? a : b));
       } else if (values.length > 1 || field.uiPlugin === 'hashtag' || field.uiPlugin === 'media') {
         value = values;

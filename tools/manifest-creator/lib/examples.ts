@@ -115,6 +115,74 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
     },
   },
 
+  'venue-review': {
+    id: 'venue-review-v1',
+    version: '1.0.0',
+    requiredKinds: [1],
+    fields: [
+      {
+        id: 'review',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 1, target: 'content' },
+        required: true,
+        metadata: {
+          label: 'Review',
+          placeholder: 'What did you think of this venue?',
+        },
+      },
+      {
+        id: 'rating',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
+        required: true,
+        metadata: {
+          label: 'Rating',
+          max: 5,
+          showNumber: true,
+        },
+      },
+      {
+        id: 'venue',
+        type: 'geo',
+        uiPlugin: 'venue',
+        mapTo: { kind: 1, target: 'tag', tagName: 'g' },
+        required: true,
+        metadata: {
+          label: 'Venue',
+          precision: 6,
+          providers: ['osm'],
+        },
+      },
+      {
+        id: 'photos',
+        type: 'string',
+        uiPlugin: 'media',
+        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        metadata: {
+          label: 'Photos',
+          accept: ['image/*'],
+          maxFiles: 5,
+        },
+      },
+      {
+        id: 'tags',
+        type: 'string',
+        uiPlugin: 'hashtag',
+        mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        metadata: {
+          label: 'Tags',
+          suggestions: ['restaurant', 'cafe', 'bar', 'park', 'museum', 'hotel'],
+        },
+      },
+    ],
+    metadata: {
+      name: 'Venue Review',
+      description: 'Review a specific venue with OSM linking, star rating, photos, and hashtags',
+    },
+  },
+
   article: {
     id: 'article-v1',
     version: '1.0.0',

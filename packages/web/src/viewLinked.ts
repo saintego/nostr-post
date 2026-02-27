@@ -82,10 +82,30 @@ const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
     const field = fieldByTag.get(tagName);
     if (!field) continue;
 
-    if (field.uiPlugin === 'geo' && group.length > 1) {
+    const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
+    const label = (field.metadata?.label as string) || field.id;
+
+    // If plugin defines resolveFromTags, let it build a rich value from ALL event tags
+    if (plugin?.resolveFromTags) {
+      const value = plugin.resolveFromTags(tags, field);
+      if (plugin.viewTagName) {
+        const viewTag = unsafeStatic(plugin.viewTagName);
+        results.push(html`
+          <div class="linked-field">
+            <span class="linked-field-label">${label}:</span>
+            ${staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`}
+          </div>
+        `);
+      } else {
+        results.push(html`
+          <div class="linked-field">
+            <span class="linked-field-label">${label}:</span>
+            <span>${String(value)}</span>
+          </div>
+        `);
+      }
+    } else if (field.uiPlugin === 'geo' && group.length > 1) {
       // NIP-52 geohash prefix tags: pick the most precise (longest) value
-      const label = (field.metadata?.label as string) || field.id;
-      const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
       const bestValue = group.map((t) => t[1]).reduce((a, b) => (a.length >= b.length ? a : b));
       if (plugin?.viewTagName) {
         const viewTag = unsafeStatic(plugin.viewTagName);
@@ -105,8 +125,6 @@ const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
       }
     } else if (group.length > 1 || field.uiPlugin === 'hashtag' || field.uiPlugin === 'media') {
       // Aggregate: pass array of values to the plugin
-      const label = (field.metadata?.label as string) || field.id;
-      const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
       const values = group.map((t) => t[1]);
 
       if (plugin?.viewTagName) {

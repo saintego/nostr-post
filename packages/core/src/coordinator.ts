@@ -39,6 +39,13 @@ export interface CoordinatorConfig {
    * If not set, an empty string is used as default per NIP-01.
    */
   dTag?: string;
+  /**
+   * Optional hook to produce extra tags for a field value.
+   * Called per tag field after the primary tag is emitted.
+   * Used by plugins that need to emit multiple tags from a single field
+   * (e.g. venue plugin emits NIP-73 "i" tags and "location" alongside the "g" geohash).
+   */
+  extraTagsFn?: (value: unknown, field: PostField) => [string, ...string[]][] | undefined;
 }
 
 /**
@@ -156,7 +163,19 @@ const validateFieldType = (field: PostField, value: unknown): Result<void, Valid
       break;
 
     case 'geo':
-      if (!isValidGeohash(value)) {
+      // Accept a geohash string OR an object with a valid geohash property (e.g. VenueData)
+      if (typeof value === 'object' && value !== null && 'geohash' in value) {
+        if (!isValidGeohash((value as Record<string, unknown>).geohash)) {
+          return {
+            success: false,
+            error: {
+              field: field.id,
+              message: `Field "${field.id}" must contain a valid geohash`,
+              code: 'INVALID_GEO',
+            },
+          };
+        }
+      } else if (!isValidGeohash(value)) {
         return {
           success: false,
           error: {
@@ -264,17 +283,50 @@ const createEventForKind = (
           const stringValue = custom !== undefined ? custom : serializeTagValue(item);
           tags.push([field.mapTo.tagName, stringValue]);
         }
-      } else if (field.mapTo.tagName === 'g' && isValidGeohash(value)) {
+      } else if (field.mapTo.tagName === 'g') {
         // NIP-52: emit geohash at all prefix lengths for relay-side filtering
-        // e.g. "u09tvw" → ["g","u09tvw"], ["g","u09tv"], ["g","u09t"], ["g","u09"], ["g","u0"]
-        const gh = value as string;
-        for (let len = gh.length; len >= 2; len--) {
-          tags.push(['g', gh.slice(0, len)]);
+        // Accept either a geohash string or an object with a .geohash property (e.g. VenueData)
+        let gh: string | undefined;
+        if (isValidGeohash(value)) {
+          gh = value as string;
+        } else if (
+          typeof value === 'object' &&
+          value !== null &&
+          'geohash' in value &&
+          isValidGeohash((value as Record<string, unknown>).geohash)
+        ) {
+          gh = (value as Record<string, string>).geohash;
+        }
+
+        if (gh) {
+          // e.g. "u09tvw" → ["g","u09tvw"], ["g","u09tv"], ["g","u09t"], ["g","u09"], ["g","u0"]
+          for (let len = gh.length; len >= 2; len--) {
+            tags.push(['g', gh.slice(0, len)]);
+          }
+        } else {
+          const custom = config.tagSerializer?.(value, field);
+          const stringValue = custom !== undefined ? custom : serializeTagValue(value);
+          tags.push([field.mapTo.tagName, stringValue]);
         }
       } else {
         const custom = config.tagSerializer?.(value, field);
         const stringValue = custom !== undefined ? custom : serializeTagValue(value);
         tags.push([field.mapTo.tagName, stringValue]);
+      }
+    }
+  }
+
+  // Call extraTagsFn hook for each tag field (plugin-provided extra tags)
+  if (config.extraTagsFn) {
+    for (const field of tagFields) {
+      const value = formData[field.id];
+      if (value !== undefined) {
+        const extras = config.extraTagsFn(value, field);
+        if (extras) {
+          for (const tag of extras) {
+            tags.push(tag);
+          }
+        }
       }
     }
   }

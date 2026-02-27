@@ -90,4 +90,26 @@ export interface NostrUIPlugin {
    * The element must accept .value and .field properties.
    */
   viewTagName?: string;
+
+  /**
+   * Emit additional tags beyond the primary mapTo tag.
+   * Called by the coordinator during event creation.
+   * For example, a venue plugin maps to "g" (geohash) as the primary tag
+   * but also emits NIP-73 "i" tags and a "location" tag.
+   *
+   * @returns Array of extra [tagName, ...values] tags to add
+   */
+  extraTags?: (value: unknown, field: PostField) => [string, ...string[]][];
+
+  /**
+   * Resolve a rich view value from all event tags.
+   * Called by view components when rendering; allows plugins to reconstruct
+   * a structured object from multiple related tags (e.g. geohash + venue ID + address).
+   * When defined, takes priority over the default single-tag-value resolution.
+   *
+   * @param tags - All tags from the event
+   * @param field - The field definition from the manifest
+   * @returns The resolved value to pass to the view component's .value property
+   */
+  resolveFromTags?: (tags: string[][], field: PostField) => unknown;
 }

@@ -215,6 +215,10 @@ export class NostrPostComposer extends NostrPostElement {
           const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
           return plugin?.serializeValue?.(value, field);
         },
+        extraTagsFn: (value, field) => {
+          const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
+          return plugin?.extraTags?.(value, field);
+        },
       });
 
       if (!result.success) {

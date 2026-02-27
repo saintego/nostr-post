@@ -222,6 +222,10 @@ export class NpGeoInput extends LitElement {
   @property({ type: Object })
   field: PostField | null = null;
 
+  /** When true, hides the built-in search bar (useful when wrapped by another component) */
+  @property({ type: Boolean })
+  hideSearch = false;
+
   /** Decoded coordinates for internal map display */
   @state() private coords: GeoCoordinates | null = null;
 
@@ -398,7 +402,10 @@ export class NpGeoInput extends LitElement {
       />
       <div class="container">
         <!-- Search -->
-        <div class="search-row">
+        ${
+          this.hideSearch
+            ? nothing
+            : html`<div class="search-row">
           <input
             class="search-input"
             type="text"
@@ -444,6 +451,7 @@ export class NpGeoInput extends LitElement {
               </div>
             `
             : nothing
+        }`
         }
 
         <!-- Map -->

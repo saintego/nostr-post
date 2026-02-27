@@ -209,6 +209,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
     import('@nostr-post/plugin-media/web');
     import('@nostr-post/plugin-markdown/web');
     import('@nostr-post/plugin-hashtag/web');
+    import('@nostr-post/plugin-venue/web');
   }, []);
 
   // Load events: show cache immediately, then fetch from relays
