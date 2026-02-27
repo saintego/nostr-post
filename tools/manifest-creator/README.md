@@ -55,14 +55,12 @@ All tests use mocked Nostr functionality to avoid requiring a real Nostr extensi
 ## Creating a Manifest
 
 1. **Add Fields**: Click "Add Field" and configure:
-
    - Field ID and type
    - UI plugin to use
    - Target event kind and location (content/tag)
    - Validation rules (required, options)
 
 2. **Configure Metadata**: Set field-specific options like:
-
    - Star ratings: min/max values
    - Enums: available options
    - Geo: default location

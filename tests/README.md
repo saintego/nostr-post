@@ -18,11 +18,13 @@ tests/
 ## Running Tests
 
 ### All Tests
+
 ```bash
 pnpm test:all
 ```
 
 ### Unit Tests Only
+
 ```bash
 # Run all package unit tests
 pnpm test
@@ -35,6 +37,7 @@ pnpm test:watch
 ```
 
 ### E2E Tests Only
+
 ```bash
 # Run E2E tests
 pnpm test:e2e
@@ -44,6 +47,7 @@ pnpm test:e2e:watch
 ```
 
 ### Individual Package Tests
+
 ```bash
 # Core package
 cd packages/core && pnpm test
@@ -103,21 +107,26 @@ The mock Nostr relay (`helpers/mock-relay.ts`) provides:
 - Tag-based filtering (hashtags, geohash, etc.)
 
 Example usage:
+
 ```typescript
-import { MockNostrRelay, generateMockKeypair, mockSignEvent } from '../helpers/mock-relay';
+import {
+  MockNostrRelay,
+  generateMockKeypair,
+  mockSignEvent,
+} from "../helpers/mock-relay";
 
 const relay = new MockNostrRelay();
 const keypair = generateMockKeypair();
 
 // Publish an event
-const unsignedEvent = { /* ... */ };
+const unsignedEvent = {
+  /* ... */
+};
 const signedEvent = mockSignEvent(unsignedEvent, keypair.privkey);
 await relay.publish(signedEvent);
 
 // Query events
-const events = await relay.query([
-  { kinds: [1], authors: [keypair.pubkey] }
-]);
+const events = await relay.query([{ kinds: [1], authors: [keypair.pubkey] }]);
 ```
 
 ## Writing Tests
@@ -128,12 +137,12 @@ Unit tests should be colocated with the source files:
 
 ```typescript
 // packages/core/src/example.test.ts
-import { describe, it, expect } from 'vitest';
-import { myFunction } from './example';
+import { describe, it, expect } from "vitest";
+import { myFunction } from "./example";
 
-describe('myFunction', () => {
-  it('should do something', () => {
-    expect(myFunction()).toBe('expected');
+describe("myFunction", () => {
+  it("should do something", () => {
+    expect(myFunction()).toBe("expected");
   });
 });
 ```
@@ -144,10 +153,10 @@ E2E tests go in the `tests/e2e/` directory:
 
 ```typescript
 // tests/e2e/my-workflow.test.ts
-import { describe, it, expect, beforeEach } from 'vitest';
-import { MockNostrRelay, generateMockKeypair } from '../helpers/mock-relay';
+import { describe, it, expect, beforeEach } from "vitest";
+import { MockNostrRelay, generateMockKeypair } from "../helpers/mock-relay";
 
-describe('My Workflow', () => {
+describe("My Workflow", () => {
   let relay: MockNostrRelay;
   let keypair: ReturnType<typeof generateMockKeypair>;
 
@@ -156,7 +165,7 @@ describe('My Workflow', () => {
     keypair = generateMockKeypair();
   });
 
-  it('should handle the workflow', async () => {
+  it("should handle the workflow", async () => {
     // Test implementation
   });
 });
@@ -165,6 +174,7 @@ describe('My Workflow', () => {
 ## CI Integration
 
 Tests are run automatically on:
+
 - Pre-commit (via lefthook)
 - Pull requests
 - Main branch pushes
