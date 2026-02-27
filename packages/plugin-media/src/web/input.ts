@@ -53,72 +53,175 @@ async function createNip98AuthToken(url: string, method: string): Promise<string
 @customElement('np-media-input')
 export class NpMediaInput extends LitElement {
   static styles = css`
-    :host { display: block; }
-    .container { display: flex; flex-direction: column; gap: 0.75rem; }
+    :host {
+      display: block;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
 
     /* Gallery */
-    .gallery { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .gallery-card {
-      position: relative; border: 1px solid #e5e7eb; border-radius: 6px;
-      overflow: hidden; width: 120px; height: 90px; background: #f3f4f6;
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
     }
-    .gallery-card img, .gallery-card video {
-      width: 100%; height: 100%; object-fit: cover;
+    .gallery-card {
+      position: relative;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+      width: 120px;
+      height: 90px;
+      background: #f3f4f6;
+    }
+    .gallery-card img,
+    .gallery-card video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
     .gallery-card .badge {
-      position: absolute; bottom: 4px; left: 4px; background: rgba(0,0,0,0.6);
-      color: #fff; padding: 0 4px; border-radius: 3px; font-size: 0.7rem;
+      position: absolute;
+      bottom: 4px;
+      left: 4px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      padding: 0 4px;
+      border-radius: 3px;
+      font-size: 0.7rem;
     }
     .gallery-card .placeholder {
-      width: 100%; height: 100%; display: flex; align-items: center;
-      justify-content: center; font-size: 0.7rem; color: #6b7280;
-      padding: 0.25rem; word-break: break-all; text-align: center;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      color: #6b7280;
+      padding: 0.25rem;
+      word-break: break-all;
+      text-align: center;
     }
     .gallery-card .remove-btn {
-      position: absolute; top: 2px; right: 2px;
-      background: rgba(0,0,0,0.6); color: #fff; border: none;
-      border-radius: 50%; width: 22px; height: 22px;
-      cursor: pointer; font-size: 0.8rem; line-height: 1;
-      display: flex; align-items: center; justify-content: center;
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      border: none;
+      border-radius: 50%;
+      width: 22px;
+      height: 22px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .gallery-card .remove-btn:hover { background: rgba(220, 38, 38, 0.8); }
+    .gallery-card .remove-btn:hover {
+      background: rgba(220, 38, 38, 0.8);
+    }
 
     /* Drop zone */
     .drop-zone {
-      border: 2px dashed #d1d5db; border-radius: 8px;
-      padding: 1.5rem 1rem; text-align: center; cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
+      border: 2px dashed #d1d5db;
+      border-radius: 8px;
+      padding: 1.5rem 1rem;
+      text-align: center;
+      cursor: pointer;
+      transition:
+        border-color 0.15s,
+        background 0.15s;
     }
-    .drop-zone:hover, .drop-zone.dragover {
-      border-color: #6366f1; background: rgba(99, 102, 241, 0.04);
+    .drop-zone:hover,
+    .drop-zone.dragover {
+      border-color: #6366f1;
+      background: rgba(99, 102, 241, 0.04);
     }
-    .drop-zone.uploading { border-color: #a5b4fc; opacity: 0.7; pointer-events: none; }
-    .drop-icon { font-size: 1.75rem; margin-bottom: 0.25rem; }
-    .drop-text { font-size: 0.875rem; color: #6b7280; margin: 0; }
-    .drop-hint { font-size: 0.75rem; color: #9ca3af; margin: 0.25rem 0 0; }
-    .file-input { display: none; }
+    .drop-zone.uploading {
+      border-color: #a5b4fc;
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .drop-icon {
+      font-size: 1.75rem;
+      margin-bottom: 0.25rem;
+    }
+    .drop-text {
+      font-size: 0.875rem;
+      color: #6b7280;
+      margin: 0;
+    }
+    .drop-hint {
+      font-size: 0.75rem;
+      color: #9ca3af;
+      margin: 0.25rem 0 0;
+    }
+    .file-input {
+      display: none;
+    }
 
     /* URL input */
-    .url-row { display: flex; gap: 0.5rem; align-items: center; }
+    .url-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
     .separator {
-      font-size: 0.75rem; color: #9ca3af; text-transform: uppercase;
-      font-weight: 600; letter-spacing: 0.05em;
+      font-size: 0.75rem;
+      color: #9ca3af;
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
     }
     .url-input {
-      flex: 1; padding: 0.5rem 0.75rem; border: 1px solid #d1d5db;
-      border-radius: 6px; font-size: 0.875rem; outline: none; transition: border-color 0.15s;
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s;
     }
-    .url-input:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15); }
+    .url-input:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+    }
 
     /* Progress & status */
-    .progress-bar { height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
-    .progress-fill { height: 100%; background: #6366f1; transition: width 0.3s; border-radius: 2px; }
-    .upload-status { font-size: 0.75rem; color: #6b7280; text-align: center; }
-    .error {
-      font-size: 0.8125rem; color: #dc2626; padding: 0.5rem 0.75rem;
-      background: #fef2f2; border-radius: 6px; border: 1px solid #fecaca;
+    .progress-bar {
+      height: 4px;
+      background: #e5e7eb;
+      border-radius: 2px;
+      overflow: hidden;
     }
-    .hint { font-size: 0.75rem; color: #9ca3af; }
+    .progress-fill {
+      height: 100%;
+      background: #6366f1;
+      transition: width 0.3s;
+      border-radius: 2px;
+    }
+    .upload-status {
+      font-size: 0.75rem;
+      color: #6b7280;
+      text-align: center;
+    }
+    .error {
+      font-size: 0.8125rem;
+      color: #dc2626;
+      padding: 0.5rem 0.75rem;
+      background: #fef2f2;
+      border-radius: 6px;
+      border: 1px solid #fecaca;
+    }
+    .hint {
+      font-size: 0.75rem;
+      color: #9ca3af;
+    }
   `;
 
   @property({ type: Array })
@@ -300,39 +403,51 @@ export class NpMediaInput extends LitElement {
     return html`
       <div class="container">
         ${this.urls.length > 0 ? this.renderGallery() : nothing}
-
         ${
           canAddMore
             ? html`
-          ${showUpload ? this.renderDropZone() : nothing}
-          ${showUpload && showUrl ? html`<div class="url-row"><span class="separator">or</span></div>` : nothing}
-          ${
-            showUrl
-              ? html`
-            <div class="url-row">
-              <input
-                class="url-input" type="url"
-                placeholder="Paste a URL and press Enter"
-                .value=${this.urlInput}
-                @input=${(e: Event) => {
-                  this.urlInput = (e.target as HTMLInputElement).value;
-                }}
-                @keypress=${this.handleUrlKeypress}
-              />
-            </div>
-          `
-              : nothing
-          }
-        `
+              ${showUpload ? this.renderDropZone() : nothing}
+              ${
+                showUpload && showUrl
+                  ? html`<div class="url-row">
+                    <span class="separator">or</span>
+                  </div>`
+                  : nothing
+              }
+              ${
+                showUrl
+                  ? html`
+                    <div class="url-row">
+                      <input
+                        class="url-input"
+                        type="url"
+                        placeholder="Paste a URL and press Enter"
+                        .value=${this.urlInput}
+                        @input=${(e: Event) => {
+                          this.urlInput = (e.target as HTMLInputElement).value;
+                        }}
+                        @keypress=${this.handleUrlKeypress}
+                      />
+                    </div>
+                  `
+                  : nothing
+              }
+            `
             : nothing
         }
-
         ${
           this.uploading
             ? html`
-          <div class="progress-bar"><div class="progress-fill" style="width: ${this.uploadProgress}%"></div></div>
-          <div class="upload-status">Uploading... ${this.uploadProgress}%</div>
-        `
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  style="width: ${this.uploadProgress}%"
+                ></div>
+              </div>
+              <div class="upload-status">
+                Uploading... ${this.uploadProgress}%
+              </div>
+            `
             : nothing
         }
         ${this.uploadError ? html`<div class="error">${this.uploadError}</div>` : nothing}
@@ -353,12 +468,21 @@ export class NpMediaInput extends LitElement {
                   ? html`<img src=${url} alt="Media ${i + 1}" />`
                   : isVideoUrl(url)
                     ? html`
-                    <video src=${url} muted></video>
-                    <span class="badge">▶</span>
-                  `
-                    : html`<div class="placeholder">${url.length > 30 ? `${url.slice(0, 27)}…` : url}</div>`
+                      <video src=${url} muted></video>
+                      <span class="badge">▶</span>
+                    `
+                    : html`<div class="placeholder">
+                      ${url.length > 30 ? `${url.slice(0, 27)}…` : url}
+                    </div>`
               }
-              <button type="button" class="remove-btn" title="Remove" @click=${() => this.removeUrl(i)}>×</button>
+              <button
+                type="button"
+                class="remove-btn"
+                title="Remove"
+                @click=${() => this.removeUrl(i)}
+              >
+                ×
+              </button>
             </div>
           `
         )}
@@ -370,13 +494,24 @@ export class NpMediaInput extends LitElement {
     return html`
       <div
         class="drop-zone ${this.dragover ? 'dragover' : ''} ${this.uploading ? 'uploading' : ''}"
-        @dragover=${this.handleDragOver} @dragleave=${this.handleDragLeave}
-        @drop=${this.handleDrop} @click=${this.openFilePicker}
+        @dragover=${this.handleDragOver}
+        @dragleave=${this.handleDragLeave}
+        @drop=${this.handleDrop}
+        @click=${this.openFilePicker}
       >
         <div class="drop-icon">📷</div>
         <p class="drop-text">Drop files here, or click to browse</p>
-        <p class="drop-hint">Uploads to nostr.build (max ${Math.round(this.maxSize / (1024 * 1024))}MB each)</p>
-        <input class="file-input" type="file" accept=${this.accept} multiple @change=${this.handleFileSelected} />
+        <p class="drop-hint">
+          Uploads to nostr.build (max
+          ${Math.round(this.maxSize / (1024 * 1024))}MB each)
+        </p>
+        <input
+          class="file-input"
+          type="file"
+          accept=${this.accept}
+          multiple
+          @change=${this.handleFileSelected}
+        />
       </div>
     `;
   }

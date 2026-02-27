@@ -224,9 +224,5 @@ export const renderLinkedEvents = (
 
   if (results.length === 0) return '';
 
-  return html`
-    <div class="linked-data">
-      ${results}
-    </div>
-  `;
+  return html` <div class="linked-data">${results}</div> `;
 };

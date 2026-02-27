@@ -15,23 +15,53 @@ import { isImageUrl, isVideoUrl, toArray } from '../core';
 @customElement('np-media-view')
 export class NpMediaView extends LitElement {
   static styles = css`
-    :host { display: block; }
-    .gallery { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-    .media-view { border-radius: 8px; overflow: hidden; background: #f9fafb; }
+    :host {
+      display: block;
+    }
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .media-view {
+      border-radius: 8px;
+      overflow: hidden;
+      background: #f9fafb;
+    }
     img {
-      display: block; max-width: 100%; max-height: 400px;
-      object-fit: contain; border-radius: 8px;
+      display: block;
+      max-width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+      border-radius: 8px;
     }
     video {
-      display: block; max-width: 100%; max-height: 400px; border-radius: 8px;
+      display: block;
+      max-width: 100%;
+      max-height: 400px;
+      border-radius: 8px;
     }
     .media-link {
-      display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem;
-      color: #6366f1; text-decoration: none; font-size: 0.875rem; word-break: break-all;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem;
+      color: #6366f1;
+      text-decoration: none;
+      font-size: 0.875rem;
+      word-break: break-all;
     }
-    .media-link:hover { text-decoration: underline; }
-    .media-icon { font-size: 1.25rem; flex-shrink: 0; }
-    .empty { font-size: 0.875rem; color: #9ca3af; }
+    .media-link:hover {
+      text-decoration: underline;
+    }
+    .media-icon {
+      font-size: 1.25rem;
+      flex-shrink: 0;
+    }
+    .empty {
+      font-size: 0.875rem;
+      color: #9ca3af;
+    }
   `;
 
   @property({ type: Array })
@@ -48,9 +78,7 @@ export class NpMediaView extends LitElement {
     }
 
     return html`
-      <div class="gallery">
-        ${urls.map((url) => this.renderItem(url))}
-      </div>
+      <div class="gallery">${urls.map((url) => this.renderItem(url))}</div>
     `;
   }
 
