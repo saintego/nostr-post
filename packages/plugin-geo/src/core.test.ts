@@ -74,12 +74,12 @@ describe('geoPlugin.validate', () => {
   };
 
   it('should validate valid geohash string', () => {
-    const result = geoPlugin.validate('u09tvw', field);
+    const result = geoPlugin.validate!('u09tvw', field);
     expect(result.success).toBe(true);
   });
 
   it('should reject invalid geohash', () => {
-    const result = geoPlugin.validate('invalid!', field);
+    const result = geoPlugin.validate!('invalid!', field);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.code).toBe('INVALID_GEOHASH');
@@ -87,69 +87,76 @@ describe('geoPlugin.validate', () => {
   });
 
   it('should reject empty string', () => {
-    const result = geoPlugin.validate('', field);
+    const result = geoPlugin.validate!('', field);
     expect(result.success).toBe(false);
   });
 
   it('should reject non-string values', () => {
-    const result = geoPlugin.validate(123, field);
+    const result = geoPlugin.validate!(123, field);
     expect(result.success).toBe(false);
   });
 
   it('should reject geohash with invalid characters', () => {
-    const result = geoPlugin.validate('UPPERCASE', field);
+    const result = geoPlugin.validate!('UPPERCASE', field);
     expect(result.success).toBe(false);
   });
 
   it('should accept all valid base32 characters', () => {
-    const result = geoPlugin.validate('0123456789bcdefghjkmnpqrstuvwxyz', field);
+    const result = geoPlugin.validate!('0123456789bcdefghjkmnpqrstuvwxyz', field);
     expect(result.success).toBe(true);
   });
 });
 
 describe('geoPlugin.formatValue', () => {
   it('should format geohash as coordinates', () => {
-    const formatted = geoPlugin.formatValue('u09tvw');
+    const formatted = geoPlugin.formatValue!('u09tvw');
     expect(formatted).toContain('📍');
     expect(formatted).toMatch(/\d+\.\d+, -?\d+\.\d+/);
   });
 
   it('should handle empty string', () => {
-    const formatted = geoPlugin.formatValue('');
+    const formatted = geoPlugin.formatValue!('');
     expect(formatted).toBe('Unknown location');
   });
 
   it('should handle non-string values', () => {
-    const formatted = geoPlugin.formatValue(123);
+    const formatted = geoPlugin.formatValue!(123);
     expect(formatted).toBe('Unknown location');
   });
 });
 
 describe('geoPlugin.serializeValue', () => {
   it('should serialize geohash string as-is', () => {
-    const result = geoPlugin.serializeValue('u09tvw');
+    const result = geoPlugin.serializeValue!('u09tvw');
     expect(result).toBe('u09tvw');
   });
 
   it('should handle non-string values', () => {
-    const result = geoPlugin.serializeValue(123);
+    const result = geoPlugin.serializeValue!(123);
     expect(result).toBe('');
   });
 
   it('should handle empty string', () => {
-    const result = geoPlugin.serializeValue('');
+    const result = geoPlugin.serializeValue!('');
     expect(result).toBe('');
   });
 });
 
 describe('geoPlugin.deserializeValue', () => {
+  const field: PostField = {
+    id: 'location',
+    type: 'geo',
+    uiPlugin: 'geo',
+    mapTo: { kind: 1, target: 'tag', tagName: 'g' },
+  };
+
   it('should return geohash string as-is', () => {
-    const result = geoPlugin.deserializeValue('u09tvw');
+    const result = geoPlugin.deserializeValue!('u09tvw', field);
     expect(result).toBe('u09tvw');
   });
 
   it('should handle empty string', () => {
-    const result = geoPlugin.deserializeValue('');
+    const result = geoPlugin.deserializeValue!('', field);
     expect(result).toBe('');
   });
 });

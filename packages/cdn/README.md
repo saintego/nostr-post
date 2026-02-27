@@ -7,7 +7,10 @@ A single-file CDN bundle that includes **all** nostr-post web components and plu
 ### ESM (recommended)
 
 ```html
-<script type="module" src="https://saintego.github.io/nostr-post/nostr-post.js"></script>
+<script
+  type="module"
+  src="https://saintego.github.io/nostr-post/nostr-post.js"
+></script>
 
 <nostr-post-composer auto-publish></nostr-post-composer>
 ```
@@ -26,11 +29,11 @@ The IIFE build exposes a global `NostrPost` object for programmatic access.
 
 Loading the bundle automatically registers every custom element:
 
-| Component | Tag |
-|---|---|
-| Composer | `<nostr-post-composer>` |
-| View | `<nostr-post-view>` |
-| Feed | `<nostr-post-feed>` |
+| Component | Tag                     |
+| --------- | ----------------------- |
+| Composer  | `<nostr-post-composer>` |
+| View      | `<nostr-post-view>`     |
+| Feed      | `<nostr-post-feed>`     |
 
 All six plugins and their UI elements are also registered:
 
@@ -54,10 +57,10 @@ The bundle re-exports utilities for advanced usage:
     signAndPublish,
     getUserRelays,
     validateManifest,
-  } from 'https://saintego.github.io/nostr-post/nostr-post.js';
+  } from "https://saintego.github.io/nostr-post/nostr-post.js";
 
   const relays = await getUserRelays();
-  console.log('User relays:', relays);
+  console.log("User relays:", relays);
 </script>
 ```
 
@@ -92,22 +95,29 @@ The bundle re-exports utilities for advanced usage:
 ```html
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>nostr-post CDN Demo</title>
-  <script type="module" src="https://saintego.github.io/nostr-post/nostr-post.js"></script>
-  <style>
-    body { font-family: system-ui; max-width: 640px; margin: 2rem auto; }
-  </style>
-</head>
-<body>
-  <h1>Compose a Post</h1>
-  <nostr-post-composer auto-publish></nostr-post-composer>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>nostr-post CDN Demo</title>
+    <script
+      type="module"
+      src="https://saintego.github.io/nostr-post/nostr-post.js"
+    ></script>
+    <style>
+      body {
+        font-family: system-ui;
+        max-width: 640px;
+        margin: 2rem auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Compose a Post</h1>
+    <nostr-post-composer auto-publish></nostr-post-composer>
 
-  <h2>Recent Posts</h2>
-  <nostr-post-feed></nostr-post-feed>
-</body>
+    <h2>Recent Posts</h2>
+    <nostr-post-feed></nostr-post-feed>
+  </body>
 </html>
 ```
 
@@ -135,7 +145,7 @@ pnpm dev
 
 ## Bundle Size
 
-| Format | Raw | Gzipped |
-|---|---|---|
-| ESM | ~267 KB | ~72 KB |
-| IIFE | ~267 KB | ~72 KB |
+| Format | Raw     | Gzipped |
+| ------ | ------- | ------- |
+| ESM    | ~267 KB | ~72 KB  |
+| IIFE   | ~267 KB | ~72 KB  |
