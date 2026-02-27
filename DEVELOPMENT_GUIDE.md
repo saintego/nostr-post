@@ -2,151 +2,226 @@
 
 ## Project Overview
 
-**nostr-post** is a Plugin + Manifest Architecture for creating and viewing complex Nostr content. It uses a "Lego" architecture where different packages handle specific concerns.
+**nostr-post** is a Plugin + Manifest Architecture for creating and viewing complex Nostr content. It uses layered architecture where different packages handle specific concerns.
 
-**Tagline:** A Headless UI Engine for Structured Nostr Content
+**Tagline:** Manifest-Driven UI Engine for Structured Nostr Content  
+**Status:** All core packages complete ✅
 
-## Architecture
-
-### The "Lego" System
-
-```
-@nostr-post/core (Headless)
-    ↓
-@nostr-post/plugins (Framework-agnostic UI)
-    ↓
-@nostr-post/web (Web Components)
-    ↓
-@nostr-post/react (React/Next.js)
-```
-
-### Package Responsibilities
-
-#### 1. **@nostr-post/core** (Headless Logic - COMPLETED ✓)
-
-- **Status:** Initial implementation complete
-- **Location:** `packages/core/`
-- **Purpose:** Pure TypeScript logic with zero UI dependencies
-- **Key Files:**
-  - `types.ts` - Core type definitions
-  - `manifest.ts` - Manifest validation and utilities
-  - `coordinator.ts` - EventCoordinator for multi-event splitting
-
-**What's Implemented:**
-
-- ✅ Manifest type system with field-to-Nostr mapping
-- ✅ Validation functions for manifests and form data
-- ✅ EventCoordinator that produces unsigned event bundles
-- ✅ Support for NIP-01 (basic events) and NIP-78 (structured data)
-
-**Next Steps for Core:**
-
-- [ ] Add unit tests for all validation functions
-- [ ] Implement event ID generation (NIP-01)
-- [ ] Add cross-linking logic ('e' tags for related events)
-- [ ] Support for more field types (arrays, nested objects)
-
-#### 2. **@nostr-post/plugins** (Next Priority)
-
-- **Status:** Not yet created
-- **Purpose:** Atomic, framework-agnostic UI plugin system
-- **Key Concepts:**
-  - Each plugin is a pure function/configuration object
-  - No framework dependencies (no React, no DOM)
-  - Just interfaces and specifications
-
-**Recommended Structure:**
+## Architecture Layers
 
 ```
-packages/plugins/
-├── package.json
-├── src/
-│   ├── plugin-interface.ts    # NostrUIPlugin interface
-│   ├── plugin-stars.ts        # Rating/stars plugin
-│   ├── plugin-media.ts        # Image/video upload plugin
-│   ├── plugin-markdown.ts     # Rich text editor plugin
-│   ├── plugin-geo.ts          # Location picker plugin
-│   └── registry.ts            # Plugin registry/loader
+                    Your App
+            (React, Vue, Next.js, etc.)
+                      │
+     ┌────────────────▼─────────────────┐
+     │ @nostr-post/react                │
+     │ (Hooks + Components)             │
+     │ + Plugin Packages                │
+     └────────────────┬─────────────────┘
+                      │
+     ┌────────────────▼─────────────────┐
+     │ @nostr-post/web                  │
+     │ (Lit Web Components)             │
+     │ <nostr-post-composer>            │
+     │ <nostr-post-view>                │
+     │ <nostr-post-feed>                │
+     └────────────────┬─────────────────┘
+                      │
+     ┌────────────────▼──────────────────┐
+     │ @nostr-post/signer               │
+     │ (NIP-07 signing + relay)         │
+     │ @nostr-post/plugins (registry)   │
+     └────────────────┬──────────────────┘
+                      │
+     ┌────────────────▼──────────────────┐
+     │ @nostr-post/core                 │
+     │ (Zero Dependencies)              │
+     │ Manifest validation              │
+     │ Event coordination               │
+     │ NIP-78 storage                   │
+     └──────────────────────────────────┘
 ```
 
-**Plugin Interface (from types.ts):**
+## Package Breakdown (All Complete ✅)
 
-```typescript
-export interface NostrUIPlugin {
-  id: string;
-  type: FieldType | FieldType[];
-  validate?: (
-    value: unknown,
-    field: PostField,
-  ) => Result<void, ValidationError>;
-}
-```
+### Core Packages (5)
 
-**To Implement:**
+#### 1. **@nostr-post/core** ✅ (Headless)
 
-- [ ] Expand NostrUIPlugin interface with render metadata
-- [ ] Create plugin registry/discovery system
-- [ ] Implement core plugins (stars, media, markdown)
-- [ ] Add plugin configuration schema
+**Location:** `packages/core/`  
+**Status:** Complete - Production ready
 
-#### 3. **@nostr-post/web** (Web Components Layer)
+**Purpose:** Pure TypeScript event coordination with zero dependencies
 
-- **Status:** Not yet created
-- **Purpose:** Universal, framework-independent UI using Web Components
-- **Key Components:**
-  - `<nostr-post-composer>` - Form builder using manifest
-  - `<nostr-post-view>` - Read-only view of Nostr events
-  - `<nostr-post-field>` - Individual field renderer
+**Key Files:**
+- `types.ts` - Type system (PostField, NostrTarget, FieldVisibility, etc.)
+- `manifest.ts` - Manifest validation
+- `coordinator.ts` - Event coordination and field defaults
+- `nip78.ts` - NIP-78 manifest serialization
 
-**Recommended Structure:**
+**Features:**
+- ✅ Multi-event coordination (split across kinds)
+- ✅ Manifest validation
+- ✅ Form data validation with type checking
+- ✅ defaultValue support (manifest-level defaults)
+- ✅ Field visibility (hidden/visible/readonly in edit/view)
+- ✅ extraTagsFn hook for plugin tag emission
+- ✅ Geohash prefix tag expansion (NIP-52)
+- ✅ Hashtag auto-extraction from Kind 1 content
+- ✅ NIP-78 event serialization/deserialization
 
-```
-packages/web/
-├── package.json
-├── src/
-│   ├── components/
-│   │   ├── nostr-post-composer.ts
-│   │   ├── nostr-post-view.ts
-│   │   └── nostr-post-field.ts
-│   ├── plugin-renderers/
-│   │   ├── stars-renderer.ts
-│   │   └── media-renderer.ts
-│   └── index.ts
-```
+#### 2. **@nostr-post/signer** ✅
 
-**To Implement:**
+**Location:** `packages/signer/`  
+**Status:** Complete
 
-- [ ] Set up Lit or vanilla Web Components
-- [ ] Create base component classes
-- [ ] Integrate @nostr-post/core for logic
-- [ ] Load plugins dynamically
-- [ ] Add styling system (CSS variables, shadow DOM)
+**Purpose:** NIP-07 browser extension signing and relay communication
 
-#### 4. **@nostr-post/react** (React Bindings)
+**Features:**
+- ✅ NIP-07 extension detection and fallback retry (up to 10x)
+- ✅ Event signing
+- ✅ Event publishing to relays
+- ✅ Event fetching from relays with filters
 
-- **Status:** Not yet created
-- **Purpose:** React hooks and components for Next.js/React apps
-- **Key Exports:**
-  - `useManifest(manifestId)` - Load and validate manifest
-  - `useEventCoordinator()` - Hook for event coordination
-  - `<NostrPostComposer>` - React component wrapper
-  - `<NostrPostView>` - React view component
+#### 3. **@nostr-post/plugins** ✅ (Registry + Types)
 
-**Recommended Structure:**
+**Location:** `packages/plugins/`  
+**Status:** Complete
 
-```
-packages/react/
-├── package.json
-├── src/
-│   ├── hooks/
-│   │   ├── useManifest.ts
-│   │   ├── useEventCoordinator.ts
-│   │   └── useNostrPlugin.ts
-│   ├── components/
-│   │   ├── NostrPostComposer.tsx
-│   │   └── NostrPostView.tsx
-│   └── index.ts
-```
+**Purpose:** Plugin interface and discovery registry
+
+**Features:**
+- ✅ Plugin interface with hooks (extraTags, resolveFromTags)
+- ✅ Plugin registry singleton
+- ✅ Plugin discovery by ID
+- ✅ Auto-registration on import
+
+#### 4. **@nostr-post/web** ✅ (Web Components)
+
+**Location:** `packages/web/`  
+**Status:** Complete - Production ready
+
+**Purpose:** Lit-based Web Components that work in any HTML/JS context
+
+**Components:**
+- `<nostr-post-composer>` - Form builder with field defaults, excludeFields, readonlyFields, prefill
+- `<nostr-post-view>` - Event viewer with NIP-78 auto-fetch
+- `<nostr-post-feed>` - Event stream with refresh() method
+
+**Features:**
+- ✅ Automatic plugin loading on tag names
+- ✅ Manifest-driven form generation
+- ✅ Field visibility enforcement
+- ✅ Readonly field rendering with view plugin
+- ✅ Dark mode support
+- ✅ Shadow DOM styling
+- ✅ resolveFromTags hook support
+
+#### 5. **@nostr-post/react** ✅ (React Bindings)
+
+**Location:** `packages/react/`  
+**Status:** Complete
+
+**Purpose:** React hooks and wrapper components
+
+**Hooks:**
+- `useNostrAuth()` - Login/logout with NIP-07
+- `useNostrPublish()` - Sign and publish with manifest coordination
+- `useNostrEvents()` - Fetch events with filtering
+
+**Components:**
+- `<NostrPostComposer>` - Wrapper around web component
+- `<NostrPostView>` - Display single event
+- `<NostrPostFeed>` - Display event stream
+
+**Features:**
+- ✅ Props pass-through (excludeFields, readonlyFields, prefill, manifestRef)
+- ✅ Events with proper event listener handling
+- ✅ Feed refresh via useImperativeHandle()
+
+### Plugins (6)
+
+Each plugin package includes: core logic + web component input + web component view
+
+#### 1. **plugin-stars** ✅
+
+**Creates:** Rating selection (1-N stars)
+
+**Core:** Converts number to "3/5" format  
+**Input:** <np-stars-input> interactive stars  
+**View:** <np-stars-view> static star display  
+**Tags:** Single ["rating", "3/5"] per field
+
+#### 2. **plugin-geo** ✅
+
+**Creates:** Geohash location selection with map
+
+**Core:** Geohash encode/decode (pure JS)  
+**Input:** <np-geo-input> Leaflet map + geohash input  
+**View:** <np-geo-view> location display + links  
+**Tags:** ["g", "u09tvw"] + NIP-52 prefixes (["g", "u09tv"], etc.)
+
+**Special:** Auto-generates geohash prefix tags for relay filtering
+
+#### 3. **plugin-venue** ✅
+
+**Creates:** Business/POI selection with OSM search
+
+**Core:** Nominatim search + NIP-73 identity tag support  
+**Input:** <np-venue-input> wraps geo, adds search overlay  
+**View:** <np-venue-view> wraps geo view, adds venue UI  
+**Tags:** ["g", geohash] + ["i", "osm:node:123"] (NIP-73) + ["location", address]
+
+**Special Pattern:** Composition - venue wraps geo, doesn't duplicate map logic
+
+#### 4. **plugin-media** ✅
+
+**Creates:** Photo/video upload with array support
+
+**Core:** Array field support, isImageUrl/isVideoUrl helpers  
+**Input:** <np-media-input> drag-drop, multi-file, URL paste, NIP-98 signed upload  
+**View:** <np-media-view> responsive gallery (images + lightbox, videos + controls)  
+**Tags:** Multiple ["r", "https://..."] per field
+
+**Special:** NIP-98 auth for nostr.build upload
+
+#### 5. **plugin-markdown** ✅
+
+**Creates:** Markdown editor with live preview
+
+**Core:** Markdown validation (plain string passthrough)  
+**Input:** <np-markdown-input> toolbar, split pane, WYSIWYG toggle  
+**View:** <np-markdown-view> HTML rendering  
+**Tags:** Single content field (usually Kind 30023 target: 'content')
+
+#### 6. **plugin-hashtag** ✅
+
+**Creates:** Tag arrays from simple text input
+
+**Core:** Array support, normalizeTag, extractHashtags from content  
+**Input:** <np-hashtag-input> chip editor, Enter/comma adds  
+**View:** <np-hashtag-view> purple pill display  
+**Tags:** Multiple ["t", "tag"] per field
+
+**Special:** Auto-extracted from Kind 1 content in coordinator
+
+### Examples & Tools (4)
+
+#### 1. **examples/basic** ✅
+
+Vanilla HTML with Web Components, no framework
+
+#### 2. **examples/react-demo** ✅
+
+React + Vite example with all plugins
+
+#### 3. **examples/nextjs-demo** ✅
+
+Next.js 13+ App Router with Server/Client components
+
+#### 4. **tools/manifest-creator** ✅
+
+Visual manifest editor app (Next.js) with 9 example manifests
 
 ## Technical Standards (CRITICAL)
 
@@ -386,23 +461,62 @@ const articleManifest: NostrPostManifest = {
 - Test Web Components in real browser
 - Test React components in sample app
 
-## Phase Implementation Order
+## Implementation Status
 
-### Phase 1: Core Engine ✅ (COMPLETED)
+### Phase 1: Core Engine ✅ COMPLETE
 
-- [x] Type definitions
-- [x] Manifest validation
-- [x] EventCoordinator
-- [ ] Unit tests
-- [x] Documentation
+- [x] Type definitions (PostField, NostrTarget, FieldVisibility)
+- [x] Manifest validation with comprehensive error messages
+- [x] EventCoordinator with multi-event splitting
+- [x] defaultValue support at field level
+- [x] Field visibility (hidden/visible/readonly)
+- [x] Plugin hook support (extraTags, resolveFromTags)
+- [x] Geohash prefix tag expansion (NIP-52)
+- [x] Hashtag auto-extraction from content
+- [x] Documentation and examples
 
-### Phase 2: Plugin System ✅ (COMPLETED)
+### Phase 2: Plugin System ✅ COMPLETE
 
-- [x] Define plugin interface
-- [x] Create plugin registry
-- [x] Implement core plugins (stars, media, markdown, geo)
+- [x] Plugin interface with hooks
+- [x] Plugin registry singleton
+- [x] 6 production plugins (stars, geo, venue, media, markdown, hashtag)
+- [x] Plugin composition (venue wraps geo)
 - [x] Plugin validation and loading
-- [x] Integrate with web components
+
+### Phase 3: Web Components ✅ COMPLETE
+
+- [x] Lit component infrastructure
+- [x] Composer component with field defaults, excludeFields, readonlyFields, prefill
+- [x] View component with NIP-78 auto-fetch
+- [x] Feed component with refresh()
+- [x] Plugin auto-loading
+- [x] Shadow DOM styling and dark mode
+- [x] resolveFromTags hook support
+
+### Phase 4: React Bindings ✅ COMPLETE
+
+- [x] useNostrAuth() hook
+- [x] useNostrPublish() hook with manifest coordination
+- [x] useNostrEvents() hook for fetching
+- [x] NostrPostComposer React wrapper
+- [x] NostrPostView React wrapper
+- [x] NostrPostFeed React wrapper
+
+### Phase 5: Examples & Tools ✅ COMPLETE
+
+- [x] Basic HTML example (Vanilla Web Components)
+- [x] React + Vite example
+- [x] Next.js 13+ App Router example
+- [x] Manifest Creator visual editor (9 example manifests)
+
+### Next Steps (Optional Enhancements)
+
+- [ ] Comprehensive unit test suite
+- [ ] Venue linking UI improvements (OSM ID deep links)
+- [ ] Additional plugins (polls, calendars, markets)
+- [ ] Performance optimizations
+- [ ] API documentation website
+- [ ] Advanced manifest features (conditions, dependencies)
 - [ ] Plugin examples and documentation
 
 ### Phase 3: Web Components ✅ (COMPLETED)

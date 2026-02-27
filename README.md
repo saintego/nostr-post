@@ -2,131 +2,188 @@
 
 > A Plugin + Manifest Architecture for Creating and Viewing Complex Nostr Content
 
+Manifest-driven UI engine for complex structured Nostr content (Reviews, Articles, Events, Venues) with automatic event coordination, field-level visibility controls, plugin composition, and NIP-78 manifest storage.
+
 ## 🎯 What is nostr-post?
 
-**nostr-post** is a UI engine that enables any website to create and view complex Nostr data (Reviews, Venues, Articles) using a shared "Plugin + Manifest" architecture.
+**nostr-post** enables you to:
 
-Instead of building custom forms and parsers for every type of structured content, you define a **Manifest** that describes:
-
-- What fields exist (rating, location, images, etc.)
-- Where each field's data lives in the Nostr event ecosystem (Kind 1 tags, NIP-78 JSON paths)
-- Which UI plugin renders each field (stars, map, markdown editor)
-
-The engine automatically:
-
-- ✅ Generates multi-event bundles with cross-linking
-- ✅ Validates data against the manifest schema
-- ✅ Splits complex data across appropriate Nostr event kinds
+✅ **Define content once** via JSON manifest (what fields, which plugin, where data lives)  
+✅ **Works everywhere** - Web Components, React, Next.js, or headless  
+✅ **Automatic coordination** - Forms split into multi-event bundles with NIP-78 linking  
+✅ **Composable plugins** - Media arrays, geohash locations, markdown editors, hashtags, ratings  
+✅ **Field-level control** - Visibility, read-only modes, default values, prefill, exclude fields  
+✅ **NIP support** - NIP-01, NIP-07 (signing), NIP-23 (articles), NIP-52 (geohash filtering), NIP-73 (identity tags), NIP-78 (manifest storage), NIP-98 (file upload auth)
 
 ## 🧱 Architecture: The "Lego" System
 
+## 🧱 Architecture: Package Layers
+
 ```
-┌─────────────────────────────────────────────┐
-│  @nostr-post/react                          │  React/Next.js
-│  (Hooks + Components)                       │
-└──────────────────┬──────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────┐
-│  @nostr-post/web                            │  Web Components
-│  (<nostr-post-composer>, <nostr-post-view>) │
-└──────────────────┬──────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────┐
-│  @nostr-post/signer                         │  Shared Utilities
-│  (NIP-07 signing, relay publishing)         │  Browser APIs
-└──────────────────┬──────────────────────────┘
-                   │
-┌──────────────────▼──────────────────────────┐
-│  @nostr-post/core  (HEADLESS)               │  Pure Logic
-│  (Manifest parsing, validation, splitting)  │  Zero Dependencies
-└─────────────────────────────────────────────┘
-```
-
-### Package Responsibilities
-
-| Package                 | Status          | Purpose                                                     |
-| ----------------------- | --------------- | ----------------------------------------------------------- |
-| **@nostr-post/core**    | ✅ **Complete** | Headless logic: manifest validation, event coordination     |
-| **@nostr-post/signer**  | ✅ **Complete** | NIP-07 signing, relay publish/fetch                         |
-| **@nostr-post/plugins** | ✅ **Complete** | Framework-agnostic UI plugins (stars, media, markdown, geo) |
-| **@nostr-post/web**     | ✅ **Complete** | Universal Web Components with automatic plugin loading      |
-| **@nostr-post/react**   | ✅ **Complete** | React hooks and wrapper components                          |
-
-## 🚀 Quick Start
-
-### Installation
-
-```bash
-pnpm add @nostr-post/core
+┌────────────────────────────────────┐
+│  Your App (React, Vue, Next.js)    │
+└────────────────┬───────────────────┘
+                 │
+    ┌────────────▼──────────────┐
+    │ @nostr-post/react         │  (Hooks + React Components)
+    │ + Plugin Packages          │  (plugin-geo, plugin-media, etc.)
+    └────────────┬──────────────┘
+                 │
+    ┌────────────▼──────────────────┐
+    │ @nostr-post/web               │  (Lit Web Components)
+    │ <nostr-post-composer>         │
+    │ <nostr-post-view>             │
+    │ <nostr-post-feed>             │
+    └────────────┬──────────────────┘
+                 │
+    ┌────────────▼──────────────────┐
+    │ @nostr-post/signer            │  (NIP-07, Relay Publish/Fetch)
+    │ @nostr-post/plugins (Registry)│
+    └────────────┬──────────────────┘
+                 │
+    ┌────────────▼──────────────────┐
+    │ @nostr-post/core              │  (Zero Dependencies)
+    │ Manifest validation           │  Pure TypeScript Logic
+    │ Event coordination            │
+    │ NIP-78 storage               │
+    └───────────────────────────────┘
 ```
 
-### Example: Restaurant Review
+### Packages & Plugins Status
+
+| Package                   | Status          | Purpose                                                  |
+|---------------------------|-----------------|----------------------------------------------------------|
+| **@nostr-post/core**      | ✅ **Complete** | Manifest validation, event coordination, NIP-78 storage |
+| **@nostr-post/signer**    | ✅ **Complete** | NIP-07 signing, relay publish/fetch                     |
+| **@nostr-post/plugins**   | ✅ **Complete** | Plugin registry + types (extraTags, resolveFromTags)    |
+| **@nostr-post/web**       | ✅ **Complete** | Lit web components (composer, view, feed)               |
+| **@nostr-post/react**     | ✅ **Complete** | React hooks + wrapper components                        |
+| **plugin-stars**          | ✅ **Complete** | Star rating (1-5 scale, customizable)                   |
+| **plugin-geo**            | ✅ **Complete** | Geohash location picker with NIP-52 prefix tags         |
+| **plugin-venue**          | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo      |
+| **plugin-media**          | ✅ **Complete** | Multi-file upload with NIP-98 auth to nostr.build       |
+| **plugin-markdown**       | ✅ **Complete** | Markdown editor with live preview                       |
+| **plugin-hashtag**        | ✅ **Complete** | Hashtag array input with auto-extraction from content   |
+
+## � Key Features
+
+### 1. **Manifest-Driven Architecture**
+Define content structure once, deploy everywhere:
 
 ```typescript
-import { coordinateEvents } from "@nostr-post/core/coordinator";
-import type { NostrPostManifest } from "@nostr-post/core/types";
-
-// 1. Define your manifest
 const manifest: NostrPostManifest = {
-  id: "restaurant-review-v1",
+  id: "blog-v1",
   version: "1.0.0",
-  requiredKinds: [1, 30078], // Kind 1 (social) + Kind 30078 (structured)
+  requiredKinds: [30023],  // Long-form articles
   fields: [
     {
-      id: "reviewText",
+      id: "title",
+      type: "string",
+      uiPlugin: "textarea",
+      mapTo: { kind: 30023, target: "title" },
+      defaultValue: "Untitled Article",
+    },
+    {
+      id: "content",
       type: "string",
       uiPlugin: "markdown",
-      mapTo: { kind: 1, target: "content" },
-      required: true,
-    },
-    {
-      id: "rating",
-      type: "number",
-      uiPlugin: "stars",
-      mapTo: { kind: 1, target: "tag", tagName: "r" },
-      required: true,
-    },
-    {
-      id: "venueName",
-      type: "string",
-      uiPlugin: "text",
-      mapTo: { kind: 30078, target: "content", path: "venue.name" },
+      mapTo: { kind: 30023, target: "content" },
       required: true,
     },
   ],
 };
+```
 
-// 2. Collect form data
-const formData = {
-  reviewText: "Amazing pizza! Best in town.",
-  rating: 5,
-  venueName: "Mario's Pizzeria",
-};
+### 2. **Multi-Event Coordination**
+Automatically splits data across event kinds and links them via NIP-78:
 
-// 3. Generate event bundle
-const result = coordinateEvents(manifest, formData);
+```typescript
+const result = coordinateEvents(manifest, formData, { pubkey });
+// returns: { events: [Kind 30023, Kind 30078 (manifest)] }
+```
 
-if (result.success) {
-  const { events } = result.data;
-  // events[0]: Kind 1 with review text + rating tag
-  // events[1]: Kind 30078 with structured venue data
+### 3. **6 Production Plugins**
+Ready-to-use UI components via Web Components or React:
 
-  // Sign and publish to Nostr relays...
+- **plugin-geo** - Location picker (Leaflet map + geohash, NIP-52)
+- **plugin-venue** - Business/POI search (Nominatim OSM, NIP-73)
+- **plugin-media** - Photo/video upload (drag-drop, multi-file, NIP-98)
+- **plugin-markdown** - Rich text editor with live preview
+- **plugin-hashtag** - Tag arrays with auto-extraction from content
+- **plugin-stars** - Customizable rating (1-5 scale)
+
+### 4. **Field-Level Controls**
+Visibility, defaults, prefill, readonly, exclusion:
+
+```typescript
+{
+  id: "private-notes",
+  type: "string",
+  visibility: {
+    edit: "visible",    // Author can edit
+    view: "hidden"      // Viewers cannot see
+  },
+  defaultValue: "My notes...",
 }
 ```
 
-## 📦 Packages
+### 5. **Plugin Composition**
+Plugins emit custom tags and reconstruct from tags:
 
-### [@nostr-post/core](./packages/core) ✅
+```typescript
+// plugin-venue wraps plugin-geo, adds OSM search
+// Emits: ["g", geohash], ["i", "osm:node:123"], ["location", address]
+// Reconstructs from all 3 tags back into VenueData object
+```
 
-**Status:** Initial implementation complete
+### 6. **NIP Support**
+Built on standardized Nostr Improvement Proposals:
 
-Pure TypeScript logic with zero dependencies. Handles:
+| NIP | Feature | Example |
+|-----|---------|---------|
+| **NIP-01** | Base protocol | All events build on this |
+| **NIP-07** | Browser extension signing | `window.nostr.signEvent()` |
+| **NIP-23** | Kind 30023 (articles) | Long-form content |
+| **NIP-52** | Geohash prefix tags | Relay-side location filtering |
+| **NIP-73** | External identity tags | OSM place IDs |
+| **NIP-78** | Manifest storage | Kind 30078 structured data |
+| **NIP-98** | HTTP file server auth | nostr.build upload |
 
-- Manifest validation
-- Form data validation
-- Multi-event coordination
-- Support for NIP-01, NIP-78, and more
+## 🏃 Quick Start
+
+### Web Components (Vanilla JS)
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="module">
+    import '@nostr-post/web';
+  </script>
+</head>
+<body>
+  <nostr-post-composer></nostr-post-composer>
+</body>
+</html>
+```
+
+### React
+
+```tsx
+import { NostrPostComposer, useNostrAuth } from '@nostr-post/react';
+
+export default function App() {
+  const { pubkey, login } = useNostrAuth();
+  
+  return !pubkey ? (
+    <button onClick={login}>Login with Nostr</button>
+  ) : (
+    <NostrPostComposer pubkey={pubkey} />
+  );
+}
+```
+
+Detailed setup: [QUICKSTART.md](./QUICKSTART.md)
 
 ```typescript
 import { coordinateEvents } from "@nostr-post/core/coordinator";
@@ -134,40 +191,61 @@ import { validateManifest, getFieldsByKind } from "@nostr-post/core/manifest";
 import type { NostrPostManifest, PostField } from "@nostr-post/core/types";
 ```
 
-### @nostr-post/plugins 🚧
+### [@nostr-post/signer](./packages/signer) ✅
 
-**Status:** Next priority
+**Status:** Complete
 
-Framework-agnostic plugin definitions. No React, no DOM, just pure interfaces.
+NIP-07 browser extension integration and relay communication.
 
 ```typescript
-// Future usage
-import { starsPlugin, mediaPlugin, markdownPlugin } from "@nostr-post/plugins";
+import { NostrSigner } from "@nostr-post/signer";
+
+const signer = new NostrSigner();
+await signer.signEvent(event);
 ```
 
-### @nostr-post/web 📋
+### [@nostr-post/plugins](./packages/plugins) ✅
 
-**Status:** Planned
+**Status:** Complete
 
-Universal Web Components that work everywhere.
+Framework-agnostic plugin definitions and registry. Includes plugins for:
+- Stars (ratings)
+- Media (images/videos) 
+- Markdown
+- Geo (location)
+- Hashtags
+- Venues
+
+```typescript
+import { getPlugin } from "@nostr-post/plugins/registry";
+
+const starsPlugin = getPlugin("stars");
+```
+
+### [@nostr-post/web](./packages/web) ✅
+
+**Status:** Complete
+
+Universal Web Components that work in any framework or vanilla HTML.
 
 ```html
-<!-- Future usage -->
-<nostr-post-composer manifest-id="restaurant-review-v1"></nostr-post-composer>
-<nostr-post-view event-id="abc123..."></nostr-post-view>
+<nostr-post-composer></nostr-post-composer>
+<nostr-post-view></nostr-post-view>
+<nostr-post-feed></nostr-post-feed>
 ```
 
-### @nostr-post/react 📋
+### [@nostr-post/react](./packages/react) ✅
 
-**Status:** Planned
+**Status:** Complete
 
 React hooks and components for Next.js/React apps.
 
 ```tsx
-// Future usage
-function ReviewForm() {
-  const { coordinateEvents } = useEventCoordinator(manifest);
-  // ...
+import { NostrPostComposer, NostrPostFeed, useNostrAuth } from "@nostr-post/react";
+
+function App() {
+  const { pubkey, login } = useNostrAuth();
+  return <NostrPostComposer pubkey={pubkey} />;
 }
 ```
 
@@ -243,49 +321,58 @@ nostr-post/
 
 ## 📚 Documentation
 
+- **[Quick Start Guide](./QUICKSTART.md)** - Get started from installation to working examples
+- **[Usage Guide](./USAGE_GUIDE.md)** - Complete API reference for all packages
+- **[Examples](./EXAMPLES.md)** - Real-world usage examples and code samples
 - **[Development Guide](./DEVELOPMENT_GUIDE.md)** - Comprehensive guide for contributors
-- **[Examples](./EXAMPLES.md)** - Real-world usage examples
-- **[Technical Standards](./DEVELOPMENT_GUIDE.md#technical-standards-critical)** - Coding standards and best practices
+- **[Architecture](./ARCHITECTURE.md)** - System design and technical architecture
+- **[Plugins](./PLUGINS.md)** - Creating and using custom plugins
 
 ## 🎯 Roadmap
 
 ### Phase 1: Core Engine ✅ (Complete)
 
 - [x] Type definitions
-- [x] Manifest validation
-- [x] EventCoordinator
-- [ ] Unit tests
-- [ ] API documentation
+## 🚀 Getting Started
 
-### Phase 2: Plugin System 🚧 (Next)
+```bash
+# Install dependencies
+pnpm install
 
-- [ ] Plugin interface definition
-- [ ] Plugin registry
-- [ ] Core plugins (stars, media, markdown)
-- [ ] Plugin validation
+# Build all 15 packages (11 libraries + 3 examples + manifest creator)
+pnpm -r build
 
-### Phase 3: Web Components 📋
+# Watch mode for development
+pnpm -r dev
 
-- [ ] Set up Web Components infrastructure
-- [ ] Composer component
-- [ ] View component
-- [ ] Plugin integration
+# Type checking
+pnpm typecheck
 
-### Phase 4: React Bindings 📋
+# Linting + formatting with Biome
+pnpm lint
+pnpm format
+```
 
-- [ ] React hooks
-- [ ] React components
-- [ ] Example Next.js app
+## 📚 Documentation
+
+See the guides above for complete documentation:
+
+- **[QUICKSTART.md](./QUICKSTART.md)** - Setup for Web Components, React, Next.js
+- **[USAGE_GUIDE.md](./USAGE_GUIDE.md)** - Complete API reference
+- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Design decisions and NIP support
+- **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** - Contributing and building
+- **[EXAMPLES.md](./EXAMPLES.md)** - Real-world code examples
+- **[PLUGINS.md](./PLUGINS.md)** - Creating custom plugins
 
 ## 🤝 Contributing
 
 We follow strict coding standards:
 
 1. **Max 500 lines per file** - Refactor if exceeded
-2. **No barrel files** - Use explicit subpath exports
+2. **No barrel files** - Use explicit subpath exports in package.json
 3. **Functional style** - Pure functions, immutable data
 4. **TypeScript strict mode** - Full type safety
-5. **Biome for linting** - Fast, Rust-based tooling
+5. **Biome for linting** - Unified formatting and linting
 
 See [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) for complete standards.
 
@@ -295,65 +382,15 @@ MIT
 
 ## 🔗 Resources
 
+- [Nostr Protocol](https://nostr.com/)
 - [NIP-01: Basic Protocol](https://github.com/nostr-protocol/nips/blob/master/01.md)
-- [NIP-78: App-specific Data](https://github.com/nostr-protocol/nips/blob/master/78.md)
+- [NIP-07: Nostr Sign-in Flow](https://github.com/nostr-protocol/nips/blob/master/07.md)
 - [NIP-23: Long-form Content](https://github.com/nostr-protocol/nips/blob/master/23.md)
+- [NIP-52: Calendar Events](https://github.com/nostr-protocol/nips/blob/master/52.md)
+- [NIP-73: External Content ID](https://github.com/nostr-protocol/nips/blob/master/73.md)
+- [NIP-78: App-specific Data](https://github.com/nostr-protocol/nips/blob/master/78.md)
+- [NIP-98: HTTP Auth](https://github.com/nostr-protocol/nips/blob/master/98.md)
 
 ---
 
 **Built with ❤️ for the Nostr ecosystem**
-
-Enable any website to create and view complex Nostr data (Reviews, Venues, Articles) using a shared "Plugin + Manifest" architecture. Inspired by the nostr-login approach, this project provides ready-to-use UI components with a headless core.
-
-## The "Lego" Architecture
-
-This monorepo contains four main packages:
-
-- **@nostr-post/core**: Headless logic layer. Handles manifest parsing, validation, and multi-event "splitting" (e.g., Kind 1 for social, NIP-78 for rich data). Framework-agnostic and UI-independent.
-- **@nostr-post/plugins**: Atomic, framework-agnostic UI modules (e.g., plugin-stars, plugin-media).
-- **@nostr-post/web**: Browser-ready Web Components (`<nostr-post-composer>`, `<nostr-post-view>`) with built-in UI, similar to nostr-login's approach.
-- **@nostr-post/react**: High-level hooks and components for React/Next.js with pre-styled UI.
-
-## Technical Standards
-
-- **Language**: TypeScript (Strict mode)
-- **Toolchain**: Biome for linting and formatting
-- **Package Manager**: pnpm with Workspaces
-- **Coding Style**: Functional programming, pure functions, immutable data
-- **File Constraints**: Max 500 lines per file
-- **Exports**: Explicit subpath exports, no barrel files
-
-## Getting Started
-
-```bash
-# Install dependencies
-pnpm install
-
-# Build all packages
-pnpm build
-
-# Run type checking
-pnpm typecheck
-
-# Lint and format
-pnpm lint
-pnpm format
-```
-
-## Development Roadmap
-
-### Phase 1: Core Engine ✓ (In Progress)
-
-Build the EventCoordinator that takes a Manifest and Form Data, then produces a Bundle of unsigned events with cross-linking tags.
-
-### Phase 2: Plugin System
-
-Define the NostrUIPlugin interface so that Media, Stars, and Markup plugins can be injected into the UI at runtime.
-
-### Phase 3: Web Components
-
-Create the universal wrappers that use the Core logic to render forms and views in plain HTML.
-
-## License
-
-MIT

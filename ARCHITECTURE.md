@@ -92,78 +92,150 @@ This works in:
 - Svelte ✅
 - Vanilla JS ✅
 
-### 4. Separation of Concerns
+## Plugin Composition Pattern
 
-```
-┌─────────────────────────────────────────┐
-│  Your App (React, Vue, Svelte, etc.)   │
-│  - Handles signing (NDK, nostr-tools)  │
-│  - Manages relay connections            │
-│  - UI framework of choice               │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│  @nostr-post/web (Lit Components)      │
-│  - Universal UI layer                   │
-│  - Framework-independent                │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│  @nostr-post/plugins                    │
-│  - Render methods (DOM elements)        │
-│  - Validation logic                     │
-│  - Format/filter utilities              │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│  @nostr-post/core (Pure Logic)         │
-│  - ZERO dependencies                    │
-│  - Manifest parsing                     │
-│  - Event coordination                   │
-│  - Type definitions                     │
-└─────────────────────────────────────────┘
-```
+### The Problem
+Venue selection and location picking are similar - both need maps. But they have different search UIs (venue = Nominatim OSM search, geo = geohash input).
 
-## Example: Basic App
+### The Solution
+**plugin-venue wraps plugin-geo** instead of duplicating logic:
 
-The `examples/basic` shows the minimal setup:
+```typescript
+// plugin-venue core.ts
+export const venue = {
+  inputTagName: "np-venue-input",  // Custom input
+  viewTagName: "np-venue-view",    // Custom view
+  
+  // Emit: geohash + OSM identity tag + address
+  extraTagsFn: (fieldId, value, manifest, { pubkey }) => [
+    ["g", value.geohash],
+    ["i", `osm:node:${value.osmId}`, ""],  // NIP-73
+    ["location", value.address]
+  ],
+  
+  // Reconstruct from tags
+  resolveFromTagsFn: (fieldId, tags) => ({
+    geohash: tags.find(t => t[0] === "g")?.[1],
+    osmId: tags.find(t => t[0] === "i")?.[1]?.replace("osm:node:", ""),
+    address: tags.find(t => t[0] === "location")?.[1],
+  })
+}
 
-1. **nostr-login** handles authentication (could use NDK instead)
-2. **@nostr-post/web** provides the UI components
-3. **@nostr-post/core** coordinates the events
-4. Your code signs and publishes
-
-## Tools: Manifest Creator
-
-Located in `tools/manifest-creator/`:
-
-```bash
-cd tools/manifest-creator
-pnpm dev
+// plugin-venue input wraps geo-input
+<np-venue-input>
+  <input placeholder="Search venues..." @change=${...} />
+  <np-geo-input hideSearch="${true}" />  // ← Hide geo search
+  <venue-card ${value} />
+</np-venue-input>
 ```
 
-A standalone visual tool for designing manifests. Can be deployed separately from your app.
+**Benefits:**
+- Single source of truth for map UI
+- Venue adds search overlay, nothing else
+- Both plugins emit/read from tags independently
 
-## Future: React Package
+## Plugin Hooks
 
-When we create `@nostr-post/react`, it will be a thin wrapper:
+### extraTagsFn - Emit Custom Tags
 
-```tsx
-import { useNostrPost } from "@nostr-post/react";
+**Use Case:** Plugin needs to emit multiple tags or derived values
 
-function MyComponent() {
-  const { NostrComposer } = useNostrPost();
+```typescript
+extraTagsFn?: (
+  fieldId: string,
+  value: unknown,
+  manifest: NostrPostManifest,
+  options: { pubkey: string }
+) => Array<[string, ...string[]]>
+```
 
-  return <NostrComposer manifest={manifest} onSubmit={handleSubmit} />;
+**Example:** plugin-geo emits NIP-52 prefix tags
+
+```typescript
+extraTagsFn: (fieldId, value, manifest, opts) => [
+  ["g", "u09tvw"],      // Full precision
+  ["g", "u09tv"],       // 5 chars (for relay filtering)
+  ["g", "u09t"],        // 4 chars
+  ["g", "u09"],         // 3 chars
+  ["g", "u0"],          // 2 chars
+]
+```
+
+Coordinator automatically merges all extra tags into the event.
+
+### resolveFromTagsFn - Reconstruct from Tags
+
+**Use Case:** Plugin needs to read back values from event tags
+
+```typescript
+resolveFromTagsFn?: (
+  fieldId: string,
+  tags: Array<[string, ...string[]]>,
+  manifest: NostrPostManifest
+) => unknown
+```
+
+**Example:** plugin-venue reads geo + identity tags
+
+```typescript
+resolveFromTagsFn: (fieldId, tags) => {
+  const geohash = tags.find(t => t[0] === "g")?.[1];
+  const iTag = tags.find(t => t[0] === "i")?.[1];
+  
+  return {
+    geohash,
+    osmId: iTag?.replace("osm:node:", ""),
+    lat: decodeGeohash(geohash).latitude,
+    lon: decodeGeohash(geohash).longitude,
+  };
 }
 ```
 
-Under the hood: still using the Web Components, just with React-friendly APIs.
+View component uses this to reconstruct objects from tags.
 
-## Summary
+## Field Visibility Controls
 
-- **Core**: Pure logic, zero deps, works everywhere
-- **Plugins**: DOM-based rendering, framework-agnostic
-- **Web**: Standard Web Components with Lit
-- **Your App**: Choose your Nostr library (NDK, nostr-tools, etc.)
-- **Styling**: CSS custom properties (Tailwind optional)
+### Three-State Visibility
+
+```typescript
+interface FieldVisibility {
+  edit: "visible" | "hidden" | "readonly";   // In composer
+  view: "visible" | "hidden";                // In viewer
+}
+```
+
+**Use Cases:**
+
+1. **Author-only notes** (hidden from viewers)
+   ```typescript
+   visibility: { edit: "visible", view: "hidden" }
+   ```
+
+2. **Read-only metadata** (set by system, not user)
+   ```typescript
+   visibility: { edit: "readonly", view: "visible" }
+   ```
+
+3. **Hidden internal fields** (not in manifests or UI)
+   ```typescript
+   visibility: { edit: "hidden", view: "hidden" }
+   ```
+
+### Component-Level Control
+
+Composer also supports props:
+- `excludeFields: string[]` - Hide specific fields from form
+- `readonlyFields: string[]` - Make fields read-only
+- `prefill: Record<string, unknown>` - Pre-populate values
+
+## Supported NIPs
+
+| NIP | Purpose | How |
+|-----|---------|-----|
+| **NIP-01** | Base protocol | All events build on this |
+| **NIP-07** | Browser extension signing | useNostrAuth() connects to window.nostr |
+| **NIP-23** | Kind 30023 (articles) | Manifest requiredKinds: [30023] |
+| **NIP-52** | Geohash prefix tags | plugin-geo emits ["g", "u09"], ["g", "u09t"], etc. |
+| **NIP-73** | External identity (`i` tags) | plugin-venue emits ["i", "osm:node:123"] |
+| **NIP-78** | Kind 30078 (app data) | manifestRef links composer to manifest event |
+| **NIP-98** | HTTP auth (kind 27235) | plugin-media signs upload to nostr.build |
