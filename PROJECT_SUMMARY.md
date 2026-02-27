@@ -23,7 +23,6 @@ Location: `packages/core/`
 **Files Created:**
 
 - [types.ts](./packages/core/src/types.ts) - Complete type system (163 lines)
-
   - `NostrTarget` - Defines where data is stored in Nostr events
   - `PostField` - Individual field definitions with UI plugin mapping
   - `NostrPostManifest` - The blueprint for content structure
@@ -32,7 +31,6 @@ Location: `packages/core/`
   - `NostrUIPlugin` - Plugin interface
 
 - [manifest.ts](./packages/core/src/manifest.ts) - Manifest validation (199 lines)
-
   - `validateNostrTarget()` - Validates Nostr target configuration
   - `validatePostField()` - Validates individual fields
   - `validateManifest()` - Complete manifest validation
@@ -51,14 +49,12 @@ Location: `packages/core/`
 #### 3. **Documentation**
 
 - [README.md](./README.md) - Comprehensive project overview
-
   - Architecture explanation
   - Quick start guide
   - Package status and roadmap
   - Contributing guidelines
 
 - [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md) - Developer documentation
-
   - Technical standards (500 line limit, no barrel files, functional style)
   - Package structure and responsibilities
   - Implementation phases
@@ -125,7 +121,6 @@ Location: `packages/core/`
 ### What Each Package Does
 
 1. **@nostr-post/core** ✅
-
    - Pure TypeScript logic
    - Zero UI dependencies
    - Manifest parsing and validation
@@ -133,14 +128,12 @@ Location: `packages/core/`
    - Splits data across Nostr kinds (1, 30078, 30023, etc.)
 
 2. **@nostr-post/plugins** ✅
-
    - Framework-agnostic plugin definitions
    - Stars, media, markdown, geo plugins
    - Plugin registry system
    - Integrated with web components
 
 3. **@nostr-post/web** ✅
-
    - Lit-based Web Components
    - `<nostr-post-composer>`, `<nostr-post-view>`, `<nostr-post-feed>`
    - Works in any framework (vanilla JS, React, Vue, Svelte, etc.)
@@ -247,6 +240,7 @@ import { coordinateEvents } from "@nostr-post/core/coordinator";
 ### Current Status: All Core Packages Complete ✅
 
 All 4 packages are implemented and working:
+
 - ✅ @nostr-post/core - Manifest system and event coordination
 - ✅ @nostr-post/plugins - 4 core plugins with registry
 - ✅ @nostr-post/web - Web components with plugin integration

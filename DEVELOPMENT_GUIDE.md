@@ -77,7 +77,7 @@ export interface NostrUIPlugin {
   type: FieldType | FieldType[];
   validate?: (
     value: unknown,
-    field: PostField
+    field: PostField,
   ) => Result<void, ValidationError>;
 }
 ```
@@ -176,7 +176,7 @@ export * from './manifest';
 ```typescript
 // ✅ DO: Pure functions, immutable data
 export const validateManifest = (
-  manifest: NostrPostManifest
+  manifest: NostrPostManifest,
 ): Result<void, ValidationError[]> => {
   // ...
 };
@@ -449,7 +449,6 @@ const articleManifest: NostrPostManifest = {
 ## Next Steps
 
 1. **Add Testing Infrastructure (HIGH PRIORITY)**
-
    - Set up Vitest for unit testing
    - Write tests for validation functions in @nostr-post/core
    - Test EventCoordinator edge cases
@@ -457,14 +456,12 @@ const articleManifest: NostrPostManifest = {
    - E2E tests for web components
 
 2. **User Testing & API Stabilization**
-
    - Get feedback from real-world usage
    - Identify pain points and confusing APIs
    - Stabilize manifest schema
    - Document breaking changes
 
 3. **Plugin System Enhancement**
-
    - Test plugins in manifest-creator tool
    - Add more plugins (date, tags, mentions)
    - Improve plugin developer documentation

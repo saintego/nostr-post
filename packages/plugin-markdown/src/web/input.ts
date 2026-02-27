@@ -174,7 +174,9 @@ export class NpMarkdownInput extends LitElement {
       font-size: 0.875rem;
       font-weight: 600;
       color: #374151;
-      transition: background 0.1s, border-color 0.1s;
+      transition:
+        background 0.1s,
+        border-color 0.1s;
     }
 
     .toolbar-btn:hover {
@@ -233,11 +235,24 @@ export class NpMarkdownInput extends LitElement {
       box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.15);
     }
 
-    .editor h1 { font-size: 1.5rem; margin: 0.75rem 0 0.5rem; }
-    .editor h2 { font-size: 1.25rem; margin: 0.75rem 0 0.5rem; }
-    .editor h3 { font-size: 1.125rem; margin: 0.75rem 0 0.5rem; }
-    .editor strong { font-weight: 700; }
-    .editor em { font-style: italic; }
+    .editor h1 {
+      font-size: 1.5rem;
+      margin: 0.75rem 0 0.5rem;
+    }
+    .editor h2 {
+      font-size: 1.25rem;
+      margin: 0.75rem 0 0.5rem;
+    }
+    .editor h3 {
+      font-size: 1.125rem;
+      margin: 0.75rem 0 0.5rem;
+    }
+    .editor strong {
+      font-weight: 700;
+    }
+    .editor em {
+      font-style: italic;
+    }
     .editor code {
       background: #f3f4f6;
       padding: 2px 4px;
@@ -260,14 +275,21 @@ export class NpMarkdownInput extends LitElement {
       margin: 0.5rem 0;
       color: #6b7280;
     }
-    .editor a { color: #6366f1; text-decoration: underline; }
-    .editor img { max-width: 100%; border-radius: 4px; }
+    .editor a {
+      color: #6366f1;
+      text-decoration: underline;
+    }
+    .editor img {
+      max-width: 100%;
+      border-radius: 4px;
+    }
     .editor hr {
       border: none;
       border-top: 1px solid #e5e7eb;
       margin: 0.75rem 0;
     }
-    .editor ul, .editor ol {
+    .editor ul,
+    .editor ol {
       padding-left: 1.5rem;
       margin: 0.25rem 0;
     }
@@ -279,7 +301,7 @@ export class NpMarkdownInput extends LitElement {
       padding: 0.75rem 1rem;
       border: none;
       outline: none;
-      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
       font-size: 0.875rem;
       line-height: 1.6;
       color: #1f2937;
@@ -440,26 +462,25 @@ export class NpMarkdownInput extends LitElement {
     return html`
       <div class="container">
         ${this.renderToolbar()}
-
         ${
           this.mode === 'wysiwyg'
             ? html`
-            <div
-              class="editor"
-              contenteditable="true"
-              @input=${this.handleWysiwygInput}
-              data-placeholder=${placeholder}
-              .innerHTML=${this.editorHtml}
-            ></div>
-          `
+              <div
+                class="editor"
+                contenteditable="true"
+                @input=${this.handleWysiwygInput}
+                data-placeholder=${placeholder}
+                .innerHTML=${this.editorHtml}
+              ></div>
+            `
             : html`
-            <textarea
-              class="raw-editor"
-              placeholder=${placeholder}
-              .value=${this.value}
-              @input=${this.handleRawInput}
-            ></textarea>
-          `
+              <textarea
+                class="raw-editor"
+                placeholder=${placeholder}
+                .value=${this.value}
+                @input=${this.handleRawInput}
+              ></textarea>
+            `
         }
 
         <div class="footer">
@@ -478,20 +499,99 @@ export class NpMarkdownInput extends LitElement {
         ${
           isWysiwyg
             ? html`
-            <button type="button" class="toolbar-btn" title="Bold (Ctrl+B)" @click=${() => this.execCommand('bold')}>B</button>
-            <button type="button" class="toolbar-btn" title="Italic (Ctrl+I)" @click=${() => this.execCommand('italic')} style="font-style:italic">I</button>
-            <button type="button" class="toolbar-btn" title="Strikethrough" @click=${() => this.execCommand('strikeThrough')} style="text-decoration:line-through">S</button>
-            <div class="toolbar-sep"></div>
-            <button type="button" class="toolbar-btn" title="Heading 1" @click=${() => this.insertHeading(1)}>H1</button>
-            <button type="button" class="toolbar-btn" title="Heading 2" @click=${() => this.insertHeading(2)}>H2</button>
-            <button type="button" class="toolbar-btn" title="Heading 3" @click=${() => this.insertHeading(3)}>H3</button>
-            <div class="toolbar-sep"></div>
-            <button type="button" class="toolbar-btn" title="Unordered list" @click=${() => this.execCommand('insertUnorderedList')}>•</button>
-            <button type="button" class="toolbar-btn" title="Blockquote" @click=${() => this.execCommand('formatBlock', 'blockquote')}>❝</button>
-            <button type="button" class="toolbar-btn" title="Code block" @click=${this.insertCodeBlock}>⟨⟩</button>
-            <button type="button" class="toolbar-btn" title="Link" @click=${this.insertLink}>🔗</button>
-            <button type="button" class="toolbar-btn" title="Horizontal rule" @click=${this.insertHR}>―</button>
-          `
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Bold (Ctrl+B)"
+                @click=${() => this.execCommand('bold')}
+              >
+                B
+              </button>
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Italic (Ctrl+I)"
+                @click=${() => this.execCommand('italic')}
+                style="font-style:italic"
+              >
+                I
+              </button>
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Strikethrough"
+                @click=${() => this.execCommand('strikeThrough')}
+                style="text-decoration:line-through"
+              >
+                S
+              </button>
+              <div class="toolbar-sep"></div>
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Heading 1"
+                @click=${() => this.insertHeading(1)}
+              >
+                H1
+              </button>
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Heading 2"
+                @click=${() => this.insertHeading(2)}
+              >
+                H2
+              </button>
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Heading 3"
+                @click=${() => this.insertHeading(3)}
+              >
+                H3
+              </button>
+              <div class="toolbar-sep"></div>
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Unordered list"
+                @click=${() => this.execCommand('insertUnorderedList')}
+              >
+                •
+              </button>
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Blockquote"
+                @click=${() => this.execCommand('formatBlock', 'blockquote')}
+              >
+                ❝
+              </button>
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Code block"
+                @click=${this.insertCodeBlock}
+              >
+                ⟨⟩
+              </button>
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Link"
+                @click=${this.insertLink}
+              >
+                🔗
+              </button>
+              <button
+                type="button"
+                class="toolbar-btn"
+                title="Horizontal rule"
+                @click=${this.insertHR}
+              >
+                ―
+              </button>
+            `
             : nothing
         }
 
@@ -501,12 +601,16 @@ export class NpMarkdownInput extends LitElement {
           type="button"
           class="mode-toggle ${this.mode === 'wysiwyg' ? 'active' : ''}"
           @click=${() => this.switchMode('wysiwyg')}
-        >Visual</button>
+        >
+          Visual
+        </button>
         <button
           type="button"
           class="mode-toggle ${this.mode === 'raw' ? 'active' : ''}"
           @click=${() => this.switchMode('raw')}
-        >Markdown</button>
+        >
+          Markdown
+        </button>
       </div>
     `;
   }

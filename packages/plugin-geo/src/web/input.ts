@@ -368,7 +368,10 @@ export class NpGeoInput extends LitElement {
 
   render() {
     return html`
-      <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+      <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      />
       <div class="container">
         <!-- Search -->
         <div class="search-row">
@@ -386,32 +389,36 @@ export class NpGeoInput extends LitElement {
                 this.handleSearch();
               }
             }}
-          >
+          />
           <button
             class="btn btn-primary"
             type="button"
             @click=${this.handleSearch}
             ?disabled=${this.searching}
-          >${this.searching ? 'Searching...' : 'Search'}</button>
+          >
+            ${this.searching ? 'Searching...' : 'Search'}
+          </button>
         </div>
 
         <!-- Search results -->
         ${
           this.searchResults.length > 0
             ? html`
-            <div class="search-results">
-              <ul class="results-list">
-                ${this.searchResults.map(
-                  (r) => html`
-                    <li
-                      class="result-item"
-                      @click=${() => this.selectSearchResult(r)}
-                    >${r.display_name}</li>
-                  `
-                )}
-              </ul>
-            </div>
-          `
+              <div class="search-results">
+                <ul class="results-list">
+                  ${this.searchResults.map(
+                    (r) => html`
+                      <li
+                        class="result-item"
+                        @click=${() => this.selectSearchResult(r)}
+                      >
+                        ${r.display_name}
+                      </li>
+                    `
+                  )}
+                </ul>
+              </div>
+            `
             : nothing
         }
 
@@ -422,7 +429,11 @@ export class NpGeoInput extends LitElement {
 
         <!-- Actions -->
         <div class="actions-row">
-          <button class="btn btn-secondary" type="button" @click=${this.handleLocateMe}>
+          <button
+            class="btn btn-secondary"
+            type="button"
+            @click=${this.handleLocateMe}
+          >
             📍 Use my location
           </button>
         </div>
@@ -445,7 +456,7 @@ export class NpGeoInput extends LitElement {
                   this.setCoords(lat, this.value?.lon ?? 0);
                 }
               }}
-            >
+            />
           </div>
           <div class="coord-field">
             <label class="coord-label">Longitude</label>
@@ -463,7 +474,7 @@ export class NpGeoInput extends LitElement {
                   this.setCoords(this.value?.lat ?? 0, lon);
                 }
               }}
-            >
+            />
           </div>
         </div>
 

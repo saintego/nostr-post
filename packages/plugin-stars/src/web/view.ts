@@ -65,7 +65,9 @@ export class NpStarsView extends LitElement {
     for (let i = 1; i <= max; i++) {
       const active = i <= rating;
       stars.push(
-        html`<span class="star ${active ? 'active' : 'inactive'}">${active ? '★' : '☆'}</span>`
+        html`<span class="star ${active ? 'active' : 'inactive'}"
+          >${active ? '★' : '☆'}</span
+        >`
       );
     }
 

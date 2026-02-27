@@ -23,7 +23,10 @@ const NOSTR_BUILD_UPLOAD = 'https://nostr.build/api/v2/upload/files';
 async function createNip98AuthToken(url: string, method: string): Promise<string | null> {
   const nostr = (
     window as unknown as {
-      nostr?: { getPublicKey(): Promise<string>; signEvent(e: unknown): Promise<unknown> };
+      nostr?: {
+        getPublicKey(): Promise<string>;
+        signEvent(e: unknown): Promise<unknown>;
+      };
     }
   ).nostr;
   if (!nostr) return null;
@@ -70,7 +73,9 @@ export class NpMediaInput extends LitElement {
       padding: 2rem 1rem;
       text-align: center;
       cursor: pointer;
-      transition: border-color 0.15s, background 0.15s;
+      transition:
+        border-color 0.15s,
+        background 0.15s;
       position: relative;
     }
 
@@ -413,29 +418,32 @@ export class NpMediaInput extends LitElement {
           this.value
             ? this.renderPreview()
             : html`
-            ${showUpload ? this.renderDropZone() : nothing}
-
-            ${
-              showUpload && showUrl
-                ? html`<div class="url-row"><span class="separator">or</span></div>`
-                : nothing
-            }
-
-            ${showUrl ? this.renderUrlInput() : nothing}
-          `
+              ${showUpload ? this.renderDropZone() : nothing}
+              ${
+                showUpload && showUrl
+                  ? html`<div class="url-row">
+                    <span class="separator">or</span>
+                  </div>`
+                  : nothing
+              }
+              ${showUrl ? this.renderUrlInput() : nothing}
+            `
         }
-
         ${
           this.uploading
             ? html`
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: ${this.uploadProgress}%"></div>
-            </div>
-            <div class="upload-status">Uploading... ${this.uploadProgress}%</div>
-          `
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  style="width: ${this.uploadProgress}%"
+                ></div>
+              </div>
+              <div class="upload-status">
+                Uploading... ${this.uploadProgress}%
+              </div>
+            `
             : nothing
         }
-
         ${this.uploadError ? html`<div class="error">${this.uploadError}</div>` : nothing}
       </div>
     `;
@@ -452,13 +460,16 @@ export class NpMediaInput extends LitElement {
       >
         <div class="drop-icon">📷</div>
         <p class="drop-text">Drop an image or video here, or click to browse</p>
-        <p class="drop-hint">Uploads to nostr.build (max ${Math.round(this.maxSize / (1024 * 1024))}MB)</p>
+        <p class="drop-hint">
+          Uploads to nostr.build (max
+          ${Math.round(this.maxSize / (1024 * 1024))}MB)
+        </p>
         <input
           class="file-input"
           type="file"
           accept=${this.accept}
           @change=${this.handleFileSelected}
-        >
+        />
       </div>
     `;
   }
@@ -474,7 +485,7 @@ export class NpMediaInput extends LitElement {
           @input=${this.handleUrlInput}
           @keypress=${this.handleUrlKeypress}
           @blur=${this.handleUrlBlur}
-        >
+        />
       </div>
     `;
   }
@@ -485,14 +496,20 @@ export class NpMediaInput extends LitElement {
         ${
           this.isVideo
             ? html`<video src=${this.value} controls preload="metadata"></video>`
-            : html`<img src=${this.value} alt="Media preview" @error=${this.handleImageError}>`
+            : html`<img
+              src=${this.value}
+              alt="Media preview"
+              @error=${this.handleImageError}
+            />`
         }
         <button
           type="button"
           class="preview-remove"
           title="Remove media"
           @click=${this.removeMedia}
-        >✕</button>
+        >
+          ✕
+        </button>
         <div class="preview-url">${this.value}</div>
       </div>
     `;

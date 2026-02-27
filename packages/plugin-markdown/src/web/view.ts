@@ -100,7 +100,7 @@ export class NpMarkdownView extends LitElement {
       background: #f3f4f6;
       padding: 2px 5px;
       border-radius: 3px;
-      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-family: "SF Mono", "Fira Code", monospace;
       font-size: 0.875em;
     }
 
@@ -110,7 +110,7 @@ export class NpMarkdownView extends LitElement {
       padding: 0.75rem 1rem;
       border-radius: 6px;
       overflow-x: auto;
-      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-family: "SF Mono", "Fira Code", monospace;
       font-size: 0.875rem;
       line-height: 1.5;
     }
@@ -178,9 +178,7 @@ export class NpMarkdownView extends LitElement {
     }
 
     return html`
-      <div class="markdown-view">
-        ${unsafeHTML(renderMarkdown(this.value))}
-      </div>
+      <div class="markdown-view">${unsafeHTML(renderMarkdown(this.value))}</div>
     `;
   }
 }

@@ -30,7 +30,9 @@ export class NpStarsInput extends LitElement {
       border: none;
       cursor: pointer;
       padding: 0.125rem;
-      transition: transform 0.1s, color 0.15s;
+      transition:
+        transform 0.1s,
+        color 0.15s;
       line-height: 1;
     }
 
@@ -88,7 +90,9 @@ export class NpStarsInput extends LitElement {
           class="star ${active ? 'active' : 'inactive'}"
           @click=${() => this.selectStar(i)}
           title="${i} star${i > 1 ? 's' : ''}"
-        >${active ? '★' : '☆'}</button>
+        >
+          ${active ? '★' : '☆'}
+        </button>
       `);
     }
 

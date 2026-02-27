@@ -68,7 +68,8 @@ export class NpGeoView extends LitElement {
           href="https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=15/${lat}/${lon}"
           target="_blank"
           rel="noopener"
-        >View on map ↗</a>
+          >View on map ↗</a
+        >
       </div>
     `;
   }

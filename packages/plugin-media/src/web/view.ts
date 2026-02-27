@@ -108,7 +108,7 @@ export class NpMediaView extends LitElement {
             @error=${() => {
               this.loadFailed = true;
             }}
-          >
+          />
         </div>
       `;
     }
