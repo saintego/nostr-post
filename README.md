@@ -166,7 +166,10 @@ The fastest way to get started — add one script tag:
 <!DOCTYPE html>
 <html>
   <head>
-    <script type="module" src="https://saintego.github.io/nostr-post/nostr-post.js"></script>
+    <script
+      type="module"
+      src="https://saintego.github.io/nostr-post/nostr-post.js"
+    ></script>
   </head>
   <body>
     <h1>Create a Post</h1>
@@ -298,7 +301,10 @@ Single-file CDN bundle with all components and plugins — no npm required.
 
 ```html
 <!-- ESM (recommended) -->
-<script type="module" src="https://saintego.github.io/nostr-post/nostr-post.js"></script>
+<script
+  type="module"
+  src="https://saintego.github.io/nostr-post/nostr-post.js"
+></script>
 
 <!-- IIFE (classic) -->
 <script src="https://saintego.github.io/nostr-post/nostr-post.iife.js"></script>
