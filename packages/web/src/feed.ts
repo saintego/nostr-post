@@ -81,6 +81,10 @@ export class NostrPostFeed extends NostrPostElement {
   @state()
   private isLoading = false;
 
+  /** Tag filters: e.g. { '#i': ['osm:node:123'] } */
+  @property({ type: Object })
+  tagFilters?: Record<string, string[]>;
+
   constructor() {
     super();
     this.kinds = [1];

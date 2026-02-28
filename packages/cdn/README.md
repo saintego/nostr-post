@@ -149,3 +149,48 @@ pnpm dev
 | ------ | ------- | ------- |
 | ESM    | ~267 KB | ~72 KB  |
 | IIFE   | ~267 KB | ~72 KB  |
+
+## Filtering <nostr-post-feed>
+
+You can filter posts by custom Nostr tags, including geohash and OSM venue links.
+
+### Geohash (NIP-52)
+
+```html
+<nostr-post-feed
+  .tagFilters=${{ '#g': ['u09tvw'] }}
+  ...
+></nostr-post-feed>
+```
+
+Or with HTML attribute (if supported):
+
+```html
+<nostr-post-feed filter-tags="#g:u09tvw" ...></nostr-post-feed>
+```
+
+### OSM Venue Link (NIP-73)
+
+```html
+<nostr-post-feed
+  .tagFilters=${{ '#i': ['osm:node:123'] }}
+  ...
+></nostr-post-feed>
+```
+
+Or with HTML attribute:
+
+```html
+<nostr-post-feed filter-tags="#i:osm:node:123" ...></nostr-post-feed>
+```
+
+You can filter by multiple values:
+
+```html
+<nostr-post-feed
+  .tagFilters=${{ '#g': ['u09tvw', 'u09tuv'], '#i': ['osm:node:123', 'osm:node:456'] }}
+  ...
+></nostr-post-feed>
+```
+
+See [plugin-geo](../plugin-geo/README.md) and [plugin-venue](../plugin-venue/README.md) for more details on emitted tags.
