@@ -58,6 +58,7 @@ Manifest-driven UI engine for complex structured Nostr content (Reviews, Article
 | **@nostr-post/plugins** | ✅ **Complete** | Plugin registry + types (extraTags, resolveFromTags)    |
 | **@nostr-post/web**     | ✅ **Complete** | Lit web components (composer, view, feed)               |
 | **@nostr-post/react**   | ✅ **Complete** | React hooks + wrapper components                        |
+| **@nostr-post/cdn**     | ✅ **Complete** | Single-file CDN bundle (ESM + IIFE, no npm required)    |
 | **plugin-stars**        | ✅ **Complete** | Star rating (1-5 scale, customizable)                   |
 | **plugin-geo**          | ✅ **Complete** | Geohash location picker with NIP-52 prefix tags         |
 | **plugin-venue**        | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo      |
@@ -157,7 +158,34 @@ Built on standardized Nostr Improvement Proposals:
 
 ## 🏃 Quick Start
 
-### Web Components (Vanilla JS)
+### CDN (No Build Tools Required)
+
+The fastest way to get started — add one script tag:
+
+```html
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="module" src="https://saintego.github.io/nostr-post/nostr-post.js"></script>
+  </head>
+  <body>
+    <h1>Create a Post</h1>
+    <nostr-post-composer auto-publish></nostr-post-composer>
+  </body>
+</html>
+```
+
+Or use the IIFE build for older browsers:
+
+```html
+<script src="https://saintego.github.io/nostr-post/nostr-post.iife.js"></script>
+```
+
+**📦 What's included:** All web components (`<nostr-post-composer>`, `<nostr-post-view>`, `<nostr-post-feed>`) + all 6 plugins are automatically registered. [Full CDN docs →](./packages/cdn/README.md)
+
+---
+
+### Web Components (With npm)
 
 ```html
 <!DOCTYPE html>
@@ -259,6 +287,27 @@ function App() {
   return <NostrPostComposer pubkey={pubkey} />;
 }
 ```
+
+### [@nostr-post/cdn](./packages/cdn) ✅
+
+**Status:** Complete
+
+Single-file CDN bundle with all components and plugins — no npm required.
+
+**Deployed at:** https://saintego.github.io/nostr-post/
+
+```html
+<!-- ESM (recommended) -->
+<script type="module" src="https://saintego.github.io/nostr-post/nostr-post.js"></script>
+
+<!-- IIFE (classic) -->
+<script src="https://saintego.github.io/nostr-post/nostr-post.iife.js"></script>
+
+<!-- Use components -->
+<nostr-post-composer auto-publish></nostr-post-composer>
+```
+
+**Bundle size:** ~267 KB raw / ~72 KB gzipped
 
 ## 🎨 Key Features
 
