@@ -29,6 +29,7 @@ jobs:
       - run: pnpm install
       - run: pnpm build
       - run: cd packages/cdn && pnpm build
+      - run: cp packages/cdn/index.html packages/cdn/dist/index.html
 
       - uses: actions/upload-pages-artifact@v3
         with:
