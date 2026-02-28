@@ -1,4 +1,4 @@
-name: Build and Deploy CDN Bundle
+name: Build and Deploy to GitHub Pages
 
 on:
   push:
@@ -28,12 +28,21 @@ jobs:
 
       - run: pnpm install
       - run: pnpm build
+      
+      # Build CDN bundle
       - run: cd packages/cdn && pnpm build
-      - run: cp packages/cdn/index.html packages/cdn/dist/index.html
+      
+      # Create deployment directory structure
+      - run: mkdir -p .deploy
+      - run: cp -r packages/cdn/dist/* .deploy/
+      - run: cp packages/cdn/index.html .deploy/index.html
+      
+      # Build and copy manifest-creator
+      - run: cp -r tools/manifest-creator/out .deploy/manifest-creator
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: packages/cdn/dist
+          path: .deploy
 
   deploy:
     needs: build

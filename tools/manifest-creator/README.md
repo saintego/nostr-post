@@ -2,6 +2,8 @@
 
 A visual tool for creating and testing nostr-post manifests.
 
+**🌐 Live Demo:** https://saintego.github.io/nostr-post/manifest-creator/
+
 ## Features
 
 - 📝 Visual manifest builder with form UI
@@ -12,6 +14,12 @@ A visual tool for creating and testing nostr-post manifests.
 - 🔗 Automatic event coordination testing
 
 ## Usage
+
+### Online
+
+Visit the live demo at https://saintego.github.io/nostr-post/manifest-creator/
+
+### Local Development
 
 ```bash
 cd tools/manifest-creator
