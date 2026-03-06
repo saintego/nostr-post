@@ -202,10 +202,10 @@ This rewrites to a relay query like:
 
 ```html
 <script type="module">
-  const feed = document.querySelector('nostr-post-feed');
+  const feed = document.querySelector("nostr-post-feed");
   feed.filters = [
-    { kinds: [1], '#g': ['u09tvw'], limit: 20 },
-    { kinds: [30023], '#t': ['review'], limit: 20 }
+    { kinds: [1], "#g": ["u09tvw"], limit: 20 },
+    { kinds: [30023], "#t": ["review"], limit: 20 },
   ];
 </script>
 ```
@@ -213,7 +213,12 @@ This rewrites to a relay query like:
 Relays receive one `REQ` with multiple filter objects:
 
 ```json
-["REQ", "subId", { "kinds": [1], "#g": ["u09tvw"] }, { "kinds": [30023], "#t": ["review"] }]
+[
+  "REQ",
+  "subId",
+  { "kinds": [1], "#g": ["u09tvw"] },
+  { "kinds": [30023], "#t": ["review"] }
+]
 ```
 
 See [plugin-geo](../plugin-geo/README.md) and [plugin-venue](../plugin-venue/README.md) for details on emitted tags.
