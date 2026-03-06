@@ -167,7 +167,6 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       search,
       limit,
       relays,
-      filterTags,
       tagFilters,
       filters,
       manifest,

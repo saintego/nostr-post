@@ -115,35 +115,41 @@ describe('geoPlugin.validate', () => {
 
 describe('geoPlugin.formatValue', () => {
   it('should format geohash as coordinates', () => {
-    const formatted = geoPlugin.formatValue?.('u09tvw');
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const formatted = geoPlugin.formatValue!('u09tvw');
     expect(formatted).toContain('📍');
     expect(formatted).toMatch(/\d+\.\d+, -?\d+\.\d+/);
   });
 
   it('should handle empty string', () => {
-    const formatted = geoPlugin.formatValue?.('');
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const formatted = geoPlugin.formatValue!('');
     expect(formatted).toBe('Unknown location');
   });
 
   it('should handle non-string values', () => {
-    const formatted = geoPlugin.formatValue?.(123);
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const formatted = geoPlugin.formatValue!(123);
     expect(formatted).toBe('Unknown location');
   });
 });
 
 describe('geoPlugin.serializeValue', () => {
   it('should serialize geohash string as-is', () => {
-    const result = geoPlugin.serializeValue?.('u09tvw');
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.serializeValue!('u09tvw');
     expect(result).toBe('u09tvw');
   });
 
   it('should handle non-string values', () => {
-    const result = geoPlugin.serializeValue?.(123);
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.serializeValue!(123);
     expect(result).toBe('');
   });
 
   it('should handle empty string', () => {
-    const result = geoPlugin.serializeValue?.('');
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.serializeValue!('');
     expect(result).toBe('');
   });
 });
@@ -157,12 +163,14 @@ describe('geoPlugin.deserializeValue', () => {
   };
 
   it('should return geohash string as-is', () => {
-    const result = geoPlugin.deserializeValue?.('u09tvw', field);
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.deserializeValue!('u09tvw', field);
     expect(result).toBe('u09tvw');
   });
 
   it('should handle empty string', () => {
-    const result = geoPlugin.deserializeValue?.('', field);
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.deserializeValue!('', field);
     expect(result).toBe('');
   });
 });
