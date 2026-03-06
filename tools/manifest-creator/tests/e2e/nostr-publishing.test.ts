@@ -222,16 +222,16 @@ describe('Nostr Publishing E2E', () => {
       const tags: string[][] = [];
       let content = '';
 
-      manifest.fields.forEach((field) => {
+      for (const field of manifest.fields) {
         const value = formData[field.id as keyof typeof formData];
-        if (value === undefined) return;
+        if (value === undefined) continue;
 
         if (field.mapTo.target === 'content') {
           content = String(value);
         } else if (field.mapTo.target === 'tag' && field.mapTo.tagName) {
           tags.push([field.mapTo.tagName, String(value)]);
         }
-      });
+      }
 
       const event = {
         kind: 1,
@@ -291,16 +291,16 @@ describe('Nostr Publishing E2E', () => {
         const tags: string[][] = [];
         let content = '';
 
-        fieldsForKind.forEach((field) => {
+        for (const field of fieldsForKind) {
           const value = formData[field.id as keyof typeof formData];
-          if (value === undefined) return;
+          if (value === undefined) continue;
 
           if (field.mapTo.target === 'content') {
             content = String(value);
           } else if (field.mapTo.target === 'tag' && field.mapTo.tagName) {
             tags.push([field.mapTo.tagName, String(value)]);
           }
-        });
+        }
 
         events.push({
           kind,

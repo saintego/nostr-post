@@ -1,4 +1,9 @@
-import { NostrPostComposer, NostrPostFeed, useNostrAuth, type NostrPostFeedRef } from '@nostr-post/react';
+import {
+  NostrPostComposer,
+  NostrPostFeed,
+  type NostrPostFeedRef,
+  useNostrAuth,
+} from '@nostr-post/react';
 import { useEffect, useRef, useState } from 'react';
 
 const styles = {

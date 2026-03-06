@@ -151,8 +151,10 @@ export async function signAndPublish(
 }
 
 export interface FetchFilter {
+  ids?: string[];
   kinds?: number[];
   authors?: string[];
+  search?: string;
   limit?: number;
   since?: number;
   until?: number;
@@ -160,6 +162,7 @@ export interface FetchFilter {
   '#p'?: string[];
   '#d'?: string[];
   '#t'?: string[];
+  [tagFilter: `#${string}`]: string[] | number[] | undefined;
 }
 
 /**
@@ -167,12 +170,13 @@ export interface FetchFilter {
  */
 export function fetchEventsFromRelay(
   relayUrl: string,
-  filter: FetchFilter
+  filter: FetchFilter | FetchFilter[]
 ): Promise<SignedEvent[]> {
   return new Promise((resolve, reject) => {
     const events: SignedEvent[] = [];
     const ws = new WebSocket(relayUrl);
     const subId = Math.random().toString(36).substring(7);
+    const filters = Array.isArray(filter) ? filter : [filter];
 
     const timeout = setTimeout(() => {
       ws.close();
@@ -180,7 +184,7 @@ export function fetchEventsFromRelay(
     }, 10000);
 
     ws.onopen = () => {
-      ws.send(JSON.stringify(['REQ', subId, filter]));
+      ws.send(JSON.stringify(['REQ', subId, ...filters]));
     };
 
     ws.onmessage = (msg) => {
@@ -210,7 +214,7 @@ export function fetchEventsFromRelay(
  * Fetch events from multiple relays (deduplicated by event id)
  */
 export async function fetchEvents(
-  filter: FetchFilter,
+  filter: FetchFilter | FetchFilter[],
   relays: string[] = DEFAULT_RELAYS
 ): Promise<SignedEvent[]> {
   const results = await Promise.allSettled(

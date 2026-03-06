@@ -5,7 +5,7 @@
  */
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { fetchEvents } from '@nostr-post/signer';
+import { type FetchFilter, fetchEvents } from '@nostr-post/signer';
 import { css, html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { NostrPostElement, baseStyles } from './base-component';
@@ -60,6 +60,18 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Array })
   kinds?: number[];
 
+  @property({ type: Array })
+  ids?: string[];
+
+  @property({ type: Number })
+  since?: number;
+
+  @property({ type: Number })
+  until?: number;
+
+  @property({ type: String })
+  search?: string;
+
   @property({ type: Number })
   limit?: number;
 
@@ -75,6 +87,13 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Boolean })
   showTags?: boolean;
 
+  /**
+   * Comma-separated tag filters, e.g. "#i:osm:node:123,#g:u09tvw"
+   * Useful for plain HTML attribute usage.
+   */
+  @property({ type: String, attribute: 'filter-tags' })
+  filterTags?: string;
+
   @state()
   private events: SignedEvent[] = [];
 
@@ -84,6 +103,10 @@ export class NostrPostFeed extends NostrPostElement {
   /** Tag filters: e.g. { '#i': ['osm:node:123'] } */
   @property({ type: Object })
   tagFilters?: Record<string, string[]>;
+
+  /** Optional explicit list of REQ filters; if set, this is forwarded as-is. */
+  @property({ type: Array })
+  filters?: FetchFilter[];
 
   constructor() {
     super();
@@ -106,8 +129,15 @@ export class NostrPostFeed extends NostrPostElement {
     if (
       changedProperties.has('authors') ||
       changedProperties.has('kinds') ||
+      changedProperties.has('ids') ||
       changedProperties.has('limit') ||
-      changedProperties.has('relays')
+      changedProperties.has('since') ||
+      changedProperties.has('until') ||
+      changedProperties.has('search') ||
+      changedProperties.has('relays') ||
+      changedProperties.has('filterTags') ||
+      changedProperties.has('tagFilters') ||
+      changedProperties.has('filters')
     ) {
       if (this.shouldLoad()) {
         this.loadEvents();
@@ -116,25 +146,81 @@ export class NostrPostFeed extends NostrPostElement {
   }
 
   private shouldLoad(): boolean {
-    // Only load if we have at least one filter set
+    // Only load if we have at least one meaningful filter set
     return !!(
       (this.authors && this.authors.length > 0) ||
       (this.kinds && this.kinds.length > 0) ||
-      this.limit !== undefined
+      (this.ids && this.ids.length > 0) ||
+      this.since !== undefined ||
+      this.until !== undefined ||
+      (this.search && this.search.trim().length > 0) ||
+      (this.filterTags && this.filterTags.trim().length > 0) ||
+      (this.tagFilters && Object.keys(this.tagFilters).length > 0) ||
+      (this.filters && this.filters.length > 0)
     );
+  }
+
+  private parseFilterTags(input?: string): Record<string, string[]> {
+    if (!input) return {};
+
+    const parsed: Record<string, string[]> = {};
+    const entries = input
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+
+    for (const entry of entries) {
+      const separatorIndex = entry.indexOf(':');
+      if (separatorIndex <= 0) continue;
+
+      const rawTag = entry.slice(0, separatorIndex).trim();
+      const value = entry.slice(separatorIndex + 1).trim();
+      if (!rawTag || !value) continue;
+
+      const tag = rawTag.startsWith('#') ? rawTag : `#${rawTag}`;
+      if (!parsed[tag]) parsed[tag] = [];
+      parsed[tag].push(value);
+    }
+
+    return parsed;
+  }
+
+  private buildFetchFilter(): FetchFilter {
+    const filter: FetchFilter = {
+      ids: this.ids,
+      authors: this.authors,
+      kinds: this.kinds,
+      search: this.search,
+      limit: this.limit,
+      since: this.since,
+      until: this.until,
+    };
+
+    const fromAttribute = this.parseFilterTags(this.filterTags);
+    const mergedTagFilters: Record<string, string[]> = {
+      ...fromAttribute,
+      ...(this.tagFilters ?? {}),
+    };
+
+    for (const [tag, values] of Object.entries(mergedTagFilters)) {
+      if (!tag.startsWith('#') || values.length === 0) continue;
+      filter[tag as `#${string}`] = values;
+    }
+
+    return filter;
+  }
+
+  private buildFetchFilters(): FetchFilter | FetchFilter[] {
+    if (this.filters && this.filters.length > 0) {
+      return this.filters;
+    }
+    return this.buildFetchFilter();
   }
 
   private async loadEvents() {
     this.isLoading = true;
     try {
-      const events = await fetchEvents(
-        {
-          authors: this.authors,
-          kinds: this.kinds,
-          limit: this.limit,
-        },
-        this.relays
-      );
+      const events = await fetchEvents(this.buildFetchFilters(), this.relays);
       this.events = events;
     } catch (error) {
       console.error('Failed to load events:', error);

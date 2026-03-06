@@ -152,45 +152,68 @@ pnpm dev
 
 ## Filtering <nostr-post-feed>
 
-You can filter posts by custom Nostr tags, including geohash and OSM venue links.
+`<nostr-post-feed>` now forwards feed filters directly into Nostr `REQ` filters.
 
-### Geohash (NIP-52)
+### Supported Filters
 
-```html
-<nostr-post-feed
-  .tagFilters=${{ '#g': ['u09tvw'] }}
-  ...
-></nostr-post-feed>
-```
+- `authors: string[]`
+- `kinds: number[]`
+- `ids: string[]`
+- `since: number` (unix timestamp)
+- `until: number` (unix timestamp)
+- `limit: number`
+- `search: string` (relay-dependent, NIP-50)
+- `tagFilters: Record<'#tag', string[]>`
+- `filter-tags` attribute (string form for tag filters)
+- `filters: FetchFilter[]` (advanced: send multiple REQ filter objects)
 
-Or with HTML attribute (if supported):
+### Universal Tag Filters (`#<tag>`)
 
-```html
-<nostr-post-feed filter-tags="#g:u09tvw" ...></nostr-post-feed>
-```
-
-### OSM Venue Link (NIP-73)
-
-```html
-<nostr-post-feed
-  .tagFilters=${{ '#i': ['osm:node:123'] }}
-  ...
-></nostr-post-feed>
-```
-
-Or with HTML attribute:
-
-```html
-<nostr-post-feed filter-tags="#i:osm:node:123" ...></nostr-post-feed>
-```
-
-You can filter by multiple values:
+Use either `tagFilters` (object) or `filter-tags` (attribute string):
 
 ```html
 <nostr-post-feed
-  .tagFilters=${{ '#g': ['u09tvw', 'u09tuv'], '#i': ['osm:node:123', 'osm:node:456'] }}
-  ...
+  .tagFilters=${{ '#g': ['u09tvw'], '#i': ['osm:node:123'] }}
+  limit="20"
 ></nostr-post-feed>
 ```
 
-See [plugin-geo](../plugin-geo/README.md) and [plugin-venue](../plugin-venue/README.md) for more details on emitted tags.
+```html
+<nostr-post-feed
+  filter-tags="#g:u09tvw,#i:osm:node:123"
+  limit="20"
+></nostr-post-feed>
+```
+
+This rewrites to a relay query like:
+
+```json
+{ "kinds": [1], "limit": 20, "#g": ["u09tvw"], "#i": ["osm:node:123"] }
+```
+
+### Geohash and OSM Examples
+
+```html
+<nostr-post-feed filter-tags="#g:u09tvw" limit="20"></nostr-post-feed>
+<nostr-post-feed filter-tags="#i:osm:node:123" limit="20"></nostr-post-feed>
+```
+
+### Advanced: Multiple REQ Filters
+
+```html
+<script type="module">
+  const feed = document.querySelector('nostr-post-feed');
+  feed.filters = [
+    { kinds: [1], '#g': ['u09tvw'], limit: 20 },
+    { kinds: [30023], '#t': ['review'], limit: 20 }
+  ];
+</script>
+```
+
+Relays receive one `REQ` with multiple filter objects:
+
+```json
+["REQ", "subId", { "kinds": [1], "#g": ["u09tvw"] }, { "kinds": [30023], "#t": ["review"] }]
+```
+
+See [plugin-geo](../plugin-geo/README.md) and [plugin-venue](../plugin-venue/README.md) for details on emitted tags.

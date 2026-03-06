@@ -70,12 +70,12 @@ describe('hashtagPlugin.validate', () => {
   };
 
   it('should validate array of strings', () => {
-    const result = hashtagPlugin.validate!(['nostr', 'bitcoin'], field);
+    const result = hashtagPlugin.validate?.(['nostr', 'bitcoin'], field);
     expect(result.success).toBe(true);
   });
 
   it('should reject non-array values', () => {
-    const result = hashtagPlugin.validate!('not-an-array', field);
+    const result = hashtagPlugin.validate?.('not-an-array', field);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.code).toBe('INVALID_TYPE');
@@ -83,7 +83,7 @@ describe('hashtagPlugin.validate', () => {
   });
 
   it('should reject arrays with non-string values', () => {
-    const result = hashtagPlugin.validate!(['valid', 123, 'tags'], field);
+    const result = hashtagPlugin.validate?.(['valid', 123, 'tags'], field);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.code).toBe('INVALID_TAG');
@@ -91,7 +91,7 @@ describe('hashtagPlugin.validate', () => {
   });
 
   it('should reject empty string tags', () => {
-    const result = hashtagPlugin.validate!(['valid', '', 'tags'], field);
+    const result = hashtagPlugin.validate?.(['valid', '', 'tags'], field);
     expect(result.success).toBe(false);
   });
 
@@ -100,7 +100,7 @@ describe('hashtagPlugin.validate', () => {
       ...field,
       metadata: { maxTags: 3 },
     };
-    const result = hashtagPlugin.validate!(['tag1', 'tag2', 'tag3', 'tag4'], fieldWithLimit);
+    const result = hashtagPlugin.validate?.(['tag1', 'tag2', 'tag3', 'tag4'], fieldWithLimit);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.code).toBe('TOO_MANY_TAGS');
@@ -112,35 +112,35 @@ describe('hashtagPlugin.validate', () => {
       ...field,
       metadata: { maxTags: 3 },
     };
-    const result = hashtagPlugin.validate!(['tag1', 'tag2', 'tag3'], fieldWithLimit);
+    const result = hashtagPlugin.validate?.(['tag1', 'tag2', 'tag3'], fieldWithLimit);
     expect(result.success).toBe(true);
   });
 
   it('should use default maxTags of 20', () => {
     const manyTags = Array.from({ length: 21 }, (_, i) => `tag${i}`);
-    const result = hashtagPlugin.validate!(manyTags, field);
+    const result = hashtagPlugin.validate?.(manyTags, field);
     expect(result.success).toBe(false);
   });
 
   it('should accept empty array', () => {
-    const result = hashtagPlugin.validate!([], field);
+    const result = hashtagPlugin.validate?.([], field);
     expect(result.success).toBe(true);
   });
 });
 
 describe('hashtagPlugin.serializeValue', () => {
   it('should serialize array to comma-separated string', () => {
-    const result = hashtagPlugin.serializeValue!(['nostr', 'bitcoin', 'web3']);
+    const result = hashtagPlugin.serializeValue?.(['nostr', 'bitcoin', 'web3']);
     expect(result).toBe('nostr,bitcoin,web3');
   });
 
   it('should handle empty array', () => {
-    const result = hashtagPlugin.serializeValue!([]);
+    const result = hashtagPlugin.serializeValue?.([]);
     expect(result).toBe('');
   });
 
   it('should stringify non-array values', () => {
-    const result = hashtagPlugin.serializeValue!('single-tag');
+    const result = hashtagPlugin.serializeValue?.('single-tag');
     expect(result).toBe('single-tag');
   });
 });
@@ -154,17 +154,17 @@ describe('hashtagPlugin.deserializeValue', () => {
   };
 
   it('should deserialize comma-separated string to array', () => {
-    const result = hashtagPlugin.deserializeValue!('nostr,bitcoin,web3', field);
+    const result = hashtagPlugin.deserializeValue?.('nostr,bitcoin,web3', field);
     expect(result).toEqual(['nostr', 'bitcoin', 'web3']);
   });
 
   it('should return empty array for empty string', () => {
-    const result = hashtagPlugin.deserializeValue!('', field);
+    const result = hashtagPlugin.deserializeValue?.('', field);
     expect(result).toEqual([]);
   });
 
   it('should normalize tags during deserialization', () => {
-    const result = hashtagPlugin.deserializeValue!('NoStr,#Bitcoin,WEB-3', field);
+    const result = hashtagPlugin.deserializeValue?.('NoStr,#Bitcoin,WEB-3', field);
     expect(result).toEqual(['nostr', 'bitcoin', 'web-3']);
   });
 });

@@ -1,6 +1,11 @@
 'use client';
 
-import { NostrPostComposer, NostrPostFeed, useNostrAuth, type NostrPostFeedRef } from '@nostr-post/react';
+import {
+  NostrPostComposer,
+  NostrPostFeed,
+  type NostrPostFeedRef,
+  useNostrAuth,
+} from '@nostr-post/react';
 import { useEffect, useRef, useState } from 'react';
 
 const styles = {
@@ -67,7 +72,6 @@ export default function Home() {
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
-  console.log('isDark:', isDark)
   return (
     <div style={styles.container}>
       <header style={styles.header}>

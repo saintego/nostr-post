@@ -272,6 +272,10 @@ Universal Web Components that work in any framework or vanilla HTML.
 <nostr-post-feed></nostr-post-feed>
 ```
 
+`<nostr-post-feed>` supports direct Nostr filtering (`authors`, `kinds`, `ids`, `since`, `until`, `limit`, `search`) plus universal tag filters via `tagFilters` / `filter-tags` (for example `#g` geohash and `#i` OSM identity tags). It also supports advanced multi-filter `REQ` queries through the `filters` property.
+
+Detailed examples: [packages/cdn/README.md](./packages/cdn/README.md)
+
 ### [@nostr-post/react](./packages/react) ✅
 
 **Status:** Complete
@@ -289,6 +293,39 @@ function App() {
   const { pubkey, login } = useNostrAuth();
   return <NostrPostComposer pubkey={pubkey} />;
 }
+```
+
+`NostrPostFeed` supports the same advanced filtering options as the web component:
+
+```tsx
+import { NostrPostFeed } from "@nostr-post/react";
+
+export function VenueFeed({ placeId }: { placeId: string }) {
+  return (
+    <NostrPostFeed
+      kinds={[1]}
+      limit={20}
+      filterTags={`#i:osm:node:${placeId},#g:u09tvw`}
+    />
+  );
+}
+```
+
+You can also use object/advanced forms:
+
+```tsx
+<NostrPostFeed
+  tagFilters={{ "#i": [`osm:node:${placeId}`], "#g": ["u09tvw"] }}
+  since={Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 7}
+  search="review"
+/>
+
+<NostrPostFeed
+  filters={[
+    { kinds: [1], "#g": ["u09tvw"], limit: 20 },
+    { kinds: [30023], "#t": ["review"], limit: 20 },
+  ]}
+/>
 ```
 
 ### [@nostr-post/cdn](./packages/cdn) ✅

@@ -124,42 +124,42 @@ describe('EXAMPLE_MANIFESTS', () => {
     });
 
     it('should have valid version strings', () => {
-      Object.values(EXAMPLE_MANIFESTS).forEach((manifest) => {
+      for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
         expect(manifest.version).toMatch(/^\d+\.\d+\.\d+$/);
-      });
+      }
     });
 
     it('should have at least one required kind', () => {
-      Object.values(EXAMPLE_MANIFESTS).forEach((manifest) => {
+      for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
         expect(manifest.requiredKinds).toBeDefined();
         expect(manifest.requiredKinds.length).toBeGreaterThan(0);
-      });
+      }
     });
 
     it('should have at least one field', () => {
-      Object.values(EXAMPLE_MANIFESTS).forEach((manifest) => {
+      for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
         expect(manifest.fields).toBeDefined();
         expect(manifest.fields.length).toBeGreaterThan(0);
-      });
+      }
     });
 
     it('should have unique field ids within each manifest', () => {
-      Object.values(EXAMPLE_MANIFESTS).forEach((manifest) => {
+      for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
         const fieldIds = manifest.fields.map((f) => f.id);
         const uniqueFieldIds = new Set(fieldIds);
         expect(fieldIds.length).toBe(uniqueFieldIds.size);
-      });
+      }
     });
 
     it('should have valid mapTo configuration for all fields', () => {
-      Object.values(EXAMPLE_MANIFESTS).forEach((manifest) => {
-        manifest.fields.forEach((field) => {
+      for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
+        for (const field of manifest.fields) {
           expect(field.mapTo).toBeDefined();
           expect(field.mapTo.kind).toBeTypeOf('number');
           expect(field.mapTo.target).toBeDefined();
           expect(['content', 'tag', 'created_at', 'kind']).toContain(field.mapTo.target);
-        });
-      });
+        }
+      }
     });
   });
 });
