@@ -74,12 +74,14 @@ describe('geoPlugin.validate', () => {
   };
 
   it('should validate valid geohash string', () => {
-    const result = geoPlugin.validate?.('u09tvw', field);
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.validate!('u09tvw', field);
     expect(result.success).toBe(true);
   });
 
   it('should reject invalid geohash', () => {
-    const result = geoPlugin.validate?.('invalid!', field);
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.validate!('invalid!', field);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.code).toBe('INVALID_GEOHASH');
@@ -87,22 +89,26 @@ describe('geoPlugin.validate', () => {
   });
 
   it('should reject empty string', () => {
-    const result = geoPlugin.validate?.('', field);
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.validate!('', field);
     expect(result.success).toBe(false);
   });
 
   it('should reject non-string values', () => {
-    const result = geoPlugin.validate?.(123, field);
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.validate!(123, field);
     expect(result.success).toBe(false);
   });
 
   it('should reject geohash with invalid characters', () => {
-    const result = geoPlugin.validate?.('UPPERCASE', field);
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.validate!('UPPERCASE', field);
     expect(result.success).toBe(false);
   });
 
   it('should accept all valid base32 characters', () => {
-    const result = geoPlugin.validate?.('0123456789bcdefghjkmnpqrstuvwxyz', field);
+    // biome-ignore lint/style/noNonNullAssertion: test helper
+    const result = geoPlugin.validate!('0123456789bcdefghjkmnpqrstuvwxyz', field);
     expect(result.success).toBe(true);
   });
 });
