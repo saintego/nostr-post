@@ -6,7 +6,7 @@ class MockRelay {
   url: string;
   connected = false;
   publishedEvents: SignedEvent[] = [];
-  subscriptions: Map<string, any[]> = new Map();
+  subscriptions: Map<string, unknown[]> = new Map();
 
   constructor(url: string) {
     this.url = url;
@@ -23,7 +23,7 @@ class MockRelay {
     this.publishedEvents.push(event);
   }
 
-  async subscribe(filters: any[], callback: (event: SignedEvent) => void): Promise<string> {
+  async subscribe(filters: unknown[], _callback: (event: SignedEvent) => void): Promise<string> {
     const subId = Math.random().toString(36);
     this.subscriptions.set(subId, filters);
     return subId;
@@ -37,7 +37,11 @@ class MockRelay {
 
 describe('Nostr Publishing E2E', () => {
   let mockRelays: MockRelay[];
-  let mockNostr: any;
+  let mockNostr: {
+    getPublicKey: ReturnType<typeof vi.fn>;
+    signEvent: ReturnType<typeof vi.fn>;
+    getRelays: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockRelays = [new MockRelay('wss://relay.damus.io'), new MockRelay('wss://relay.nostr.band')];
@@ -58,8 +62,8 @@ describe('Nostr Publishing E2E', () => {
       }),
     };
 
-    global.window = global.window || ({} as any);
-    (window as any).nostr = mockNostr;
+    global.window = global.window || ({} as Window);
+    (window as Window & { nostr?: unknown }).nostr = mockNostr;
   });
 
   describe('Publishing Manifest to Nostr', () => {
@@ -187,6 +191,7 @@ describe('Nostr Publishing E2E', () => {
   });
 
   describe('Using Manifest to Create Events', () => {
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: e2e scenario intentionally validates end-to-end mapping paths
     it('should use fetched manifest to create form', async () => {
       const manifest: NostrPostManifest = {
         id: 'review-v1',
@@ -246,6 +251,7 @@ describe('Nostr Publishing E2E', () => {
       expect(signed.tags).toContainEqual(['rating', '5']);
     });
 
+    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: e2e scenario intentionally validates per-kind coordination logic
     it('should coordinate multiple events from single form', async () => {
       const manifest: NostrPostManifest = {
         id: 'article-with-announcement',
@@ -284,7 +290,8 @@ describe('Nostr Publishing E2E', () => {
 
       // Group fields by kind
       const kinds = new Set(manifest.fields.map((f) => f.mapTo.kind));
-      const events: any[] = [];
+      const events: Array<{ kind: number; created_at: number; tags: string[][]; content: string }> =
+        [];
 
       for (const kind of kinds) {
         const fieldsForKind = manifest.fields.filter((f) => f.mapTo.kind === kind);
@@ -393,7 +400,7 @@ describe('Nostr Publishing E2E', () => {
       const versions = ['1.0.0', '1.1.0', '2.0.0'];
       const manifestId = 'my-manifest';
 
-      versions.forEach((version) => {
+      for (const version of versions) {
         const manifest: NostrPostManifest = {
           id: manifestId,
           version,
@@ -402,7 +409,7 @@ describe('Nostr Publishing E2E', () => {
         };
 
         expect(manifest.id).toBe(manifestId);
-      });
+      }
     });
   });
 });

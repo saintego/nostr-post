@@ -73,6 +73,7 @@ export const encodeGeohash = (lat: number, lon: number, precision = 6): string =
 };
 
 /** Decode a geohash string to lat/lon (centre of bounding box). */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: geohash bit-walk algorithm is intentionally imperative
 export const decodeGeohash = (hash: string): GeoCoordinates => {
   let latMin = -90;
   let latMax = 90;

@@ -107,12 +107,10 @@ function htmlToMarkdown(htmlStr: string): string {
       case 'img':
         return `![${el.getAttribute('alt') ?? ''}](${el.getAttribute('src') ?? ''})`;
       case 'blockquote':
-        return (
-          inner
-            .split('\n')
-            .map((l) => (l ? `> ${l}` : ''))
-            .join('\n') + '\n'
-        );
+        return `${inner
+          .split('\n')
+          .map((l) => (l ? `> ${l}` : ''))
+          .join('\n')}\n`;
       case 'ul':
       case 'ol':
         return `${inner}\n`;

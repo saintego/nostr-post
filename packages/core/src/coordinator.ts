@@ -97,6 +97,7 @@ export const validateFormData = (
 /**
  * Validates a value against a field's type definition.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: typed validation matrix kept explicit for readability
 const validateFieldType = (field: PostField, value: unknown): Result<void, ValidationError> => {
   switch (field.type) {
     case 'string':
@@ -221,6 +222,7 @@ const isValidGeohash = (value: unknown): value is string => {
 /**
  * Creates an unsigned Nostr event for a specific kind.
  */
+// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: event construction intentionally handles multiple Nostr mapping modes
 const createEventForKind = (
   kind: number,
   fields: PostField[],

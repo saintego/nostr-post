@@ -316,7 +316,7 @@ Create and publish Nostr posts.
 
 #### `<nostr-post-view>`
 
-Display a single Nostr event.
+Display a single Nostr event with automatic field rendering based on manifest.
 
 **Attributes:**
 
@@ -327,6 +327,14 @@ Display a single Nostr event.
 **Properties:**
 
 - `event: NostrEvent` - Event to display
+- `manifest: NostrPostManifest` - Manifest to guide field rendering (optional, auto-fetched from event via NIP-78 if not provided)
+
+**Field Visibility**
+
+The view component respects `visibility.view` settings from the manifest:
+
+- `visibility.view = "visible"` (default) — Field is shown to viewers
+- `visibility.view = "hidden"` — Field is hidden from viewers (e.g., author draft notes)
 
 **Example:**
 
@@ -335,15 +343,53 @@ Display a single Nostr event.
 
 <script>
   const viewer = document.getElementById("viewer");
+  
+  // Set the manifest to control which fields are displayed
+  viewer.manifest = {
+    id: "review-v1",
+    version: "1.0.0",
+    requiredKinds: [1],
+    fields: [
+      {
+        id: "review",
+        type: "string",
+        uiPlugin: "textarea",
+        mapTo: { kind: 1, target: "content" },
+        visibility: { view: "visible" }, // Shown to viewers
+      },
+      {
+        id: "internal_notes",
+        type: "string",
+        uiPlugin: "textarea",
+        visibility: { view: "hidden" }, // Author only; hidden from viewers
+      },
+    ],
+  };
+  
+  // Display the event
   viewer.event = {
     id: "...",
     kind: 1,
     pubkey: "...",
     created_at: 1703865600,
     tags: [],
-    content: "Hello, Nostr!",
+    content: "Great venue!",
     sig: "...",
   };
+</script>
+```
+
+**With NIP-78 Auto-Fetch:**
+
+If the event includes a manifest reference (NIP-78 `a` tag), the view component automatically fetches and applies the manifest:
+
+```html
+<nostr-post-view id="viewer"></nostr-post-view>
+
+<script>
+  // Event includes ["a", "30078:author:review-v1"] tag
+  // View component will auto-fetch the manifest from Nostr
+  viewer.event = eventWithManifestRef;
 </script>
 ```
 
@@ -383,42 +429,123 @@ Display a feed of Nostr events.
 
 #### Field-Level Controls
 
-Control field visibility and initialization at the component level:
+Control field visibility at two levels:
+
+1. **Manifest-level** (permanent): Define in your manifest via `visibility` property
+2. **Component-level** (runtime): Control at the component via HTML attributes or JavaScript properties
+
+##### Approach 1: Manifest-Level Visibility (Recommended)
+
+Define permanent field visibility rules in your manifest:
+
+```typescript
+const manifest: NostrPostManifest = {
+  id: "venue-review-v1",
+  fields: [
+    {
+      id: "review",
+      type: "string",
+      visibility: {
+        edit: "visible",  // Author can edit
+        view: "visible",  // Viewers can see
+      },
+    },
+    {
+      id: "geohash",     // Derived from OSM, don't ask user
+      type: "geo",
+      visibility: {
+        edit: "hidden",   // Hide from form
+        view: "hidden",   // Don't repeat in view
+      },
+    },
+    {
+      id: "author_id",   // Pre-filled, can't change
+      type: "string",
+      visibility: {
+        edit: "readonly", // Visible but read-only
+        view: "visible",
+      },
+    },
+  ],
+};
+```
+
+##### Approach 2: Component-Level Control (Runtime Override)
+
+Override visibility at the component level via HTML attributes or JavaScript:
+
+**Web Components (HTML attributes):**
+
+```html
+<!-- Using HTML attributes -->
+<nostr-post-composer
+  manifest='...'
+  exclude-fields='["rating", "tags"]'
+  readonly-fields='["author"]'
+></nostr-post-composer>
+```
+
+**Web Components (JavaScript properties):**
+
+```html
+<nostr-post-composer id="composer" manifest='...'></nostr-post-composer>
+
+<script>
+  const composer = document.getElementById("composer");
+
+  // Hide fields from the form
+  composer.excludeFields = ["rating", "tags"];
+
+  // Make fields read-only
+  composer.readonlyFields = ["author"];
+
+  // Pre-fill field values
+  composer.prefill = {
+    title: "Default Title",
+    content: "Pre-filled content...",
+    geohash: "u09tvw", // From OSM map selection
+  };
+</script>
+```
+
+**React Component:**
+
+```tsx
+import { NostrPostComposer } from "@nostr-post/react";
+
+export function ReviewForm() {
+  const [osmData, setOsmData] = useState({ geohash: "u09tvw", osmId: "123" });
+
+  return (
+    <NostrPostComposer
+      manifest={venueManifest}
+      excludeFields={["geohash", "osm_id"]} // Hidden; filled from osmData
+      readonlyFields={["author_id"]}
+      prefill={{
+        author_id: currentUser.pubkey,
+        geohash: osmData.geohash, // From map selection
+      }}
+    />
+  );
+}
+```
 
 **Properties:**
 
 - `excludeFields: string[]` - Hide specific fields from the form
 - `readonlyFields: string[]` - Make fields read-only (displayed but not editable)
 - `prefill: Record<string, unknown>` - Pre-populate field values
-- `manifestRef: { kind: number, dTag: string }` - Link manifest via NIP-78
 
-**Example:**
+##### When to Use Each Approach
 
-```html
-<nostr-post-composer
-  id="composer"
-  manifest='{"id":"post-v1","version":"1.0.0","requiredKinds":[1],"fields":[...]}'
-></nostr-post-composer>
-
-<script>
-  const composer = document.getElementById("composer");
-
-  // Hide certain fields
-  composer.excludeFields = ["rating", "tags"];
-
-  // Make fields read-only
-  composer.readonlyFields = ["author"];
-
-  // Pre-fill values
-  composer.prefill = {
-    title: "Default Title",
-    content: "Pre-filled content...",
-  };
-
-  // Link manifest for multi-event coordination
-  composer.manifestRef = { kind: 30078, dTag: "post-manifest-v1" };
-</script>
-```
+| Scenario | Use | Reason |
+|----------|-----|--------|
+| Draft-only fields | Manifest `visibility.view = "hidden"` | Permanent business rule |
+| Admin/system fields | Manifest `visibility.edit = "readonly"` | Always read-only |
+| OSM-derived data | Manifest `visibility.edit = "hidden"` + Component `prefill` | User doesn't enter; filled programmatically |
+| Conditional display | Component `excludeFields`/`readonly-fields` | Runtime decision (user role, context) |
+| Default values | Field `defaultValue` in manifest | Static defaults |
+| Dynamic pre-fill | Component `prefill` | Data from context (OSM, previous post, etc.) |
 
 #### defaultValue in Manifest
 

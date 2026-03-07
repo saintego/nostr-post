@@ -96,8 +96,11 @@ export class NpVenueView extends LitElement {
   }
 
   private renderVenueLinks(v: VenueData) {
-    const hasOsmLink = v.osmType && v.osmId;
-    const hasGooglePlaceLink = v.googlePlaceId;
+    const osmType = v.osmType;
+    const osmId = v.osmId;
+    const googlePlaceId = v.googlePlaceId;
+    const hasOsmLink = !!(osmType && osmId);
+    const hasGooglePlaceLink = !!googlePlaceId;
     if (!hasOsmLink && !hasGooglePlaceLink) return nothing;
 
     return html`
@@ -106,7 +109,7 @@ export class NpVenueView extends LitElement {
           hasOsmLink
             ? html`<a
               class="venue-link"
-              href="${osmUrl(v.osmType!, v.osmId!)}"
+              href="${osmUrl(osmType, osmId)}"
               target="_blank"
               rel="noopener"
               >View on OSM ↗</a
@@ -117,7 +120,7 @@ export class NpVenueView extends LitElement {
           hasGooglePlaceLink
             ? html`<a
               class="venue-link"
-              href="${googleMapsPlaceUrl(v.googlePlaceId!)}"
+              href="${googleMapsPlaceUrl(googlePlaceId)}"
               target="_blank"
               rel="noopener"
               >Google Maps ↗</a

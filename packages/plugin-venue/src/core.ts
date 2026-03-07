@@ -224,6 +224,7 @@ export const venuePlugin: NostrUIPlugin = {
    * Reconstruct VenueData from all event tags (for view rendering).
    * Reads "g", "i" (osm/gplace), and "location" tags.
    */
+  // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: parser handles multiple interoperable tag formats
   resolveFromTags: (tags: string[][], _field: PostField): unknown => {
     // Find the most precise geohash (longest "g" tag value)
     let geohash = '';
