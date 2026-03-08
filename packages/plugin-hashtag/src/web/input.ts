@@ -43,6 +43,15 @@ export class NpHashtagInput extends LitElement {
       box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
     }
 
+    :host-context(.dark) .chip-box {
+      background: #374151;
+      border-color: #4b5563;
+    }
+
+    :host-context(.dark) .chip-box:focus-within {
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+    }
+
     .chip {
       display: inline-flex;
       align-items: center;
@@ -67,6 +76,19 @@ export class NpHashtagInput extends LitElement {
       color: #4c1d95;
     }
 
+    :host-context(.dark) .chip {
+      background: #4338ca;
+      color: #e0e7ff;
+    }
+
+    :host-context(.dark) .chip .remove {
+      color: #e0e7ff;
+    }
+
+    :host-context(.dark) .chip .remove:hover {
+      color: #c7d2fe;
+    }
+
     .inline-input {
       border: none;
       outline: none;
@@ -75,6 +97,14 @@ export class NpHashtagInput extends LitElement {
       font-size: 0.875rem;
       padding: 0.2rem;
       background: transparent;
+    }
+
+    :host-context(.dark) .inline-input {
+      color: #f3f4f6;
+    }
+
+    :host-context(.dark) .inline-input::placeholder {
+      color: #9ca3af;
     }
 
     .suggestions {
@@ -98,8 +128,24 @@ export class NpHashtagInput extends LitElement {
       border-color: #c4b5fd;
     }
 
+    :host-context(.dark) .suggestion-btn {
+      background: #374151;
+      color: #d1d5db;
+      border-color: #4b5563;
+    }
+
+    :host-context(.dark) .suggestion-btn:hover {
+      background: #4338ca;
+      color: #e0e7ff;
+      border-color: #6366f1;
+    }
+
     .hint {
       font-size: 0.75rem;
+      color: #9ca3af;
+    }
+
+    :host-context(.dark) .hint {
       color: #9ca3af;
     }
   `;
