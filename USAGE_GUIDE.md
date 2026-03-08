@@ -633,14 +633,14 @@ The venue plugin (`@nostr-post/plugin-venue`) automatically validates and resolv
 
 <script>
   const composer = document.getElementById("composer");
-  
+
   // Prefill with just OSM identity → auto-resolves coordinates
   composer.prefill = {
     venue: {
-      osmType: "way",    // node, way, or relation
-      osmId: "34633854"  // OSM entity ID
+      osmType: "way", // node, way, or relation
+      osmId: "34633854", // OSM entity ID
       // geohash, lat, lon, name will be fetched automatically
-    }
+    },
   };
 </script>
 ```
@@ -654,7 +654,7 @@ export function VenueReview({ osmId, osmType }) {
     <NostrPostComposer
       manifest={venueManifest}
       prefill={{
-        venue: { osmType, osmId }
+        venue: { osmType, osmId },
         // Component auto-resolves coordinates before submit
       }}
     />
@@ -668,14 +668,14 @@ If the OSM ID is invalid or the API request fails, the component displays an err
 
 ```typescript
 // Get reference to the venue input component
-const venueInput = document.querySelector('np-venue-input');
+const venueInput = document.querySelector("np-venue-input");
 
 // Ensure data is complete before form submission
 try {
   await venueInput.ensureComplete();
   // Data is valid and complete
 } catch (error) {
-  console.error('Venue resolution failed:', error);
+  console.error("Venue resolution failed:", error);
 }
 ```
 
