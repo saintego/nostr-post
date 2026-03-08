@@ -104,13 +104,27 @@ export class NpHashtagInput extends LitElement {
     }
   `;
 
-  @property({ type: Array })
-  value: string[] = [];
+  @property({ type: Object })
+  value: string[] | string = [];
 
   @property({ type: Object })
   field: PostField | null = null;
 
   @state() private inputValue = '';
+
+  // Accept defensive coercion because external prefill/runtime code may pass strings.
+  private get tags(): string[] {
+    if (Array.isArray(this.value)) {
+      return this.value.filter((t): t is string => typeof t === 'string');
+    }
+    if (typeof this.value === 'string') {
+      return this.value
+        .split(/[\s,]+/)
+        .map(normalizeTag)
+        .filter((t: string) => t.length > 0);
+    }
+    return [];
+  }
 
   private get config(): HashtagPluginConfig {
     return (this.field?.metadata as HashtagPluginConfig) || {};
@@ -121,7 +135,7 @@ export class NpHashtagInput extends LitElement {
   }
 
   private get suggestions(): string[] {
-    return (this.config.suggestions ?? []).filter((s) => !this.value.includes(s));
+    return (this.config.suggestions ?? []).filter((s) => !this.tags.includes(s));
   }
 
   private emitValue(tags: string[]) {
@@ -136,20 +150,21 @@ export class NpHashtagInput extends LitElement {
   }
 
   private addTags(raw: string) {
+    const currentTags = this.tags;
     const newTags = raw
       .split(/[,\s]+/)
       .map(normalizeTag)
-      .filter((t) => t.length > 0 && !this.value.includes(t));
+      .filter((t) => t.length > 0 && !currentTags.includes(t));
 
     if (newTags.length === 0) return;
-    if (this.value.length + newTags.length > this.maxTags) return;
+    if (currentTags.length + newTags.length > this.maxTags) return;
 
-    this.emitValue([...this.value, ...newTags]);
+    this.emitValue([...currentTags, ...newTags]);
     this.inputValue = '';
   }
 
   private removeTag(tag: string) {
-    this.emitValue(this.value.filter((t) => t !== tag));
+    this.emitValue(this.tags.filter((t) => t !== tag));
   }
 
   private handleKeydown(e: KeyboardEvent) {
@@ -157,8 +172,8 @@ export class NpHashtagInput extends LitElement {
       e.preventDefault();
       this.addTags(this.inputValue);
     }
-    if (e.key === 'Backspace' && this.inputValue === '' && this.value.length > 0) {
-      this.emitValue(this.value.slice(0, -1));
+    if (e.key === 'Backspace' && this.inputValue === '' && this.tags.length > 0) {
+      this.emitValue(this.tags.slice(0, -1));
     }
   }
 
@@ -173,10 +188,12 @@ export class NpHashtagInput extends LitElement {
   }
 
   render() {
+    const tags = this.tags;
+
     return html`
       <div class="container">
         <div class="chip-box" @click=${this.focusInput}>
-          ${this.value.map(
+          ${tags.map(
             (tag) => html`
               <span class="chip">
                 #${tag}
@@ -191,12 +208,12 @@ export class NpHashtagInput extends LitElement {
             `
           )}
           ${
-            this.value.length < this.maxTags
+            tags.length < this.maxTags
               ? html`
                 <input
                   class="inline-input"
                   type="text"
-                  placeholder=${this.value.length === 0 ? 'Add hashtags…' : ''}
+                  placeholder=${tags.length === 0 ? 'Add hashtags…' : ''}
                   .value=${this.inputValue}
                   @input=${(e: Event) => {
                     this.inputValue = (e.target as HTMLInputElement).value;
