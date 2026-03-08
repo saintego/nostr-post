@@ -198,6 +198,7 @@ export class NpVenueInput extends LitElement {
   @state() private resolutionError: string | null = null;
 
   private searchTimeout: ReturnType<typeof setTimeout> | null = null;
+  private resolvedOsmId: string | null = null; // Track resolved OSM IDs to avoid re-resolving
 
   private get config(): VenuePluginConfig {
     return (this.field?.metadata ?? {}) as VenuePluginConfig;
@@ -240,22 +241,26 @@ export class NpVenueInput extends LitElement {
    * Lifecycle: detect when value is set with OSM data but missing geohash.
    * Automatically resolve from OSM API.
    */
-  override async willUpdate(changedProperties: Map<string, unknown>) {
-    super.willUpdate(changedProperties);
+  override async updated(changedProperties: Map<string, unknown>) {
+    super.updated(changedProperties);
 
     if (changedProperties.has('value') && this.value) {
       const { osmType, osmId, geohash } = this.value;
+      const currentOsmId = osmId ? `${osmType}:${osmId}` : null;
 
-      // If OSM ID is present but geohash is missing → auto-resolve
-      if (osmType && osmId && !geohash) {
+      // If OSM ID is present but geohash is missing → auto-resolve (only once per ID)
+      if (osmType && osmId && !geohash && currentOsmId !== this.resolvedOsmId) {
+        this.resolvedOsmId = currentOsmId;
         const resolved = await this.resolveVenueFromOsm(osmType, osmId);
         if (resolved) {
           // Merge resolved data with any existing properties
-          this.value = { ...this.value, ...resolved };
+          const mergedValue = { ...this.value, ...resolved };
+          // Update internal state
+          this.value = mergedValue;
           // Emit the resolved value so parent components get the complete data
           this.dispatchEvent(
             new CustomEvent('np-value-changed', {
-              detail: { value: this.value },
+              detail: { value: mergedValue },
               bubbles: true,
               composed: true,
             })
@@ -305,6 +310,7 @@ export class NpVenueInput extends LitElement {
   }
 
   private selectResult(result: NominatimResult) {
+    this.resolvedOsmId = null; // Reset resolution tracking since we have complete data
     const venue = nominatimToVenue(result, this.precision);
     this.emitValue(venue);
     this.searchQuery = '';
@@ -325,6 +331,7 @@ export class NpVenueInput extends LitElement {
 
     const geohash = e.detail.value;
     if (!geohash) {
+      this.resolvedOsmId = null;
       this.value = null;
       this.dispatchEvent(
         new CustomEvent('np-value-changed', {
@@ -340,6 +347,7 @@ export class NpVenueInput extends LitElement {
     if (this.value && this.value.geohash === geohash) return;
 
     // Map click → new geohash without venue metadata
+    this.resolvedOsmId = null;
     this.emitValue({ geohash, lat: 0, lon: 0 });
   }
 
@@ -385,6 +393,7 @@ export class NpVenueInput extends LitElement {
   }
 
   private clearVenue() {
+    this.resolvedOsmId = null; // Reset resolution tracking
     if (this.value) {
       // Clear only venue metadata, keep the pin
       this.emitValue({
