@@ -1,0 +1,37 @@
+{
+  "name": "@nostr-post/plugin-list",
+  "version": "0.1.0",
+  "description": "NIP-51 user lists plugin for nostr-post",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["nostr", "plugin", "lists", "nip-51", "audience"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nostr-post/plugins": "workspace:*",
+    "@nostr-post/signer": "workspace:*",
+    "lit": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  }
+}
