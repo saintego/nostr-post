@@ -54,6 +54,16 @@ export class NpListInput extends LitElement {
       box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
     }
 
+    :host-context(.dark) select {
+      background: #374151;
+      border-color: #4b5563;
+      color: #f3f4f6;
+    }
+
+    :host-context(.dark) select:focus {
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+    }
+
     .btn {
       padding: 0.5rem 0.75rem;
       border: 1px solid #d1d5db;
@@ -69,6 +79,16 @@ export class NpListInput extends LitElement {
       background: #f3f4f6;
     }
 
+    :host-context(.dark) .btn {
+      background: #374151;
+      border-color: #4b5563;
+      color: #f3f4f6;
+    }
+
+    :host-context(.dark) .btn:hover {
+      background: #4b5563;
+    }
+
     .btn:active {
       background: #e5e7eb;
     }
@@ -80,6 +100,15 @@ export class NpListInput extends LitElement {
 
     .btn-danger:hover {
       background: #fef2f2;
+    }
+
+    :host-context(.dark) .btn-danger {
+      color: #fca5a5;
+      border-color: #7f1d1d;
+    }
+
+    :host-context(.dark) .btn-danger:hover {
+      background: #450a0a;
     }
 
     .btn:disabled {
@@ -113,6 +142,23 @@ export class NpListInput extends LitElement {
       font-size: 0.75rem;
     }
 
+    :host-context(.dark) .list-info {
+      background: #1e293b;
+      border-color: #334155;
+    }
+
+    :host-context(.dark) .list-name {
+      color: #bfdbfe;
+    }
+
+    :host-context(.dark) .list-description {
+      color: #cbd5e1;
+    }
+
+    :host-context(.dark) .list-stats {
+      color: #94a3b8;
+    }
+
     /* Create list dialog */
     .dialog-overlay {
       position: fixed;
@@ -127,6 +173,10 @@ export class NpListInput extends LitElement {
       z-index: 1000;
     }
 
+    :host-context(.dark) .dialog-overlay {
+      background: rgba(0, 0, 0, 0.7);
+    }
+
     .dialog {
       background: white;
       border-radius: 8px;
@@ -134,6 +184,13 @@ export class NpListInput extends LitElement {
       max-width: 400px;
       width: 90%;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    }
+
+    :host-context(.dark) .dialog {
+      background: #1f2937;
+      color: #f3f4f6;
+      border: 1px solid #374151;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.45);
     }
 
     .dialog-title {
@@ -170,6 +227,27 @@ export class NpListInput extends LitElement {
       box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
     }
 
+    :host-context(.dark) .dialog-field label {
+      color: #e5e7eb;
+    }
+
+    :host-context(.dark) .dialog-field input,
+    :host-context(.dark) .dialog-field textarea {
+      background: #374151;
+      border-color: #4b5563;
+      color: #f3f4f6;
+    }
+
+    :host-context(.dark) .dialog-field input::placeholder,
+    :host-context(.dark) .dialog-field textarea::placeholder {
+      color: #9ca3af;
+    }
+
+    :host-context(.dark) .dialog-field input:focus,
+    :host-context(.dark) .dialog-field textarea:focus {
+      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.25);
+    }
+
     .dialog-actions {
       display: flex;
       gap: 0.5rem;
@@ -190,6 +268,16 @@ export class NpListInput extends LitElement {
       background: #f3f4f6;
     }
 
+    :host-context(.dark) .dialog-actions button {
+      background: #374151;
+      border-color: #4b5563;
+      color: #f3f4f6;
+    }
+
+    :host-context(.dark) .dialog-actions button:hover {
+      background: #4b5563;
+    }
+
     .dialog-actions button.primary {
       background: #6366f1;
       color: white;
@@ -207,6 +295,10 @@ export class NpListInput extends LitElement {
       padding: 0.5rem 0;
     }
 
+    :host-context(.dark) .loading {
+      color: #9ca3af;
+    }
+
     .error {
       color: #dc2626;
       background: #fee2e2;
@@ -214,6 +306,12 @@ export class NpListInput extends LitElement {
       border-radius: 6px;
       padding: 0.5rem 0.75rem;
       font-size: 0.8125rem;
+    }
+
+    :host-context(.dark) .error {
+      color: #fca5a5;
+      background: #450a0a;
+      border-color: #7f1d1d;
     }
   `;
 
