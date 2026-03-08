@@ -1,5 +1,3 @@
-import type { NostrEvent } from '@nostr-post/plugins/types';
-
 /**
  * NIP-51 user list (p-list) data structure.
  * Represents a curated list of user pubkeys.
@@ -63,7 +61,10 @@ export interface ListPluginConfig {
  * ...
  * Kind 30050: Deprecated user list
  */
-export interface Nip51ListEvent extends NostrEvent {
+export interface Nip51ListEvent {
+  id?: string;
+  pubkey: string;
+  created_at: number;
   kind: number; // 30000-30099
   content: string; // List description
   tags: Array<[string, ...string[]]>;

@@ -114,12 +114,13 @@ export const createListEvent = (
   listKind = 30000,
   description = ''
 ): Nip51ListEvent => {
+  const pubkeyTags: Array<[string, ...string[]]> = pubkeys.map((pk) => ['p', pk]);
   return {
     kind: listKind,
     pubkey: userPubkey,
     created_at: Math.floor(Date.now() / 1000),
     content: description,
-    tags: [['d', listName], ...pubkeys.map((pk) => ['p', pk])],
+    tags: [['d', listName], ...pubkeyTags],
   };
 };
 
@@ -147,7 +148,7 @@ export const listPlugin: NostrUIPlugin = {
   validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
     if (!value) {
       // Lists are optional by default
-      return { success: true };
+      return { success: true, data: undefined };
     }
 
     const selectedListIds = getSelectedListIds(value);
@@ -163,43 +164,33 @@ export const listPlugin: NostrUIPlugin = {
       };
     }
 
-    return { success: true };
+    return { success: true, data: undefined };
   },
 
-  formatValue: (value: unknown, _field: PostField) => {
+  formatValue: (value: unknown) => {
     if (!value) return '';
     const selectedListIds = getSelectedListIds(value);
     return selectedListIds.join(',');
   },
 
-  serializeValue: (value: unknown, _field: PostField) => {
+  serializeValue: (value: unknown, _field?: PostField) => {
     if (!value) return '';
     const selectedListIds = getSelectedListIds(value);
     // Store as comma-separated IDs for tag/content mapping targets
     return selectedListIds.join(',');
   },
 
-  deserializeValue: (value: unknown, _field: PostField) => {
-    if (!value) return null;
-    if (typeof value === 'string') {
-      const listIds = value
+  deserializeValue: (raw: string, _field: PostField) => {
+    if (!raw) return null;
+    if (typeof raw === 'string') {
+      const listIds = raw
         .split(',')
         .map((id) => id.trim())
         .filter((id) => id.length > 0);
       return { listIds } as ListSelectionData;
     }
 
-    if (Array.isArray(value)) {
-      const listIds = value
-        .filter((id) => typeof id === 'string')
-        .map((id) => id.trim())
-        .filter((id) => id.length > 0);
-      return { listIds } as ListSelectionData;
-    }
-
-    return {
-      listIds: [String(value)],
-    } as ListSelectionData;
+    return { listIds: [] } as ListSelectionData;
   },
 
   // Extra tags hook for multi-event coordination
