@@ -205,6 +205,17 @@ export class NostrPostComposer extends NostrPostElement {
   }
 
   /**
+   * Check if a field is excluded but has a prefilled value.
+   * These should still be rendered (but hidden) so they can process input events.
+   */
+  private isExcludedButPrefilled(field: PostField): boolean {
+    return (
+      this.isFieldExcluded(field) &&
+      (this.prefill?.[field.id] !== undefined || field.defaultValue !== undefined)
+    );
+  }
+
+  /**
    * Check if a field is read-only.
    */
   private isFieldReadonly(field: PostField): boolean {
@@ -357,7 +368,7 @@ export class NostrPostComposer extends NostrPostElement {
   /**
    * Render a single form field based on its type
    */
-  private renderField(field: PostField) {
+  private renderField(field: PostField, isHidden = false) {
     const value = this._formData[field.id] ?? field.defaultValue ?? '';
     const error = this.errors[field.id];
     const isRequired = field.required === true;
@@ -381,7 +392,7 @@ export class NostrPostComposer extends NostrPostElement {
     const label = (field.metadata?.label as string) || field.id;
 
     return html`
-      <div class="field ${readonly ? 'field-readonly' : ''}">
+      <div class="field ${readonly ? 'field-readonly' : ''}" style="${isHidden ? 'display: none;' : ''}">
         <label class="${isRequired ? 'required' : ''}">${label}</label>
         ${readonly ? this.renderFieldView(field, value) : this.renderFieldInput(field, value, handleInput)}
         ${error ? html`<div class="field-error">${error}</div>` : ''}
@@ -502,7 +513,15 @@ export class NostrPostComposer extends NostrPostElement {
         }
 
         <form @submit=${this.handleSubmit}>
-          ${manifest.fields.filter((f) => !this.isFieldExcluded(f)).map((field) => this.renderField(field))}
+          ${manifest.fields.map((field) => {
+            // Skip completely excluded fields (those without prefill)
+            if (this.isFieldExcluded(field) && !this.isExcludedButPrefilled(field)) {
+              return '';
+            }
+            // Render excluded-but-prefilled fields as hidden
+            const isHidden = this.isExcludedButPrefilled(field);
+            return this.renderField(field, isHidden);
+          })}
 
           <div class="composer-actions">
             <button
