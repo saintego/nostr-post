@@ -14,7 +14,7 @@
  */
 
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
-import type { ListSelectionData, Nip51ListEvent, UserList } from './types';
+import type { ListSelectionData, Nip51Adapter, Nip51ListEvent, UserList } from './types';
 
 const getSelectedListIds = (value: unknown): string[] => {
   if (!value) return [];
@@ -135,6 +135,47 @@ export const createListEvent = (
     content: description,
     tags: [['d', listName], ...pubkeyTags],
   };
+};
+
+/**
+ * Load NIP-51 lists for a user via an injected relay adapter.
+ */
+export const loadUserLists = async (
+  pubkey: string,
+  relays: string[],
+  adapter: Nip51Adapter
+): Promise<UserList[]> => {
+  const events = await adapter.queryEvents(
+    { kinds: Array.from({ length: 100 }, (_, i) => 30000 + i), authors: [pubkey], limit: 200 },
+    relays
+  );
+  return events
+    .map(parseListEvent)
+    .filter((list): list is UserList => list !== null)
+    .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+};
+
+/**
+ * Create, sign, and publish a new NIP-51 list via an injected adapter.
+ */
+export const publishNewList = async (
+  params: { pubkey: string; name: string; description?: string; kind?: number },
+  relays: string[],
+  adapter: Nip51Adapter
+): Promise<UserList> => {
+  const event = createListEvent(
+    params.pubkey,
+    params.name,
+    [],
+    params.kind ?? 30000,
+    params.description ?? ''
+  );
+  const signed = await adapter.signEvent(event);
+  const result = await adapter.publishEvent(signed, relays);
+  if (result.success === 0) throw new Error('Failed to publish list to relays');
+  const list = parseListEvent(signed);
+  if (!list) throw new Error('Failed to parse created list');
+  return list;
 };
 
 /**

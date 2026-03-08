@@ -63,11 +63,28 @@ export interface ListPluginConfig {
  */
 export interface Nip51ListEvent {
   id?: string;
+  sig?: string;
   pubkey: string;
   created_at: number;
   kind: number; // 30000-30099
   content: string; // List description
   tags: Array<[string, ...string[]]>;
+}
+
+/**
+ * Adapter interface for NIP-51 relay operations.
+ * Injected into core functions so protocol logic stays DOM-free.
+ */
+export interface Nip51Adapter {
+  queryEvents(
+    filter: { kinds: number[]; authors: string[]; limit?: number },
+    relays: string[]
+  ): Promise<Nip51ListEvent[]>;
+  signEvent(event: Nip51ListEvent): Promise<Nip51ListEvent>;
+  publishEvent(
+    event: Nip51ListEvent,
+    relays: string[]
+  ): Promise<{ success: number; failed: number }>;
 }
 
 /**
