@@ -5,6 +5,13 @@ import type { PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
 import { decodeGeohash, encodeGeohash, geoPlugin } from './core';
 
+const requireMethod = <T>(method: T | undefined, methodName: string): T => {
+  if (!method) {
+    throw new Error(`${methodName} is not implemented`);
+  }
+  return method;
+};
+
 describe('encodeGeohash', () => {
   it('should encode coordinates to geohash', () => {
     // San Francisco: 37.7749° N, 122.4194° W
@@ -66,6 +73,8 @@ describe('decodeGeohash', () => {
 });
 
 describe('geoPlugin.validate', () => {
+  const validate = requireMethod(geoPlugin.validate, 'geoPlugin.validate');
+
   const field: PostField = {
     id: 'location',
     type: 'geo',
@@ -74,14 +83,12 @@ describe('geoPlugin.validate', () => {
   };
 
   it('should validate valid geohash string', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.validate!('u09tvw', field);
+    const result = validate('u09tvw', field);
     expect(result.success).toBe(true);
   });
 
   it('should reject invalid geohash', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.validate!('invalid!', field);
+    const result = validate('invalid!', field);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.code).toBe('INVALID_GEOHASH');
@@ -89,72 +96,68 @@ describe('geoPlugin.validate', () => {
   });
 
   it('should reject empty string', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.validate!('', field);
+    const result = validate('', field);
     expect(result.success).toBe(false);
   });
 
   it('should reject non-string values', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.validate!(123, field);
+    const result = validate(123, field);
     expect(result.success).toBe(false);
   });
 
   it('should reject geohash with invalid characters', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.validate!('UPPERCASE', field);
+    const result = validate('UPPERCASE', field);
     expect(result.success).toBe(false);
   });
 
   it('should accept all valid base32 characters', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.validate!('0123456789bcdefghjkmnpqrstuvwxyz', field);
+    const result = validate('0123456789bcdefghjkmnpqrstuvwxyz', field);
     expect(result.success).toBe(true);
   });
 });
 
 describe('geoPlugin.formatValue', () => {
+  const formatValue = requireMethod(geoPlugin.formatValue, 'geoPlugin.formatValue');
+
   it('should format geohash as coordinates', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const formatted = geoPlugin.formatValue!('u09tvw');
+    const formatted = formatValue('u09tvw');
     expect(formatted).toContain('📍');
     expect(formatted).toMatch(/\d+\.\d+, -?\d+\.\d+/);
   });
 
   it('should handle empty string', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const formatted = geoPlugin.formatValue!('');
+    const formatted = formatValue('');
     expect(formatted).toBe('Unknown location');
   });
 
   it('should handle non-string values', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const formatted = geoPlugin.formatValue!(123);
+    const formatted = formatValue(123);
     expect(formatted).toBe('Unknown location');
   });
 });
 
 describe('geoPlugin.serializeValue', () => {
+  const serializeValue = requireMethod(geoPlugin.serializeValue, 'geoPlugin.serializeValue');
+
   it('should serialize geohash string as-is', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.serializeValue!('u09tvw');
+    const result = serializeValue('u09tvw');
     expect(result).toBe('u09tvw');
   });
 
   it('should handle non-string values', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.serializeValue!(123);
+    const result = serializeValue(123);
     expect(result).toBe('');
   });
 
   it('should handle empty string', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.serializeValue!('');
+    const result = serializeValue('');
     expect(result).toBe('');
   });
 });
 
 describe('geoPlugin.deserializeValue', () => {
+  const deserializeValue = requireMethod(geoPlugin.deserializeValue, 'geoPlugin.deserializeValue');
+
   const field: PostField = {
     id: 'location',
     type: 'geo',
@@ -163,14 +166,12 @@ describe('geoPlugin.deserializeValue', () => {
   };
 
   it('should return geohash string as-is', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.deserializeValue!('u09tvw', field);
+    const result = deserializeValue('u09tvw', field);
     expect(result).toBe('u09tvw');
   });
 
   it('should handle empty string', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = geoPlugin.deserializeValue!('', field);
+    const result = deserializeValue('', field);
     expect(result).toBe('');
   });
 });

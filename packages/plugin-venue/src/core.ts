@@ -106,6 +106,29 @@ export const searchNominatim = async (query: string): Promise<NominatimResult[]>
 };
 
 /**
+ * Lookup a specific OSM entity by type and ID.
+ * Used to validate and resolve prefilled OSM data.
+ */
+export const lookupNominatimByOsmId = async (
+  osmType: 'node' | 'way' | 'relation',
+  osmId: string | number
+): Promise<NominatimResult | null> => {
+  const osmTypePrefix = osmType.charAt(0).toUpperCase(); // N, W, R
+  const url = new URL('https://nominatim.openstreetmap.org/lookup');
+  url.searchParams.set('osm_ids', `${osmTypePrefix}${osmId}`);
+  url.searchParams.set('format', 'json');
+  url.searchParams.set('addressdetails', '1');
+
+  const resp = await fetch(url.toString(), {
+    headers: { 'User-Agent': 'nostr-post/0.1' },
+  });
+
+  if (!resp.ok) throw new Error(`Nominatim lookup failed: ${resp.status}`);
+  const results = (await resp.json()) as NominatimResult[];
+  return results[0] ?? null;
+};
+
+/**
  * Convert a Nominatim result to VenueData.
  */
 export const nominatimToVenue = (result: NominatimResult, precision = 6): VenueData => {

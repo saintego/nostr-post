@@ -343,7 +343,7 @@ The view component respects `visibility.view` settings from the manifest:
 
 <script>
   const viewer = document.getElementById("viewer");
-  
+
   // Set the manifest to control which fields are displayed
   viewer.manifest = {
     id: "review-v1",
@@ -365,7 +365,7 @@ The view component respects `visibility.view` settings from the manifest:
       },
     ],
   };
-  
+
   // Display the event
   viewer.event = {
     id: "...",
@@ -446,20 +446,20 @@ const manifest: NostrPostManifest = {
       id: "review",
       type: "string",
       visibility: {
-        edit: "visible",  // Author can edit
-        view: "visible",  // Viewers can see
+        edit: "visible", // Author can edit
+        view: "visible", // Viewers can see
       },
     },
     {
-      id: "geohash",     // Derived from OSM, don't ask user
+      id: "geohash", // Derived from OSM, don't ask user
       type: "geo",
       visibility: {
-        edit: "hidden",   // Hide from form
-        view: "hidden",   // Don't repeat in view
+        edit: "hidden", // Hide from form
+        view: "hidden", // Don't repeat in view
       },
     },
     {
-      id: "author_id",   // Pre-filled, can't change
+      id: "author_id", // Pre-filled, can't change
       type: "string",
       visibility: {
         edit: "readonly", // Visible but read-only
@@ -479,7 +479,7 @@ Override visibility at the component level via HTML attributes or JavaScript:
 ```html
 <!-- Using HTML attributes -->
 <nostr-post-composer
-  manifest='...'
+  manifest="..."
   exclude-fields='["rating", "tags"]'
   readonly-fields='["author"]'
 ></nostr-post-composer>
@@ -488,7 +488,7 @@ Override visibility at the component level via HTML attributes or JavaScript:
 **Web Components (JavaScript properties):**
 
 ```html
-<nostr-post-composer id="composer" manifest='...'></nostr-post-composer>
+<nostr-post-composer id="composer" manifest="..."></nostr-post-composer>
 
 <script>
   const composer = document.getElementById("composer");
@@ -538,14 +538,14 @@ export function ReviewForm() {
 
 ##### When to Use Each Approach
 
-| Scenario | Use | Reason |
-|----------|-----|--------|
-| Draft-only fields | Manifest `visibility.view = "hidden"` | Permanent business rule |
-| Admin/system fields | Manifest `visibility.edit = "readonly"` | Always read-only |
-| OSM-derived data | Manifest `visibility.edit = "hidden"` + Component `prefill` | User doesn't enter; filled programmatically |
-| Conditional display | Component `excludeFields`/`readonly-fields` | Runtime decision (user role, context) |
-| Default values | Field `defaultValue` in manifest | Static defaults |
-| Dynamic pre-fill | Component `prefill` | Data from context (OSM, previous post, etc.) |
+| Scenario            | Use                                                         | Reason                                       |
+| ------------------- | ----------------------------------------------------------- | -------------------------------------------- |
+| Draft-only fields   | Manifest `visibility.view = "hidden"`                       | Permanent business rule                      |
+| Admin/system fields | Manifest `visibility.edit = "readonly"`                     | Always read-only                             |
+| OSM-derived data    | Manifest `visibility.edit = "hidden"` + Component `prefill` | User doesn't enter; filled programmatically  |
+| Conditional display | Component `excludeFields`/`readonly-fields`                 | Runtime decision (user role, context)        |
+| Default values      | Field `defaultValue` in manifest                            | Static defaults                              |
+| Dynamic pre-fill    | Component `prefill`                                         | Data from context (OSM, previous post, etc.) |
 
 #### defaultValue in Manifest
 
@@ -611,6 +611,72 @@ const manifest: NostrPostManifest = {
     },
   ],
 };
+```
+
+#### OSM Venue Auto-Resolution
+
+The venue plugin (`@nostr-post/plugin-venue`) automatically validates and resolves OpenStreetMap data when prefilling venue fields.
+
+**How it works:**
+
+1. When you prefill a venue field with only `osmType` and `osmId` (without geohash/coordinates), the component automatically fetches the complete data from the OSM Nominatim API
+2. If resolution fails (invalid OSM ID), an error is displayed
+3. The resolved data includes geohash, coordinates, and venue name
+4. This validation also happens on prefill to ensure the OSM data is valid
+
+**Example: Minimal OSM Prefill**
+
+```html
+<!-- Web Component -->
+<nostr-post-composer id="composer" manifest="venue-manifest">
+</nostr-post-composer>
+
+<script>
+  const composer = document.getElementById("composer");
+  
+  // Prefill with just OSM identity → auto-resolves coordinates
+  composer.prefill = {
+    venue: {
+      osmType: "way",    // node, way, or relation
+      osmId: "34633854"  // OSM entity ID
+      // geohash, lat, lon, name will be fetched automatically
+    }
+  };
+</script>
+```
+
+```tsx
+// React Component
+import { NostrPostComposer } from "@nostr-post/react";
+
+export function VenueReview({ osmId, osmType }) {
+  return (
+    <NostrPostComposer
+      manifest={venueManifest}
+      prefill={{
+        venue: { osmType, osmId }
+        // Component auto-resolves coordinates before submit
+      }}
+    />
+  );
+}
+```
+
+**Error Handling:**
+
+If the OSM ID is invalid or the API request fails, the component displays an error message. You can also manually validate before submission:
+
+```typescript
+// Get reference to the venue input component
+const venueInput = document.querySelector('np-venue-input');
+
+// Ensure data is complete before form submission
+try {
+  await venueInput.ensureComplete();
+  // Data is valid and complete
+} catch (error) {
+  console.error('Venue resolution failed:', error);
+}
 ```
 
 ### Theming

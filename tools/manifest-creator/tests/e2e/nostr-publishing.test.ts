@@ -1,6 +1,54 @@
 import type { NostrPostManifest, SignedEvent } from '@nostr-post/core/types';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+type FormDataRecord = Record<string, string | number>;
+type BuiltEvent = { kind: number; created_at: number; tags: string[][]; content: string };
+
+const buildEventForKind = (
+  fields: NostrPostManifest['fields'],
+  formData: FormDataRecord,
+  kind: number
+): BuiltEvent => {
+  const tags: string[][] = [];
+  let content = '';
+
+  for (const field of fields) {
+    const value = formData[field.id];
+    if (value === undefined) continue;
+
+    if (field.mapTo.target === 'content') {
+      content = String(value);
+      continue;
+    }
+
+    if (field.mapTo.target === 'tag' && field.mapTo.tagName) {
+      tags.push([field.mapTo.tagName, String(value)]);
+    }
+  }
+
+  return {
+    kind,
+    created_at: Math.floor(Date.now() / 1000),
+    tags,
+    content,
+  };
+};
+
+const buildEventsByKind = (
+  fields: NostrPostManifest['fields'],
+  formData: FormDataRecord
+): BuiltEvent[] => {
+  const kinds = new Set(fields.map((field) => field.mapTo.kind));
+  const events: BuiltEvent[] = [];
+
+  for (const kind of kinds) {
+    const fieldsForKind = fields.filter((field) => field.mapTo.kind === kind);
+    events.push(buildEventForKind(fieldsForKind, formData, kind));
+  }
+
+  return events;
+};
+
 // Mock relay connection
 class MockRelay {
   url: string;
@@ -191,7 +239,6 @@ describe('Nostr Publishing E2E', () => {
   });
 
   describe('Using Manifest to Create Events', () => {
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: e2e scenario intentionally validates end-to-end mapping paths
     it('should use fetched manifest to create form', async () => {
       const manifest: NostrPostManifest = {
         id: 'review-v1',
@@ -223,27 +270,7 @@ describe('Nostr Publishing E2E', () => {
         rating: 5,
       };
 
-      // Build event from manifest and form data
-      const tags: string[][] = [];
-      let content = '';
-
-      for (const field of manifest.fields) {
-        const value = formData[field.id as keyof typeof formData];
-        if (value === undefined) continue;
-
-        if (field.mapTo.target === 'content') {
-          content = String(value);
-        } else if (field.mapTo.target === 'tag' && field.mapTo.tagName) {
-          tags.push([field.mapTo.tagName, String(value)]);
-        }
-      }
-
-      const event = {
-        kind: 1,
-        created_at: Math.floor(Date.now() / 1000),
-        tags,
-        content,
-      };
+      const event = buildEventForKind(manifest.fields, formData, 1);
 
       const signed = await mockNostr.signEvent(event);
 
@@ -251,7 +278,6 @@ describe('Nostr Publishing E2E', () => {
       expect(signed.tags).toContainEqual(['rating', '5']);
     });
 
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: e2e scenario intentionally validates per-kind coordination logic
     it('should coordinate multiple events from single form', async () => {
       const manifest: NostrPostManifest = {
         id: 'article-with-announcement',
@@ -288,34 +314,7 @@ describe('Nostr Publishing E2E', () => {
         announcement: 'Just published a new article!',
       };
 
-      // Group fields by kind
-      const kinds = new Set(manifest.fields.map((f) => f.mapTo.kind));
-      const events: Array<{ kind: number; created_at: number; tags: string[][]; content: string }> =
-        [];
-
-      for (const kind of kinds) {
-        const fieldsForKind = manifest.fields.filter((f) => f.mapTo.kind === kind);
-        const tags: string[][] = [];
-        let content = '';
-
-        for (const field of fieldsForKind) {
-          const value = formData[field.id as keyof typeof formData];
-          if (value === undefined) continue;
-
-          if (field.mapTo.target === 'content') {
-            content = String(value);
-          } else if (field.mapTo.target === 'tag' && field.mapTo.tagName) {
-            tags.push([field.mapTo.tagName, String(value)]);
-          }
-        }
-
-        events.push({
-          kind,
-          created_at: Math.floor(Date.now() / 1000),
-          tags,
-          content,
-        });
-      }
+      const events = buildEventsByKind(manifest.fields, formData);
 
       expect(events).toHaveLength(2);
       expect(events.find((e) => e.kind === 30023)).toBeDefined();

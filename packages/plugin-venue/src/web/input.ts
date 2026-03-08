@@ -19,6 +19,7 @@ import {
   type NominatimResult,
   type VenueData,
   type VenuePluginConfig,
+  lookupNominatimByOsmId,
   nominatimToVenue,
   osmUrl,
   searchNominatim,
@@ -161,6 +162,26 @@ export class NpVenueInput extends LitElement {
       color: #6b7280;
       padding: 0.25rem 0;
     }
+
+    .error-message {
+      padding: 0.625rem 0.75rem;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 6px;
+      color: #991b1b;
+      font-size: 0.8125rem;
+      line-height: 1.4;
+    }
+
+    .resolving {
+      padding: 0.625rem 0.75rem;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      color: #1e40af;
+      font-size: 0.8125rem;
+      line-height: 1.4;
+    }
   `;
 
   @property({ type: Object })
@@ -173,6 +194,8 @@ export class NpVenueInput extends LitElement {
   @state() private searchResults: NominatimResult[] = [];
   @state() private isSearching = false;
   @state() private showResults = false;
+  @state() private isResolving = false;
+  @state() private resolutionError: string | null = null;
 
   private searchTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -182,6 +205,65 @@ export class NpVenueInput extends LitElement {
 
   private get precision(): number {
     return this.config.precision ?? 6;
+  }
+
+  // ── OSM Resolution ─────────────────────────────────────────────
+
+  /**
+   * Resolve venue data from OSM ID if geohash is missing.
+   * Called automatically when value is set with osmType + osmId but no geohash.
+   */
+  private async resolveVenueFromOsm(
+    osmType: 'node' | 'way' | 'relation',
+    osmId: string
+  ): Promise<VenueData | null> {
+    this.isResolving = true;
+    this.resolutionError = null;
+
+    try {
+      const result = await lookupNominatimByOsmId(osmType, osmId);
+      if (!result) {
+        throw new Error(`OSM ${osmType}:${osmId} not found`);
+      }
+      return nominatimToVenue(result, this.precision);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      this.resolutionError = `Failed to resolve OSM data: ${message}`;
+      console.error('OSM resolution failed:', err);
+      return null;
+    } finally {
+      this.isResolving = false;
+    }
+  }
+
+  /**
+   * Lifecycle: detect when value is set with OSM data but missing geohash.
+   * Automatically resolve from OSM API.
+   */
+  override async willUpdate(changedProperties: Map<string, unknown>) {
+    super.willUpdate(changedProperties);
+
+    if (changedProperties.has('value') && this.value) {
+      const { osmType, osmId, geohash } = this.value;
+
+      // If OSM ID is present but geohash is missing → auto-resolve
+      if (osmType && osmId && !geohash) {
+        const resolved = await this.resolveVenueFromOsm(osmType, osmId);
+        if (resolved) {
+          // Merge resolved data with any existing properties
+          this.value = { ...this.value, ...resolved };
+          // Emit the resolved value so parent components get the complete data
+          this.dispatchEvent(
+            new CustomEvent('np-value-changed', {
+              detail: { value: this.value },
+              bubbles: true,
+              composed: true,
+            })
+          );
+          this.requestUpdate(); // Force re-render with complete data
+        }
+      }
+    }
   }
 
   // ── Search ─────────────────────────────────────────────────────
@@ -263,6 +345,34 @@ export class NpVenueInput extends LitElement {
 
   // ── Value management ───────────────────────────────────────────
 
+  /**
+   * Public validation method.
+   * Returns true if value is complete, false if resolution is needed/pending.
+   * Throws error if resolution failed.
+   */
+  public async ensureComplete(): Promise<boolean> {
+    if (!this.value) return true;
+    if (this.resolutionError) {
+      throw new Error(this.resolutionError);
+    }
+    if (this.isResolving) {
+      throw new Error('Venue resolution in progress, please wait');
+    }
+
+    const { osmType, osmId, geohash } = this.value;
+    if (osmType && osmId && !geohash) {
+      // Try to resolve one more time before submit
+      const resolved = await this.resolveVenueFromOsm(osmType, osmId);
+      if (!resolved) {
+        throw new Error(this.resolutionError || `Cannot resolve OSM ${osmType}:${osmId}`);
+      }
+      this.value = { ...this.value, ...resolved };
+      return true;
+    }
+
+    return true;
+  }
+
   private emitValue(venue: VenueData) {
     this.value = venue;
     this.dispatchEvent(
@@ -293,6 +403,19 @@ export class NpVenueInput extends LitElement {
     return html`
       <div class="container">
         ${this.renderVenueSearch()}
+        
+        ${
+          this.isResolving
+            ? html`<div class="resolving">🔄 Resolving OSM venue data…</div>`
+            : nothing
+        }
+        
+        ${
+          this.resolutionError
+            ? html`<div class="error-message">❌ ${this.resolutionError}</div>`
+            : nothing
+        }
+        
         ${hasVenueMeta ? this.renderVenueCard() : nothing}
 
         <np-geo-input

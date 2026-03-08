@@ -5,6 +5,13 @@ import type { PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
 import { extractHashtags, hashtagPlugin, normalizeTag } from './core';
 
+const requireMethod = <T>(method: T | undefined, methodName: string): T => {
+  if (!method) {
+    throw new Error(`${methodName} is not implemented`);
+  }
+  return method;
+};
+
 describe('normalizeTag', () => {
   it('should lowercase tags', () => {
     expect(normalizeTag('NoStr')).toBe('nostr');
@@ -62,6 +69,8 @@ describe('extractHashtags', () => {
 });
 
 describe('hashtagPlugin.validate', () => {
+  const validate = requireMethod(hashtagPlugin.validate, 'hashtagPlugin.validate');
+
   const field: PostField = {
     id: 'hashtags',
     type: 'string',
@@ -70,14 +79,12 @@ describe('hashtagPlugin.validate', () => {
   };
 
   it('should validate array of strings', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.validate!(['nostr', 'bitcoin'], field);
+    const result = validate(['nostr', 'bitcoin'], field);
     expect(result.success).toBe(true);
   });
 
   it('should reject non-array values', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.validate!('not-an-array', field);
+    const result = validate('not-an-array', field);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.code).toBe('INVALID_TYPE');
@@ -85,8 +92,7 @@ describe('hashtagPlugin.validate', () => {
   });
 
   it('should reject arrays with non-string values', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.validate!(['valid', 123, 'tags'], field);
+    const result = validate(['valid', 123, 'tags'], field);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.code).toBe('INVALID_TAG');
@@ -94,8 +100,7 @@ describe('hashtagPlugin.validate', () => {
   });
 
   it('should reject empty string tags', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.validate!(['valid', '', 'tags'], field);
+    const result = validate(['valid', '', 'tags'], field);
     expect(result.success).toBe(false);
   });
 
@@ -104,8 +109,7 @@ describe('hashtagPlugin.validate', () => {
       ...field,
       metadata: { maxTags: 3 },
     };
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.validate!(['tag1', 'tag2', 'tag3', 'tag4'], fieldWithLimit);
+    const result = validate(['tag1', 'tag2', 'tag3', 'tag4'], fieldWithLimit);
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.code).toBe('TOO_MANY_TAGS');
@@ -117,46 +121,50 @@ describe('hashtagPlugin.validate', () => {
       ...field,
       metadata: { maxTags: 3 },
     };
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.validate!(['tag1', 'tag2', 'tag3'], fieldWithLimit);
+    const result = validate(['tag1', 'tag2', 'tag3'], fieldWithLimit);
     expect(result.success).toBe(true);
   });
 
   it('should use default maxTags of 20', () => {
     const manyTags = Array.from({ length: 21 }, (_, i) => `tag${i}`);
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.validate!(manyTags, field);
+    const result = validate(manyTags, field);
     expect(result.success).toBe(false);
   });
 
   it('should accept empty array', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.validate!([], field);
+    const result = validate([], field);
     expect(result.success).toBe(true);
   });
 });
 
 describe('hashtagPlugin.serializeValue', () => {
+  const serializeValue = requireMethod(
+    hashtagPlugin.serializeValue,
+    'hashtagPlugin.serializeValue'
+  );
+
   it('should serialize array to comma-separated string', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.serializeValue!(['nostr', 'bitcoin', 'web3']);
+    const result = serializeValue(['nostr', 'bitcoin', 'web3']);
     expect(result).toBe('nostr,bitcoin,web3');
   });
 
   it('should handle empty array', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.serializeValue!([]);
+    const result = serializeValue([]);
     expect(result).toBe('');
   });
 
   it('should stringify non-array values', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.serializeValue!('single-tag');
+    const result = serializeValue('single-tag');
     expect(result).toBe('single-tag');
   });
 });
 
 describe('hashtagPlugin.deserializeValue', () => {
+  const deserializeValue = requireMethod(
+    hashtagPlugin.deserializeValue,
+    'hashtagPlugin.deserializeValue'
+  );
+
   const field: PostField = {
     id: 'hashtags',
     type: 'string',
@@ -165,20 +173,17 @@ describe('hashtagPlugin.deserializeValue', () => {
   };
 
   it('should deserialize comma-separated string to array', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.deserializeValue!('nostr,bitcoin,web3', field);
+    const result = deserializeValue('nostr,bitcoin,web3', field);
     expect(result).toEqual(['nostr', 'bitcoin', 'web3']);
   });
 
   it('should return empty array for empty string', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.deserializeValue!('', field);
+    const result = deserializeValue('', field);
     expect(result).toEqual([]);
   });
 
   it('should normalize tags during deserialization', () => {
-    // biome-ignore lint/style/noNonNullAssertion: test helper
-    const result = hashtagPlugin.deserializeValue!('NoStr,#Bitcoin,WEB-3', field);
+    const result = deserializeValue('NoStr,#Bitcoin,WEB-3', field);
     expect(result).toEqual(['nostr', 'bitcoin', 'web-3']);
   });
 });

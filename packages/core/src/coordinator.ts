@@ -219,10 +219,165 @@ const isValidGeohash = (value: unknown): value is string => {
   return true;
 };
 
+const addAddressableDTagIfNeeded = (
+  kind: number,
+  tagFields: PostField[],
+  tags: NostrTag[],
+  dTag?: string
+) => {
+  if (kind < 30000 || kind >= 40000) return;
+
+  const hasDTag = tagFields.some((field) => field.mapTo.tagName === 'd');
+  if (hasDTag) return;
+
+  if (dTag !== undefined) {
+    tags.push(['d', dTag]);
+    return;
+  }
+
+  tags.push(['d', '']);
+};
+
+const buildContentForKind = (
+  kind: number,
+  contentFields: PostField[],
+  formData: FormData
+): string => {
+  if (contentFields.length === 0) return '';
+
+  if (kind !== 30078 && kind !== 30079) {
+    return contentFields
+      .map((field) => formData[field.id])
+      .filter((value) => value !== undefined)
+      .join('\n');
+  }
+
+  const contentObj: Record<string, unknown> = {};
+  for (const field of contentFields) {
+    const value = formData[field.id];
+    if (value === undefined) continue;
+
+    if (field.mapTo.path) {
+      setNestedValue(contentObj, field.mapTo.path, value);
+      continue;
+    }
+
+    contentObj[field.id] = value;
+  }
+
+  return JSON.stringify(contentObj);
+};
+
+const extractGeohash = (value: unknown): string | undefined => {
+  if (isValidGeohash(value)) {
+    return value;
+  }
+
+  if (typeof value === 'object' && value !== null && 'geohash' in value) {
+    const geohash = (value as Record<string, unknown>).geohash;
+    if (isValidGeohash(geohash)) {
+      return geohash;
+    }
+  }
+
+  return undefined;
+};
+
+const appendTagValue = (
+  tags: NostrTag[],
+  tagName: string,
+  value: unknown,
+  config: CoordinatorConfig,
+  field: PostField
+) => {
+  const custom = config.tagSerializer?.(value, field);
+  const stringValue = custom !== undefined ? custom : serializeTagValue(value);
+  tags.push([tagName, stringValue]);
+};
+
+const appendGeohashTags = (
+  tags: NostrTag[],
+  value: unknown,
+  config: CoordinatorConfig,
+  field: PostField
+) => {
+  const geohash = extractGeohash(value);
+  if (!geohash) {
+    appendTagValue(tags, 'g', value, config, field);
+    return;
+  }
+
+  for (let len = geohash.length; len >= 2; len--) {
+    tags.push(['g', geohash.slice(0, len)]);
+  }
+};
+
+const appendTagMappings = (
+  tagFields: PostField[],
+  formData: FormData,
+  config: CoordinatorConfig,
+  tags: NostrTag[]
+) => {
+  for (const field of tagFields) {
+    const value = formData[field.id];
+    if (value === undefined || !field.mapTo.tagName) continue;
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        appendTagValue(tags, field.mapTo.tagName, item, config, field);
+      }
+      continue;
+    }
+
+    if (field.mapTo.tagName === 'g') {
+      appendGeohashTags(tags, value, config, field);
+      continue;
+    }
+
+    appendTagValue(tags, field.mapTo.tagName, value, config, field);
+  }
+};
+
+const appendExtraTags = (
+  tagFields: PostField[],
+  formData: FormData,
+  extraTagsFn: CoordinatorConfig['extraTagsFn'],
+  tags: NostrTag[]
+) => {
+  if (!extraTagsFn) return;
+
+  for (const field of tagFields) {
+    const value = formData[field.id];
+    if (value === undefined) continue;
+
+    const extras = extraTagsFn(value, field);
+    if (!extras) continue;
+
+    for (const tag of extras) {
+      tags.push(tag);
+    }
+  }
+};
+
+const appendContentHashtags = (kind: number, content: string, tags: NostrTag[]) => {
+  if (!content || kind !== 1) return;
+
+  const hashtagMatches = content.match(/#[\w\u0080-\uffff][\w\u0080-\uffff-]*/g);
+  if (!hashtagMatches) return;
+
+  const existingT = new Set(tags.filter((tag) => tag[0] === 't').map((tag) => tag[1]));
+  for (const match of hashtagMatches) {
+    const tag = match.slice(1).toLowerCase();
+    if (!tag || existingT.has(tag)) continue;
+
+    tags.push(['t', tag]);
+    existingT.add(tag);
+  }
+};
+
 /**
  * Creates an unsigned Nostr event for a specific kind.
  */
-// biome-ignore lint/complexity/noExcessiveCognitiveComplexity: event construction intentionally handles multiple Nostr mapping modes
 const createEventForKind = (
   kind: number,
   fields: PostField[],
@@ -230,126 +385,18 @@ const createEventForKind = (
   config: CoordinatorConfig
 ): UnsignedNostrEvent => {
   const tags: NostrTag[] = [];
-  let content = '';
 
-  // Separate fields by target type
   const contentFields = fields.filter((f) => f.mapTo.target === 'content');
   const tagFields = fields.filter((f) => f.mapTo.target === 'tag');
 
-  // For parameterized replaceable events (kinds 30000-39999), auto-add `d` tag
-  if (kind >= 30000 && kind < 40000) {
-    // Use manifest id as the d-tag identifier if no explicit d tag exists in the fields
-    const hasDTag = tagFields.some((f) => f.mapTo.tagName === 'd');
-    if (!hasDTag && config.dTag !== undefined) {
-      tags.push(['d', config.dTag]);
-    } else if (!hasDTag) {
-      // Default d-tag: empty string (NIP-01 spec requires it for addressable events)
-      tags.push(['d', '']);
-    }
-  }
+  addAddressableDTagIfNeeded(kind, tagFields, tags, config.dTag);
 
-  // Build content (for NIP-78, this will be JSON)
-  if (contentFields.length > 0) {
-    if (kind === 30078 || kind === 30079) {
-      // NIP-78: Structured JSON content
-      const contentObj: Record<string, unknown> = {};
-      for (const field of contentFields) {
-        const value = formData[field.id];
-        if (value !== undefined) {
-          // Handle path-based storage
-          if (field.mapTo.path) {
-            setNestedValue(contentObj, field.mapTo.path, value);
-          } else {
-            contentObj[field.id] = value;
-          }
-        }
-      }
-      content = JSON.stringify(contentObj);
-    } else {
-      // Simple text content (Kind 1, etc.)
-      content = contentFields
-        .map((f) => formData[f.id])
-        .filter((v) => v !== undefined)
-        .join('\n');
-    }
-  }
+  const content = buildContentForKind(kind, contentFields, formData);
 
-  // Build tags
-  for (const field of tagFields) {
-    const value = formData[field.id];
-    if (value !== undefined && field.mapTo.tagName) {
-      // Array values → one tag per element (hashtags, media URLs, etc.)
-      if (Array.isArray(value)) {
-        for (const item of value) {
-          const custom = config.tagSerializer?.(item, field);
-          const stringValue = custom !== undefined ? custom : serializeTagValue(item);
-          tags.push([field.mapTo.tagName, stringValue]);
-        }
-      } else if (field.mapTo.tagName === 'g') {
-        // NIP-52: emit geohash at all prefix lengths for relay-side filtering
-        // Accept either a geohash string or an object with a .geohash property (e.g. VenueData)
-        let gh: string | undefined;
-        if (isValidGeohash(value)) {
-          gh = value as string;
-        } else if (
-          typeof value === 'object' &&
-          value !== null &&
-          'geohash' in value &&
-          isValidGeohash((value as Record<string, unknown>).geohash)
-        ) {
-          gh = (value as Record<string, string>).geohash;
-        }
+  appendTagMappings(tagFields, formData, config, tags);
+  appendExtraTags(tagFields, formData, config.extraTagsFn, tags);
+  appendContentHashtags(kind, content, tags);
 
-        if (gh) {
-          // e.g. "u09tvw" → ["g","u09tvw"], ["g","u09tv"], ["g","u09t"], ["g","u09"], ["g","u0"]
-          for (let len = gh.length; len >= 2; len--) {
-            tags.push(['g', gh.slice(0, len)]);
-          }
-        } else {
-          const custom = config.tagSerializer?.(value, field);
-          const stringValue = custom !== undefined ? custom : serializeTagValue(value);
-          tags.push([field.mapTo.tagName, stringValue]);
-        }
-      } else {
-        const custom = config.tagSerializer?.(value, field);
-        const stringValue = custom !== undefined ? custom : serializeTagValue(value);
-        tags.push([field.mapTo.tagName, stringValue]);
-      }
-    }
-  }
-
-  // Call extraTagsFn hook for each tag field (plugin-provided extra tags)
-  if (config.extraTagsFn) {
-    for (const field of tagFields) {
-      const value = formData[field.id];
-      if (value !== undefined) {
-        const extras = config.extraTagsFn(value, field);
-        if (extras) {
-          for (const tag of extras) {
-            tags.push(tag);
-          }
-        }
-      }
-    }
-  }
-
-  // Auto-extract #hashtags from content into `t` tags (NIP-12)
-  if (content && kind === 1) {
-    const hashtagMatches = content.match(/#[\w\u0080-\uffff][\w\u0080-\uffff-]*/g);
-    if (hashtagMatches) {
-      // Collect existing `t` tags to avoid duplicates
-      const existingT = new Set(tags.filter((t) => t[0] === 't').map((t) => t[1]));
-      for (const match of hashtagMatches) {
-        const tag = match.slice(1).toLowerCase();
-        if (tag && !existingT.has(tag)) {
-          tags.push(['t', tag]);
-          existingT.add(tag);
-        }
-      }
-    }
-  }
-
-  // Add manifest reference tag if configured
   if (config.manifestRef) {
     tags.push(['a', config.manifestRef]);
   }
