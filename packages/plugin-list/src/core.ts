@@ -17,7 +17,20 @@ import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-p
 import type { ListSelectionData, Nip51ListEvent, UserList } from './types';
 
 const getSelectedListIds = (value: unknown): string[] => {
-  if (!value || typeof value !== 'object') return [];
+  if (!value) return [];
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0);
+  }
+
+  if (Array.isArray(value)) {
+    return value.filter((id): id is string => typeof id === 'string' && id.length > 0);
+  }
+
+  if (typeof value !== 'object') return [];
   const listData = value as ListSelectionData;
 
   if (Array.isArray(listData.listIds)) {
@@ -180,17 +193,14 @@ export const listPlugin: NostrUIPlugin = {
     return selectedListIds.join(',');
   },
 
-  deserializeValue: (raw: string, _field: PostField) => {
+  deserializeValue: (raw: string, field: PostField) => {
     if (!raw) return null;
-    if (typeof raw === 'string') {
-      const listIds = raw
-        .split(',')
-        .map((id) => id.trim())
-        .filter((id) => id.length > 0);
-      return { listIds } as ListSelectionData;
-    }
-
-    return { listIds: [] } as ListSelectionData;
+    const listIds = raw
+      .split(',')
+      .map((id) => id.trim())
+      .filter((id) => id.length > 0);
+    const multiple = (field.metadata as { multiple?: boolean } | undefined)?.multiple !== false;
+    return multiple ? listIds : (listIds[0] ?? '');
   },
 
   // Extra tags hook for multi-event coordination

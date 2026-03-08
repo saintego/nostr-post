@@ -8,8 +8,8 @@
  * - Delete list confirmation
  * - Add/remove pubkeys from selected list
  *
- * Value: ListSelectionData { listIds, pubkeys? }
- * Dispatches 'np-value-changed' with { detail: { value: ListSelectionData } }
+ * Value: string | string[] (list ID or list IDs)
+ * Dispatches 'np-value-changed' with { detail: { value: string | string[] | null } }
  */
 
 import { pluginRegistry } from '@nostr-post/plugins/registry';
@@ -17,7 +17,7 @@ import type { PostField } from '@nostr-post/plugins/types';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { createListEvent, fetchUserLists, listPlugin, parseListEvent } from './core';
-import type { ListPluginConfig, ListSelectionData, UserList } from './types';
+import type { ListPluginConfig, UserList } from './types';
 
 @customElement('np-list-input')
 export class NpListInput extends LitElement {
@@ -316,7 +316,7 @@ export class NpListInput extends LitElement {
   `;
 
   @property({ type: Object })
-  value: ListSelectionData | null = null;
+  value: string | string[] | null = null;
 
   @property({ type: Object })
   field: PostField | null = null;
@@ -339,11 +339,9 @@ export class NpListInput extends LitElement {
 
   private get selectedListIds(): string[] {
     if (!this.value) return [];
-    if (Array.isArray(this.value.listIds)) {
-      return this.value.listIds;
-    }
-    if (this.value.listId) {
-      return [this.value.listId];
+    if (typeof this.value === 'string') return this.value ? [this.value] : [];
+    if (Array.isArray(this.value)) {
+      return this.value.filter((id): id is string => typeof id === 'string' && id.length > 0);
     }
     return [];
   }
@@ -394,7 +392,7 @@ export class NpListInput extends LitElement {
       return;
     }
 
-    this.value = { listIds };
+    this.value = this.isMultiple ? listIds : (listIds[0] ?? null);
     this.emitValue(this.value);
   }
 
@@ -434,7 +432,7 @@ export class NpListInput extends LitElement {
         const newListId = newList.id || this.newListName;
         this.lists = [...this.lists, newList];
         const listIds = Array.from(new Set([...this.selectedListIds, newListId]));
-        this.value = { listIds };
+        this.value = this.isMultiple ? listIds : (listIds[0] ?? null);
         this.emitValue(this.value);
         this.closeCreateDialog();
       }
@@ -455,7 +453,12 @@ export class NpListInput extends LitElement {
       // TODO: Delete list event from relays
       this.lists = this.lists.filter((l) => l.id !== listId);
       const remainingListIds = this.selectedListIds.filter((id) => id !== listId);
-      this.value = remainingListIds.length > 0 ? { listIds: remainingListIds } : null;
+      this.value =
+        remainingListIds.length > 0
+          ? this.isMultiple
+            ? remainingListIds
+            : remainingListIds[0]
+          : null;
       this.emitValue(this.value);
     } catch (err) {
       this.loadError = err instanceof Error ? err.message : 'Failed to delete list';
@@ -463,7 +466,7 @@ export class NpListInput extends LitElement {
     }
   }
 
-  private emitValue(value: ListSelectionData | null): void {
+  private emitValue(value: string | string[] | null): void {
     this.dispatchEvent(
       new CustomEvent('np-value-changed', {
         detail: { value },
