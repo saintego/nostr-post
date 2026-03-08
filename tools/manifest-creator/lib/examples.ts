@@ -190,6 +190,18 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         },
       },
       {
+        id: 'list',
+        type: 'string',
+        uiPlugin: 'list',
+        mapTo: { kind: 30023, target: 'tag', tagName: 'L' },
+        metadata: {
+          label: 'List',
+          allowCreate: true,
+          allowDelete: true,
+          defaultList: 'trusted-reviewers',
+        },
+      },
+      {
         id: 'tags',
         type: 'string',
         uiPlugin: 'hashtag',

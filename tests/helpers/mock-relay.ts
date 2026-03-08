@@ -190,7 +190,7 @@ export class MockNostrRelay {
   /**
    * Generate a mock event ID
    */
-  private generateEventId(event: UnsignedNostrEvent): string {
+  public generateEventId(event: UnsignedNostrEvent): string {
     // Simple hash-like mock ID
     const str = JSON.stringify(event);
     let hash = 0;
@@ -201,12 +201,11 @@ export class MockNostrRelay {
     }
     return Math.abs(hash).toString(16).padStart(64, '0');
   }
-
   /**
    * Generate a mock signature
    */
   private generateSignature(): string {
-    return 'mock_signature_' + Math.random().toString(36).substring(2);
+    return `mock_signature_${Math.random().toString(36).substring(2)}`;
   }
 }
 
@@ -217,7 +216,7 @@ export function mockSignEvent(event: UnsignedNostrEvent, privateKey: string): Si
   const relay = new MockNostrRelay();
   return {
     ...event,
-    id: (relay as any).generateEventId(event),
+    id: relay.generateEventId(event),
     sig: `sig_${privateKey.slice(0, 8)}`,
   };
 }
@@ -228,7 +227,7 @@ export function mockSignEvent(event: UnsignedNostrEvent, privateKey: string): Si
 export function generateMockKeypair(): { pubkey: string; privkey: string } {
   const rand = Math.random().toString(36).substring(2);
   return {
-    pubkey: 'pubkey_' + rand.padEnd(56, '0'),
-    privkey: 'privkey_' + rand.padEnd(56, '0'),
+    pubkey: `pubkey_${rand.padEnd(56, '0')}`,
+    privkey: `privkey_${rand.padEnd(56, '0')}`,
   };
 }

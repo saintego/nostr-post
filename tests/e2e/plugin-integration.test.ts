@@ -153,7 +153,9 @@ describe('E2E: Plugin Integration', () => {
     if (!result.success) return;
 
     // Validate the geohash
-    const field = manifest.fields.find((f) => f.id === 'location')!;
+    const field = manifest.fields.find((f) => f.id === 'location');
+    expect(field).toBeDefined();
+    if (!field) return;
     const validation = geoPlugin.validate(geohash, field);
     expect(validation.success).toBe(true);
 

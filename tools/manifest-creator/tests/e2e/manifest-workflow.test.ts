@@ -4,9 +4,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 // Mock Nostr interface
 interface MockNostr {
   getPublicKey: () => Promise<string>;
-  signEvent: (event: any) => Promise<SignedEvent>;
+  signEvent: (event: UnsignedEvent) => Promise<SignedEvent>;
   getRelays?: () => Promise<Record<string, { read: boolean; write: boolean }>>;
 }
+
+type UnsignedEvent = Omit<SignedEvent, 'id' | 'sig'>;
 
 describe('Manifest Creator E2E', () => {
   let mockNostr: MockNostr;
@@ -23,7 +25,7 @@ describe('Manifest Creator E2E', () => {
         const signedEvent: SignedEvent = {
           ...event,
           id: `event-${Date.now()}-${Math.random()}`,
-          sig: 'mock-signature-' + Math.random().toString(36),
+          sig: `mock-signature-${Math.random().toString(36)}`,
           pubkey: await mockNostr.getPublicKey(),
         };
         signedEvents.push(signedEvent);
@@ -36,8 +38,11 @@ describe('Manifest Creator E2E', () => {
     };
 
     // Mock window.nostr
-    global.window = global.window || ({} as any);
-    (window as any).nostr = mockNostr;
+    const globalWithWindow = globalThis as typeof globalThis & {
+      window?: Window & { nostr?: MockNostr };
+    };
+    globalWithWindow.window ??= {} as Window & { nostr?: MockNostr };
+    globalWithWindow.window.nostr = mockNostr;
   });
 
   describe('Manifest Creation Flow', () => {
@@ -208,7 +213,7 @@ describe('Manifest Creator E2E', () => {
         ],
       };
 
-      manifest.fields.forEach((field) => {
+      for (const field of manifest.fields) {
         expect(field.mapTo).toBeDefined();
         expect(field.mapTo.kind).toBeTypeOf('number');
         expect(field.mapTo.target).toBeTypeOf('string');
@@ -216,7 +221,7 @@ describe('Manifest Creator E2E', () => {
         if (field.mapTo.target === 'tag') {
           expect(field.mapTo.tagName).toBeDefined();
         }
-      });
+      }
     });
 
     it('should validate manifest version format', () => {
@@ -271,13 +276,13 @@ describe('Manifest Creator E2E', () => {
 
       // Group fields by kind
       const fieldsByKind = new Map<number, typeof manifest.fields>();
-      manifest.fields.forEach((field) => {
+      for (const field of manifest.fields) {
         const kind = field.mapTo.kind;
         if (!fieldsByKind.has(kind)) {
           fieldsByKind.set(kind, []);
         }
         fieldsByKind.get(kind)?.push(field);
-      });
+      }
 
       expect(fieldsByKind.size).toBe(2);
       expect(fieldsByKind.has(1)).toBe(true);

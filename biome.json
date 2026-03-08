@@ -17,7 +17,10 @@
       "*.config.js",
       "packages/*/dist",
       "examples/*/dist",
-      "examples/*/.next"
+      "examples/*/.next",
+      "tools/*/dist",
+      "tools/*/.next",
+      "tools/*/out"
     ]
   },
   "formatter": {
