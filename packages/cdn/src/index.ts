@@ -21,6 +21,7 @@ import '@nostr-post/plugin-venue/web';
 import '@nostr-post/plugin-media/web';
 import '@nostr-post/plugin-markdown/web';
 import '@nostr-post/plugin-hashtag/web';
+import '@nostr-post/plugin-list/web';
 
 // ── Re-exports for programmatic / advanced usage ────────────────────────────
 

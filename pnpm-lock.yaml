@@ -125,6 +125,9 @@ importers:
       '@nostr-post/plugin-hashtag':
         specifier: workspace:*
         version: link:../plugin-hashtag
+      '@nostr-post/plugin-list':
+        specifier: workspace:*
+        version: link:../plugin-list
       '@nostr-post/plugin-markdown':
         specifier: workspace:*
         version: link:../plugin-markdown

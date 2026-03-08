@@ -12,10 +12,11 @@
  * Dispatches 'np-value-changed' with { detail: { value: ListSelectionData } }
  */
 
+import { pluginRegistry } from '@nostr-post/plugins/registry';
 import type { PostField } from '@nostr-post/plugins/types';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { createListEvent, fetchUserLists, parseListEvent } from './core';
+import { createListEvent, fetchUserLists, listPlugin, parseListEvent } from './core';
 import type { ListPluginConfig, ListSelectionData, UserList } from './types';
 
 @customElement('np-list-input')
@@ -501,3 +502,11 @@ declare global {
     'np-list-input': NpListInput;
   }
 }
+
+// Register plugin with its web input tag name so composer renders np-list-input
+pluginRegistry.register({
+  ...listPlugin,
+  inputTagName: 'np-list-input',
+});
+
+export { listPlugin } from './core';

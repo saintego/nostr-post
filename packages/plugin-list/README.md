@@ -23,7 +23,7 @@ pnpm add @nostr-post/plugin-list
 
 ```html
 <script type="module">
-  import '@nostr-post/plugin-list';
+  import '@nostr-post/plugin-list/web';
 </script>
 
 <np-list-input id="list-select"></np-list-input>
@@ -74,7 +74,7 @@ const venueReviewManifest: NostrPostManifest = {
 
 ```tsx
 import { NostrPostComposer } from '@nostr-post/react';
-import '@nostr-post/plugin-list';
+import '@nostr-post/plugin-list/web';
 
 export function ReviewForm() {
   return (
