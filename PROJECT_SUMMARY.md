@@ -8,6 +8,7 @@
 ## Project Completion Status
 
 All phases of development complete:
+
 - ✅ **Phase 1:** Core engine (manifest validation, event coordination)
 - ✅ **Phase 2:** Plugin system (6 production plugins with hooks)
 - ✅ **Phase 3:** Web components (Lit-based UI)
@@ -18,24 +19,24 @@ All phases of development complete:
 
 ### Core Packages (5) - All Complete ✅
 
-| Package | Purpose | Status |
-|---------|---------|--------|
-| **@nostr-post/core** | Event coordination, manifest validation (zero deps) | ✅ Complete |
-| **@nostr-post/signer** | NIP-07 signing, relay communication | ✅ Complete |
-| **@nostr-post/plugins** | Plugin registry + interface with hooks | ✅ Complete |
-| **@nostr-post/web** | Lit web components (composer, view, feed) | ✅ Complete |
-| **@nostr-post/react** | React hooks + wrapper components | ✅ Complete |
+| Package                 | Purpose                                             | Status      |
+| ----------------------- | --------------------------------------------------- | ----------- |
+| **@nostr-post/core**    | Event coordination, manifest validation (zero deps) | ✅ Complete |
+| **@nostr-post/signer**  | NIP-07 signing, relay communication                 | ✅ Complete |
+| **@nostr-post/plugins** | Plugin registry + interface with hooks              | ✅ Complete |
+| **@nostr-post/web**     | Lit web components (composer, view, feed)           | ✅ Complete |
+| **@nostr-post/react**   | React hooks + wrapper components                    | ✅ Complete |
 
 ### Plugin Packages (6) - All Complete ✅
 
-| Plugin | Creates | Features | Status |
-|--------|---------|----------|--------|
-| **plugin-stars** | Star rating (1-N) | Customizable scale | ✅ Complete |
-| **plugin-geo** | Location picker | Leaflet map, geohash, NIP-52 | ✅ Complete |
-| **plugin-venue** | Business/POI search | OSM Nominatim, NIP-73 tags | ✅ Complete |
-| **plugin-media** | Photo/video upload | Multi-file, drag-drop, NIP-98 | ✅ Complete |
-| **plugin-markdown** | Rich text editor | Toolbar, live preview, WYSIWYG | ✅ Complete |
-| **plugin-hashtag** | Tag arrays | Auto-extraction, chip input | ✅ Complete |
+| Plugin              | Creates             | Features                       | Status      |
+| ------------------- | ------------------- | ------------------------------ | ----------- |
+| **plugin-stars**    | Star rating (1-N)   | Customizable scale             | ✅ Complete |
+| **plugin-geo**      | Location picker     | Leaflet map, geohash, NIP-52   | ✅ Complete |
+| **plugin-venue**    | Business/POI search | OSM Nominatim, NIP-73 tags     | ✅ Complete |
+| **plugin-media**    | Photo/video upload  | Multi-file, drag-drop, NIP-98  | ✅ Complete |
+| **plugin-markdown** | Rich text editor    | Toolbar, live preview, WYSIWYG | ✅ Complete |
+| **plugin-hashtag**  | Tag arrays          | Auto-extraction, chip input    | ✅ Complete |
 
 ### Examples (3) - All Complete ✅
 
@@ -49,16 +50,16 @@ All phases of development complete:
 
 ### Documentation (8 files) - All Complete ✅
 
-| Document | Purpose |
-|----------|---------|
-| **README.md** | Project overview, key features, quick start |
-| **QUICKSTART.md** | Setup guides (Web Components, React, Next.js) |
-| **USAGE_GUIDE.md** | Complete API reference for all packages |
-| **ARCHITECTURE.md** | Design decisions, NIP support, patterns |
-| **DEVELOPMENT_GUIDE.md** | Contributing guide, technical standards |
-| **EXAMPLES.md** | Real-world code examples |
-| **PLUGINS.md** | Custom plugin creation guide |
-| **PROJECT_SUMMARY.md** | This file |
+| Document                 | Purpose                                       |
+| ------------------------ | --------------------------------------------- |
+| **README.md**            | Project overview, key features, quick start   |
+| **QUICKSTART.md**        | Setup guides (Web Components, React, Next.js) |
+| **USAGE_GUIDE.md**       | Complete API reference for all packages       |
+| **ARCHITECTURE.md**      | Design decisions, NIP support, patterns       |
+| **DEVELOPMENT_GUIDE.md** | Contributing guide, technical standards       |
+| **EXAMPLES.md**          | Real-world code examples                      |
+| **PLUGINS.md**           | Custom plugin creation guide                  |
+| **PROJECT_SUMMARY.md**   | This file                                     |
 
 ## Architecture Summary
 
@@ -92,6 +93,7 @@ All phases of development complete:
 ## Feature Completeness
 
 ### Manifest-Driven Features
+
 - ✅ JSON manifest defines form structure
 - ✅ Multi-event coordination (split across kinds)
 - ✅ Field visibility (hidden/visible/readonly in edit/view)
@@ -100,6 +102,7 @@ All phases of development complete:
 - ✅ NIP-78 manifest storage + auto-linking
 
 ### Plugin System
+
 - ✅ 6 production plugins
 - ✅ Plugin composition (venue wraps geo)
 - ✅ Plugin hooks (extraTags, resolveFromTags)
@@ -107,6 +110,7 @@ All phases of development complete:
 - ✅ Plugin validation
 
 ### UI Components
+
 - ✅ Web Components (Lit-based, Shadow DOM)
 - ✅ React hooks (useNostrAuth, useNostrPublish, useNostrEvents)
 - ✅ React components (wrapper + hooks integration)
@@ -115,6 +119,7 @@ All phases of development complete:
 - ✅ Responsive design
 
 ### NIP Support
+
 - ✅ NIP-01 (base protocol)
 - ✅ NIP-07 (browser extension signing)
 - ✅ NIP-23 (Kind 30023 articles)
@@ -275,24 +280,19 @@ All 4 packages are implemented and working:
 
 ### Recommended Next Priorities
 
-1. **Testing & Stability**
-   - Add unit tests for @nostr-post/core validation functions
-   - Test EventCoordinator edge cases
-   - Integration tests for manifest → events flow
-   - E2E tests for web components
-   - Set up Vitest or similar test framework
+1. **Domain Features In This Repo**
 
-2. **Plugin Enhancements**
-   - Test plugin rendering in real use cases
-   - Add more plugins: date picker, tags, mentions, file upload
-   - Improve plugin documentation
-   - Add plugin examples
+- Add comments scenarios for kind 1 (manifest presets + examples)
+- Add calendar event support (NIP-52) with agenda-style rendering
+- Add p2p offer support (NIP-69) with filtered views/feed presets
+- Add scenario manifests for offer creation, confirmation, and closing flow
 
-3. **Documentation Improvements**
-   - API reference for each package
-   - More manifest examples
-   - Video tutorials
-   - Migration guides
+2. **Testing & Stability**
+
+- Add unit tests for @nostr-post/core validation functions
+- Test EventCoordinator edge cases
+- Integration tests for manifest → events flow
+- E2E tests for web components and new scenario manifests
 
 ## Developer Commands
 

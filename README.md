@@ -437,6 +437,17 @@ nostr-post/
 
 - [x] Type definitions
 
+### Phase 2: Domain Scenarios (Planned)
+
+- [ ] Comments support (kind 1) with manifest presets and examples
+- [ ] Calendar events support (NIP-52) with agenda-oriented rendering
+- [ ] P2P offers support (NIP-69) with filtered feed presets/views
+- [ ] Zap support (NIP-57): zap requests/receipts with amount + payer views and filtering
+- [ ] Add scenario manifests for:
+  - offer creation (NIP-69)
+  - offer confirmation messages (NIP-17 formatted payload)
+  - deal closing flow events
+
 ## 🚀 Getting Started
 
 ```bash
