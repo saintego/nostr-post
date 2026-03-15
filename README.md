@@ -1,13 +1,15 @@
 # nostr-post
 
-> A Plugin + Manifest Architecture for Creating and Viewing Complex Nostr Content
+> An easy-to-use library for showing and creating Nostr posts on any web page, with a deeper plugin + manifest system for complex structured content.
 
-Manifest-driven UI engine for complex structured Nostr content (Reviews, Articles, Events, Venues) with automatic event coordination, field-level visibility controls, plugin composition, and NIP-78 manifest storage.
+Use it in plain HTML through the CDN bundle, drop in Web Components, use the React wrappers, or run it headless. Start with simple post creation and viewing, then scale up to manifest-driven structured content like reviews, articles, events, venues, and multi-event workflows.
 
 ## 🎯 What is nostr-post?
 
 **nostr-post** enables you to:
 
+✅ **Use it fast** - Add Nostr post creation, viewing, and feeds to almost any site with Web Components or the CDN bundle  
+✅ **Stay simple when you want** - Works for basic kind 1 posts without needing manifests or custom plugins  
 ✅ **Define content once** via JSON manifest (what fields, which plugin, where data lives)  
 ✅ **Works everywhere** - Web Components, React, Next.js, or headless  
 ✅ **Automatic coordination** - Forms split into multi-event bundles with NIP-78 linking  
