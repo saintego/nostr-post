@@ -20,6 +20,7 @@ import { viewStyle } from './viewStyle';
 
 /** Event type that can be either unsigned or signed */
 export type DisplayableEvent = UnsignedNostrEvent | SignedEvent;
+type RegisteredPlugin = Exclude<ReturnType<typeof pluginRegistry.get>, undefined>;
 
 /**
  * View Web Component for displaying Nostr events
@@ -304,6 +305,56 @@ export class NostrPostView extends NostrPostElement {
     return map;
   }
 
+  private groupTagValues(
+    tags: string[][],
+    tagFieldMap: Map<string, PostField>
+  ): Map<string, string[]> {
+    const tagGroups = new Map<string, string[]>();
+    for (const [tagName, rawValue] of tags) {
+      if (!rawValue || !tagFieldMap.has(tagName)) continue;
+      const existing = tagGroups.get(tagName) ?? [];
+      existing.push(rawValue);
+      tagGroups.set(tagName, existing);
+    }
+    return tagGroups;
+  }
+
+  private shouldSkipTagField(field: PostField): boolean {
+    return field.visibility?.view === 'hidden' || this.excludeFields?.includes(field.id) === true;
+  }
+
+  private deserializeTagValue(
+    plugin: RegisteredPlugin,
+    field: PostField,
+    rawValue: string
+  ): unknown {
+    if (plugin.deserializeValue) {
+      return plugin.deserializeValue(rawValue, field);
+    }
+    if (field.type === 'number') {
+      return Number(rawValue);
+    }
+    return rawValue;
+  }
+
+  private resolveTagPluginValue(
+    plugin: RegisteredPlugin,
+    field: PostField,
+    values: string[],
+    tags: string[][]
+  ): unknown {
+    if (plugin.resolveFromTags) {
+      return plugin.resolveFromTags(tags, field);
+    }
+    if (field.uiPlugin === 'geo') {
+      return values.reduce((a, b) => (a.length >= b.length ? a : b));
+    }
+    if (values.length > 1 || field.uiPlugin === 'hashtag' || field.uiPlugin === 'media') {
+      return values;
+    }
+    return this.deserializeTagValue(plugin, field, values[0]);
+  }
+
   /**
    * Render tag values using registered plugin view components.
    * Aggregates multi-value tags (hashtags, media) into arrays.
@@ -313,48 +364,19 @@ export class NostrPostView extends NostrPostElement {
     const tagFieldMap = this.getTagFieldMap();
     if (tagFieldMap.size === 0) return '';
 
-    // Group tags by tag name
-    const tagGroups = new Map<string, string[]>();
-    for (const tag of tags) {
-      const [tagName, rawValue] = tag;
-      if (!rawValue || !tagFieldMap.has(tagName)) continue;
-      const existing = tagGroups.get(tagName) ?? [];
-      existing.push(rawValue);
-      tagGroups.set(tagName, existing);
-    }
+    const tagGroups = this.groupTagValues(tags, tagFieldMap);
 
     const results = [];
     for (const [tagName, values] of tagGroups) {
       const field = tagFieldMap.get(tagName);
       if (!field) continue;
 
-      // Skip fields hidden via visibility or excludeFields
-      if (field.visibility?.view === 'hidden') continue;
-      if (this.excludeFields?.includes(field.id)) continue;
+      if (this.shouldSkipTagField(field)) continue;
 
       const plugin = pluginRegistry.get(field.uiPlugin);
       if (!plugin?.viewTagName) continue;
 
-      // If plugin defines resolveFromTags, let it build a rich value from ALL event tags
-      // (e.g. venue plugin reads g + i + location tags together)
-      let value: unknown;
-      if (plugin.resolveFromTags) {
-        value = plugin.resolveFromTags(tags, field);
-      } else if (field.uiPlugin === 'geo') {
-        // NIP-52 geohash prefix tags → pick the most precise (longest) value
-        value = values.reduce((a, b) => (a.length >= b.length ? a : b));
-      } else if (values.length > 1 || field.uiPlugin === 'hashtag' || field.uiPlugin === 'media') {
-        value = values;
-      } else {
-        const rawValue = values[0];
-        if (plugin.deserializeValue) {
-          value = plugin.deserializeValue(rawValue, field);
-        } else if (field.type === 'number') {
-          value = Number(rawValue);
-        } else {
-          value = rawValue;
-        }
-      }
+      const value = this.resolveTagPluginValue(plugin, field, values, tags);
 
       const viewTag = unsafeStatic(plugin.viewTagName);
       results.push(staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`);

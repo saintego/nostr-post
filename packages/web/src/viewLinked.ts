@@ -12,6 +12,8 @@ import { html } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import type { DisplayableEvent } from './view';
 
+type RegisteredPlugin = Exclude<ReturnType<typeof pluginRegistry.get>, undefined>;
+
 /**
  * Get a nested value from an object using dot notation (e.g. "ratings.wifi").
  */
@@ -57,18 +59,44 @@ const renderLinkedTagField = (tag: string[], field: PostField) => {
   `;
 };
 
-/**
- * Render tag-based fields from a linked event using plugins.
- * For array-type plugins (hashtag, media), aggregates all tags with the same
- * tag name into a single array value before rendering.
- */
-const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
-  const fieldByTag = new Map<string, PostField>();
-  for (const f of fields) {
-    if (f.mapTo.tagName) fieldByTag.set(f.mapTo.tagName, f);
+const renderLinkedFieldValue = (
+  label: string,
+  value: unknown,
+  field: PostField,
+  plugin?: RegisteredPlugin
+) => {
+  if (plugin?.viewTagName) {
+    const viewTag = unsafeStatic(plugin.viewTagName);
+    return html`
+      <div class="linked-field">
+        <span class="linked-field-label">${label}:</span>
+        ${staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`}
+      </div>
+    `;
   }
 
-  // Group tags by tag name for aggregation
+  return html`
+    <div class="linked-field">
+      <span class="linked-field-label">${label}:</span>
+      <span>${String(value)}</span>
+    </div>
+  `;
+};
+
+const buildFieldByTag = (fields: PostField[]): Map<string, PostField> => {
+  const fieldByTag = new Map<string, PostField>();
+  for (const field of fields) {
+    if (field.mapTo.tagName) {
+      fieldByTag.set(field.mapTo.tagName, field);
+    }
+  }
+  return fieldByTag;
+};
+
+const groupTagsByName = (
+  tags: string[][],
+  fieldByTag: Map<string, PostField>
+): Map<string, string[][]> => {
   const tagGroups = new Map<string, string[][]>();
   for (const tag of tags) {
     if (!tag[1] || !fieldByTag.has(tag[0])) continue;
@@ -76,79 +104,55 @@ const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
     existing.push(tag);
     tagGroups.set(tag[0], existing);
   }
+  return tagGroups;
+};
+
+const getLinkedTagGroupValue = (
+  plugin: RegisteredPlugin | undefined,
+  field: PostField,
+  group: string[][],
+  tags: string[][]
+): unknown => {
+  if (plugin?.resolveFromTags) {
+    return plugin.resolveFromTags(tags, field);
+  }
+
+  if (field.uiPlugin === 'geo' && group.length > 1) {
+    return group.map((tag) => tag[1]).reduce((a, b) => (a.length >= b.length ? a : b));
+  }
+
+  if (group.length > 1 || field.uiPlugin === 'hashtag' || field.uiPlugin === 'media') {
+    return group.map((tag) => tag[1]);
+  }
+
+  return undefined;
+};
+
+/**
+ * Render tag-based fields from a linked event using plugins.
+ * For array-type plugins (hashtag, media), aggregates all tags with the same
+ * tag name into a single array value before rendering.
+ */
+const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
+  const fieldByTag = buildFieldByTag(fields);
+  const tagGroups = groupTagsByName(tags, fieldByTag);
 
   const results: unknown[] = [];
   for (const [tagName, group] of tagGroups) {
     const field = fieldByTag.get(tagName);
     if (!field) continue;
-
-    // Skip fields hidden in view
     if (field.visibility?.view === 'hidden') continue;
 
     const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
     const label = (field.metadata?.label as string) || field.id;
 
-    // If plugin defines resolveFromTags, let it build a rich value from ALL event tags
-    if (plugin?.resolveFromTags) {
-      const value = plugin.resolveFromTags(tags, field);
-      if (plugin.viewTagName) {
-        const viewTag = unsafeStatic(plugin.viewTagName);
-        results.push(html`
-          <div class="linked-field">
-            <span class="linked-field-label">${label}:</span>
-            ${staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`}
-          </div>
-        `);
-      } else {
-        results.push(html`
-          <div class="linked-field">
-            <span class="linked-field-label">${label}:</span>
-            <span>${String(value)}</span>
-          </div>
-        `);
-      }
-    } else if (field.uiPlugin === 'geo' && group.length > 1) {
-      // NIP-52 geohash prefix tags: pick the most precise (longest) value
-      const bestValue = group.map((t) => t[1]).reduce((a, b) => (a.length >= b.length ? a : b));
-      if (plugin?.viewTagName) {
-        const viewTag = unsafeStatic(plugin.viewTagName);
-        results.push(html`
-          <div class="linked-field">
-            <span class="linked-field-label">${label}:</span>
-            ${staticHtml`<${viewTag} .value=${bestValue} .field=${field}></${viewTag}>`}
-          </div>
-        `);
-      } else {
-        results.push(html`
-          <div class="linked-field">
-            <span class="linked-field-label">${label}:</span>
-            <span>${bestValue}</span>
-          </div>
-        `);
-      }
-    } else if (group.length > 1 || field.uiPlugin === 'hashtag' || field.uiPlugin === 'media') {
-      // Aggregate: pass array of values to the plugin
-      const values = group.map((t) => t[1]);
-
-      if (plugin?.viewTagName) {
-        const viewTag = unsafeStatic(plugin.viewTagName);
-        results.push(html`
-          <div class="linked-field">
-            <span class="linked-field-label">${label}:</span>
-            ${staticHtml`<${viewTag} .value=${values} .field=${field}></${viewTag}>`}
-          </div>
-        `);
-      } else {
-        results.push(html`
-          <div class="linked-field">
-            <span class="linked-field-label">${label}:</span>
-            <span>${values.join(', ')}</span>
-          </div>
-        `);
-      }
-    } else {
-      results.push(renderLinkedTagField(group[0], field));
+    const groupValue = getLinkedTagGroupValue(plugin, field, group, tags);
+    if (groupValue !== undefined) {
+      results.push(renderLinkedFieldValue(label, groupValue, field, plugin));
+      continue;
     }
+
+    results.push(renderLinkedTagField(group[0], field));
   }
   return results;
 };

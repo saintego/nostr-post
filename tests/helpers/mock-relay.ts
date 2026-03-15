@@ -36,6 +36,63 @@ export class MockNostrRelay {
   private events: Map<string, SignedNostrEvent> = new Map();
   private subscriptions: Map<string, NostrFilter[]> = new Map();
 
+  private isReplaceableKind(kind: number): boolean {
+    return (kind >= 10000 && kind < 20000) || (kind >= 30000 && kind < 40000);
+  }
+
+  private isParameterizedReplaceableKind(kind: number): boolean {
+    return kind >= 30000 && kind < 40000;
+  }
+
+  private getDTagValue(event: Pick<SignedNostrEvent, 'tags'>): string {
+    return event.tags.find((tag) => tag[0] === 'd')?.[1] || '';
+  }
+
+  private validatePublishedEvent(event: SignedNostrEvent): string | undefined {
+    if (!event.kind || event.kind < 0) {
+      return 'Invalid event kind';
+    }
+    return undefined;
+  }
+
+  private removeExistingReplaceableEvent(event: SignedNostrEvent): void {
+    if (!this.isReplaceableKind(event.kind) || !this.isParameterizedReplaceableKind(event.kind)) {
+      return;
+    }
+
+    const dTag = this.getDTagValue(event);
+    for (const [id, existingEvent] of this.events.entries()) {
+      if (existingEvent.kind !== event.kind || existingEvent.pubkey !== event.pubkey) {
+        continue;
+      }
+
+      if (this.getDTagValue(existingEvent) === dTag) {
+        this.events.delete(id);
+      }
+    }
+  }
+
+  private matchesBasicFilterCriteria(event: SignedNostrEvent, filter: NostrFilter): boolean {
+    if (filter.ids && !filter.ids.includes(event.id)) return false;
+    if (filter.authors && !filter.authors.includes(event.pubkey)) return false;
+    if (filter.kinds && !filter.kinds.includes(event.kind)) return false;
+    if (filter.since && event.created_at < filter.since) return false;
+    if (filter.until && event.created_at > filter.until) return false;
+    return true;
+  }
+
+  private matchesTagFilterCriteria(event: SignedNostrEvent, filter: NostrFilter): boolean {
+    for (const [key, values] of Object.entries(filter)) {
+      if (!key.startsWith('#')) continue;
+      const tagName = key.slice(1);
+      const eventTags = event.tags.filter((tag) => tag[0] === tagName).map((tag) => tag[1]);
+      if (!values?.some((value) => eventTags.includes(value))) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /**
    * Publish an event to the relay
    */
@@ -49,32 +106,12 @@ export class MockNostrRelay {
       sig: this.generateSignature(),
     };
 
-    // Validate basic event structure
-    if (!signedEvent.kind || signedEvent.kind < 0) {
-      return { success: false, id: signedEvent.id, message: 'Invalid event kind' };
+    const validationError = this.validatePublishedEvent(signedEvent);
+    if (validationError) {
+      return { success: false, id: signedEvent.id, message: validationError };
     }
 
-    // Handle replaceable events (kinds 10000-19999 and 30000-39999)
-    if (
-      (signedEvent.kind >= 10000 && signedEvent.kind < 20000) ||
-      (signedEvent.kind >= 30000 && signedEvent.kind < 40000)
-    ) {
-      // For parameterized replaceable events, check d-tag
-      if (signedEvent.kind >= 30000 && signedEvent.kind < 40000) {
-        const dTag = signedEvent.tags.find((t) => t[0] === 'd')?.[1] || '';
-        const replaceKey = `${signedEvent.kind}:${signedEvent.pubkey}:${dTag}`;
-
-        // Remove old event with same coordinates
-        for (const [id, evt] of this.events.entries()) {
-          if (evt.kind === signedEvent.kind && evt.pubkey === signedEvent.pubkey) {
-            const existingDTag = evt.tags.find((t) => t[0] === 'd')?.[1] || '';
-            if (existingDTag === dTag) {
-              this.events.delete(id);
-            }
-          }
-        }
-      }
-    }
+    this.removeExistingReplaceableEvent(signedEvent);
 
     this.events.set(signedEvent.id, signedEvent);
     return { success: true, id: signedEvent.id };
@@ -149,42 +186,9 @@ export class MockNostrRelay {
    * Check if event matches a single filter
    */
   private matchesFilter(event: SignedNostrEvent, filter: NostrFilter): boolean {
-    // Check IDs
-    if (filter.ids && !filter.ids.includes(event.id)) {
-      return false;
-    }
-
-    // Check authors
-    if (filter.authors && !filter.authors.includes(event.pubkey)) {
-      return false;
-    }
-
-    // Check kinds
-    if (filter.kinds && !filter.kinds.includes(event.kind)) {
-      return false;
-    }
-
-    // Check timestamps
-    if (filter.since && event.created_at < filter.since) {
-      return false;
-    }
-
-    if (filter.until && event.created_at > filter.until) {
-      return false;
-    }
-
-    // Check tag filters
-    for (const [key, values] of Object.entries(filter)) {
-      if (key.startsWith('#')) {
-        const tagName = key.slice(1);
-        const eventTags = event.tags.filter((t) => t[0] === tagName).map((t) => t[1]);
-        if (!values?.some((v) => eventTags.includes(v))) {
-          return false;
-        }
-      }
-    }
-
-    return true;
+    return (
+      this.matchesBasicFilterCriteria(event, filter) && this.matchesTagFilterCriteria(event, filter)
+    );
   }
 
   /**

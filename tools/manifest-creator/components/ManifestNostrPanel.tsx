@@ -1,11 +1,10 @@
 'use client';
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
-  MANIFEST_D_TAG_PREFIX,
-  type ManifestRef,
   NIP78_KIND,
   type StoredManifest,
   buildManifestDTag,
@@ -173,9 +172,165 @@ const styles = {
 };
 
 type StatusMessage = { type: 'success' | 'error'; text: string } | null;
+type PanelTab = 'publish' | 'my' | 'browse';
+
+const truncatePubkey = (pubkey: string) =>
+  pubkey.length > 16 ? `${pubkey.slice(0, 8)}...${pubkey.slice(-8)}` : pubkey;
+
+const StatusBanner = ({ status }: { status: StatusMessage }) => {
+  if (!status) return null;
+
+  return (
+    <div style={status.type === 'success' ? styles.statusSuccess : styles.statusError}>
+      {status.text}
+    </div>
+  );
+};
+
+interface PublishTabProps {
+  currentPubkey?: string;
+  isPublishing: boolean;
+  manifest: NostrPostManifest;
+  onDelete: () => void;
+  onPublish: () => void;
+  status: StatusMessage;
+}
+
+const PublishTab = ({
+  currentPubkey,
+  isPublishing,
+  manifest,
+  onDelete,
+  onPublish,
+  status,
+}: PublishTabProps) => (
+  <div>
+    <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 1rem 0' }}>
+      Publish the current manifest to Nostr relays as a kind {NIP78_KIND} event. Anyone can discover
+      and use it.
+    </p>
+
+    <div style={styles.buttonGroup}>
+      <button
+        type="button"
+        style={styles.publishButton}
+        onClick={onPublish}
+        disabled={isPublishing}
+      >
+        {isPublishing ? 'Publishing...' : '🚀 Publish Manifest'}
+      </button>
+      <button type="button" style={styles.deleteButton} onClick={onDelete} disabled={isPublishing}>
+        🗑️ Delete from Relays
+      </button>
+    </div>
+
+    <StatusBanner status={status} />
+
+    <details style={{ marginTop: '1rem' }}>
+      <summary style={{ cursor: 'pointer', fontSize: '0.875rem', color: '#6b7280' }}>
+        Preview NIP-78 Event
+      </summary>
+      <pre
+        style={{
+          background: '#1f2937',
+          color: '#e5e7eb',
+          padding: '0.75rem',
+          borderRadius: '0.375rem',
+          fontFamily: 'monospace',
+          fontSize: '0.75rem',
+          marginTop: '0.5rem',
+          overflowX: 'auto',
+          maxHeight: '300px',
+          overflowY: 'auto',
+        }}
+      >
+        {JSON.stringify(manifestToEvent(manifest, currentPubkey || '<pubkey>'), null, 2)}
+      </pre>
+    </details>
+  </div>
+);
+
+interface ManifestListTabProps {
+  description: string;
+  emptyMessage: string;
+  isLoading: boolean;
+  loadingMessage: string;
+  manifests: StoredManifest[];
+  refresh: () => void;
+  renderCard: (stored: StoredManifest) => ReactNode;
+}
+
+const ManifestListTab = ({
+  description,
+  emptyMessage,
+  isLoading,
+  loadingMessage,
+  manifests,
+  refresh,
+  renderCard,
+}: ManifestListTabProps) => (
+  <div>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: '0.75rem',
+      }}
+    >
+      <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>{description}</p>
+      <button type="button" style={styles.secondaryButton} onClick={refresh} disabled={isLoading}>
+        {isLoading ? 'Loading...' : '🔄 Refresh'}
+      </button>
+    </div>
+
+    {isLoading && manifests.length === 0 ? (
+      <div style={styles.emptyState}>{loadingMessage}</div>
+    ) : manifests.length === 0 ? (
+      <div style={styles.emptyState}>{emptyMessage}</div>
+    ) : (
+      manifests.map((manifest) => renderCard(manifest))
+    )}
+  </div>
+);
+
+const useInitialPubkey = (setCurrentPubkey: (pubkey: string | undefined) => void) => {
+  useEffect(() => {
+    const getPubkey = async () => {
+      try {
+        const { getPublicKey } = await import('@nostr-post/signer');
+        const pubkey = await getPublicKey();
+        setCurrentPubkey(pubkey);
+      } catch {
+        setCurrentPubkey(undefined);
+      }
+    };
+
+    getPubkey();
+  }, [setCurrentPubkey]);
+};
+
+const useAutoLoadManifestTab = (
+  activeTab: PanelTab,
+  myManifestCount: number,
+  browseManifestCount: number,
+  loadMyManifests: () => void,
+  browseAllManifests: () => void
+) => {
+  useEffect(() => {
+    if (activeTab === 'my' && myManifestCount === 0) {
+      loadMyManifests();
+      return;
+    }
+
+    if (activeTab === 'browse' && browseManifestCount === 0) {
+      browseAllManifests();
+    }
+  }, [activeTab, browseManifestCount, browseAllManifests, loadMyManifests, myManifestCount]);
+};
 
 export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: ManifestNostrPanelProps) {
-  const [activeTab, setActiveTab] = useState<'publish' | 'my' | 'browse'>('publish');
+  const [activeTab, setActiveTab] = useState<PanelTab>('publish');
   const [status, setStatus] = useState<StatusMessage>(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -183,19 +338,7 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
   const [browseManifests, setBrowseManifests] = useState<StoredManifest[]>([]);
   const [currentPubkey, setCurrentPubkey] = useState<string | undefined>();
 
-  // Try to get pubkey on mount
-  useEffect(() => {
-    const getPubkey = async () => {
-      try {
-        const { getPublicKey } = await import('@nostr-post/signer');
-        const pk = await getPublicKey();
-        setCurrentPubkey(pk);
-      } catch {
-        // Not logged in
-      }
-    };
-    getPubkey();
-  }, []);
+  useInitialPubkey(setCurrentPubkey);
 
   const showStatus = useCallback((type: 'success' | 'error', text: string) => {
     setStatus({ type, text });
@@ -326,14 +469,13 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
     }
   }, [showStatus]);
 
-  // Auto-load when switching tabs
-  useEffect(() => {
-    if (activeTab === 'my' && myManifests.length === 0) {
-      loadMyManifests();
-    } else if (activeTab === 'browse' && browseManifests.length === 0) {
-      browseAllManifests();
-    }
-  }, [activeTab, myManifests.length, browseManifests.length, loadMyManifests, browseAllManifests]);
+  useAutoLoadManifestTab(
+    activeTab,
+    myManifests.length,
+    browseManifests.length,
+    loadMyManifests,
+    browseAllManifests
+  );
 
   const loadIntoEditor = (stored: StoredManifest) => {
     onChange(stored.manifest);
@@ -341,9 +483,6 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
     setActiveTab('publish');
     showStatus('success', `Loaded "${stored.manifest.metadata?.name || stored.manifest.id}"`);
   };
-
-  const truncatePubkey = (pk: string) =>
-    pk.length > 16 ? `${pk.slice(0, 8)}...${pk.slice(-8)}` : pk;
 
   const renderManifestCard = (stored: StoredManifest, showAuthor = false) => (
     <div key={`${stored.pubkey}-${stored.dTag}`} style={styles.manifestCard}>
@@ -379,6 +518,38 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
     </div>
   );
 
+  const activeTabContent =
+    activeTab === 'publish' ? (
+      <PublishTab
+        currentPubkey={currentPubkey}
+        isPublishing={isPublishing}
+        manifest={manifest}
+        onDelete={() => deleteManifest(manifest.id)}
+        onPublish={publishManifest}
+        status={status}
+      />
+    ) : activeTab === 'my' ? (
+      <ManifestListTab
+        description="Your published manifests on Nostr relays."
+        emptyMessage="No manifests published yet. Go to the Publish tab to publish one."
+        isLoading={isLoading}
+        loadingMessage="Loading your manifests..."
+        manifests={myManifests}
+        refresh={loadMyManifests}
+        renderCard={(stored) => renderManifestCard(stored)}
+      />
+    ) : (
+      <ManifestListTab
+        description="Discover manifests published by other users."
+        emptyMessage="No manifests found on relays. Be the first to publish one!"
+        isLoading={isLoading}
+        loadingMessage="Searching relays for manifests..."
+        manifests={browseManifests}
+        refresh={browseAllManifests}
+        renderCard={(stored) => renderManifestCard(stored, true)}
+      />
+    );
+
   return (
     <div style={styles.panel}>
       <h2 style={styles.panelTitle}>🌐 Nostr Manifests (NIP-78)</h2>
@@ -407,134 +578,7 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
         </button>
       </div>
 
-      {/* Publish Tab */}
-      {activeTab === 'publish' && (
-        <div>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 1rem 0' }}>
-            Publish the current manifest to Nostr relays as a kind {NIP78_KIND} event. Anyone can
-            discover and use it.
-          </p>
-
-          <div style={styles.buttonGroup}>
-            <button
-              type="button"
-              style={styles.publishButton}
-              onClick={publishManifest}
-              disabled={isPublishing}
-            >
-              {isPublishing ? 'Publishing...' : '🚀 Publish Manifest'}
-            </button>
-            <button
-              type="button"
-              style={styles.deleteButton}
-              onClick={() => deleteManifest(manifest.id)}
-              disabled={isPublishing}
-            >
-              🗑️ Delete from Relays
-            </button>
-          </div>
-
-          {status && (
-            <div style={status.type === 'success' ? styles.statusSuccess : styles.statusError}>
-              {status.text}
-            </div>
-          )}
-
-          <details style={{ marginTop: '1rem' }}>
-            <summary style={{ cursor: 'pointer', fontSize: '0.875rem', color: '#6b7280' }}>
-              Preview NIP-78 Event
-            </summary>
-            <pre
-              style={{
-                background: '#1f2937',
-                color: '#e5e7eb',
-                padding: '0.75rem',
-                borderRadius: '0.375rem',
-                fontFamily: 'monospace',
-                fontSize: '0.75rem',
-                marginTop: '0.5rem',
-                overflowX: 'auto',
-                maxHeight: '300px',
-                overflowY: 'auto',
-              }}
-            >
-              {JSON.stringify(manifestToEvent(manifest, currentPubkey || '<pubkey>'), null, 2)}
-            </pre>
-          </details>
-        </div>
-      )}
-
-      {/* My Manifests Tab */}
-      {activeTab === 'my' && (
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '0.75rem',
-            }}
-          >
-            <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>
-              Your published manifests on Nostr relays.
-            </p>
-            <button
-              type="button"
-              style={styles.secondaryButton}
-              onClick={loadMyManifests}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Loading...' : '🔄 Refresh'}
-            </button>
-          </div>
-
-          {isLoading && myManifests.length === 0 ? (
-            <div style={styles.emptyState}>Loading your manifests...</div>
-          ) : myManifests.length === 0 ? (
-            <div style={styles.emptyState}>
-              No manifests published yet. Go to the Publish tab to publish one.
-            </div>
-          ) : (
-            myManifests.map((m) => renderManifestCard(m))
-          )}
-        </div>
-      )}
-
-      {/* Browse All Tab */}
-      {activeTab === 'browse' && (
-        <div>
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '0.75rem',
-            }}
-          >
-            <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>
-              Discover manifests published by other users.
-            </p>
-            <button
-              type="button"
-              style={styles.secondaryButton}
-              onClick={browseAllManifests}
-              disabled={isLoading}
-            >
-              {isLoading ? 'Loading...' : '🔄 Refresh'}
-            </button>
-          </div>
-
-          {isLoading && browseManifests.length === 0 ? (
-            <div style={styles.emptyState}>Searching relays for manifests...</div>
-          ) : browseManifests.length === 0 ? (
-            <div style={styles.emptyState}>
-              No manifests found on relays. Be the first to publish one!
-            </div>
-          ) : (
-            browseManifests.map((m) => renderManifestCard(m, true))
-          )}
-        </div>
-      )}
+      {activeTabContent}
     </div>
   );
 }
