@@ -22,8 +22,12 @@ interface NostrPostFeedElement extends HTMLElement {
   tagFilters?: Record<string, string[]>;
   filters?: FetchFilter[];
   manifest?: import('@nostr-post/core/types').NostrPostManifest;
+  commentManifest?: import('@nostr-post/core/types').NostrPostManifest;
   showKind?: boolean;
   showTags?: boolean;
+  commentsEnabled?: boolean;
+  reactionsEnabled?: boolean;
+  reactionOptions?: string[];
   refresh?: () => Promise<void>;
 }
 
@@ -76,10 +80,18 @@ export interface NostrPostFeedProps {
   filters?: FetchFilter[];
   /** Manifest for plugin-aware rendering */
   manifest?: import('@nostr-post/core/types').NostrPostManifest;
+  /** Manifest used for standard kind 1 comment composer in the feed */
+  commentManifest?: import('@nostr-post/core/types').NostrPostManifest;
   /** Show event kind badge */
   showKind?: boolean;
   /** Show tags */
   showTags?: boolean;
+  /** Enable standard kind 1 comments in the feed */
+  commentsEnabled?: boolean;
+  /** Enable standard kind 7 reactions in the feed */
+  reactionsEnabled?: boolean;
+  /** Reaction button options shown in the feed */
+  reactionOptions?: string[];
   /** Custom class name */
   className?: string;
   /** Dark mode */
@@ -112,8 +124,12 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       tagFilters,
       filters,
       manifest,
+      commentManifest,
       showKind = false,
       showTags = false,
+      commentsEnabled = true,
+      reactionsEnabled = true,
+      reactionOptions,
       className = '',
       dark,
     },
@@ -156,8 +172,12 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       element.tagFilters = tagFilters;
       element.filters = filters;
       element.manifest = manifest;
+      element.commentManifest = commentManifest;
       element.showKind = showKind;
       element.showTags = showTags;
+      element.commentsEnabled = commentsEnabled;
+      element.reactionsEnabled = reactionsEnabled;
+      element.reactionOptions = reactionOptions;
     }, [
       ids,
       authors,
@@ -170,8 +190,12 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       tagFilters,
       filters,
       manifest,
+      commentManifest,
       showKind,
       showTags,
+      commentsEnabled,
+      reactionsEnabled,
+      reactionOptions,
     ]);
 
     // Don't pass authors/kinds/relays as attributes since we're setting them as properties

@@ -6,10 +6,26 @@
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { type FetchFilter, fetchEvents } from '@nostr-post/signer';
-import { css, html } from 'lit';
+import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { NostrPostElement, baseStyles } from './base-component';
+import {
+  handleCommentPublished as handleCommentPublishedDetail,
+  isReplyComposerOpen,
+  renderReplies,
+} from './feedComments';
+import { publishReaction, summarizeReactionsWithAuthors } from './feedReactions';
+import {
+  DEFAULT_COMMENT_MANIFEST,
+  DEFAULT_REACTION_OPTIONS,
+  type ReplyTarget,
+  buildReplyTarget,
+  buildThreads,
+} from './feedStandard';
+import { feedStyle } from './feedStyle';
 import type { SignedEvent } from './signer';
+import { type NostrProfile, displayNameForPubkey, loadProfilesForEvents } from './userProfile';
+import './composer';
 import './view';
 
 /**
@@ -26,33 +42,7 @@ import './view';
  */
 @customElement('nostr-post-feed')
 export class NostrPostFeed extends NostrPostElement {
-  static styles = [
-    baseStyles,
-    css`
-      .feed {
-        font-family:
-          system-ui,
-          -apple-system,
-          sans-serif;
-      }
-
-      .loading,
-      .empty {
-        text-align: center;
-        padding: 2rem;
-        color: var(--nl-text-secondary, #6b7280);
-      }
-
-      :host-context(.dark) .loading,
-      :host-context(.dark) .empty {
-        color: #9ca3af;
-      }
-
-      .event-item {
-        margin-bottom: 0.75rem;
-      }
-    `,
-  ];
+  static styles = [baseStyles, feedStyle];
 
   @property({ type: Array })
   authors?: string[];
@@ -87,6 +77,18 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Boolean })
   showTags?: boolean;
 
+  @property({ type: Boolean, attribute: 'comments-enabled' })
+  commentsEnabled?: boolean;
+
+  @property({ type: Boolean, attribute: 'reactions-enabled' })
+  reactionsEnabled?: boolean;
+
+  @property({ type: Object, attribute: false })
+  commentManifest?: NostrPostManifest;
+
+  @property({ type: Array, attribute: false })
+  reactionOptions?: string[];
+
   /**
    * Comma-separated tag filters, e.g. "#i:osm:node:123,#g:u09tvw"
    * Useful for plain HTML attribute usage.
@@ -99,6 +101,24 @@ export class NostrPostFeed extends NostrPostElement {
 
   @state()
   private isLoading = false;
+
+  @state()
+  private interactionEvents: SignedEvent[] = [];
+
+  @state()
+  private activeReplyTarget?: ReplyTarget;
+
+  @state()
+  private reactionPendingKey?: string;
+
+  @state()
+  private statusMessage?: string;
+
+  @state()
+  private statusTone: 'info' | 'error' = 'info';
+
+  @state()
+  private profileMap: Record<string, NostrProfile> = {};
 
   /** Tag filters: e.g. { '#i': ['osm:node:123'] } */
   @property({ type: Object })
@@ -114,6 +134,10 @@ export class NostrPostFeed extends NostrPostElement {
     this.limit = 20;
     this.showKind = false;
     this.showTags = false;
+    this.commentsEnabled = true;
+    this.reactionsEnabled = true;
+    this.commentManifest = DEFAULT_COMMENT_MANIFEST;
+    this.reactionOptions = [...DEFAULT_REACTION_OPTIONS];
   }
 
   async connectedCallback() {
@@ -137,7 +161,9 @@ export class NostrPostFeed extends NostrPostElement {
       changedProperties.has('relays') ||
       changedProperties.has('filterTags') ||
       changedProperties.has('tagFilters') ||
-      changedProperties.has('filters')
+      changedProperties.has('filters') ||
+      changedProperties.has('commentsEnabled') ||
+      changedProperties.has('reactionsEnabled')
     ) {
       if (this.shouldLoad()) {
         this.loadEvents();
@@ -222,12 +248,138 @@ export class NostrPostFeed extends NostrPostElement {
     try {
       const events = await fetchEvents(this.buildFetchFilters(), this.relays);
       this.events = events;
+      this.interactionEvents = [];
+      await this.loadInteractions(events);
+      this.profileMap = await loadProfilesForEvents(
+        [...this.events, ...this.interactionEvents],
+        this.profileMap,
+        this.relays
+      );
     } catch (error) {
       console.error('Failed to load events:', error);
       this.events = [];
+      this.interactionEvents = [];
     } finally {
       this.isLoading = false;
     }
+  }
+
+  private displayName(pubkey: string): string {
+    return displayNameForPubkey(this.profileMap, pubkey);
+  }
+
+  private async loadInteractions(events: SignedEvent[]) {
+    const rootIds = events.map((event) => event.id);
+    if (rootIds.length === 0) return;
+
+    const filters: FetchFilter[] = [];
+    const interactionLimit = Math.max(rootIds.length * 10, 50);
+
+    if (this.commentsEnabled) {
+      filters.push({ kinds: [1], '#e': rootIds, limit: interactionLimit });
+    }
+
+    if (this.reactionsEnabled) {
+      filters.push({ kinds: [7], '#e': rootIds, limit: interactionLimit });
+    }
+
+    if (filters.length === 0) return;
+
+    try {
+      this.interactionEvents = await fetchEvents(filters, this.relays);
+    } catch (error) {
+      console.warn('Failed to load interaction events:', error);
+      this.interactionEvents = [];
+    }
+  }
+
+  private showStatus(message: string, tone: 'info' | 'error' = 'info') {
+    this.statusMessage = message;
+    this.statusTone = tone;
+  }
+
+  private async publishReaction(event: SignedEvent, reaction: string) {
+    const reactionKey = `${event.id}:${reaction}`;
+    this.reactionPendingKey = reactionKey;
+    this.showStatus(`Publishing ${reaction} reaction...`);
+
+    try {
+      const result = await publishReaction({
+        event,
+        reaction,
+        relays: this.relays,
+        interactionEvents: this.interactionEvents,
+        profileMap: this.profileMap,
+      });
+
+      this.interactionEvents = result.interactionEvents;
+      this.profileMap = result.profileMap;
+      this.dispatchCustomEvent('nostr-post-interaction-published', result.signedEvent);
+      this.showStatus(`Published ${reaction} reaction.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to publish reaction.';
+      this.showError(message);
+      this.showStatus(message, 'error');
+    } finally {
+      this.reactionPendingKey = undefined;
+    }
+  }
+
+  private openReplyComposer(event: SignedEvent, rootEvent?: SignedEvent) {
+    this.activeReplyTarget = buildReplyTarget(event, rootEvent);
+  }
+
+  private handleCommentPublished(event: Event) {
+    void handleCommentPublishedDetail({
+      detail: (event as CustomEvent).detail,
+      interactionEvents: this.interactionEvents,
+      profileMap: this.profileMap,
+      relays: this.relays,
+    }).then(({ publishedEvents, interactionEvents, profileMap }) => {
+      if (publishedEvents.length === 0) return;
+
+      this.interactionEvents = interactionEvents;
+      this.profileMap = profileMap;
+      this.activeReplyTarget = undefined;
+      this.dispatchCustomEvent('nostr-post-interaction-published', publishedEvents);
+      this.showStatus(`Published ${publishedEvents.length} comment event(s).`);
+    });
+  }
+
+  private renderEventActions(event: SignedEvent, rootEvent?: SignedEvent) {
+    return html`
+      <div class="event-actions">
+        ${
+          this.commentsEnabled
+            ? html`
+              <button
+                class="action-button"
+                type="button"
+                @click=${() => this.openReplyComposer(event, rootEvent)}
+              >
+                Comment
+              </button>
+            `
+            : ''
+        }
+        ${
+          this.reactionsEnabled
+            ? this.reactionOptions?.map(
+                (reaction) => html`
+                <button
+                  class="reaction-button"
+                  type="button"
+                  ?disabled=${this.reactionPendingKey === `${event.id}:${reaction}`}
+                  @click=${() => this.publishReaction(event, reaction)}
+                >
+                  ${reaction}
+                </button>
+              `
+              )
+            : ''
+        }
+      </div>
+    `;
   }
 
   /**
@@ -257,20 +409,80 @@ export class NostrPostFeed extends NostrPostElement {
       `;
     }
 
+    const threads = buildThreads(this.events, this.interactionEvents);
+
     return html`
       <div class="feed">
-        ${this.events.map(
-          (event) => html`
+        ${
+          this.statusMessage
+            ? html`<div class="status ${this.statusTone}">${this.statusMessage}</div>`
+            : ''
+        }
+        ${threads.map((thread) => {
+          const reactionSummaryWithAuthors = summarizeReactionsWithAuthors(
+            thread.reactions,
+            (pubkey) => this.displayName(pubkey)
+          );
+          const isReplyComposerVisible = isReplyComposerOpen(
+            this.activeReplyTarget,
+            thread.root.id
+          );
+
+          return html`
             <div class="event-item">
               <nostr-post-view
-                .event=${event}
+                .event=${thread.root}
                 .manifest=${this.manifest}
                 ?showKind=${this.showKind}
                 ?showTags=${this.showTags}
               ></nostr-post-view>
+              ${
+                reactionSummaryWithAuthors.length > 0
+                  ? html`
+                    <div class="reaction-summary">
+                      ${reactionSummaryWithAuthors.map(
+                        ({ reaction, count, authors }) => html`
+                          <span class="reaction-chip" title=${authors.join(', ')}>
+                            ${reaction} ${count}
+                            ${
+                              authors.length > 0
+                                ? html`<span class="reaction-authors"> ${authors.join(', ')}</span>`
+                                : ''
+                            }
+                          </span>
+                        `
+                      )}
+                    </div>
+                  `
+                  : ''
+              }
+              ${this.renderEventActions(thread.root, thread.root)}
+              ${
+                isReplyComposerVisible
+                  ? html`
+                    <div class="reply-composer">
+                      <nostr-post-composer
+                        auto-publish
+                        .manifest=${this.commentManifest}
+                        .replyToEventId=${this.activeReplyTarget?.replyToEventId}
+                        .replyToPubkey=${this.activeReplyTarget?.replyToPubkey}
+                        .rootEventId=${this.activeReplyTarget?.rootEventId}
+                        .rootPubkey=${this.activeReplyTarget?.rootPubkey}
+                        @nostr-post-published=${this.handleCommentPublished}
+                      ></nostr-post-composer>
+                    </div>
+                  `
+                  : ''
+              }
+              ${renderReplies(
+                thread.root,
+                thread.replies,
+                this.commentManifest,
+                (event, rootEvent) => this.renderEventActions(event, rootEvent)
+              )}
             </div>
-          `
-        )}
+          `;
+        })}
       </div>
     `;
   }

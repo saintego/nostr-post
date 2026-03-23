@@ -1,4 +1,3 @@
-import type { NostrPostManifest } from '@nostr-post/core/types';
 import { describe, expect, it } from 'vitest';
 import { EXAMPLE_MANIFESTS } from '../../lib/examples';
 
@@ -7,21 +6,24 @@ describe('EXAMPLE_MANIFESTS', () => {
     it('should have correct structure', () => {
       const manifest = EXAMPLE_MANIFESTS.simple;
       expect(manifest).toBeDefined();
-      expect(manifest.id).toBe('kind1-note');
+      expect(manifest.id).toBe('kind1-simple-post');
       expect(manifest.version).toBe('1.0.0');
       expect(manifest.requiredKinds).toEqual([1]);
     });
 
-    it('should have content and tags fields', () => {
+    it('should have content, media, and tags fields', () => {
       const manifest = EXAMPLE_MANIFESTS.simple;
-      expect(manifest.fields).toHaveLength(2);
+      expect(manifest.fields).toHaveLength(3);
       expect(manifest.fields[0].id).toBe('content');
       expect(manifest.fields[0].type).toBe('string');
       expect(manifest.fields[0].uiPlugin).toBe('textarea');
       expect(manifest.fields[0].required).toBe(true);
 
-      expect(manifest.fields[1].id).toBe('tags');
-      expect(manifest.fields[1].uiPlugin).toBe('hashtag');
+      expect(manifest.fields[1].id).toBe('media');
+      expect(manifest.fields[1].uiPlugin).toBe('media');
+
+      expect(manifest.fields[2].id).toBe('tags');
+      expect(manifest.fields[2].uiPlugin).toBe('hashtag');
     });
 
     it('should have proper mapTo configuration', () => {
@@ -29,8 +31,9 @@ describe('EXAMPLE_MANIFESTS', () => {
       const contentField = manifest.fields[0];
       expect(contentField.mapTo).toEqual({ kind: 1, target: 'content' });
 
-      const tagsField = manifest.fields[1];
+      const tagsField = manifest.fields[2];
       expect(tagsField.mapTo).toEqual({ kind: 1, target: 'tag', tagName: 't' });
+      expect(tagsField.defaultValue).toEqual(['test', 'nostr-post']);
     });
   });
 

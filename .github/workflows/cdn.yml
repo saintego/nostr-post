@@ -31,13 +31,26 @@ jobs:
       
       # Build CDN bundle
       - run: cd packages/cdn && pnpm build
+
+      # Build examples for static hosting under /examples/*
+      - run: pnpm --filter @nostr-post/example build
+      - run: pnpm --filter react-demo build
+      - run: cd examples/nextjs-demo && NOSTR_POST_BASE_PATH=/nostr-post/examples/nextjs-demo pnpm build
       
       # Create deployment directory structure
       - run: mkdir -p .deploy
       - run: cp -r packages/cdn/dist/* .deploy/
       - run: cp packages/cdn/index.html .deploy/index.html
+      - run: mkdir -p .deploy/examples
+      - run: cp packages/cdn/examples-index.html .deploy/examples/index.html
+
+      # Copy all example builds
+      - run: cp -r examples/basic/dist .deploy/examples/basic
+      - run: cp -r examples/react-demo/dist .deploy/examples/react-demo
+      - run: cp -r examples/nextjs-demo/out .deploy/examples/nextjs-demo
       
       # Build and copy manifest-creator
+      - run: cd tools/manifest-creator && NOSTR_POST_BASE_PATH=/nostr-post/manifest-creator pnpm build
       - run: cp -r tools/manifest-creator/out .deploy/manifest-creator
 
       - uses: actions/upload-pages-artifact@v3

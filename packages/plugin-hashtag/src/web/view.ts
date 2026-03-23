@@ -16,9 +16,11 @@ export class NpHashtagView extends LitElement {
       display: block;
     }
     .tags {
-      display: flex;
+      display: inline-flex;
       flex-wrap: wrap;
       gap: 0.375rem;
+      align-items: center;
+      max-width: 100%;
     }
     .tag {
       display: inline-block;
@@ -41,11 +43,7 @@ export class NpHashtagView extends LitElement {
     const tags = Array.isArray(this.value) ? this.value : [];
     if (tags.length === 0) return nothing;
 
-    return html`
-      <div class="tags">
-        ${tags.map((tag) => html`<span class="tag">#${tag}</span>`)}
-      </div>
-    `;
+    return html`<div class="tags">${tags.map((tag) => html`<span class="tag">#${tag}</span>`)}</div>`;
   }
 }
 

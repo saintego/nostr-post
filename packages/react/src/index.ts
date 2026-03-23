@@ -38,6 +38,7 @@ export {
   type Nip07Provider,
   colors,
   baseStyles,
+  STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/web';
 
 // Signer utilities (re-exported from @nostr-post/signer)

@@ -202,6 +202,8 @@ const articleManifest: NostrPostManifest = {
 
 The `@nostr-post/web` package provides framework-independent Web Components.
 
+Built-in plugins are lazy-loaded when a manifest uses them, so manifests using `media`, `hashtag`, `stars`, `geo`, `venue`, `markdown`, or `list` work without separate plugin imports and stay SSR-safe.
+
 ### Example 1: Basic Composer in HTML
 
 ```html
@@ -303,6 +305,22 @@ The `@nostr-post/web` package provides framework-independent Web Components.
 </script>
 ```
 
+### Example 3b: Feed with standard comments/reactions
+
+```html
+<nostr-post-feed
+  authors='["your-pubkey-hex"]'
+  kinds='[1]'
+  limit="20"
+  comments-enabled
+  reactions-enabled
+></nostr-post-feed>
+```
+
+Notes:
+- Comments default to `STANDARD_KIND1_POST_MANIFEST` unless `commentManifest` is provided.
+- Reaction chips show who reacted when kind 0 profile metadata is available.
+
 ### Example 4: View Single Event
 
 ```html
@@ -327,8 +345,29 @@ The `@nostr-post/web` package provides framework-independent Web Components.
     content: "Hello, Nostr!",
     sig: "signature-hex",
   };
+
+  // Technical metadata is hidden by default.
+  // Turn on manifest/debug visibility when needed:
+  viewer.showKind = true;
+  viewer.showTags = true;
 </script>
 ```
+
+### Example 5: Composer reply context panel
+
+```html
+<nostr-post-composer
+  auto-publish
+  show-reply-target
+  editable-reply-target
+  reply-to-event-id="<parent-event-id>"
+  reply-to-pubkey="<parent-pubkey>"
+  root-event-id="<root-event-id>"
+  root-pubkey="<root-pubkey>"
+></nostr-post-composer>
+```
+
+When no `manifest` is set, composer defaults to `STANDARD_KIND1_POST_MANIFEST`.
 
 ---
 

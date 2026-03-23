@@ -21,8 +21,30 @@ export const viewStyle = css`
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    margin-bottom: 0.75rem;
+    margin-bottom: 0.5rem;
     font-size: 12px;
+  }
+
+  .view-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    object-fit: cover;
+    border: 1px solid var(--nl-border, #d1d5db);
+    flex-shrink: 0;
+  }
+
+  .view-author {
+    font-weight: 600;
+    color: var(--nl-text, #111827);
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :host-context(.dark) .view-author {
+    color: #f3f4f6;
   }
 
   .view-pubkey {
@@ -38,10 +60,24 @@ export const viewStyle = css`
   }
 
   .view-content {
-    white-space: pre-wrap;
+    white-space: normal;
     word-break: break-word;
     line-height: 1.6;
     color: var(--nl-text, #1f2937);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .view-content > * {
+    margin: 0;
+  }
+
+  .view-content np-hashtag-view,
+  .view-content np-media-view,
+  .linked-field np-hashtag-view,
+  .linked-field np-media-view {
+    align-self: start;
   }
 
   :host-context(.dark) .view-content {
@@ -49,8 +85,8 @@ export const viewStyle = css`
   }
 
   .view-tags {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
     border-top: 1px solid var(--nl-border, #e5e7eb);
   }
 
@@ -89,7 +125,7 @@ export const viewStyle = css`
   }
 
   .view-id {
-    margin-top: 0.5rem;
+    margin-top: 0.35rem;
     font-size: 11px;
     font-family: monospace;
     color: var(--nl-text-secondary, #9ca3af);
@@ -97,8 +133,8 @@ export const viewStyle = css`
   }
 
   .linked-data {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
     border-top: 1px solid var(--nl-border, #e5e7eb);
   }
 
@@ -119,7 +155,7 @@ export const viewStyle = css`
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 0.375rem;
+    margin-bottom: 0.25rem;
     font-size: 0.875rem;
   }
 

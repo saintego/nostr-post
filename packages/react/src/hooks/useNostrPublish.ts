@@ -6,9 +6,9 @@
 
 import { coordinateEvents } from '@nostr-post/core/coordinator';
 import {
-  DEFAULT_KIND1_MANIFEST,
   type FormData,
   type NostrPostManifest,
+  STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
 import { useCallback, useState } from 'react';
 import { DEFAULT_RELAYS, type SignedEvent, getPublicKey, signAndPublish } from '../signer';
@@ -54,7 +54,7 @@ export interface UseNostrPublishReturn {
  */
 export function useNostrPublish(options: UseNostrPublishOptions = {}): UseNostrPublishReturn {
   const {
-    manifest = DEFAULT_KIND1_MANIFEST,
+    manifest = STANDARD_KIND1_POST_MANIFEST,
     relays = DEFAULT_RELAYS,
     onSuccess,
     onError,

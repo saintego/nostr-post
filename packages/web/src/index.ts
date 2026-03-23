@@ -1,7 +1,7 @@
 /**
  * @nostr-post/web - Web Components entry point
  *
- * Universal, framework-independent UI for nostr-post
+ * Universal, framework-independent UI for nostr-post.
  */
 
 // Components
@@ -12,6 +12,9 @@ export { NostrPostElement } from './base-component';
 
 // Theme (single source of truth for colors and styles)
 export { colors, baseStyles } from './theme';
+
+// Standard manifests
+export { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
 
 // Signer and relay utilities
 export {

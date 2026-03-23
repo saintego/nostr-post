@@ -190,3 +190,52 @@ export const DEFAULT_KIND1_MANIFEST: NostrPostManifest = {
     },
   ],
 };
+
+/**
+ * Standard kind 1 post manifest with the common out-of-box field set.
+ * This is suitable for regular notes and comments when you want text,
+ * media attachments, and hashtags backed by the composer system.
+ */
+export const STANDARD_KIND1_POST_MANIFEST: NostrPostManifest = {
+  id: 'kind1-standard-post',
+  version: '1.0.0',
+  requiredKinds: [1],
+  fields: [
+    {
+      id: 'content',
+      type: 'string',
+      uiPlugin: 'textarea',
+      mapTo: { kind: 1, target: 'content' },
+      required: true,
+      metadata: {
+        label: 'Post',
+        placeholder: 'Write something...',
+      },
+    },
+    {
+      id: 'media',
+      type: 'string',
+      uiPlugin: 'media',
+      mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+      metadata: {
+        label: 'Attachments',
+        accept: ['image/*'],
+        maxFiles: 4,
+      },
+    },
+    {
+      id: 'tags',
+      type: 'string',
+      uiPlugin: 'hashtag',
+      mapTo: { kind: 1, target: 'tag', tagName: 't' },
+      metadata: {
+        label: 'Tags',
+      },
+    },
+  ],
+  metadata: {
+    name: 'Standard Kind 1 Post',
+    description: 'Standard kind 1 post/comment with text, media attachments, and hashtags.',
+    tags: ['kind1', 'standard', 'comment', 'reply'],
+  },
+};

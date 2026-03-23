@@ -17,28 +17,31 @@ export class NpMediaView extends LitElement {
   static styles = css`
     :host {
       display: block;
+      line-height: 1.3;
     }
     .gallery {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.4rem;
     }
     .media-view {
       border-radius: 8px;
       overflow: hidden;
       background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      max-width: min(220px, 100%);
     }
     img {
       display: block;
-      max-width: 100%;
-      max-height: 400px;
+      width: 100%;
+      max-height: 180px;
       object-fit: contain;
       border-radius: 8px;
     }
     video {
       display: block;
-      max-width: 100%;
-      max-height: 400px;
+      width: 100%;
+      max-height: 180px;
       border-radius: 8px;
     }
     .media-link {
@@ -50,6 +53,8 @@ export class NpMediaView extends LitElement {
       text-decoration: none;
       font-size: 0.875rem;
       word-break: break-all;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
     }
     .media-link:hover {
       text-decoration: underline;
@@ -77,9 +82,7 @@ export class NpMediaView extends LitElement {
       return html`<span class="empty">No media</span>`;
     }
 
-    return html`
-      <div class="gallery">${urls.map((url) => this.renderItem(url))}</div>
-    `;
+    return html`<div class="gallery">${urls.map((url) => this.renderItem(url))}</div>`;
   }
 
   private renderItem(url: string) {

@@ -134,6 +134,34 @@ pnpm build            # outputs dist/nostr-post.js + dist/nostr-post.iife.js
 
 Serve the `dist/` folder from any static host. The GitHub Actions workflow (`.github/workflows/cdn.yml`) deploys automatically to GitHub Pages on every push to `main`.
 
+## Local Pages Preview (Regression Check)
+
+Build the same artifact that gets deployed to GitHub Pages, including all examples:
+
+```bash
+pnpm build:pages
+```
+
+This creates `.pages-local/` with:
+
+- CDN bundles (`nostr-post.js`, `nostr-post.iife.js`)
+- `manifest-creator/`
+- `examples/basic/`
+- `examples/react-demo/`
+- `examples/nextjs-demo/`
+
+Preview locally:
+
+```bash
+pnpm preview:pages
+```
+
+Then open:
+
+- `/` (CDN landing)
+- `/examples/` (examples index)
+- `/manifest-creator/`
+
 ## Development
 
 Watch mode rebuilds on file changes (ESM only, unminified):

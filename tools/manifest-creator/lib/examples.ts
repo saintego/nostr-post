@@ -1,30 +1,13 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { DEFAULT_KIND1_MANIFEST } from '@nostr-post/core/types';
+import { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
 
 export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   simple: {
-    id: 'kind1-note',
-    version: '1.0.0',
-    requiredKinds: [1],
-    fields: [
-      {
-        id: 'content',
-        type: 'string',
-        uiPlugin: 'textarea',
-        mapTo: { kind: 1, target: 'content' },
-        required: true,
-      },
-      {
-        id: 'tags',
-        type: 'string',
-        uiPlugin: 'hashtag',
-        mapTo: { kind: 1, target: 'tag', tagName: 't' },
-        defaultValue: ['test', 'nostr-post'],
-        metadata: {
-          label: 'Tags',
-        },
-      },
-    ],
+    ...STANDARD_KIND1_POST_MANIFEST,
+    id: 'kind1-simple-post',
+    fields: STANDARD_KIND1_POST_MANIFEST.fields.map((field) =>
+      field.id === 'tags' ? { ...field, defaultValue: ['test', 'nostr-post'] } : field
+    ),
   },
 
   review: {

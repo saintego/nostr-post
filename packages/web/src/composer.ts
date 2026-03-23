@@ -1,6 +1,5 @@
 /**
  * @nostr-post/web - <nostr-post-composer> Web Component
- *
  * A universal composer for creating Nostr posts using manifests
  * Supports automatic signing and publishing via NIP-07
  */
@@ -8,22 +7,28 @@
 import { coordinateEvents } from '@nostr-post/core/coordinator';
 import { validateManifest } from '@nostr-post/core/manifest';
 import {
-  DEFAULT_KIND1_MANIFEST,
   type EventBundle,
   type FormData as NostrFormData,
   type NostrPostManifest,
   type PostField,
+  STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { css, html } from 'lit';
+import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { NostrPostElement, baseStyles } from './base-component';
+import {
+  applyReplyTargetToBundle,
+  hasReplyTarget,
+  renderReplyTargetPanel,
+  updateReplyTargetValue,
+} from './composerReply';
+import { composerStyle } from './composerStyle';
+import { ensurePluginsForManifest } from './pluginAutoLoad';
 import { type SignedEvent, getPublicKey, getUserRelays, signAndPublish } from './signer';
-
 /**
  * Composer Web Component
- *
  * @fires nostr-post-submit - Fired when form is submitted with event bundle (before signing if autoPublish=false)
  * @fires nostr-post-published - Fired after events are signed and published (if autoPublish=true)
  * @fires nostr-post-error - Fired when validation, signing, or publishing fails
@@ -46,73 +51,7 @@ import { type SignedEvent, getPublicKey, getUserRelays, signAndPublish } from '.
  */
 @customElement('nostr-post-composer')
 export class NostrPostComposer extends NostrPostElement {
-  static styles = [
-    baseStyles,
-    css`
-      .composer {
-        padding: 1rem;
-        border: 1px solid var(--nl-border, #e5e7eb);
-        border-radius: 8px;
-        background: var(--nl-bg, white);
-      }
-
-      :host-context(.dark) .composer {
-        background: #374151;
-        border-color: #4b5563;
-      }
-
-      .composer-header {
-        margin-bottom: 1rem;
-      }
-
-      .composer-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        margin: 0 0 0.25rem 0;
-        color: var(--nl-text, #111827);
-      }
-
-      :host-context(.dark) .composer-title {
-        color: #f3f4f6;
-      }
-
-      .composer-description {
-        color: var(--nl-text-secondary, #6b7280);
-        margin: 0;
-      }
-
-      .composer-actions {
-        display: flex;
-        gap: 0.5rem;
-        margin-top: 1rem;
-      }
-
-      .success-message {
-        padding: 0.75rem;
-        background: #d1fae5;
-        border: 1px solid #6ee7b7;
-        border-radius: 8px;
-        color: #065f46;
-        margin-bottom: 1rem;
-      }
-
-      .field-readonly {
-        opacity: 0.75;
-        pointer-events: none;
-      }
-
-      .readonly-value {
-        font-size: 0.875rem;
-        color: #6b7280;
-      }
-
-      :host-context(.dark) .success-message {
-        background: #064e3b;
-        border-color: #059669;
-        color: #6ee7b7;
-      }
-    `,
-  ];
+  static styles = [baseStyles, composerStyle];
 
   @property({ type: Object })
   manifest?: NostrPostManifest;
@@ -143,6 +82,30 @@ export class NostrPostComposer extends NostrPostElement {
   /** Pre-filled values keyed by field ID (merged with field defaultValue, prefill wins) */
   @property({ type: Object })
   prefill?: Record<string, unknown>;
+
+  /** Parent event id for protocol-standard kind 1 replies/comments. */
+  @property({ type: String, attribute: 'reply-to-event-id' })
+  replyToEventId?: string;
+
+  /** Parent author pubkey for protocol-standard kind 1 replies/comments. */
+  @property({ type: String, attribute: 'reply-to-pubkey' })
+  replyToPubkey?: string;
+
+  /** Optional root event id when replying deeper in a thread. Defaults to replyToEventId. */
+  @property({ type: String, attribute: 'root-event-id' })
+  rootEventId?: string;
+
+  /** Optional root author pubkey when replying deeper in a thread. */
+  @property({ type: String, attribute: 'root-pubkey' })
+  rootPubkey?: string;
+
+  /** Show reply target context panel when reply tags are in use. */
+  @property({ type: Boolean, attribute: 'show-reply-target' })
+  showReplyTarget = false;
+
+  /** Allow editing reply target ids/pubkeys directly in the composer panel. */
+  @property({ type: Boolean, attribute: 'editable-reply-target' })
+  editableReplyTarget = false;
 
   @state()
   private _formData!: Record<string, unknown>;
@@ -176,11 +139,22 @@ export class NostrPostComposer extends NostrPostElement {
     super.updated(changed);
     if (changed.has('manifest') || changed.has('prefill')) {
       this.initDefaults();
+      void this.ensureManifestPlugins();
     }
   }
 
+  connectedCallback(): void {
+    super.connectedCallback();
+    void this.ensureManifestPlugins();
+  }
+
+  private async ensureManifestPlugins() {
+    await ensurePluginsForManifest(this.manifest || STANDARD_KIND1_POST_MANIFEST);
+    this.requestUpdate();
+  }
+
   private initDefaults() {
-    const manifest = this.manifest || DEFAULT_KIND1_MANIFEST;
+    const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
     const defaults: Record<string, unknown> = {};
     for (const field of manifest.fields) {
       if (field.defaultValue !== undefined) {
@@ -256,8 +230,8 @@ export class NostrPostComposer extends NostrPostElement {
     this.successMessage = '';
     this.errors = {};
 
-    // Use default Kind 1 manifest if none provided
-    const manifest = this.manifest || DEFAULT_KIND1_MANIFEST;
+    // Use standard Kind 1 manifest if none provided
+    const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
 
     // Validate manifest
     const manifestValidation = validateManifest(manifest);
@@ -308,7 +282,12 @@ export class NostrPostComposer extends NostrPostElement {
         return;
       }
 
-      const bundle = result.data;
+      const bundle = applyReplyTargetToBundle(result.data, {
+        replyToEventId: this.replyToEventId,
+        replyToPubkey: this.replyToPubkey,
+        rootEventId: this.rootEventId,
+        rootPubkey: this.rootPubkey,
+      });
 
       if (this.autoPublish) {
         const signedEvents = await this.signAndPublishBundle(bundle);
@@ -485,9 +464,16 @@ export class NostrPostComposer extends NostrPostElement {
     }
   }
 
+  private updateReplyTarget(
+    field: 'replyToEventId' | 'replyToPubkey' | 'rootEventId' | 'rootPubkey',
+    value: string
+  ) {
+    this[field] = updateReplyTargetValue(value);
+  }
+
   render() {
-    // Use default Kind 1 manifest if none provided
-    const manifest = this.manifest || DEFAULT_KIND1_MANIFEST;
+    // Use standard Kind 1 manifest if none provided
+    const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
     const { metadata } = manifest;
 
     return html`
@@ -513,6 +499,27 @@ export class NostrPostComposer extends NostrPostElement {
         }
 
         <form @submit=${this.handleSubmit}>
+          ${
+            !this.showReplyTarget &&
+            !this.editableReplyTarget &&
+            !hasReplyTarget({
+              replyToEventId: this.replyToEventId,
+              replyToPubkey: this.replyToPubkey,
+              rootEventId: this.rootEventId,
+              rootPubkey: this.rootPubkey,
+            })
+              ? ''
+              : renderReplyTargetPanel({
+                  target: {
+                    replyToEventId: this.replyToEventId,
+                    replyToPubkey: this.replyToPubkey,
+                    rootEventId: this.rootEventId,
+                    rootPubkey: this.rootPubkey,
+                  },
+                  readonly: !this.editableReplyTarget,
+                  onUpdate: (field, value) => this.updateReplyTarget(field, value),
+                })
+          }
           ${manifest.fields.map((field) => {
             // Skip completely excluded fields (those without prefill)
             if (this.isFieldExcluded(field) && !this.isExcludedButPrefilled(field)) {

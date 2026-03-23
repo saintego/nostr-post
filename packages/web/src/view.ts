@@ -7,14 +7,26 @@
  */
 
 import { NIP78_KIND, eventToManifest, parseManifestATag } from '@nostr-post/core/nip78';
-import type { NostrPostManifest, PostField, UnsignedNostrEvent } from '@nostr-post/core/types';
+import {
+  type NostrPostManifest,
+  type PostField,
+  STANDARD_KIND1_POST_MANIFEST,
+  type UnsignedNostrEvent,
+} from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { html } from 'lit';
+import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { NostrPostElement, baseStyles } from './base-component';
+import { ensurePluginsForManifest } from './pluginAutoLoad';
 import type { SignedEvent } from './signer';
+import {
+  type NostrProfile,
+  authorDisplayName,
+  fetchAuthorProfile,
+  truncatePubkey,
+} from './userProfile';
 import { renderLinkedEvents } from './viewLinked';
 import { viewStyle } from './viewStyle';
 
@@ -72,23 +84,32 @@ export class NostrPostView extends NostrPostElement {
   /** Track which event ID we've fetched linked events for */
   private _lastFetchedLinkedId?: string;
 
+  /** Track which pubkey we've fetched profile data for */
+  private _lastFetchedProfilePubkey?: string;
+
   /** Static cache of fetched manifests by `a` tag */
   private static _manifestCache = new Map<string, NostrPostManifest>();
 
   /** Static cache of fetched linked events by primary event id */
   private static _linkedEventsCache = new Map<string, DisplayableEvent[]>();
 
+  /** Static cache of fetched author profiles by pubkey */
+  private static _profileCache = new Map<string, NostrProfile>();
+
+  @state()
+  private _authorProfile?: NostrProfile;
+
   constructor() {
     super();
-    this.showTags = true;
-    this.showKind = true;
+    this.showTags = false;
+    this.showKind = false;
   }
 
   /**
    * The effective manifest: explicit prop takes priority, then auto-fetched.
    */
   private get effectiveManifest(): NostrPostManifest | undefined {
-    return this.manifest ?? this._resolvedManifest;
+    return this.manifest ?? this._resolvedManifest ?? STANDARD_KIND1_POST_MANIFEST;
   }
 
   /**
@@ -106,11 +127,36 @@ export class NostrPostView extends NostrPostElement {
       if (!this.manifest) {
         this._tryFetchManifest();
       }
+      void this._ensureManifestPlugins();
       // Auto-fetch linked events when manifest has multiple kinds
       if (!this.linkedEvents) {
         this._tryFetchLinkedEvents();
       }
+      this._tryFetchAuthorProfile();
     }
+  }
+
+  connectedCallback(): void {
+    super.connectedCallback();
+    void this._ensureManifestPlugins();
+  }
+
+  private async _ensureManifestPlugins() {
+    await ensurePluginsForManifest(this.effectiveManifest);
+    this.requestUpdate();
+  }
+
+  private async _tryFetchAuthorProfile() {
+    if (!this.event?.pubkey) return;
+
+    const pubkey = this.event.pubkey;
+    if (this._lastFetchedProfilePubkey === pubkey) return;
+    this._lastFetchedProfilePubkey = pubkey;
+
+    this._authorProfile = await fetchAuthorProfile({
+      pubkey,
+      cache: NostrPostView._profileCache,
+    });
   }
 
   /**
@@ -226,13 +272,8 @@ export class NostrPostView extends NostrPostElement {
     return new Date(timestamp * 1000).toLocaleString();
   }
 
-  /**
-   * Truncate pubkey for display
-   */
-  private truncatePubkey(pubkey: string): string {
-    if (!pubkey) return 'Unknown';
-    if (pubkey.length <= 16) return pubkey;
-    return `${pubkey.slice(0, 8)}...${pubkey.slice(-8)}`;
+  private authorDisplayName(pubkey: string): string {
+    return authorDisplayName(this._authorProfile, pubkey);
   }
 
   render() {
@@ -249,23 +290,39 @@ export class NostrPostView extends NostrPostElement {
     const content = event.content;
     const pubkey = event.pubkey;
     const eventId = 'id' in event ? (event as SignedEvent).id : undefined;
+    const showTechnicalMeta = Boolean(this.showKind || this.showTags);
 
     return html`
       <div class="view">
         <div class="view-header">
           ${this.showKind ? html`<span class="view-kind">Kind ${kind}</span>` : ''}
-          <span class="view-pubkey" title=${pubkey}
-            >${this.truncatePubkey(pubkey)}</span
-          >
+          ${
+            this._authorProfile?.picture
+              ? html`
+                <img
+                  class="view-avatar"
+                  src=${this._authorProfile.picture}
+                  alt="Author avatar"
+                  loading="lazy"
+                  referrerpolicy="no-referrer"
+                />
+              `
+              : ''
+          }
+          <span class="view-author" title=${pubkey}>${this.authorDisplayName(pubkey)}</span>
+          ${
+            showTechnicalMeta
+              ? html`<span class="view-pubkey" title=${pubkey}>${truncatePubkey(pubkey)}</span>`
+              : ''
+          }
           <span class="view-timestamp"
             >${this.formatTimestamp(created_at)}</span
           >
         </div>
 
-        <div class="view-content">
-          ${content ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>` : ''}
-          ${this.renderTagPlugins(tags)}
-        </div>
+        <div class="view-content">${
+          content ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>` : nothing
+        }${this.renderTagPlugins(tags)}</div>
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
         ${
@@ -284,7 +341,7 @@ export class NostrPostView extends NostrPostElement {
             `
             : ''
         }
-        ${eventId ? html`<div class="view-id">ID: ${eventId}</div>` : ''}
+        ${showTechnicalMeta && eventId ? html`<div class="view-id">ID: ${eventId}</div>` : ''}
       </div>
     `;
   }

@@ -322,6 +322,27 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
+      '@nostr-post/plugin-geo':
+        specifier: workspace:*
+        version: link:../plugin-geo
+      '@nostr-post/plugin-hashtag':
+        specifier: workspace:*
+        version: link:../plugin-hashtag
+      '@nostr-post/plugin-list':
+        specifier: workspace:*
+        version: link:../plugin-list
+      '@nostr-post/plugin-markdown':
+        specifier: workspace:*
+        version: link:../plugin-markdown
+      '@nostr-post/plugin-media':
+        specifier: workspace:*
+        version: link:../plugin-media
+      '@nostr-post/plugin-stars':
+        specifier: workspace:*
+        version: link:../plugin-stars
+      '@nostr-post/plugin-venue':
+        specifier: workspace:*
+        version: link:../plugin-venue
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins

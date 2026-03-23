@@ -1,9 +1,11 @@
 /** @type {import('next').NextConfig} */
+const basePath = process.env.NOSTR_POST_BASE_PATH ?? '';
+
 const nextConfig = {
   reactStrictMode: true,
   output: 'export',
-  basePath: '/nostr-post/manifest-creator',
-  assetPrefix: '/nostr-post/manifest-creator',
+  basePath,
+  assetPrefix: basePath || undefined,
   images: {
     unoptimized: true,
   },

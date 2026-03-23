@@ -18,6 +18,10 @@ interface NostrPostComposerElement extends HTMLElement {
   excludeFields?: string[];
   readonlyFields?: string[];
   prefill?: Record<string, unknown>;
+  replyToEventId?: string;
+  replyToPubkey?: string;
+  rootEventId?: string;
+  rootPubkey?: string;
 }
 
 // Declare the custom element for TypeScript/JSX
@@ -49,6 +53,14 @@ export interface NostrPostComposerProps {
   readonlyFields?: string[];
   /** Pre-filled values keyed by field ID */
   prefill?: Record<string, unknown>;
+  /** Parent event id for protocol-standard kind 1 replies/comments */
+  replyToEventId?: string;
+  /** Parent author pubkey for protocol-standard kind 1 replies/comments */
+  replyToPubkey?: string;
+  /** Optional root event id when replying inside an existing thread */
+  rootEventId?: string;
+  /** Optional root author pubkey when replying inside an existing thread */
+  rootPubkey?: string;
   /** Called after successful publish */
   onPublished?: (events: SignedEvent[]) => void;
   /** Called on submit (before signing) */
@@ -74,6 +86,10 @@ export function NostrPostComposer({
   excludeFields,
   readonlyFields,
   prefill,
+  replyToEventId,
+  replyToPubkey,
+  rootEventId,
+  rootPubkey,
   onPublished,
   onSubmit,
   onError,
@@ -101,7 +117,23 @@ export function NostrPostComposer({
     element.excludeFields = excludeFields;
     element.readonlyFields = readonlyFields;
     element.prefill = prefill;
-  }, [manifest, manifestRef, relays, autoPublish, excludeFields, readonlyFields, prefill]);
+    element.replyToEventId = replyToEventId;
+    element.replyToPubkey = replyToPubkey;
+    element.rootEventId = rootEventId;
+    element.rootPubkey = rootPubkey;
+  }, [
+    manifest,
+    manifestRef,
+    relays,
+    autoPublish,
+    excludeFields,
+    readonlyFields,
+    prefill,
+    replyToEventId,
+    replyToPubkey,
+    rootEventId,
+    rootPubkey,
+  ]);
 
   // Attach event listeners
   useEffect(() => {

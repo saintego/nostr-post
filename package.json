@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "build": "pnpm -r build",
+    "build:pages": "node scripts/build-pages-preview.mjs",
+    "preview:pages": "pnpm build:pages && npx serve .pages-local",
     "dev": "pnpm -r dev",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",

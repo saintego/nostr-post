@@ -274,6 +274,35 @@ Universal Web Components that work in any framework or vanilla HTML.
 <nostr-post-feed></nostr-post-feed>
 ```
 
+Built-in plugin loading:
+
+- `@nostr-post/web` lazy-loads built-in plugin UI modules when a manifest uses them.
+- This keeps SSR safe while still making built-in manifest plugins work automatically.
+- Built-in plugin ids supported automatically: `media`, `hashtag`, `stars`, `geo`, `venue`, `markdown`, `list`.
+- You only need manual plugin imports for custom or external plugin packages.
+
+Default behavior when no `manifest` is provided:
+- `nostr-post-composer` uses `STANDARD_KIND1_POST_MANIFEST`
+- `nostr-post-view` uses `STANDARD_KIND1_POST_MANIFEST`
+
+This means text, media (`r` tags), and hashtags (`t` tags) render out of the box for standard kind 1 posts.
+
+`<nostr-post-composer>` extended reply context API:
+- `reply-to-event-id`, `reply-to-pubkey`, `root-event-id`, `root-pubkey`
+- `show-reply-target` to show current reply target
+- `editable-reply-target` to allow editing reply target directly in the composer
+
+`<nostr-post-view>` metadata visibility defaults:
+- Technical metadata is hidden by default (`show-kind=false`, `show-tags=false`)
+- Enable manifest/debug mode with `show-kind` and/or `show-tags`
+- Author name/avatar still render by default when profile metadata is available
+
+`<nostr-post-feed>` interaction API:
+- `comments-enabled` (default `true`)
+- `reactions-enabled` (default `true`)
+- `commentManifest` (defaults to standard kind 1 manifest)
+- `reactionOptions` (defaults to `['+', '❤️', '🔥', '😂']`)
+
 `<nostr-post-feed>` supports direct Nostr filtering (`authors`, `kinds`, `ids`, `since`, `until`, `limit`, `search`) plus universal tag filters via `tagFilters` / `filter-tags` (for example `#g` geohash and `#i` OSM identity tags). It also supports advanced multi-filter `REQ` queries through the `filters` property.
 
 Detailed examples: [packages/cdn/README.md](./packages/cdn/README.md)
@@ -296,6 +325,13 @@ function App() {
   return <NostrPostComposer pubkey={pubkey} />;
 }
 ```
+
+`@nostr-post/react` wrappers expose the same interaction capabilities as web components:
+- `NostrPostFeed`: `commentsEnabled`, `reactionsEnabled`, `commentManifest`, `reactionOptions`
+- `NostrPostView`: `showKind`, `showTags` (technical metadata off by default in view)
+- `NostrPostComposer`: reply-target properties via web-component attributes/properties
+
+`useNostrPublish()` defaults to `STANDARD_KIND1_POST_MANIFEST` when `manifest` is omitted.
 
 `NostrPostFeed` supports the same advanced filtering options as the web component:
 
@@ -441,7 +477,7 @@ nostr-post/
 
 ### Phase 2: Domain Scenarios (Planned)
 
-- [ ] Comments support (kind 1) with manifest presets and examples
+- [x] Comments support (kind 1) with manifest presets, examples, and protocol-standard reply tags
 - [ ] Calendar events support (NIP-52) with agenda-oriented rendering
 - [ ] P2P offers support (NIP-69) with filtered feed presets/views
 - [ ] Zap support (NIP-57): zap requests/receipts with amount + payer views and filtering
