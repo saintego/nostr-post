@@ -221,6 +221,7 @@ export const STANDARD_KIND1_POST_MANIFEST: NostrPostManifest = {
         label: 'Attachments',
         accept: ['image/*'],
         maxFiles: 4,
+        expandable: true,
       },
     },
     {
@@ -230,6 +231,7 @@ export const STANDARD_KIND1_POST_MANIFEST: NostrPostManifest = {
       mapTo: { kind: 1, target: 'tag', tagName: 't' },
       metadata: {
         label: 'Tags',
+        expandable: true,
       },
     },
   ],

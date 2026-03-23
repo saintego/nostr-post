@@ -29,6 +29,7 @@ export const feedStyle = css`
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+    margin-top: 0.75rem;
     margin-bottom: 0.5rem;
   }
 

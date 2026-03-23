@@ -43,6 +43,23 @@ export const hashtagPlugin: NostrUIPlugin = {
   id: 'hashtag',
   type: 'string',
 
+  enrichFormData: (
+    formData: Record<string, unknown>,
+    field: PostField
+  ): Record<string, unknown> => {
+    const config = (field.metadata as HashtagPluginConfig) ?? {};
+    if (config.autoExtract === false) return {};
+    const contentField = config.autoExtractFrom ?? 'content';
+    const content =
+      typeof formData[contentField] === 'string' ? (formData[contentField] as string) : '';
+    if (!content) return {};
+    const existing = Array.isArray(formData[field.id]) ? (formData[field.id] as string[]) : [];
+    const existingSet = new Set(existing);
+    const newTags = extractHashtags(content).filter((t) => !existingSet.has(t));
+    if (!newTags.length) return {};
+    return { [field.id]: [...existing, ...newTags] };
+  },
+
   validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
     if (!Array.isArray(value)) {
       return {

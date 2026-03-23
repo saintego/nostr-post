@@ -12,43 +12,7 @@ import type { PostField } from '@nostr-post/plugins/types';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { type MediaPluginConfig, isImageUrl, isVideoUrl, toArray } from '../core';
-
-const NOSTR_BUILD_UPLOAD = 'https://nostr.build/api/v2/upload/files';
-
-/**
- * Create a NIP-98 HTTP Auth token for file uploads.
- */
-async function createNip98AuthToken(url: string, method: string): Promise<string | null> {
-  const nostr = (
-    window as unknown as {
-      nostr?: {
-        getPublicKey(): Promise<string>;
-        signEvent(e: unknown): Promise<unknown>;
-      };
-    }
-  ).nostr;
-  if (!nostr) return null;
-
-  try {
-    const pubkey = await nostr.getPublicKey();
-    const unsignedEvent = {
-      kind: 27235,
-      created_at: Math.floor(Date.now() / 1000),
-      tags: [
-        ['u', url],
-        ['method', method],
-      ],
-      content: '',
-      pubkey,
-    };
-
-    const signedEvent = await nostr.signEvent(unsignedEvent);
-    return btoa(JSON.stringify(signedEvent));
-  } catch (err) {
-    console.warn('NIP-98 auth failed:', err);
-    return null;
-  }
-}
+import { NOSTR_BUILD_UPLOAD, createNip98AuthToken } from './upload';
 
 @customElement('np-media-input')
 export class NpMediaInput extends LitElement {

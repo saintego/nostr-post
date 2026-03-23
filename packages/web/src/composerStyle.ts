@@ -111,6 +111,65 @@ export const composerStyle = css`
     color: #6b7280;
   }
 
+  .expandable-field {
+    margin-top: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .expand-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--nl-border, #e5e7eb);
+    border-radius: 999px;
+    background: transparent;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.8rem;
+    color: var(--nl-text-secondary, #6b7280);
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .expand-toggle:hover {
+    border-color: var(--nl-primary, #6366f1);
+    color: var(--nl-primary, #6366f1);
+  }
+
+  .expand-toggle.expanded {
+    border-color: var(--nl-primary, #6366f1);
+    color: var(--nl-primary, #6366f1);
+    background: rgba(99, 102, 241, 0.05);
+  }
+
+  .expand-chevron {
+    font-size: 0.65rem;
+    opacity: 0.7;
+  }
+
+  .upload-status {
+    font-size: 0.8rem;
+    color: var(--nl-text-secondary, #6b7280);
+    padding: 0.25rem 0;
+    animation: pulse 1s infinite alternate;
+  }
+
+  @keyframes pulse {
+    from { opacity: 1; }
+    to { opacity: 0.5; }
+  }
+
+  :host-context(.dark) .expand-toggle {
+    border-color: #4b5563;
+    color: #9ca3af;
+  }
+
+  :host-context(.dark) .expand-toggle.expanded {
+    background: rgba(99, 102, 241, 0.1);
+  }
+
   :host-context(.dark) .success-message {
     background: #064e3b;
     border-color: #059669;

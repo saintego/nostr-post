@@ -1,0 +1,196 @@
+/**
+ * Standalone field rendering helpers for <nostr-post-composer>.
+ *
+ * Extracted from the composer class so the HTML / plugin-dispatch logic lives
+ * in its own file, separate from lifecycle, state, and event publishing.
+ */
+
+import type { PostField } from '@nostr-post/core/types';
+import { pluginRegistry } from '@nostr-post/plugins/registry';
+import type { NostrUIPlugin } from '@nostr-post/plugins/types';
+import { type TemplateResult, html, nothing } from 'lit';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
+
+/**
+ * Dependencies that the field renderers need from the composer component.
+ * Constructed once per `render()` call and threaded through all helpers.
+ */
+export interface FieldRenderContext {
+  formData: Record<string, unknown>;
+  errors: Record<string, string>;
+  expandedFields: Set<string>;
+  isReadonly: (field: PostField) => boolean;
+  onFieldChange: (fieldId: string, value: unknown) => void;
+  onToggleExpanded: (fieldId: string) => void;
+}
+
+/**
+ * Render a read-only view of a field value using the plugin's view component,
+ * falling back to a plain text span.
+ */
+export function renderFieldView(field: PostField, value: unknown): TemplateResult {
+  if (field.uiPlugin) {
+    const plugin = pluginRegistry.get(field.uiPlugin);
+    if (plugin?.viewTagName) {
+      const tag = unsafeStatic(plugin.viewTagName);
+      return staticHtml`<${tag} .value=${value} .field=${field}></${tag}>`;
+    }
+  }
+  return html`<span class="readonly-value">${String(value)}</span>`;
+}
+
+/**
+ * Render the editable input for a field — plugin component first, native fallback.
+ */
+export function renderFieldInput(
+  field: PostField,
+  value: unknown,
+  ctx: FieldRenderContext
+): TemplateResult {
+  if (field.uiPlugin) {
+    const plugin = pluginRegistry.get(field.uiPlugin);
+    if (plugin?.inputTagName) {
+      const tag = unsafeStatic(plugin.inputTagName);
+      return staticHtml`<${tag}
+        .value=${value}
+        .field=${field}
+        @np-value-changed=${(e: CustomEvent) => ctx.onFieldChange(field.id, e.detail.value)}
+      ></${tag}>`;
+    }
+  }
+
+  // Shared handleInput for native inputs — applies type conversion before dispatch.
+  const handleInput = (e: Event) => {
+    const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
+    let fieldValue: unknown = target.value;
+    if (field.type === 'number') fieldValue = Number.parseFloat(target.value);
+    else if (field.type === 'boolean') fieldValue = (target as HTMLInputElement).checked;
+    ctx.onFieldChange(field.id, fieldValue);
+  };
+
+  switch (field.type) {
+    case 'string':
+      if (field.uiPlugin === 'textarea' || field.uiPlugin === 'markdown') {
+        // Check if any plugin wants to handle textarea paste/drop events
+        const handlers = getTextareaEventHandlers(field, ctx);
+
+        return html`<textarea
+          @input=${handleInput}
+          @paste=${(e: ClipboardEvent) => handlers.onPaste?.(e)}
+          @drop=${(e: DragEvent) => handlers.onDrop?.(e)}
+          @dragover=${(e: DragEvent) => e.preventDefault()}
+          .value=${String(value)}
+        ></textarea>`;
+      }
+      return html`<input type="text" @input=${handleInput} .value=${String(value)} />`;
+
+    case 'number':
+      return html`<input type="number" @input=${handleInput} .value=${String(value)} />`;
+
+    case 'boolean':
+      return html`<input type="checkbox" @change=${handleInput} .checked=${Boolean(value)} />`;
+
+    case 'enum':
+      return html`
+        <select @change=${handleInput}>
+          <option value="">Select...</option>
+          ${field.options?.map(
+            (opt) => html`<option value=${opt} ?selected=${value === opt}>${opt}</option>`
+          )}
+        </select>
+      `;
+
+    default:
+      return html`<input type="text" @input=${handleInput} .value=${String(value)} />`;
+  }
+}
+
+/**
+ * Get textarea event handlers from any registered plugin.
+ * Returns a pair of optional handlers that the textarea can wire up.
+ */
+function getTextareaEventHandlers(
+  field: PostField,
+  ctx: FieldRenderContext
+): {
+  onPaste?: (e: ClipboardEvent) => void;
+  onDrop?: (e: DragEvent) => void;
+} {
+  // Try to find a plugin with handleTextareaPaste/Drop
+  // For now, prioritize the media plugin, but this is generic for any plugin
+  const mediaPlugin = pluginRegistry.get('media') as NostrUIPlugin | undefined;
+
+  if (!mediaPlugin?.handleTextareaPaste && !mediaPlugin?.handleTextareaDrop) {
+    return {};
+  }
+
+  return {
+    onPaste: (e: ClipboardEvent) => {
+      if (mediaPlugin?.handleTextareaPaste) {
+        void mediaPlugin.handleTextareaPaste(e, field, {
+          formData: ctx.formData,
+          onUpdateField: ctx.onFieldChange,
+        });
+      }
+    },
+    onDrop: (e: DragEvent) => {
+      if (mediaPlugin?.handleTextareaDrop) {
+        void mediaPlugin.handleTextareaDrop(e, field, {
+          formData: ctx.formData,
+          onUpdateField: ctx.onFieldChange,
+        });
+      }
+    },
+  };
+}
+
+/**
+ * Render a single form field with label, input/view, and validation error.
+ */
+export function renderField(
+  field: PostField,
+  isHidden: boolean,
+  ctx: FieldRenderContext
+): TemplateResult {
+  const value = ctx.formData[field.id] ?? field.defaultValue ?? '';
+  const error = ctx.errors[field.id];
+  const isRequired = field.required === true;
+  const readonly = ctx.isReadonly(field);
+  const label = (field.metadata?.label as string) || field.id;
+
+  return html`
+    <div
+      class="field ${readonly ? 'field-readonly' : ''}"
+      style="${isHidden ? 'display: none;' : ''}"
+    >
+      <label class="${isRequired ? 'required' : ''}">${label}</label>
+      ${readonly ? renderFieldView(field, value) : renderFieldInput(field, value, ctx)}
+      ${error ? html`<div class="field-error">${error}</div>` : nothing}
+    </div>
+  `;
+}
+
+/**
+ * Render a field that is collapsed behind an expand toggle by default.
+ * Clicking the pill shows/hides the full plugin input widget.
+ */
+export function renderExpandableField(field: PostField, ctx: FieldRenderContext): TemplateResult {
+  const isExpanded = ctx.expandedFields.has(field.id);
+  const label = (field.metadata?.label as string) || field.id;
+  const icon = field.uiPlugin === 'hashtag' ? '#' : field.uiPlugin === 'media' ? '📎' : '+';
+
+  return html`
+    <div class="expandable-field">
+      <button
+        type="button"
+        class="expand-toggle ${isExpanded ? 'expanded' : ''}"
+        @click=${() => ctx.onToggleExpanded(field.id)}
+      >
+        <span class="expand-icon">${icon}</span>
+        <span>${label}</span>
+        <span class="expand-chevron">${isExpanded ? '▲' : '▼'}</span>
+      </button>
+      ${isExpanded ? renderField(field, false, ctx) : nothing}
+    </div>
+  `;
+}

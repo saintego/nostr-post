@@ -21,6 +21,13 @@ export interface MediaPluginConfig {
   allowUrl?: boolean;
   /** Show file upload (default: true) */
   allowUpload?: boolean;
+  /**
+   * Auto-extract image/video URLs from the content field and merge them in.
+   * Default: true (mirrors hashtag plugin's autoExtract behaviour).
+   */
+  urlAutoExtract?: boolean;
+  /** Field ID to auto-extract URLs from (defaults to "content") */
+  urlAutoExtractFrom?: string;
 }
 
 /** Check if a string is a plausible URL */
@@ -53,6 +60,27 @@ export const toArray = (value: unknown): string[] => {
 export const mediaPlugin: NostrUIPlugin = {
   id: 'media',
   type: 'string',
+
+  enrichFormData: (
+    formData: Record<string, unknown>,
+    field: PostField
+  ): Record<string, unknown> => {
+    const config = (field.metadata as MediaPluginConfig) ?? {};
+    if (config.urlAutoExtract === false) return {};
+    const contentField = config.urlAutoExtractFrom ?? 'content';
+    const content =
+      typeof formData[contentField] === 'string' ? (formData[contentField] as string) : '';
+    if (!content) return {};
+    const mediaRe =
+      /https?:\/\/\S+\.(?:jpe?g|png|gif|webp|avif|svg|mp4|webm|mov|ogg)(?:[?#]\S*)?/gi;
+    const urls = content.match(mediaRe) ?? [];
+    if (!urls.length) return {};
+    const existing = toArray(formData[field.id]);
+    const existingSet = new Set(existing);
+    const newUrls = urls.filter((u) => !existingSet.has(u));
+    if (!newUrls.length) return {};
+    return { [field.id]: [...existing, ...newUrls] };
+  },
 
   validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
     const urls = toArray(value);

@@ -99,6 +99,19 @@ export interface NostrUIPlugin {
   viewTagName?: string;
 
   /**
+   * Enrich form data before event coordination.
+   * Called once per field during the pre-coordinate phase in the composer.
+   * Plugins can use this to auto-extract values from other fields (e.g. reading
+   * the content field to extract inline #hashtags or image URLs) and merge them
+   * into the field's own value so the coordinator produces the right tags.
+   *
+   * @param formData - The current form data (read-only for other fields)
+   * @param field - The field definition from the manifest
+   * @returns Partial form data with updated values to merge in (typically just { [field.id]: newValue })
+   */
+  enrichFormData?: (formData: Record<string, unknown>, field: PostField) => Record<string, unknown>;
+
+  /**
    * Emit additional tags beyond the primary mapTo tag.
    * Called by the coordinator during event creation.
    * For example, a venue plugin maps to "g" (geohash) as the primary tag
@@ -119,4 +132,40 @@ export interface NostrUIPlugin {
    * @returns The resolved value to pass to the view component's .value property
    */
   resolveFromTags?: (tags: string[][], field: PostField) => unknown;
+
+  /**
+   * Handle clipboard paste events on textarea fields.
+   * Used by the media plugin to intercept image pastes and upload them.
+   * Plugins that want to handle textarea paste events can register this hook.
+   *
+   * @param e - The ClipboardEvent from the textarea
+   * @param field - The field definition (likely the content field)
+   * @param ctx - Context with formData and a callback to update fields
+   */
+  handleTextareaPaste?: (
+    e: ClipboardEvent,
+    field: PostField,
+    ctx: {
+      formData: Record<string, unknown>;
+      onUpdateField: (fieldId: string, value: unknown) => void;
+    }
+  ) => Promise<void>;
+
+  /**
+   * Handle drag-drop events on textarea fields.
+   * Used by the media plugin to intercept image/video drops and upload them.
+   * Plugins that want to handle textarea drop events can register this hook.
+   *
+   * @param e - The DragEvent from the textarea
+   * @param field - The field definition (likely the content field)
+   * @param ctx - Context with formData and a callback to update fields
+   */
+  handleTextareaDrop?: (
+    e: DragEvent,
+    field: PostField,
+    ctx: {
+      formData: Record<string, unknown>;
+      onUpdateField: (fieldId: string, value: unknown) => void;
+    }
+  ) => Promise<void>;
 }

@@ -16,8 +16,8 @@ import {
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { NostrPostElement, baseStyles } from './base-component';
+import { type FieldRenderContext, renderExpandableField, renderField } from './composerField';
 import {
   applyReplyTargetToBundle,
   hasReplyTarget,
@@ -123,6 +123,9 @@ export class NostrPostComposer extends NostrPostElement {
 
   @state()
   private successMessage!: string;
+
+  @state()
+  private _expandedFields: Set<string> = new Set();
 
   constructor() {
     super();
@@ -230,7 +233,7 @@ export class NostrPostComposer extends NostrPostElement {
     this.successMessage = '';
     this.errors = {};
 
-    // Use standard Kind 1 manifest if none provided
+    // Use default Kind 1 manifest if none provided
     const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
 
     // Validate manifest
@@ -257,8 +260,17 @@ export class NostrPostComposer extends NostrPostElement {
         return;
       }
 
+      // Let plugins enrich form data before coordination (e.g. hashtag/media auto-extraction)
+      const enrichedData: Record<string, unknown> = { ...(this._formData as NostrFormData) };
+      for (const field of manifest.fields) {
+        if (!field.uiPlugin) continue;
+        const plugin = pluginRegistry.get(field.uiPlugin);
+        if (!plugin?.enrichFormData) continue;
+        Object.assign(enrichedData, plugin.enrichFormData(enrichedData, field));
+      }
+
       // Coordinate events
-      const result = coordinateEvents(manifest, this._formData as NostrFormData, {
+      const result = coordinateEvents(manifest, enrichedData as NostrFormData, {
         pubkey,
         createdAt: Math.floor(Date.now() / 1000),
         manifestRef: this.manifestRef,
@@ -344,126 +356,6 @@ export class NostrPostComposer extends NostrPostElement {
     return signedEvents;
   }
 
-  /**
-   * Render a single form field based on its type
-   */
-  private renderField(field: PostField, isHidden = false) {
-    const value = this._formData[field.id] ?? field.defaultValue ?? '';
-    const error = this.errors[field.id];
-    const isRequired = field.required === true;
-    const readonly = this.isFieldReadonly(field);
-
-    const handleInput = (e: Event) => {
-      if (readonly) return;
-      const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
-      let fieldValue: unknown = target.value;
-
-      // Type conversion
-      if (field.type === 'number') {
-        fieldValue = Number.parseFloat(target.value);
-      } else if (field.type === 'boolean') {
-        fieldValue = (target as HTMLInputElement).checked;
-      }
-
-      this.handleFieldChange(field.id, fieldValue);
-    };
-
-    const label = (field.metadata?.label as string) || field.id;
-
-    return html`
-      <div class="field ${readonly ? 'field-readonly' : ''}" style="${isHidden ? 'display: none;' : ''}">
-        <label class="${isRequired ? 'required' : ''}">${label}</label>
-        ${readonly ? this.renderFieldView(field, value) : this.renderFieldInput(field, value, handleInput)}
-        ${error ? html`<div class="field-error">${error}</div>` : ''}
-      </div>
-    `;
-  }
-
-  /**
-   * Render a field in read-only mode using the view plugin.
-   */
-  private renderFieldView(field: PostField, value: unknown) {
-    if (field.uiPlugin) {
-      const plugin = pluginRegistry.get(field.uiPlugin);
-      if (plugin?.viewTagName) {
-        const tag = unsafeStatic(plugin.viewTagName);
-        return staticHtml`<${tag} .value=${value} .field=${field}></${tag}>`;
-      }
-    }
-    return html`<span class="readonly-value">${String(value)}</span>`;
-  }
-
-  /**
-   * Render the appropriate input element for a field
-   * Uses plugin system if uiPlugin is specified
-   */
-  private renderFieldInput(field: PostField, value: unknown, handleInput: (e: Event) => void) {
-    // Try to use registered plugin web component
-    if (field.uiPlugin) {
-      const plugin = pluginRegistry.get(field.uiPlugin);
-      if (plugin?.inputTagName) {
-        const tag = unsafeStatic(plugin.inputTagName);
-        return staticHtml`<${tag}
-          .value=${value}
-          .field=${field}
-          @np-value-changed=${(e: CustomEvent) => {
-            this.handleFieldChange(field.id, e.detail.value);
-          }}
-        ></${tag}>`;
-      }
-    }
-
-    // Fallback to basic inputs
-    switch (field.type) {
-      case 'string':
-        if (field.uiPlugin === 'textarea' || field.uiPlugin === 'markdown') {
-          return html`<textarea
-            @input=${handleInput}
-            .value=${String(value)}
-          ></textarea>`;
-        }
-        return html`<input
-          type="text"
-          @input=${handleInput}
-          .value=${String(value)}
-        />`;
-
-      case 'number':
-        return html`<input
-          type="number"
-          @input=${handleInput}
-          .value=${String(value)}
-        />`;
-
-      case 'boolean':
-        return html`<input
-          type="checkbox"
-          @change=${handleInput}
-          .checked=${Boolean(value)}
-        />`;
-
-      case 'enum':
-        return html`
-          <select @change=${handleInput}>
-            <option value="">Select...</option>
-            ${field.options?.map(
-              (opt) =>
-                html`<option value=${opt} ?selected=${value === opt}>
-                  ${opt}
-                </option>`
-            )}
-          </select>
-        `;
-
-      default:
-        return html`<input
-          type="text"
-          @input=${handleInput}
-          .value=${String(value)}
-        />`;
-    }
-  }
-
   private updateReplyTarget(
     field: 'replyToEventId' | 'replyToPubkey' | 'rootEventId' | 'rootPubkey',
     value: string
@@ -521,13 +413,27 @@ export class NostrPostComposer extends NostrPostElement {
                 })
           }
           ${manifest.fields.map((field) => {
-            // Skip completely excluded fields (those without prefill)
             if (this.isFieldExcluded(field) && !this.isExcludedButPrefilled(field)) {
               return '';
             }
-            // Render excluded-but-prefilled fields as hidden
             const isHidden = this.isExcludedButPrefilled(field);
-            return this.renderField(field, isHidden);
+            const ctx: FieldRenderContext = {
+              formData: this._formData,
+              errors: this.errors,
+              expandedFields: this._expandedFields,
+              isReadonly: (f) => this.isFieldReadonly(f),
+              onFieldChange: (id, val) => this.handleFieldChange(id, val),
+              onToggleExpanded: (fieldId) => {
+                const next = new Set(this._expandedFields);
+                if (this._expandedFields.has(fieldId)) next.delete(fieldId);
+                else next.add(fieldId);
+                this._expandedFields = next;
+              },
+            };
+            if (!isHidden && (field.metadata as Record<string, unknown>)?.expandable) {
+              return renderExpandableField(field, ctx);
+            }
+            return renderField(field, isHidden, ctx);
           })}
 
           <div class="composer-actions">
@@ -542,11 +448,5 @@ export class NostrPostComposer extends NostrPostElement {
         </form>
       </div>
     `;
-  }
-}
-
-declare global {
-  interface HTMLElementTagNameMap {
-    'nostr-post-composer': NostrPostComposer;
   }
 }
