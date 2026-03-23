@@ -1,3 +1,9 @@
+🚧 **ALPHA - API WILL CHANGE** 🚧
+
+This project is in active development. Expect breaking changes to the API, manifest format, and plugin system before v1.0.
+
+---
+
 # nostr-post
 
 > An easy-to-use library for showing and creating Nostr posts on any web page, with a deeper plugin + manifest system for complex structured content.
