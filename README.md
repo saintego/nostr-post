@@ -288,22 +288,26 @@ Built-in plugin loading:
 - You only need manual plugin imports for custom or external plugin packages.
 
 Default behavior when no `manifest` is provided:
+
 - `nostr-post-composer` uses `STANDARD_KIND1_POST_MANIFEST`
 - `nostr-post-view` uses `STANDARD_KIND1_POST_MANIFEST`
 
 This means text, media (`r` tags), and hashtags (`t` tags) render out of the box for standard kind 1 posts.
 
 `<nostr-post-composer>` extended reply context API:
+
 - `reply-to-event-id`, `reply-to-pubkey`, `root-event-id`, `root-pubkey`
 - `show-reply-target` to show current reply target
 - `editable-reply-target` to allow editing reply target directly in the composer
 
 `<nostr-post-view>` metadata visibility defaults:
+
 - Technical metadata is hidden by default (`show-kind=false`, `show-tags=false`)
 - Enable manifest/debug mode with `show-kind` and/or `show-tags`
 - Author name/avatar still render by default when profile metadata is available
 
 `<nostr-post-feed>` interaction API:
+
 - `comments-enabled` (default `true`)
 - `reactions-enabled` (default `true`)
 - `commentManifest` (defaults to standard kind 1 manifest)
@@ -333,6 +337,7 @@ function App() {
 ```
 
 `@nostr-post/react` wrappers expose the same interaction capabilities as web components:
+
 - `NostrPostFeed`: `commentsEnabled`, `reactionsEnabled`, `commentManifest`, `reactionOptions`
 - `NostrPostView`: `showKind`, `showTags` (technical metadata off by default in view)
 - `NostrPostComposer`: reply-target properties via web-component attributes/properties
