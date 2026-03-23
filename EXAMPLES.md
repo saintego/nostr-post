@@ -310,7 +310,7 @@ Built-in plugins are lazy-loaded when a manifest uses them, so manifests using `
 ```html
 <nostr-post-feed
   authors='["your-pubkey-hex"]'
-  kinds='[1]'
+  kinds="[1]"
   limit="20"
   comments-enabled
   reactions-enabled
@@ -318,6 +318,7 @@ Built-in plugins are lazy-loaded when a manifest uses them, so manifests using `
 ```
 
 Notes:
+
 - Comments default to `STANDARD_KIND1_POST_MANIFEST` unless `commentManifest` is provided.
 - Reaction chips show who reacted when kind 0 profile metadata is available.
 
