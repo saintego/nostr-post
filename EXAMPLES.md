@@ -202,7 +202,7 @@ const articleManifest: NostrPostManifest = {
 
 The `@nostr-post/web` package provides framework-independent Web Components.
 
-Built-in plugins are lazy-loaded when a manifest uses them, so manifests using `media`, `hashtag`, `stars`, `geo`, `venue`, `markdown`, or `list` work without separate plugin imports and stay SSR-safe.
+Built-in plugins are lazy-loaded when a manifest uses them, so manifests using `media`, `hashtag`, `reference`, `stars`, `geo`, `venue`, `markdown`, or `list` work without separate plugin imports and stay SSR-safe.
 
 ### Example 1: Basic Composer in HTML
 

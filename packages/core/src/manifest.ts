@@ -175,6 +175,27 @@ const validateFieldRelationships = (
     fieldIds.add(field.id);
   }
 
+  for (const field of manifest.fields || []) {
+    if (!field.attachTo) continue;
+
+    if (field.attachTo === field.id) {
+      errors.push({
+        field: `fields.${field.id}.attachTo`,
+        message: `Field ${field.id} cannot attach to itself`,
+        code: 'INVALID_ATTACH_TARGET',
+      });
+      continue;
+    }
+
+    if (!fieldIds.has(field.attachTo)) {
+      errors.push({
+        field: `fields.${field.id}.attachTo`,
+        message: `Field ${field.id} attaches to missing field ${field.attachTo}`,
+        code: 'UNKNOWN_ATTACH_TARGET',
+      });
+    }
+  }
+
   // Verify all requiredKinds are actually used in field mappings
   const usedKinds = new Set(manifest.fields?.map((f) => f.mapTo.kind) || []);
   for (const kind of manifest.requiredKinds || []) {

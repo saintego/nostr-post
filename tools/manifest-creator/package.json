@@ -18,6 +18,7 @@
     "@nostr-post/plugin-markdown": "workspace:*",
     "@nostr-post/plugin-hashtag": "workspace:*",
     "@nostr-post/plugin-media": "workspace:*",
+    "@nostr-post/plugin-reference": "workspace:*",
     "@nostr-post/plugin-stars": "workspace:*",
     "@nostr-post/plugin-venue": "workspace:*",
     "@nostr-post/plugins": "workspace:*",

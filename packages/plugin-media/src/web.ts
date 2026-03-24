@@ -27,6 +27,36 @@ pluginRegistry.register({
   viewTagName: 'np-media-view',
   handleTextareaPaste: handleMediaPaste,
   handleTextareaDrop: handleMediaDrop,
+  getFieldActions: (field) => [
+    {
+      id: 'media-upload',
+      icon: '🖼️',
+      label: 'Add media',
+      onClick: ({ onUpdateField }) => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept =
+          (field.metadata?.accept as string[] | undefined)?.join(',') ?? 'image/*,video/*';
+        input.multiple = true;
+        input.onchange = async () => {
+          const files = Array.from(input.files ?? []);
+          if (!files.length) return;
+          const fakeClipboard = new ClipboardEvent('paste', {
+            clipboardData: new DataTransfer(),
+          });
+          // Use the same upload path as paste handler
+          for (const file of files) {
+            fakeClipboard.clipboardData?.items.add(file);
+          }
+          await handleMediaPaste(fakeClipboard, field, {
+            formData: {},
+            onUpdateField,
+          });
+        };
+        input.click();
+      },
+    },
+  ],
 });
 
 // Re-export components for direct usage
@@ -36,4 +66,10 @@ export { mediaPlugin } from './core';
 
 // Re-export upload utilities so consumers (e.g. the composer's paste/drop handler)
 // can reuse the shared NIP-98 auth + upload logic without duplicating it.
-export { uploadToNostrBuild, createNip98AuthToken, NOSTR_BUILD_UPLOAD } from './web/upload';
+export {
+  uploadToNostrBuild,
+  createNip98AuthToken,
+  NOSTR_BUILD_UPLOAD,
+  handleMediaPaste,
+  handleMediaDrop,
+} from './web/upload';

@@ -218,6 +218,66 @@ describe('validateManifest', () => {
     }
   });
 
+  it('should reject attachTo when target field does not exist', () => {
+    const manifest: NostrPostManifest = {
+      id: 'test-manifest',
+      version: '1.0.0',
+      requiredKinds: [1],
+      fields: [
+        {
+          id: 'title',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+          required: true,
+        },
+        {
+          id: 'refs',
+          type: 'string',
+          uiPlugin: 'reference',
+          attachTo: 'body',
+          mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        },
+      ],
+    };
+
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.some((e) => e.code === 'UNKNOWN_ATTACH_TARGET')).toBe(true);
+    }
+  });
+
+  it('should reject attachTo when a field attaches to itself', () => {
+    const manifest: NostrPostManifest = {
+      id: 'test-manifest',
+      version: '1.0.0',
+      requiredKinds: [1],
+      fields: [
+        {
+          id: 'body',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+          required: true,
+        },
+        {
+          id: 'tags',
+          type: 'string',
+          uiPlugin: 'hashtag',
+          attachTo: 'tags',
+          mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        },
+      ],
+    };
+
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.some((e) => e.code === 'INVALID_ATTACH_TARGET')).toBe(true);
+    }
+  });
+
   it('should detect duplicate field IDs', () => {
     const manifest: NostrPostManifest = {
       id: 'test',

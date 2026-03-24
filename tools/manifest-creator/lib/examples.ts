@@ -10,50 +10,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
     ),
   },
 
-  review: {
-    id: 'restaurant-review-v1',
-    version: '1.0.0',
-    requiredKinds: [1],
-    fields: [
-      {
-        id: 'reviewText',
-        type: 'string',
-        uiPlugin: 'textarea',
-        mapTo: { kind: 1, target: 'content' },
-        required: true,
-        metadata: {
-          label: 'Review',
-          placeholder: 'Share your experience...',
-        },
-      },
-      {
-        id: 'rating',
-        type: 'number',
-        uiPlugin: 'stars',
-        mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
-        required: true,
-        metadata: {
-          label: 'Rating',
-        },
-      },
-      {
-        id: 'venueName',
-        type: 'string',
-        uiPlugin: 'text',
-        mapTo: { kind: 1, target: 'tag', tagName: 'venue' },
-        required: true,
-        metadata: {
-          label: 'Venue Name',
-          placeholder: 'Restaurant or cafe name',
-        },
-      },
-    ],
-    metadata: {
-      name: 'Restaurant Review',
-      description: 'Structured restaurant reviews with ratings',
-    },
-  },
-
   'geo-review': {
     id: 'geo-review-v1',
     version: '1.0.0',
@@ -108,6 +64,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         id: 'tags',
         type: 'string',
         uiPlugin: 'hashtag',
+        attachTo: 'review',
         mapTo: { kind: 1, target: 'tag', tagName: 't' },
         metadata: {
           label: 'Tags',
@@ -188,6 +145,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         id: 'tags',
         type: 'string',
         uiPlugin: 'hashtag',
+        attachTo: 'review',
         mapTo: { kind: 1, target: 'tag', tagName: 't' },
         metadata: {
           label: 'Tags',
@@ -291,49 +249,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
     },
   },
 
-  'photo-post': {
-    id: 'photo-post-v1',
-    version: '1.0.0',
-    requiredKinds: [1],
-    fields: [
-      {
-        id: 'caption',
-        type: 'string',
-        uiPlugin: 'textarea',
-        mapTo: { kind: 1, target: 'content' },
-        metadata: {
-          label: 'Caption',
-          placeholder: 'Describe your photo...',
-        },
-      },
-      {
-        id: 'photo',
-        type: 'string',
-        uiPlugin: 'media',
-        mapTo: { kind: 1, target: 'tag', tagName: 'url' },
-        required: true,
-        metadata: {
-          label: 'Photo',
-          accept: 'image/*',
-        },
-      },
-      {
-        id: 'location',
-        type: 'geo',
-        uiPlugin: 'geo',
-        mapTo: { kind: 1, target: 'tag', tagName: 'g' },
-        metadata: {
-          label: 'Location',
-          precision: 6,
-        },
-      },
-    ],
-    metadata: {
-      name: 'Photo Post',
-      description: 'Share a photo with caption and optional location',
-    },
-  },
-
   'cafe-review': {
     id: 'cafe-review-v1',
     version: '1.0.0',
@@ -387,6 +302,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         id: 'tags',
         type: 'string',
         uiPlugin: 'hashtag',
+        attachTo: 'review',
         mapTo: { kind: 1, target: 'tag', tagName: 't' },
         metadata: {
           label: 'Tags',

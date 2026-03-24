@@ -10,4 +10,5 @@ export {
   toArray,
   isImageUrl,
   isVideoUrl,
+  extractMediaUrls,
 } from './core';

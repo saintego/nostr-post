@@ -395,6 +395,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
               key={field.id}
               field={field}
               kinds={manifest.requiredKinds}
+              fieldIds={manifest.fields.map((candidate) => candidate.id)}
               onChange={(f) => updateField(index, f)}
               onDelete={() => deleteField(index)}
             />

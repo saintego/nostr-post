@@ -5,9 +5,9 @@
  * in its own file, separate from lifecycle, state, and event publishing.
  */
 
-import type { PostField } from '@nostr-post/core/types';
+import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import type { NostrUIPlugin } from '@nostr-post/plugins/types';
+import type { FieldActionContext, NostrUIPlugin } from '@nostr-post/plugins/types';
 import { type TemplateResult, html, nothing } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 
@@ -19,9 +19,27 @@ export interface FieldRenderContext {
   formData: Record<string, unknown>;
   errors: Record<string, string>;
   expandedFields: Set<string>;
+  /** Fields indexed by the fieldId they attach to. */
+  attachedByTarget: Map<string, PostField[]>;
+  /** Full manifest — needed to look up attached fields. */
+  manifest: NostrPostManifest;
   isReadonly: (field: PostField) => boolean;
   onFieldChange: (fieldId: string, value: unknown) => void;
   onToggleExpanded: (fieldId: string) => void;
+}
+
+interface BoundFieldAction {
+  id: string;
+  icon: string;
+  label: string;
+  run: () => void | Promise<void>;
+}
+
+function getPluginIcon(field: PostField): string {
+  if (field.uiPlugin === 'hashtag') return '#';
+  if (field.uiPlugin === 'media') return '🖼️';
+  if (field.uiPlugin === 'reference') return '🔗';
+  return '+';
 }
 
 /**
@@ -106,8 +124,8 @@ export function renderFieldInput(
 }
 
 /**
- * Get textarea event handlers from any registered plugin.
- * Returns a pair of optional handlers that the textarea can wire up.
+ * Get textarea event handlers from all plugins attached to this field.
+ * Collects paste/drop handlers from every attached plugin that registers them.
  */
 function getTextareaEventHandlers(
   field: PostField,
@@ -116,32 +134,133 @@ function getTextareaEventHandlers(
   onPaste?: (e: ClipboardEvent) => void;
   onDrop?: (e: DragEvent) => void;
 } {
-  // Try to find a plugin with handleTextareaPaste/Drop
-  // For now, prioritize the media plugin, but this is generic for any plugin
-  const mediaPlugin = pluginRegistry.get('media') as NostrUIPlugin | undefined;
+  const attached = ctx.attachedByTarget.get(field.id) ?? [];
+  const pasteHandlers: NonNullable<NostrUIPlugin['handleTextareaPaste']>[] = [];
+  const dropHandlers: NonNullable<NostrUIPlugin['handleTextareaDrop']>[] = [];
 
-  if (!mediaPlugin?.handleTextareaPaste && !mediaPlugin?.handleTextareaDrop) {
-    return {};
+  for (const attachedField of attached) {
+    const plugin = pluginRegistry.get(attachedField.uiPlugin) as NostrUIPlugin | undefined;
+    if (plugin?.handleTextareaPaste) pasteHandlers.push(plugin.handleTextareaPaste.bind(plugin));
+    if (plugin?.handleTextareaDrop) dropHandlers.push(plugin.handleTextareaDrop.bind(plugin));
   }
 
+  if (!pasteHandlers.length && !dropHandlers.length) return {};
+
   return {
-    onPaste: (e: ClipboardEvent) => {
-      if (mediaPlugin?.handleTextareaPaste) {
-        void mediaPlugin.handleTextareaPaste(e, field, {
-          formData: ctx.formData,
-          onUpdateField: ctx.onFieldChange,
-        });
-      }
-    },
-    onDrop: (e: DragEvent) => {
-      if (mediaPlugin?.handleTextareaDrop) {
-        void mediaPlugin.handleTextareaDrop(e, field, {
-          formData: ctx.formData,
-          onUpdateField: ctx.onFieldChange,
-        });
-      }
-    },
+    onPaste: pasteHandlers.length
+      ? (e: ClipboardEvent) => {
+          for (const handler of pasteHandlers) {
+            void handler(e, field, {
+              formData: ctx.formData,
+              onUpdateField: ctx.onFieldChange,
+            });
+          }
+        }
+      : undefined,
+    onDrop: dropHandlers.length
+      ? (e: DragEvent) => {
+          for (const handler of dropHandlers) {
+            void handler(e, field, {
+              formData: ctx.formData,
+              onUpdateField: ctx.onFieldChange,
+            });
+          }
+        }
+      : undefined,
   };
+}
+
+/**
+ * Collect FieldActions from all plugins attached to a given field.
+ */
+function getFieldActions(field: PostField, ctx: FieldRenderContext): BoundFieldAction[] {
+  const attached = ctx.attachedByTarget.get(field.id) ?? [];
+  const actions: BoundFieldAction[] = [];
+
+  for (const attachedField of attached) {
+    const plugin = pluginRegistry.get(attachedField.uiPlugin) as NostrUIPlugin | undefined;
+    if (!plugin?.getFieldActions) continue;
+    const fieldActions = plugin.getFieldActions(attachedField);
+    // Wire up onClick context
+    for (const action of fieldActions) {
+      actions.push({
+        id: action.id,
+        icon: action.icon,
+        label: action.label,
+        run: () => {
+          const actionCtx: FieldActionContext = {
+            field: attachedField,
+            targetField: field,
+            formData: ctx.formData,
+            onUpdateField: ctx.onFieldChange,
+          };
+          return action.onClick(actionCtx);
+        },
+      });
+    }
+  }
+
+  return actions;
+}
+
+/** Render the toolbar row of action icons for an attached-plugins field. */
+function renderFieldToolbar(
+  field: PostField,
+  ctx: FieldRenderContext
+): TemplateResult | typeof nothing {
+  const actions = getFieldActions(field, ctx);
+  // Also collect expandable attached fields as toggle buttons
+  const attached = ctx.attachedByTarget.get(field.id) ?? [];
+  const expandableAttached = attached.filter(
+    (f) => (f.metadata as Record<string, unknown>)?.expandable && f.visibility?.edit !== 'hidden'
+  );
+
+  if (!actions.length && !expandableAttached.length) return nothing;
+
+  return html`
+    <div class="field-toolbar">
+      ${actions.map(
+        (action) => html`
+          <button
+            type="button"
+            class="field-action"
+            title=${action.label}
+            aria-label=${action.label}
+            @click=${() => action.run()}
+          >${action.icon}</button>
+        `
+      )}
+      ${expandableAttached.map((attachedField) => {
+        const isExpanded = ctx.expandedFields.has(attachedField.id);
+        const label = (attachedField.metadata?.label as string) || attachedField.id;
+        const icon = getPluginIcon(attachedField);
+        return html`
+          <button
+            type="button"
+            class="field-action ${isExpanded ? 'expanded' : ''}"
+            title=${label}
+            aria-label=${label}
+            @click=${() => ctx.onToggleExpanded(attachedField.id)}
+          >${icon}</button>
+        `;
+      })}
+    </div>
+  `;
+}
+
+function renderAttachedExpandedFields(
+  field: PostField,
+  ctx: FieldRenderContext
+): TemplateResult | typeof nothing {
+  const attached = ctx.attachedByTarget.get(field.id) ?? [];
+  const expanded = attached.filter(
+    (attachedField) =>
+      attachedField.visibility?.edit !== 'hidden' && ctx.expandedFields.has(attachedField.id)
+  );
+
+  if (!expanded.length) return nothing;
+
+  return html`${expanded.map((attachedField) => renderField(attachedField, false, ctx))}`;
 }
 
 /**
@@ -158,13 +277,17 @@ export function renderField(
   const readonly = ctx.isReadonly(field);
   const label = (field.metadata?.label as string) || field.id;
 
+  const toolbar = readonly ? nothing : renderFieldToolbar(field, ctx);
+
   return html`
     <div
       class="field ${readonly ? 'field-readonly' : ''}"
       style="${isHidden ? 'display: none;' : ''}"
     >
       <label class="${isRequired ? 'required' : ''}">${label}</label>
+      ${toolbar}
       ${readonly ? renderFieldView(field, value) : renderFieldInput(field, value, ctx)}
+      ${readonly ? nothing : renderAttachedExpandedFields(field, ctx)}
       ${error ? html`<div class="field-error">${error}</div>` : nothing}
     </div>
   `;
@@ -177,7 +300,7 @@ export function renderField(
 export function renderExpandableField(field: PostField, ctx: FieldRenderContext): TemplateResult {
   const isExpanded = ctx.expandedFields.has(field.id);
   const label = (field.metadata?.label as string) || field.id;
-  const icon = field.uiPlugin === 'hashtag' ? '#' : field.uiPlugin === 'media' ? '📎' : '+';
+  const icon = getPluginIcon(field);
 
   return html`
     <div class="expandable-field">

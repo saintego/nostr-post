@@ -292,6 +292,8 @@ const appendTagValue = (
 ) => {
   const custom = config.tagSerializer?.(value, field);
   const stringValue = custom !== undefined ? custom : serializeTagValue(value);
+  // Skip empty values — plugins can return '' from serializeValue to suppress emission
+  if (!stringValue) return;
   tags.push([tagName, stringValue]);
 };
 
@@ -359,22 +361,6 @@ const appendExtraTags = (
   }
 };
 
-const appendContentHashtags = (kind: number, content: string, tags: NostrTag[]) => {
-  if (!content || kind !== 1) return;
-
-  const hashtagMatches = content.match(/#[\w\u0080-\uffff][\w\u0080-\uffff-]*/g);
-  if (!hashtagMatches) return;
-
-  const existingT = new Set(tags.filter((tag) => tag[0] === 't').map((tag) => tag[1]));
-  for (const match of hashtagMatches) {
-    const tag = match.slice(1).toLowerCase();
-    if (!tag || existingT.has(tag)) continue;
-
-    tags.push(['t', tag]);
-    existingT.add(tag);
-  }
-};
-
 /**
  * Creates an unsigned Nostr event for a specific kind.
  */
@@ -395,7 +381,6 @@ const createEventForKind = (
 
   appendTagMappings(tagFields, formData, config, tags);
   appendExtraTags(tagFields, formData, config.extraTagsFn, tags);
-  appendContentHashtags(kind, content, tags);
 
   if (config.manifestRef) {
     tags.push(['a', config.manifestRef]);

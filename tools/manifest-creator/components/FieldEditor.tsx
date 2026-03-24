@@ -5,6 +5,7 @@ import type { PostField } from '@nostr-post/core/types';
 interface FieldEditorProps {
   field: PostField;
   kinds: number[];
+  fieldIds: string[];
   onChange: (field: PostField) => void;
   onDelete: () => void;
 }
@@ -68,7 +69,7 @@ const styles = {
   },
 } as const;
 
-export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorProps) {
+export function FieldEditor({ field, kinds, fieldIds, onChange, onDelete }: FieldEditorProps) {
   const update = (key: keyof PostField, value: unknown) => {
     onChange({
       ...field,
@@ -174,6 +175,28 @@ export function FieldEditor({ field, kinds, onChange, onDelete }: FieldEditorPro
             <option value="geo">geo</option>
             <option value="venue">venue</option>
             <option value="hashtag">hashtag</option>
+            <option value="reference">reference</option>
+          </select>
+        </div>
+
+        <div style={styles.formGroup}>
+          <label style={styles.label} htmlFor="field-attach-to">
+            Attach To:
+          </label>
+          <select
+            id="field-attach-to"
+            style={styles.select}
+            value={field.attachTo || ''}
+            onChange={(e) => update('attachTo', e.target.value || undefined)}
+          >
+            <option value="">Standalone field</option>
+            {fieldIds
+              .filter((candidateId) => candidateId !== field.id)
+              .map((candidateId) => (
+                <option key={candidateId} value={candidateId}>
+                  {candidateId}
+                </option>
+              ))}
           </select>
         </div>
 

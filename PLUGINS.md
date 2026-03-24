@@ -259,7 +259,36 @@ Then reference it in your manifest:
 }
 ```
 
-The composer and view components will automatically use your plugin's web components for this field.
+### Using `attachTo` for enrichment plugins
+
+If your plugin auto-extracts data from another field (like hashtags from a content field), set `attachTo` on the field to specify the source:
+
+```json
+{
+  "fields": [
+    {
+      "id": "content",
+      "type": "string",
+      "uiPlugin": "textarea",
+      "mapTo": { "kind": 1, "target": "content" }
+    },
+    {
+      "id": "tags",
+      "type": "string",
+      "uiPlugin": "hashtag",
+      "attachTo": "content",
+      "mapTo": { "kind": 1, "target": "tag", "tagName": "t" }
+    }
+  ]
+}
+```
+
+`attachTo` must reference an existing field ID in the same manifest. When set:
+- The plugin's `enrichFormData` reads from that field's value to auto-extract data
+- The plugin's toolbar button (from `getFieldActions`) appears in the target field's composer toolbar
+- The plugin's editor is shown inline under the target field when toggled
+
+The `media`, `hashtag`, and `reference` plugins all use `attachTo` for this behaviour.
 
 ## Overriding a Built-in Plugin
 
@@ -288,9 +317,34 @@ interface NostrUIPlugin {
   serializeValue?(value: unknown): string;
   deserializeValue?(raw: string, field: PostField): unknown;
 
+  // Emit extra Nostr tags beyond the primary mapTo tag (e.g. venue emits geohash + NIP-73 tags)
+  extraTags?(value: unknown, field: PostField): [string, ...string[]][];
+
+  // Reconstruct a rich view value from all event tags (e.g. venue reconstructs from geohash + "i" + "location")
+  resolveFromTags?(tags: string[][], field: PostField): unknown;
+
+  // Pre-coordinate: auto-extract values from other fields (e.g. read content to extract #hashtags or URLs)
+  // Only runs for fields with `attachTo` pointing at a source field that has data
+  enrichFormData?(formData: Record<string, unknown>, field: PostField): Record<string, unknown>;
+
   // Web component tag names (set by /web entrypoint)
   inputTagName?: string; // e.g. 'np-stars-input'
   viewTagName?: string; // e.g. 'np-stars-view'
+
+  // Web-only: toolbar action buttons rendered in the target field's toolbar when attachTo is set
+  getFieldActions?(field: PostField): FieldAction[];
+
+  // Web-only: intercept clipboard paste on textarea fields (e.g. media plugin handles image paste)
+  handleTextareaPaste?(e: ClipboardEvent, field: PostField, ctx: {
+    formData: Record<string, unknown>;
+    onUpdateField: (fieldId: string, value: unknown) => void;
+  }): Promise<void>;
+
+  // Web-only: intercept drag-drop on textarea fields (e.g. media plugin handles file drop)
+  handleTextareaDrop?(e: DragEvent, field: PostField, ctx: {
+    formData: Record<string, unknown>;
+    onUpdateField: (fieldId: string, value: unknown) => void;
+  }): Promise<void>;
 }
 ```
 
@@ -314,10 +368,15 @@ interface NostrUIPlugin {
 
 ## Existing Plugins
 
-| Package                    | ID      | Type     | Description                                                   |
-| -------------------------- | ------- | -------- | ------------------------------------------------------------- |
-| `@nostr-post/plugin-stars` | `stars` | `number` | Interactive star rating (configurable max via `metadata.max`) |
-| `@nostr-post/plugin-geo`   | `geo`   | `geo`    | Map location picker using Leaflet/OpenStreetMap               |
+| Package                          | ID          | Type     | Description                                                                 |
+| -------------------------------- | ----------- | -------- | --------------------------------------------------------------------------- |
+| `@nostr-post/plugin-stars`       | `stars`     | `number` | Interactive star rating (configurable max via `metadata.max`)               |
+| `@nostr-post/plugin-geo`         | `geo`       | `geo`    | Map location picker using Leaflet/OpenStreetMap (NIP-52 geohash)            |
+| `@nostr-post/plugin-venue`       | `venue`     | `geo`    | OSM venue search + NIP-73 identity tags; wraps `plugin-geo`                 |
+| `@nostr-post/plugin-media`       | `media`     | `string` | Multi-file upload with NIP-98 auth; paste/drop on textarea via `attachTo`   |
+| `@nostr-post/plugin-markdown`    | `markdown`  | `string` | Markdown editor with live preview (WYSIWYG mode supported)                  |
+| `@nostr-post/plugin-hashtag`     | `hashtag`   | `string` | Hashtag array input; auto-extracts from target field when `attachTo` is set |
+| `@nostr-post/plugin-reference`   | `reference` | `string` | URL/nostr reference list; auto-extracts from target field when `attachTo` is set |
 
 ## Custom Field Types
 

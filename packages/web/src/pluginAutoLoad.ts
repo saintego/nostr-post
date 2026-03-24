@@ -6,6 +6,7 @@ const builtInPluginLoaders: Record<string, () => Promise<unknown>> = {
   geo: () => import('@nostr-post/plugin-geo/web'),
   venue: () => import('@nostr-post/plugin-venue/web'),
   media: () => import('@nostr-post/plugin-media/web'),
+  reference: () => import('@nostr-post/plugin-reference/web'),
   markdown: () => import('@nostr-post/plugin-markdown/web'),
   hashtag: () => import('@nostr-post/plugin-hashtag/web'),
   list: () => import('@nostr-post/plugin-list/web'),

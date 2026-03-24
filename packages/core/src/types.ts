@@ -60,6 +60,20 @@ export interface PostField {
   defaultValue?: unknown;
   /** Controls field visibility in the composer and viewer. */
   visibility?: FieldVisibility;
+  /**
+   * Manifest field ID that this field attaches to.
+   *
+   * This is a field-to-field relationship inside the manifest, not a Nostr
+   * storage target. The attached field may map to event content, a tag, or a
+   * structured JSON path.
+   *
+   * When set the field does not render its own standalone UI element.
+   * Instead it:
+   *  - Calls enrichFormData using the attached field's value as input.
+   *  - Registers action icons in the target field's toolbar (via getFieldActions).
+   *  - Still runs extraTags / mapTo for final event tag emission.
+   */
+  attachTo?: string;
 }
 
 /**
@@ -216,11 +230,28 @@ export const STANDARD_KIND1_POST_MANIFEST: NostrPostManifest = {
       id: 'media',
       type: 'string',
       uiPlugin: 'media',
+      // Attaches to the content field: adds a media toolbar icon + handles paste/drop there.
+      // Still maps uploaded image/video URLs to r tags on the event.
+      attachTo: 'content',
       mapTo: { kind: 1, target: 'tag', tagName: 'r' },
       metadata: {
-        label: 'Attachments',
-        accept: ['image/*'],
+        label: 'Media',
+        accept: ['image/*', 'video/*'],
         maxFiles: 4,
+        expandable: true,
+      },
+    },
+    {
+      id: 'refs',
+      type: 'string',
+      uiPlugin: 'reference',
+      // Attaches to content field for enrichment and optional manual URL entry.
+      // Extracts all http(s) URLs + nostr identifiers and emits r/p/q/a tags.
+      attachTo: 'content',
+      mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+      visibility: { view: 'hidden' },
+      metadata: {
+        label: 'Links',
         expandable: true,
       },
     },
@@ -228,6 +259,8 @@ export const STANDARD_KIND1_POST_MANIFEST: NostrPostManifest = {
       id: 'tags',
       type: 'string',
       uiPlugin: 'hashtag',
+      // Attaches to content field: toolbar shows # icon, extracts #hashtags on submit.
+      attachTo: 'content',
       mapTo: { kind: 1, target: 'tag', tagName: 't' },
       metadata: {
         label: 'Tags',

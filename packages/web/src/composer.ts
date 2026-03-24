@@ -5,6 +5,7 @@
  */
 
 import { coordinateEvents } from '@nostr-post/core/coordinator';
+import { prepareFormData } from '@nostr-post/core/enrichment';
 import { validateManifest } from '@nostr-post/core/manifest';
 import {
   type EventBundle,
@@ -260,14 +261,11 @@ export class NostrPostComposer extends NostrPostElement {
         return;
       }
 
-      // Let plugins enrich form data before coordination (e.g. hashtag/media auto-extraction)
-      const enrichedData: Record<string, unknown> = { ...(this._formData as NostrFormData) };
-      for (const field of manifest.fields) {
-        if (!field.uiPlugin) continue;
-        const plugin = pluginRegistry.get(field.uiPlugin);
-        if (!plugin?.enrichFormData) continue;
-        Object.assign(enrichedData, plugin.enrichFormData(enrichedData, field));
-      }
+      // Let plugins enrich form data before coordination (e.g. hashtag/media auto-extraction).
+      // Uses the cross-platform prepareFormData pipeline from core/enrichment.
+      const enrichedData = prepareFormData(manifest, this._formData as NostrFormData, (pluginId) =>
+        pluginRegistry.get(pluginId)
+      );
 
       // Coordinate events
       const result = coordinateEvents(manifest, enrichedData as NostrFormData, {
@@ -412,29 +410,50 @@ export class NostrPostComposer extends NostrPostElement {
                   onUpdate: (field, value) => this.updateReplyTarget(field, value),
                 })
           }
-          ${manifest.fields.map((field) => {
-            if (this.isFieldExcluded(field) && !this.isExcludedButPrefilled(field)) {
-              return '';
+          ${(() => {
+            // Build map of fieldId → fields that attach to it (attachTo === fieldId)
+            const attachedByTarget = new Map<string, PostField[]>();
+            for (const field of manifest.fields) {
+              if (!field.attachTo) continue;
+              const attached = attachedByTarget.get(field.attachTo) ?? [];
+              attached.push(field);
+              attachedByTarget.set(field.attachTo, attached);
             }
-            const isHidden = this.isExcludedButPrefilled(field);
-            const ctx: FieldRenderContext = {
-              formData: this._formData,
-              errors: this.errors,
-              expandedFields: this._expandedFields,
-              isReadonly: (f) => this.isFieldReadonly(f),
-              onFieldChange: (id, val) => this.handleFieldChange(id, val),
-              onToggleExpanded: (fieldId) => {
-                const next = new Set(this._expandedFields);
-                if (this._expandedFields.has(fieldId)) next.delete(fieldId);
-                else next.add(fieldId);
-                this._expandedFields = next;
-              },
-            };
-            if (!isHidden && (field.metadata as Record<string, unknown>)?.expandable) {
-              return renderExpandableField(field, ctx);
-            }
-            return renderField(field, isHidden, ctx);
-          })}
+
+            return manifest.fields.map((field) => {
+              // Attached fields render on target toolbars unless explicitly hidden in composer
+              if (field.attachTo && field.visibility?.edit !== 'hidden') {
+                return '';
+              }
+              if (this.isFieldExcluded(field) && !this.isExcludedButPrefilled(field)) {
+                return '';
+              }
+
+              const isHidden =
+                this.isExcludedButPrefilled(field) || field.visibility?.edit === 'hidden';
+
+              const ctx: FieldRenderContext = {
+                formData: this._formData,
+                errors: this.errors,
+                expandedFields: this._expandedFields,
+                attachedByTarget,
+                manifest,
+                isReadonly: (f) => this.isFieldReadonly(f),
+                onFieldChange: (id, val) => this.handleFieldChange(id, val),
+                onToggleExpanded: (fieldId) => {
+                  const next = new Set(this._expandedFields);
+                  if (this._expandedFields.has(fieldId)) next.delete(fieldId);
+                  else next.add(fieldId);
+                  this._expandedFields = next;
+                },
+              };
+
+              if (!isHidden && (field.metadata as Record<string, unknown>)?.expandable) {
+                return renderExpandableField(field, ctx);
+              }
+              return renderField(field, isHidden, ctx);
+            });
+          })()}
 
           <div class="composer-actions">
             <button

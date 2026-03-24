@@ -27,6 +27,41 @@ export interface PostField {
   metadata?: Record<string, unknown>;
   defaultValue?: unknown;
   visibility?: FieldVisibility;
+  /**
+   * Manifest field ID that this field attaches to.
+   *
+   * This is a field-to-field relationship within the manifest, not a Nostr
+   * target such as event content.
+   *
+   * The attached field can be any field ID in the same manifest.
+   * When set, this field does not render as a standalone composer element.
+   */
+  attachTo?: string;
+}
+
+/** Context passed to FieldAction.onClick handlers. */
+export interface FieldActionContext {
+  /** The attached plugin's own field definition. */
+  field: PostField;
+  /** The field this plugin is attached to (e.g. the content textarea). */
+  targetField: PostField;
+  /** Current composer form data. */
+  formData: Record<string, unknown>;
+  /** Callback to update any field value. */
+  onUpdateField: (fieldId: string, value: unknown) => void;
+}
+
+/**
+ * A toolbar action contributed by a plugin that is attached to another field.
+ * Rendered as an icon button in the target field's toolbar row.
+ */
+export interface FieldAction {
+  id: string;
+  /** Emoji or short text used as the button icon. */
+  icon: string;
+  /** Accessible label and tooltip text. */
+  label: string;
+  onClick: (ctx: FieldActionContext) => void | Promise<void>;
 }
 
 export interface ValidationError {
@@ -168,4 +203,14 @@ export interface NostrUIPlugin {
       onUpdateField: (fieldId: string, value: unknown) => void;
     }
   ) => Promise<void>;
+
+  /**
+   * Web-only: Return toolbar action buttons for a field this plugin is attached to.
+   * Called when the target field renders its toolbar and this plugin has `attachTo` set.
+   * Each returned action is rendered as a small icon button in the toolbar.
+   *
+   * @param field - This plugin's own field definition
+   * @returns Array of FieldAction objects to render as icon buttons
+   */
+  getFieldActions?: (field: PostField) => FieldAction[];
 }

@@ -72,7 +72,8 @@ Use it in plain HTML through the CDN bundle, drop in Web Components, use the Rea
 | **plugin-venue**        | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo      |
 | **plugin-media**        | ✅ **Complete** | Multi-file upload with NIP-98 auth to nostr.build       |
 | **plugin-markdown**     | ✅ **Complete** | Markdown editor with live preview                       |
-| **plugin-hashtag**      | ✅ **Complete** | Hashtag array input with auto-extraction from content   |
+| **plugin-hashtag**      | ✅ **Complete** | Hashtag array input with optional auto-extraction via `attachTo` |
+| **plugin-reference**    | ✅ **Complete** | URL/nostr reference list with optional auto-extraction via `attachTo` |
 
 ## � Key Features
 
@@ -113,7 +114,7 @@ const result = coordinateEvents(manifest, formData, { pubkey });
 // returns: { events: [Kind 30023, Kind 30078 (manifest)] }
 ```
 
-### 3. **6 Production Plugins**
+### 3. **7 Production Plugins**
 
 Ready-to-use UI components via Web Components or React:
 
@@ -121,12 +122,13 @@ Ready-to-use UI components via Web Components or React:
 - **plugin-venue** - Business/POI search (Nominatim OSM, NIP-73)
 - **plugin-media** - Photo/video upload (drag-drop, multi-file, NIP-98)
 - **plugin-markdown** - Rich text editor with live preview
-- **plugin-hashtag** - Tag arrays with auto-extraction from content
+- **plugin-hashtag** - Tag arrays with optional auto-extraction via `attachTo`
+- **plugin-reference** - URL/nostr reference list with optional auto-extraction via `attachTo`
 - **plugin-stars** - Customizable rating (1-5 scale)
 
 ### 4. **Field-Level Controls**
 
-Visibility, defaults, prefill, readonly, exclusion:
+Visibility, defaults, prefill, readonly, exclusion, and field attachment:
 
 ```typescript
 {
@@ -137,6 +139,17 @@ Visibility, defaults, prefill, readonly, exclusion:
     view: "hidden"      // Viewers cannot see
   },
   defaultValue: "My notes...",
+}
+
+// attachTo: attach a plugin field to a target field's toolbar
+// — auto-extracts data (hashtags, URLs) from the target field's content
+// — renders the plugin's toggle button in the target field's toolbar
+{
+  id: "tags",
+  type: "string",
+  uiPlugin: "hashtag",
+  attachTo: "content",  // auto-extract #hashtags from 'content', show # button in its toolbar
+  mapTo: { kind: 1, target: "tag", tagName: "t" },
 }
 ```
 

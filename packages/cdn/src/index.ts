@@ -19,6 +19,7 @@ import '@nostr-post/plugin-stars/web';
 import '@nostr-post/plugin-geo/web';
 import '@nostr-post/plugin-venue/web';
 import '@nostr-post/plugin-media/web';
+import '@nostr-post/plugin-reference/web';
 import '@nostr-post/plugin-markdown/web';
 import '@nostr-post/plugin-hashtag/web';
 import '@nostr-post/plugin-list/web';

@@ -21,6 +21,10 @@
     "./nip78": {
       "types": "./dist/nip78.d.ts",
       "import": "./dist/nip78.js"
+    },
+    "./enrichment": {
+      "types": "./dist/enrichment.d.ts",
+      "import": "./dist/enrichment.js"
     }
   },
   "scripts": {

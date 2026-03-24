@@ -187,3 +187,56 @@ describe('hashtagPlugin.deserializeValue', () => {
     expect(result).toEqual(['nostr', 'bitcoin', 'web-3']);
   });
 });
+
+describe('hashtagPlugin.enrichFormData', () => {
+  const enrichFormData = requireMethod(
+    hashtagPlugin.enrichFormData,
+    'hashtagPlugin.enrichFormData'
+  );
+
+  const field: PostField = {
+    id: 'hashtags',
+    type: 'string',
+    uiPlugin: 'hashtag',
+    mapTo: { kind: 1, target: 'tag', tagName: 't' },
+  };
+
+  it('does nothing when no source field is configured', () => {
+    const result = enrichFormData(
+      {
+        body: 'Hello #nostr',
+      },
+      field
+    );
+
+    expect(result).toEqual({});
+  });
+
+  it('extracts from the attached field id', () => {
+    const result = enrichFormData(
+      {
+        body: 'Hello #nostr #bitcoin',
+      },
+      {
+        ...field,
+        attachTo: 'body',
+      }
+    );
+
+    expect(result).toEqual({ hashtags: ['nostr', 'bitcoin'] });
+  });
+
+  it('supports legacy autoExtractFrom metadata', () => {
+    const result = enrichFormData(
+      {
+        body: 'Hello #nostr',
+      },
+      {
+        ...field,
+        metadata: { autoExtractFrom: 'body' },
+      }
+    );
+
+    expect(result).toEqual({ hashtags: ['nostr'] });
+  });
+});

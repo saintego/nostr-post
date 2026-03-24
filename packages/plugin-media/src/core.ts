@@ -22,11 +22,14 @@ export interface MediaPluginConfig {
   /** Show file upload (default: true) */
   allowUpload?: boolean;
   /**
-   * Auto-extract image/video URLs from the content field and merge them in.
-   * Default: true (mirrors hashtag plugin's autoExtract behaviour).
+   * Auto-extract image/video URLs from the attachTo field (or urlAutoExtractFrom).
+   * Default: true
    */
   urlAutoExtract?: boolean;
-  /** Field ID to auto-extract URLs from (defaults to "content") */
+  /**
+   * Field ID to auto-extract media URLs from. Deprecated — prefer PostField.attachTo.
+   * Used only for legacy manifests that have not been updated to use attachTo.
+   */
   urlAutoExtractFrom?: string;
 }
 
@@ -57,6 +60,21 @@ export const toArray = (value: unknown): string[] => {
   return [];
 };
 
+/** Extract image/video URLs from a text string. */
+export const extractMediaUrls = (text: string): string[] => {
+  if (!text) return [];
+  const matches = text.match(/https?:\/\/[^\s<>"']+/gi) ?? [];
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of matches) {
+    if (seen.has(raw) || (!isImageUrl(raw) && !isVideoUrl(raw))) continue;
+    if (!isUrl(raw)) continue;
+    seen.add(raw);
+    urls.push(raw);
+  }
+  return urls;
+};
+
 export const mediaPlugin: NostrUIPlugin = {
   id: 'media',
   type: 'string',
@@ -67,18 +85,21 @@ export const mediaPlugin: NostrUIPlugin = {
   ): Record<string, unknown> => {
     const config = (field.metadata as MediaPluginConfig) ?? {};
     if (config.urlAutoExtract === false) return {};
-    const contentField = config.urlAutoExtractFrom ?? 'content';
+    // Resolve source field by manifest field ID. No implicit default.
+    const sourceField = field.attachTo ?? config.urlAutoExtractFrom;
+    if (!sourceField) return {};
     const content =
-      typeof formData[contentField] === 'string' ? (formData[contentField] as string) : '';
+      typeof formData[sourceField] === 'string' ? (formData[sourceField] as string) : '';
     if (!content) return {};
-    const mediaRe =
-      /https?:\/\/\S+\.(?:jpe?g|png|gif|webp|avif|svg|mp4|webm|mov|ogg)(?:[?#]\S*)?/gi;
-    const urls = content.match(mediaRe) ?? [];
+
+    const urls = extractMediaUrls(content);
     if (!urls.length) return {};
+
     const existing = toArray(formData[field.id]);
     const existingSet = new Set(existing);
     const newUrls = urls.filter((u) => !existingSet.has(u));
     if (!newUrls.length) return {};
+
     return { [field.id]: [...existing, ...newUrls] };
   },
 

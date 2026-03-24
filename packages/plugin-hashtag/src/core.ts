@@ -16,11 +16,11 @@ export interface HashtagPluginConfig {
   /** Suggested/popular tags to offer in autocomplete */
   suggestions?: string[];
   /**
-   * When true, also scan a named content field for #hashtags
+   * When true, also scan a named field for #hashtags
    * and merge them in. Default: true
    */
   autoExtract?: boolean;
-  /** Field ID to auto-extract from (defaults to "content") */
+  /** Field ID to auto-extract from for legacy manifests that do not use attachTo. */
   autoExtractFrom?: string;
 }
 
@@ -49,7 +49,8 @@ export const hashtagPlugin: NostrUIPlugin = {
   ): Record<string, unknown> => {
     const config = (field.metadata as HashtagPluginConfig) ?? {};
     if (config.autoExtract === false) return {};
-    const contentField = config.autoExtractFrom ?? 'content';
+    const contentField = field.attachTo ?? config.autoExtractFrom;
+    if (!contentField) return {};
     const content =
       typeof formData[contentField] === 'string' ? (formData[contentField] as string) : '';
     if (!content) return {};

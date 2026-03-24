@@ -1,7 +1,7 @@
 {
-  "name": "@nostr-post/plugin-media",
+  "name": "@nostr-post/plugin-reference",
   "version": "0.1.0",
-  "description": "Media upload & preview plugin for nostr-post",
+  "description": "Reference/link plugin for nostr-post (r tags + URL auto-extraction)",
   "type": "module",
   "exports": {
     ".": {
@@ -17,19 +17,18 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
-  "keywords": ["nostr", "plugin", "media", "image", "upload"],
+  "keywords": ["nostr", "plugin", "reference", "url", "link"],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@nostr-post/plugins": "workspace:*",
-    "lit": "^3.2.1"
+    "@nostr-post/plugin-media": "workspace:*",
+    "lit": "^3.2.1",
+    "nostr-tools": "^2.7.2"
   },
   "devDependencies": {
-    "typescript": "^5.6.3",
-    "vitest": "^2.0.0"
+    "typescript": "^5.6.3"
   }
 }
