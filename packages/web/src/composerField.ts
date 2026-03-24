@@ -9,6 +9,7 @@ import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import type { FieldActionContext, NostrUIPlugin } from '@nostr-post/plugins/types';
 import { type TemplateResult, html, nothing } from 'lit';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 
 /**
@@ -81,8 +82,31 @@ export function renderFieldInput(
   const handleInput = (e: Event) => {
     const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
     let fieldValue: unknown = target.value;
-    if (field.type === 'number') fieldValue = Number.parseFloat(target.value);
-    else if (field.type === 'boolean') fieldValue = (target as HTMLInputElement).checked;
+    if (field.type === 'number') {
+      const raw = target.value.trim();
+      if (raw.length === 0) {
+        fieldValue = undefined;
+      } else {
+        const parsed = Number.parseFloat(raw);
+        if (Number.isNaN(parsed)) {
+          fieldValue = undefined;
+        } else {
+          const meta = (field.metadata as Record<string, unknown> | undefined) ?? {};
+          const min = typeof meta.min === 'number' ? meta.min : undefined;
+          const max = typeof meta.max === 'number' ? meta.max : undefined;
+          const step = typeof meta.step === 'number' && meta.step > 0 ? meta.step : undefined;
+
+          let next = parsed;
+          if (typeof min === 'number') next = Math.max(min, next);
+          if (typeof max === 'number') next = Math.min(max, next);
+          if (typeof step === 'number' && typeof min === 'number') {
+            next = min + Math.round((next - min) / step) * step;
+            next = Number(next.toFixed(10));
+          }
+          fieldValue = next;
+        }
+      }
+    } else if (field.type === 'boolean') fieldValue = (target as HTMLInputElement).checked;
     ctx.onFieldChange(field.id, fieldValue);
   };
 
@@ -103,7 +127,18 @@ export function renderFieldInput(
       return html`<input type="text" @input=${handleInput} .value=${String(value)} />`;
 
     case 'number':
-      return html`<input type="number" @input=${handleInput} .value=${String(value)} />`;
+      const numberMeta = (field.metadata as Record<string, unknown> | undefined) ?? {};
+      const min = typeof numberMeta.min === 'number' ? String(numberMeta.min) : undefined;
+      const max = typeof numberMeta.max === 'number' ? String(numberMeta.max) : undefined;
+      const step = typeof numberMeta.step === 'number' ? String(numberMeta.step) : undefined;
+      return html`<input
+        type="number"
+        min=${ifDefined(min)}
+        max=${ifDefined(max)}
+        step=${ifDefined(step)}
+        @input=${handleInput}
+        .value=${String(value)}
+      />`;
 
     case 'boolean':
       return html`<input type="checkbox" @change=${handleInput} .checked=${Boolean(value)} />`;

@@ -33,6 +33,7 @@ export const starsPlugin: NostrUIPlugin = {
     const config = (field.metadata as StarsPluginConfig) || {};
     const min = config.min ?? 1;
     const max = config.max ?? 5;
+    const step = config.step && config.step > 0 ? config.step : undefined;
 
     if (value < min || value > max) {
       return {
@@ -43,6 +44,20 @@ export const starsPlugin: NostrUIPlugin = {
           code: 'OUT_OF_RANGE',
         },
       };
+    }
+
+    if (step) {
+      const snapped = min + Math.round((value - min) / step) * step;
+      if (Math.abs(snapped - value) > 1e-8) {
+        return {
+          success: false,
+          error: {
+            field: field.id,
+            message: `Rating must use step ${step}`,
+            code: 'INVALID_VALUE',
+          },
+        };
+      }
     }
 
     return { success: true, data: undefined };
@@ -58,7 +73,7 @@ export const starsPlugin: NostrUIPlugin = {
     const num = typeof value === 'number' ? value : 0;
     const config = (field?.metadata as StarsPluginConfig) || {};
     const max = config.max ?? 5;
-    return `${num}/${max}`;
+    return `${num.toString()}/${max}`;
   },
 
   deserializeValue: (raw: string): unknown => {

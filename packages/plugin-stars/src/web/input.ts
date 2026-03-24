@@ -22,11 +22,12 @@ export class NpStarsInput extends LitElement {
       display: flex;
       align-items: center;
       gap: 0.125rem;
+      flex-wrap: wrap;
     }
 
     .star {
       font-size: 1.75rem;
-      background: none;
+      background: transparent;
       border: none;
       cursor: pointer;
       padding: 0.125rem;
@@ -34,24 +35,48 @@ export class NpStarsInput extends LitElement {
         transform 0.1s,
         color 0.15s;
       line-height: 1;
+      position: relative;
+      width: 1.75rem;
+      height: 1.75rem;
     }
 
     .star:hover {
       transform: scale(1.2);
     }
 
-    .star.active {
-      color: #fbbf24;
+    .star-glyph {
+      position: absolute;
+      inset: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      user-select: none;
     }
 
-    .star.inactive {
+    .star-bg {
       color: #d1d5db;
+    }
+
+    .star-fill {
+      color: #fbbf24;
+      overflow: hidden;
+      white-space: nowrap;
     }
 
     .value-label {
       margin-left: 0.5rem;
       font-size: 0.875rem;
       color: #6b7280;
+    }
+
+    .value-input {
+      margin-left: 0.5rem;
+      width: 4.75rem;
+      font-size: 0.875rem;
+      padding: 0.125rem 0.375rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
     }
   `;
 
@@ -69,29 +94,71 @@ export class NpStarsInput extends LitElement {
     return this.config.max ?? 5;
   }
 
-  private selectStar(rating: number) {
-    this.value = rating;
+  private get min(): number {
+    return this.config.min ?? 1;
+  }
+
+  private get step(): number {
+    const step = this.config.step ?? 1;
+    return step > 0 ? step : 1;
+  }
+
+  private clampAndSnap(raw: number): number {
+    const clamped = Math.min(this.max, Math.max(this.min, raw));
+    const snapped = this.min + Math.round((clamped - this.min) / this.step) * this.step;
+    return Number(snapped.toFixed(10));
+  }
+
+  private emitValue(next: number) {
+    this.value = next;
     this.dispatchEvent(
       new CustomEvent('np-value-changed', {
-        detail: { value: rating },
+        detail: { value: next },
         bubbles: true,
         composed: true,
       })
     );
   }
 
+  private selectStar(event: MouseEvent, starIndex: number) {
+    if (this.step >= 1) {
+      this.emitValue(this.clampAndSnap(starIndex));
+      return;
+    }
+
+    const target = event.currentTarget as HTMLElement;
+    const rect = target.getBoundingClientRect();
+    const x = Math.min(rect.width, Math.max(0, event.clientX - rect.left));
+    const ratio = rect.width > 0 ? x / rect.width : 1;
+    const raw = starIndex - 1 + ratio;
+    this.emitValue(this.clampAndSnap(raw));
+  }
+
+  private onManualInput(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const raw = Number.parseFloat(input.value);
+    if (Number.isNaN(raw)) return;
+    this.emitValue(this.clampAndSnap(raw));
+  }
+
+  private fillPercent(starIndex: number): number {
+    const fill = this.value - (starIndex - 1);
+    return Math.max(0, Math.min(1, fill)) * 100;
+  }
+
   render() {
     const stars = [];
     for (let i = 1; i <= this.max; i++) {
-      const active = i <= this.value;
+      const fill = this.fillPercent(i);
       stars.push(html`
         <button
           type="button"
-          class="star ${active ? 'active' : 'inactive'}"
-          @click=${() => this.selectStar(i)}
+          class="star"
+          @click=${(e: MouseEvent) => this.selectStar(e, i)}
           title="${i} star${i > 1 ? 's' : ''}"
         >
-          ${active ? '★' : '☆'}
+          <span class="star-glyph star-bg">★</span>
+          <span class="star-glyph star-fill" style="width: ${fill}%">★</span>
         </button>
       `);
     }
@@ -99,6 +166,16 @@ export class NpStarsInput extends LitElement {
     return html`
       <div class="stars-row">
         ${stars}
+        <input
+          class="value-input"
+          type="number"
+          min="${this.min}"
+          max="${this.max}"
+          step="${this.step}"
+          .value=${String(this.value || '')}
+          @input=${this.onManualInput}
+          aria-label="Rating value"
+        />
         ${
           this.config.showNumber
             ? html`<span class="value-label">${this.value}/${this.max}</span>`

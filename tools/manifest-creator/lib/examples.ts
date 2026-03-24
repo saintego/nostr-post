@@ -54,6 +54,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         type: 'string',
         uiPlugin: 'media',
         mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        attachTo: 'review',
         metadata: {
           label: 'Photos',
           accept: ['image/*'],
@@ -123,6 +124,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         type: 'string',
         uiPlugin: 'media',
         mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        attachTo: 'review',
         metadata: {
           label: 'Photos',
           accept: ['image/*'],
@@ -380,6 +382,333 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
       description:
         'Multi-event cafe review: main review as Kind 1 (visible everywhere) + detailed aspect ratings in NIP-78 (wifi, laptop-friendly, coffee, food, vibe) for advanced discovery',
       tags: ['cafe', 'review', 'coworking'],
+    },
+  },
+
+  'movie-review': {
+    id: 'movie-review-v1',
+    version: '1.0.0',
+    requiredKinds: [1],
+    fields: [
+      {
+        id: 'review',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 1, target: 'content' },
+        required: true,
+        metadata: {
+          label: 'Review',
+          placeholder: 'Share your thoughts about this movie...',
+        },
+      },
+      {
+        id: 'rating',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
+        required: true,
+        metadata: {
+          label: 'Rating',
+          max: 10,
+        },
+      },
+      {
+        id: 'title',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'title' },
+        required: true,
+        metadata: {
+          label: 'Movie Title',
+          placeholder: 'e.g. The Matrix',
+        },
+      },
+      {
+        id: 'isan',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'i' },
+        metadata: {
+          label: 'ISAN',
+          placeholder: 'International Standard Audiovisual Number',
+        },
+      },
+      {
+        id: 'genres',
+        type: 'string',
+        uiPlugin: 'hashtag',
+        attachTo: 'review',
+        mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        metadata: {
+          label: 'Genres',
+          suggestions: [
+            'drama',
+            'action',
+            'sci-fi',
+            'comedy',
+            'thriller',
+            'romance',
+            'horror',
+            'documentary',
+          ],
+        },
+      },
+      {
+        id: 'media',
+        type: 'string',
+        uiPlugin: 'media',
+        attachTo: 'review',
+        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        metadata: {
+          label: 'Media',
+          accept: ['image/*'],
+          maxFiles: 2,
+          expandable: true,
+        },
+      },
+    ],
+    metadata: {
+      name: 'Movie Review (IMDb-style)',
+      description:
+        'Movie review with 10-star rating, ISAN identifier (NIP-73), genres, and optional poster/screenshot',
+      tags: ['movie', 'review', 'film', 'cinema'],
+    },
+  },
+
+  'product-review': {
+    id: 'product-review-v1',
+    version: '1.0.0',
+    requiredKinds: [1],
+    fields: [
+      {
+        id: 'review',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 1, target: 'content' },
+        required: true,
+        metadata: {
+          label: 'Review',
+          placeholder: 'Share your experience with this product...',
+        },
+      },
+      {
+        id: 'rating',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
+        required: true,
+        metadata: {
+          label: 'Rating',
+          max: 5,
+        },
+      },
+      {
+        id: 'productName',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'title' },
+        required: true,
+        metadata: {
+          label: 'Product Name',
+          placeholder: 'e.g. Sony WH-1000XM5 Headphones',
+        },
+      },
+      {
+        id: 'gtin',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'i' },
+        metadata: {
+          label: 'GTIN (NIP-73 i tag)',
+          placeholder: 'gtin:09506000134352',
+        },
+      },
+      {
+        id: 'ean',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'i' },
+        metadata: {
+          label: 'EAN (NIP-73 i tag)',
+          placeholder: 'ean:4006381333931',
+        },
+      },
+      {
+        id: 'upc',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'i' },
+        metadata: {
+          label: 'UPC (NIP-73 i tag)',
+          placeholder: 'upc:036000291452',
+        },
+      },
+      {
+        id: 'asin',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'i' },
+        metadata: {
+          label: 'ASIN (NIP-73 i tag)',
+          placeholder: 'asin:B08N5WRWNW',
+        },
+      },
+      {
+        id: 'media',
+        type: 'string',
+        uiPlugin: 'media',
+        attachTo: 'review',
+        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        metadata: {
+          label: 'Product Photos',
+          accept: ['image/*'],
+          maxFiles: 6,
+          expandable: true,
+        },
+      },
+      {
+        id: 'tags',
+        type: 'string',
+        uiPlugin: 'hashtag',
+        attachTo: 'review',
+        mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        metadata: {
+          label: 'Tags',
+          suggestions: ['quality', 'value', 'durable', 'eco-friendly', 'shipping', 'packaging'],
+        },
+      },
+    ],
+    metadata: {
+      name: 'Product Review (Amazon-style)',
+      description:
+        'Product review with 5-star rating and multiple NIP-73 product identifiers (gtin/ean/upc/asin) as i tags',
+      tags: ['product', 'review', 'shopping', 'retail'],
+    },
+  },
+
+  'beer-review': {
+    id: 'beer-review-v1',
+    version: '1.0.0',
+    requiredKinds: [1],
+    fields: [
+      {
+        id: 'review',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 1, target: 'content' },
+        required: true,
+        metadata: {
+          label: 'Tasting Notes',
+          placeholder: 'Describe the aroma, taste, mouthfeel, and overall impression...',
+        },
+      },
+      {
+        id: 'rating',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
+        required: true,
+        metadata: {
+          label: 'Rating',
+          max: 5,
+          min: 0.25,
+          step: 0.25,
+          showNumber: true,
+        },
+      },
+      {
+        id: 'name',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'name' },
+        required: true,
+        metadata: {
+          label: 'Beer Name',
+          placeholder: 'e.g. Hoppy IPA',
+        },
+      },
+      {
+        id: 'brewery',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'brewery' },
+        required: true,
+        metadata: {
+          label: 'Brewery',
+          placeholder: 'Brewery or distributor name',
+        },
+      },
+      {
+        id: 'style',
+        type: 'string',
+        uiPlugin: 'hashtag',
+        mapTo: { kind: 1, target: 'tag', tagName: 'style' },
+        metadata: {
+          label: 'Beer Style',
+          suggestions: [
+            'IPA',
+            'Lager',
+            'Pilsner',
+            'Stout',
+            'Porter',
+            'Sour',
+            'Wheat',
+            'Amber',
+            'Pale Ale',
+            'Saison',
+          ],
+        },
+      },
+      {
+        id: 'abv',
+        type: 'number',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'abv' },
+        metadata: {
+          step: 0.1,
+          label: 'ABV %',
+          placeholder: 'Alcohol by volume',
+        },
+      },
+      {
+        id: 'tags',
+        type: 'string',
+        uiPlugin: 'hashtag',
+        attachTo: 'review',
+        mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        metadata: {
+          label: 'Tags',
+          suggestions: [
+            'hoppy',
+            'crisp',
+            'smooth',
+            'bitter',
+            'sweet',
+            'fruity',
+            'crafted',
+            'seasonal',
+          ],
+        },
+      },
+      {
+        id: 'media',
+        type: 'string',
+        uiPlugin: 'media',
+        attachTo: 'review',
+        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        metadata: {
+          label: 'Beer Photo',
+          accept: ['image/*'],
+          maxFiles: 2,
+          expandable: true,
+        },
+      },
+    ],
+    metadata: {
+      name: 'Beer Review (Untappd-style)',
+      description:
+        'Beer tasting review with 5-star rating, brewery, style, ABV, tasting notes, and beer photo',
+      tags: ['beer', 'review', 'craft', 'tasting'],
     },
   },
 };

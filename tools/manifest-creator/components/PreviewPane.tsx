@@ -1,6 +1,7 @@
 'use client';
 
 import { coordinateEvents } from '@nostr-post/core/coordinator';
+import { prepareFormData } from '@nostr-post/core/enrichment';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { NostrPostFeed, type NostrPostFeedRef, type SignedEvent } from '@nostr-post/react';
@@ -30,6 +31,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
   const [currentPubkey, setCurrentPubkey] = useState<string>('');
   const [liveEventJson, setLiveEventJson] = useState<string>('');
+  const [previewValidationErrors, setPreviewValidationErrors] = useState<string[]>([]);
   const composerRef = useRef<NostrPostComposerElement>(null);
   const feedRef = useRef<NostrPostFeedRef>(null);
 
@@ -91,9 +93,22 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
 
     const handleFormChange = (e: Event) => {
       const { formData: data } = (e as CustomEvent).detail;
-      if (!data || Object.keys(data).length === 0) return;
+      if (!data || Object.keys(data).length === 0) {
+        setLiveEventJson('');
+        setPreviewValidationErrors([]);
+        return;
+      }
 
-      const result = coordinateEvents(manifest, data, {
+      const enrichedData = prepareFormData(manifest, data, (pluginId) =>
+        pluginRegistry.get(pluginId)
+      );
+
+      const previewManifest: NostrPostManifest = {
+        ...manifest,
+        fields: manifest.fields.map((field) => ({ ...field, required: false })),
+      };
+
+      const result = coordinateEvents(previewManifest, enrichedData, {
         pubkey: '<pubkey>',
         createdAt: Math.floor(Date.now() / 1000),
         manifestRef,
@@ -101,11 +116,23 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
           const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
           return plugin?.serializeValue?.(value, field);
         },
+        extraTagsFn: (value, field) => {
+          const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
+          return plugin?.extraTags?.(value, field);
+        },
       });
+
       if (result.success) {
         const previewEvents = result.data.events as SignedEvent[];
         setLiveEventJson(JSON.stringify(previewEvents, null, 2));
+        setPreviewValidationErrors([]);
+        return;
       }
+
+      const uniqueErrors = Array.from(
+        new Set(result.error.map((error) => `${error.field}: ${error.message}`))
+      );
+      setPreviewValidationErrors(uniqueErrors);
     };
 
     composer.addEventListener('nostr-post-form-change', handleFormChange);
@@ -191,9 +218,29 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
           />
         </div>
 
+        {!liveEventJson && previewValidationErrors.length > 0 && (
+          <div
+            style={{
+              marginTop: '2rem',
+              marginBottom: '2rem',
+              padding: '1rem',
+              background: '#fff7ed',
+              borderRadius: '0.5rem',
+              border: '1px solid #fdba74',
+            }}
+          >
+            <p style={styles.eventPreviewLabel}>Preview pending. Fix these fields:</p>
+            <ul style={{ margin: '0.5rem 0 0 1.25rem', color: '#9a3412' }}>
+              {previewValidationErrors.slice(0, 6).map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <div style={styles.divider}>
           <div style={styles.headerRow}>
-            <h3 style={styles.feedHeader}>Feed</h3>
+            <h3 style={styles.feedHeader}>Feed (Published events)</h3>
           </div>
           {!currentPubkey ? (
             <div style={styles.emptyState}>
@@ -249,8 +296,16 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
               <pre style={styles.codeBlock}>{liveEventJson}</pre>
             ) : (
               <div style={styles.emptyState}>
-                <p>Start typing in the composer to see a live event preview</p>
+                <p>
+                  {previewValidationErrors.length > 0
+                    ? 'Preview is waiting for valid values in required fields'
+                    : 'Start typing in the composer to see a live event preview'}
+                </p>
               </div>
+            )}
+
+            {!liveEventJson && previewValidationErrors.length > 0 && (
+              <pre style={styles.codeBlock}>{JSON.stringify(previewValidationErrors, null, 2)}</pre>
             )}
           </div>
 
