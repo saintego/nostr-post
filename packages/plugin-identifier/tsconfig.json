@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@nostr-post/plugins/registry": ["../plugins/dist/registry.d.ts"],
+      "@nostr-post/plugins/types": ["../plugins/dist/types.d.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

@@ -195,6 +195,16 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  packages/plugin-identifier:
+    dependencies:
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+
   packages/plugin-list:
     dependencies:
       '@nostr-post/plugins':
@@ -353,6 +363,9 @@ importers:
       '@nostr-post/plugin-hashtag':
         specifier: workspace:*
         version: link:../plugin-hashtag
+      '@nostr-post/plugin-identifier':
+        specifier: workspace:*
+        version: link:../plugin-identifier
       '@nostr-post/plugin-list':
         specifier: workspace:*
         version: link:../plugin-list
@@ -396,6 +409,9 @@ importers:
       '@nostr-post/plugin-hashtag':
         specifier: workspace:*
         version: link:../../packages/plugin-hashtag
+      '@nostr-post/plugin-identifier':
+        specifier: workspace:*
+        version: link:../../packages/plugin-identifier
       '@nostr-post/plugin-markdown':
         specifier: workspace:*
         version: link:../../packages/plugin-markdown

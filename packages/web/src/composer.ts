@@ -141,8 +141,17 @@ export class NostrPostComposer extends NostrPostElement {
    */
   updated(changed: Map<string, unknown>) {
     super.updated(changed);
-    if (changed.has('manifest') || changed.has('prefill')) {
-      this.initDefaults();
+    const manifestChanged = changed.has('manifest');
+    const prefillChanged = changed.has('prefill');
+
+    if (manifestChanged || prefillChanged) {
+      this.initDefaults({ resetUnknownFields: manifestChanged });
+      if (manifestChanged) {
+        this.errors = {};
+        this.successMessage = '';
+        this._expandedFields = new Set();
+        this.dispatchFormChange();
+      }
       void this.ensureManifestPlugins();
     }
   }
@@ -157,7 +166,7 @@ export class NostrPostComposer extends NostrPostElement {
     this.requestUpdate();
   }
 
-  private initDefaults() {
+  private initDefaults({ resetUnknownFields = false }: { resetUnknownFields?: boolean } = {}) {
     const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
     const defaults: Record<string, unknown> = {};
     for (const field of manifest.fields) {
@@ -169,8 +178,26 @@ export class NostrPostComposer extends NostrPostElement {
     if (this.prefill) {
       Object.assign(defaults, this.prefill);
     }
+
+    const allowedIds = new Set(manifest.fields.map((field) => field.id));
+    const currentFormData = resetUnknownFields
+      ? Object.fromEntries(
+          Object.entries(this._formData).filter(([fieldId]) => allowedIds.has(fieldId))
+        )
+      : this._formData;
+
     // Merge with existing form data (user edits take priority)
-    this._formData = { ...defaults, ...this._formData };
+    this._formData = { ...defaults, ...currentFormData };
+  }
+
+  private dispatchFormChange(): void {
+    this.dispatchEvent(
+      new CustomEvent('nostr-post-form-change', {
+        detail: { formData: this._formData },
+        bubbles: true,
+        composed: true,
+      })
+    );
   }
 
   /**
@@ -206,10 +233,13 @@ export class NostrPostComposer extends NostrPostElement {
    * Handle form field changes
    */
   private handleFieldChange(fieldId: string, value: unknown): void {
-    this._formData = {
-      ...this._formData,
-      [fieldId]: value,
-    };
+    const nextFormData = { ...this._formData };
+    if (value === undefined) {
+      delete nextFormData[fieldId];
+    } else {
+      nextFormData[fieldId] = value;
+    }
+    this._formData = nextFormData;
     // Clear field error on change
     if (this.errors[fieldId]) {
       const newErrors = { ...this.errors };
@@ -217,13 +247,7 @@ export class NostrPostComposer extends NostrPostElement {
       this.errors = newErrors;
     }
     // Dispatch event for external consumers (live event preview)
-    this.dispatchEvent(
-      new CustomEvent('nostr-post-form-change', {
-        detail: { formData: this._formData },
-        bubbles: true,
-        composed: true,
-      })
-    );
+    this.dispatchFormChange();
   }
 
   /**

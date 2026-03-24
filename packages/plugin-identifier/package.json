@@ -1,0 +1,31 @@
+{
+  "name": "@nostr-post/plugin-identifier",
+  "version": "0.1.0",
+  "description": "Prefixed identifier plugin for nostr-post (NIP-73 i tags)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["nostr", "plugin", "identifier", "nip-73"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nostr-post/plugins": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

@@ -15,6 +15,7 @@
   "dependencies": {
     "@nostr-post/core": "workspace:*",
     "@nostr-post/plugin-geo": "workspace:*",
+    "@nostr-post/plugin-identifier": "workspace:*",
     "@nostr-post/plugin-markdown": "workspace:*",
     "@nostr-post/plugin-hashtag": "workspace:*",
     "@nostr-post/plugin-media": "workspace:*",

@@ -38,6 +38,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
   // Dynamically import web components and plugins (client-only, avoids SSR issues)
   useEffect(() => {
     import('@nostr-post/web');
+    import('@nostr-post/plugin-identifier/web');
     import('@nostr-post/plugin-stars/web');
     import('@nostr-post/plugin-geo/web');
     import('@nostr-post/plugin-media/web');
@@ -211,6 +212,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
         <div style={styles.composerContainer}>
           <h3 style={styles.feedHeader}>Composer</h3>
           <nostr-post-composer
+            key={manifest.id}
             ref={composerRef}
             auto-publish
             show-reply-target

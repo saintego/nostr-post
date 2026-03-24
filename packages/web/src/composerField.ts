@@ -12,6 +12,41 @@ import { type TemplateResult, html, nothing } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 
+type NumberFieldConfig = {
+  min?: number;
+  max?: number;
+  step?: number;
+};
+
+function getNumberFieldConfig(field: PostField): NumberFieldConfig {
+  const metadata = (field.metadata as Record<string, unknown> | undefined) ?? {};
+  return {
+    min: typeof metadata.min === 'number' ? metadata.min : undefined,
+    max: typeof metadata.max === 'number' ? metadata.max : undefined,
+    step: typeof metadata.step === 'number' && metadata.step > 0 ? metadata.step : undefined,
+  };
+}
+
+function coerceNumberValue(rawValue: string, field: PostField): unknown {
+  const raw = rawValue.trim();
+  if (raw.length === 0) return undefined;
+
+  const parsed = Number.parseFloat(raw);
+  if (Number.isNaN(parsed)) return undefined;
+
+  const { min, max, step } = getNumberFieldConfig(field);
+  let next = parsed;
+
+  if (typeof min === 'number') next = Math.max(min, next);
+  if (typeof max === 'number') next = Math.min(max, next);
+  if (typeof step === 'number' && typeof min === 'number') {
+    next = min + Math.round((next - min) / step) * step;
+    next = Number(next.toFixed(10));
+  }
+
+  return next;
+}
+
 /**
  * Dependencies that the field renderers need from the composer component.
  * Constructed once per `render()` call and threaded through all helpers.
@@ -83,29 +118,7 @@ export function renderFieldInput(
     const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
     let fieldValue: unknown = target.value;
     if (field.type === 'number') {
-      const raw = target.value.trim();
-      if (raw.length === 0) {
-        fieldValue = undefined;
-      } else {
-        const parsed = Number.parseFloat(raw);
-        if (Number.isNaN(parsed)) {
-          fieldValue = undefined;
-        } else {
-          const meta = (field.metadata as Record<string, unknown> | undefined) ?? {};
-          const min = typeof meta.min === 'number' ? meta.min : undefined;
-          const max = typeof meta.max === 'number' ? meta.max : undefined;
-          const step = typeof meta.step === 'number' && meta.step > 0 ? meta.step : undefined;
-
-          let next = parsed;
-          if (typeof min === 'number') next = Math.max(min, next);
-          if (typeof max === 'number') next = Math.min(max, next);
-          if (typeof step === 'number' && typeof min === 'number') {
-            next = min + Math.round((next - min) / step) * step;
-            next = Number(next.toFixed(10));
-          }
-          fieldValue = next;
-        }
-      }
+      fieldValue = coerceNumberValue(target.value, field);
     } else if (field.type === 'boolean') fieldValue = (target as HTMLInputElement).checked;
     ctx.onFieldChange(field.id, fieldValue);
   };
@@ -126,11 +139,11 @@ export function renderFieldInput(
       }
       return html`<input type="text" @input=${handleInput} .value=${String(value)} />`;
 
-    case 'number':
-      const numberMeta = (field.metadata as Record<string, unknown> | undefined) ?? {};
-      const min = typeof numberMeta.min === 'number' ? String(numberMeta.min) : undefined;
-      const max = typeof numberMeta.max === 'number' ? String(numberMeta.max) : undefined;
-      const step = typeof numberMeta.step === 'number' ? String(numberMeta.step) : undefined;
+    case 'number': {
+      const numberConfig = getNumberFieldConfig(field);
+      const min = typeof numberConfig.min === 'number' ? String(numberConfig.min) : undefined;
+      const max = typeof numberConfig.max === 'number' ? String(numberConfig.max) : undefined;
+      const step = typeof numberConfig.step === 'number' ? String(numberConfig.step) : undefined;
       return html`<input
         type="number"
         min=${ifDefined(min)}
@@ -139,6 +152,7 @@ export function renderFieldInput(
         @input=${handleInput}
         .value=${String(value)}
       />`;
+    }
 
     case 'boolean':
       return html`<input type="checkbox" @change=${handleInput} .checked=${Boolean(value)} />`;

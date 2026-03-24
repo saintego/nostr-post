@@ -1,6 +1,7 @@
 'use client';
 
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
+import { useRef } from 'react';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
 import { FieldEditor } from './FieldEditor';
 
@@ -87,6 +88,19 @@ const styles = {
 } as const;
 
 export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
+  const fieldEditorKeysRef = useRef<string[]>(manifest.fields.map(() => crypto.randomUUID()));
+
+  const ensureEditorKeys = (fieldCount: number) => {
+    while (fieldEditorKeysRef.current.length < fieldCount) {
+      fieldEditorKeysRef.current.push(crypto.randomUUID());
+    }
+    if (fieldEditorKeysRef.current.length > fieldCount) {
+      fieldEditorKeysRef.current = fieldEditorKeysRef.current.slice(0, fieldCount);
+    }
+  };
+
+  ensureEditorKeys(manifest.fields.length);
+
   const updateMetadata = (key: string, value: string) => {
     onChange({
       ...manifest,
@@ -116,6 +130,8 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       },
     };
 
+    fieldEditorKeysRef.current.push(crypto.randomUUID());
+
     onChange({
       ...manifest,
       fields: [...manifest.fields, newField],
@@ -132,6 +148,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
   };
 
   const deleteField = (index: number) => {
+    fieldEditorKeysRef.current.splice(index, 1);
     onChange({
       ...manifest,
       fields: manifest.fields.filter((_, i) => i !== index),
@@ -139,7 +156,9 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
   };
 
   const loadExample = (key: string) => {
-    onChange(EXAMPLE_MANIFESTS[key]);
+    const nextManifest = structuredClone(EXAMPLE_MANIFESTS[key]);
+    fieldEditorKeysRef.current = nextManifest.fields.map(() => crypto.randomUUID());
+    onChange(nextManifest);
   };
 
   const exportJSON = () => {
@@ -165,6 +184,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       reader.onload = (e) => {
         try {
           const json = JSON.parse(e.target?.result as string);
+          fieldEditorKeysRef.current = (json.fields ?? []).map(() => crypto.randomUUID());
           onChange(json);
         } catch (err) {
           alert('Failed to parse JSON');
@@ -392,7 +412,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
         <div style={styles.fieldList}>
           {manifest.fields.map((field, index) => (
             <FieldEditor
-              key={field.id}
+              key={fieldEditorKeysRef.current[index]}
               field={field}
               kinds={manifest.requiredKinds}
               fieldIds={manifest.fields.map((candidate) => candidate.id)}

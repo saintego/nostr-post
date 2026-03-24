@@ -168,6 +168,7 @@ export function FieldEditor({ field, kinds, fieldIds, onChange, onDelete }: Fiel
             onChange={(e) => update('uiPlugin', e.target.value)}
           >
             <option value="text">text</option>
+            <option value="identifier">identifier</option>
             <option value="textarea">textarea</option>
             <option value="markdown">markdown</option>
             <option value="stars">stars</option>

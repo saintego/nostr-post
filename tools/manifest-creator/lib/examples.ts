@@ -426,11 +426,12 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
       {
         id: 'isan',
         type: 'string',
-        uiPlugin: 'text',
+        uiPlugin: 'identifier',
         mapTo: { kind: 1, target: 'tag', tagName: 'i' },
         metadata: {
           label: 'ISAN',
-          placeholder: 'International Standard Audiovisual Number',
+          placeholder: '0000-0000-2CEA-0000-O-0000-0000-2',
+          prefix: 'isan',
         },
       },
       {
@@ -516,41 +517,45 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
       {
         id: 'gtin',
         type: 'string',
-        uiPlugin: 'text',
+        uiPlugin: 'identifier',
         mapTo: { kind: 1, target: 'tag', tagName: 'i' },
         metadata: {
           label: 'GTIN (NIP-73 i tag)',
-          placeholder: 'gtin:09506000134352',
+          placeholder: '09506000134352',
+          prefix: 'gtin',
         },
       },
       {
         id: 'ean',
         type: 'string',
-        uiPlugin: 'text',
+        uiPlugin: 'identifier',
         mapTo: { kind: 1, target: 'tag', tagName: 'i' },
         metadata: {
           label: 'EAN (NIP-73 i tag)',
-          placeholder: 'ean:4006381333931',
+          placeholder: '4006381333931',
+          prefix: 'ean',
         },
       },
       {
         id: 'upc',
         type: 'string',
-        uiPlugin: 'text',
+        uiPlugin: 'identifier',
         mapTo: { kind: 1, target: 'tag', tagName: 'i' },
         metadata: {
           label: 'UPC (NIP-73 i tag)',
-          placeholder: 'upc:036000291452',
+          placeholder: '036000291452',
+          prefix: 'upc',
         },
       },
       {
         id: 'asin',
         type: 'string',
-        uiPlugin: 'text',
+        uiPlugin: 'identifier',
         mapTo: { kind: 1, target: 'tag', tagName: 'i' },
         metadata: {
           label: 'ASIN (NIP-73 i tag)',
-          placeholder: 'asin:B08N5WRWNW',
+          placeholder: 'B08N5WRWNW',
+          prefix: 'asin',
         },
       },
       {
