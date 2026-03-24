@@ -496,6 +496,7 @@ nostr-post/
   - offer creation (NIP-69)
   - offer confirmation messages (NIP-17 formatted payload)
   - deal closing flow events
+  - review snapshots
 
 ## 🚀 Getting Started
 
