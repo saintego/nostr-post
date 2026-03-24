@@ -1,6 +1,6 @@
 # @nostr-post/cdn
 
-A single-file CDN bundle that includes **all** nostr-post web components and plugins — no npm install, no bundler required. Works like [nostr-login](https://github.com/nicknstr/nostr-login): add one `<script>` tag and start using components.
+A single-file CDN bundle that includes **all** nostr-post web components and plugins — no npm install, no bundler required. Works like [nostr-login](https://github.com/nicknstr/nostr-login), or [window.nostr.js](https://github.com/fiatjaf/window.nostr.js/): add one `<script>` tag and start using components.
 
 ## Quick Start
 
