@@ -44,39 +44,40 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
     import('@nostr-post/plugin-venue/web');
   }, []);
 
+  const reloadCurrentPubkey = useCallback(async () => {
+    try {
+      const { getPublicKey, fetchEvents } = await import('@nostr-post/signer');
+      let pubkey: string | undefined;
+      try {
+        pubkey = await getPublicKey();
+      } catch {
+        return;
+      }
+      if (!pubkey) return;
+
+      setCurrentPubkey(pubkey);
+      setIsLoadingEvents(true);
+
+      const kinds = manifest.requiredKinds ?? [1];
+      const events = await fetchEvents({ authors: [pubkey], kinds, limit: 20 });
+      if (events.length > 0) {
+        setPublishedEvents(events);
+        cacheEvents(events);
+      }
+    } catch (err) {
+      console.warn('Failed to reload signer/feed:', err);
+    } finally {
+      setIsLoadingEvents(false);
+    }
+  }, [manifest.requiredKinds]);
+
   // Load events: show cache immediately, then fetch from relays
   useEffect(() => {
     const cached = loadCachedEvents();
     if (cached.length > 0) setPublishedEvents(cached);
 
-    const loadFromRelays = async () => {
-      try {
-        const { getPublicKey, fetchEvents } = await import('@nostr-post/signer');
-        let pubkey: string | undefined;
-        try {
-          pubkey = await getPublicKey();
-        } catch {
-          return;
-        }
-        if (!pubkey) return;
-        setCurrentPubkey(pubkey);
-
-        setIsLoadingEvents(true);
-        const kinds = manifest.requiredKinds ?? [1];
-        const events = await fetchEvents({ authors: [pubkey], kinds, limit: 20 });
-        if (events.length > 0) {
-          setPublishedEvents(events);
-          cacheEvents(events);
-        }
-      } catch (err) {
-        console.warn('Failed to load events from relays:', err);
-      } finally {
-        setIsLoadingEvents(false);
-      }
-    };
-
-    loadFromRelays();
-  }, [manifest.requiredKinds]);
+    void reloadCurrentPubkey();
+  }, [reloadCurrentPubkey]);
 
   useEffect(() => {
     cacheEvents(publishedEvents);
@@ -195,7 +196,24 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
           </div>
           {!currentPubkey ? (
             <div style={styles.emptyState}>
-              <p>Log in with a signer to load your feed and use comments/reactions.</p>
+              <p>Connect a signer to load your feed and enable comments/reactions.</p>
+              <button
+                type="button"
+                onClick={() => void reloadCurrentPubkey()}
+                style={{
+                  marginTop: '0.75rem',
+                  padding: '0.5rem 1.25rem',
+                  background: '#8b5cf6',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                }}
+              >
+                Retry signer
+              </button>
             </div>
           ) : isLoadingEvents ? (
             <div style={styles.emptyState}>
