@@ -6,7 +6,7 @@
  * secondary events (e.g. kind 30078 NIP-78 structured data) shown as one post.
  */
 
-import { NIP78_KIND, eventToManifest, parseManifestATag } from '@nostr-post/core/nip78';
+import { parseManifestATag } from '@nostr-post/core/nip78';
 import {
   type NostrPostManifest,
   type PostField,
@@ -21,6 +21,7 @@ import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { NostrPostElement, baseStyles } from './base-component';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
 import type { SignedEvent } from './signer';
+import { fetchEvents, fetchManifestByATag } from './signer';
 import {
   type NostrProfile,
   authorDisplayName,
@@ -86,9 +87,6 @@ export class NostrPostView extends NostrPostElement {
 
   /** Track which pubkey we've fetched profile data for */
   private _lastFetchedProfilePubkey?: string;
-
-  /** Static cache of fetched manifests by `a` tag */
-  private static _manifestCache = new Map<string, NostrPostManifest>();
 
   /** Static cache of fetched linked events by primary event id */
   private static _linkedEventsCache = new Map<string, DisplayableEvent[]>();
@@ -181,33 +179,10 @@ export class NostrPostView extends NostrPostElement {
     if (this._lastFetchedATag === aTagValue) return;
     this._lastFetchedATag = aTagValue;
 
-    // Check static cache first
-    const cached = NostrPostView._manifestCache.get(aTagValue);
-    if (cached) {
-      this._resolvedManifest = cached;
-      return;
-    }
-
-    // Parse the reference
-    const ref = parseManifestATag(aTagValue);
-    if (!ref) return;
-
     try {
-      const { fetchEvents } = await import('./signer');
-
-      const events = await fetchEvents({
-        kinds: [NIP78_KIND],
-        authors: [ref.pubkey],
-        '#d': [ref.dTag],
-        limit: 1,
-      });
-
-      if (events.length > 0) {
-        const stored = eventToManifest(events[0]);
-        if (stored) {
-          NostrPostView._manifestCache.set(aTagValue, stored.manifest);
-          this._resolvedManifest = stored.manifest;
-        }
+      const stored = await fetchManifestByATag(aTagValue);
+      if (stored) {
+        this._resolvedManifest = stored.manifest;
       }
     } catch (err) {
       console.warn('Failed to auto-fetch manifest from relay:', err);
@@ -247,8 +222,6 @@ export class NostrPostView extends NostrPostElement {
     if (otherKinds.length === 0) return;
 
     try {
-      const { fetchEvents } = await import('./signer');
-
       const events = await fetchEvents({
         kinds: otherKinds,
         '#e': [eventId],

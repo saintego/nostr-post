@@ -239,6 +239,31 @@ Built-in plugins are lazy-loaded when a manifest uses them, so manifests using `
     </script>
   </body>
 </html>
+
+### Example: Using `manifestRef` (NIP-78 `a` tag)
+
+You can point a composer or feed at a manifest stored on Nostr by providing an `a`-tag-style manifest reference.
+
+```html
+<!-- a manifestRef is the NIP-01 `a` tag: <kind>:<pubkey>:<d-tag> -->
+<nostr-post-composer manifest-ref="30078:abcdef...:nostr-post:my-manifest-id"></nostr-post-composer>
+
+<nostr-post-feed manifest-ref="30078:abcdef...:nostr-post:my-manifest-id" kinds="1" limit="10"></nostr-post-feed>
+```
+
+Or set it from JavaScript:
+
+```js
+import "@nostr-post/web";
+
+const composer = document.querySelector('nostr-post-composer');
+composer.manifestRef = '30078:abcdef...:nostr-post:my-manifest-id';
+
+const feed = document.querySelector('nostr-post-feed');
+feed.manifestRef = '30078:abcdef...:nostr-post:my-manifest-id';
+```
+
+When a `manifestRef` is provided the components will fetch the manifest (once, centrally cached) and use it to render fields and plugins. Pass `relays` if you want to override relay list.
 ```
 
 ### Example 2: Composer with Custom Theme

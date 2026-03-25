@@ -19,6 +19,12 @@ export {
   signAndPublish,
   fetchEventsFromRelay,
   fetchEvents,
+  // Manifest helpers
+  fetchManifestByATag,
+  fetchManifestsByATags,
+  getCachedManifest,
+  clearManifestCache,
+  _manifestCache,
 } from '@nostr-post/signer';
 
 /**

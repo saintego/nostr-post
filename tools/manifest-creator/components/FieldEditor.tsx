@@ -5,7 +5,7 @@ import type { PostField } from '@nostr-post/core/types';
 interface FieldEditorProps {
   field: PostField;
   kinds: number[];
-  fieldIds: string[];
+  fieldIds?: string[];
   onChange: (field: PostField) => void;
   onDelete: () => void;
 }
@@ -69,7 +69,7 @@ const styles = {
   },
 } as const;
 
-export function FieldEditor({ field, kinds, fieldIds, onChange, onDelete }: FieldEditorProps) {
+export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }: FieldEditorProps) {
   const update = (key: keyof PostField, value: unknown) => {
     onChange({
       ...field,

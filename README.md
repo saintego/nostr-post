@@ -55,24 +55,34 @@ Use it in plain HTML through the CDN bundle, drop in Web Components, use the Rea
     │ Event coordination            │
     │ NIP-78 storage               │
     └───────────────────────────────┘
+
+### Manifest fetching
+
+- Manifest resolution and relay fetch logic lives in `@nostr-post/signer`.
+- There is a single centralized, cached helper `fetchManifestByATag` that consumer
+  components (`view`, `composer`, `feed`) use to resolve an `a` tag (NIP-01 format
+  for NIP-78 manifests). The helper deduplicates in-flight requests and optionally
+  falls back to querying by `d` tag across authors (configurable via `fallbackToD`).
+
+This keeps relay I/O in one place and avoids duplicate network requests.
 ```
 
 ### Packages & Plugins Status
 
-| Package                 | Status          | Purpose                                                 |
-| ----------------------- | --------------- | ------------------------------------------------------- |
-| **@nostr-post/core**    | ✅ **Complete** | Manifest validation, event coordination, NIP-78 storage |
-| **@nostr-post/signer**  | ✅ **Complete** | NIP-07 signing, relay publish/fetch                     |
-| **@nostr-post/plugins** | ✅ **Complete** | Plugin registry + types (extraTags, resolveFromTags)    |
-| **@nostr-post/web**     | ✅ **Complete** | Lit web components (composer, view, feed)               |
-| **@nostr-post/react**   | ✅ **Complete** | React hooks + wrapper components                        |
-| **@nostr-post/cdn**     | ✅ **Complete** | Single-file CDN bundle (ESM + IIFE, no npm required)    |
-| **plugin-stars**        | ✅ **Complete** | Star rating (1-5 scale, customizable)                   |
-| **plugin-geo**          | ✅ **Complete** | Geohash location picker with NIP-52 prefix tags         |
-| **plugin-venue**        | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo      |
-| **plugin-media**        | ✅ **Complete** | Multi-file upload with NIP-98 auth to nostr.build       |
-| **plugin-markdown**     | ✅ **Complete** | Markdown editor with live preview                       |
-| **plugin-hashtag**      | ✅ **Complete** | Hashtag array input with optional auto-extraction via `attachTo` |
+| Package                 | Status          | Purpose                                                               |
+| ----------------------- | --------------- | --------------------------------------------------------------------- |
+| **@nostr-post/core**    | ✅ **Complete** | Manifest validation, event coordination, NIP-78 storage               |
+| **@nostr-post/signer**  | ✅ **Complete** | NIP-07 signing, relay publish/fetch                                   |
+| **@nostr-post/plugins** | ✅ **Complete** | Plugin registry + types (extraTags, resolveFromTags)                  |
+| **@nostr-post/web**     | ✅ **Complete** | Lit web components (composer, view, feed)                             |
+| **@nostr-post/react**   | ✅ **Complete** | React hooks + wrapper components                                      |
+| **@nostr-post/cdn**     | ✅ **Complete** | Single-file CDN bundle (ESM + IIFE, no npm required)                  |
+| **plugin-stars**        | ✅ **Complete** | Star rating (1-5 scale, customizable)                                 |
+| **plugin-geo**          | ✅ **Complete** | Geohash location picker with NIP-52 prefix tags                       |
+| **plugin-venue**        | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo                    |
+| **plugin-media**        | ✅ **Complete** | Multi-file upload with NIP-98 auth to nostr.build                     |
+| **plugin-markdown**     | ✅ **Complete** | Markdown editor with live preview                                     |
+| **plugin-hashtag**      | ✅ **Complete** | Hashtag array input with optional auto-extraction via `attachTo`      |
 | **plugin-reference**    | ✅ **Complete** | URL/nostr reference list with optional auto-extraction via `attachTo` |
 
 ## � Key Features

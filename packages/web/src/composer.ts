@@ -27,7 +27,13 @@ import {
 } from './composerReply';
 import { composerStyle } from './composerStyle';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
-import { type SignedEvent, getPublicKey, getUserRelays, signAndPublish } from './signer';
+import {
+  type SignedEvent,
+  fetchManifestByATag,
+  getPublicKey,
+  getUserRelays,
+  signAndPublish,
+} from './signer';
 /**
  * Composer Web Component
  * @fires nostr-post-submit - Fired when form is submitted with event bundle (before signing if autoPublish=false)
@@ -143,6 +149,7 @@ export class NostrPostComposer extends NostrPostElement {
     super.updated(changed);
     const manifestChanged = changed.has('manifest');
     const prefillChanged = changed.has('prefill');
+    const manifestRefChanged = changed.has('manifestRef');
 
     if (manifestChanged || prefillChanged) {
       this.initDefaults({ resetUnknownFields: manifestChanged });
@@ -154,11 +161,39 @@ export class NostrPostComposer extends NostrPostElement {
       }
       void this.ensureManifestPlugins();
     }
+
+    if (manifestRefChanged) {
+      void this._resolveManifestRef();
+    }
   }
 
   connectedCallback(): void {
     super.connectedCallback();
     void this.ensureManifestPlugins();
+  }
+
+  private async _resolveManifestRef() {
+    // If an explicit manifest prop is provided, do not override it.
+    if (this.manifest) return;
+    if (!this.manifestRef) return;
+
+    try {
+      const stored = await fetchManifestByATag(this.manifestRef, this.relays);
+      if (stored) {
+        this.manifest = stored.manifest;
+        // initialize defaults for the newly resolved manifest
+        this.initDefaults({ resetUnknownFields: true });
+        this.errors = {};
+        this.successMessage = '';
+        this._expandedFields = new Set();
+        this.dispatchFormChange();
+        void this.ensureManifestPlugins();
+      }
+    } catch (err) {
+      // ignore - it's optional
+      // Could emit an event in future to surface errors
+      // console.warn('Failed to resolve manifestRef', err);
+    }
   }
 
   private async ensureManifestPlugins() {

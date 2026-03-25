@@ -5,7 +5,7 @@
  */
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { type FetchFilter, fetchEvents } from '@nostr-post/signer';
+import { type FetchFilter, fetchEvents, fetchManifestByATag } from '@nostr-post/signer';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { NostrPostElement, baseStyles } from './base-component';
@@ -70,6 +70,10 @@ export class NostrPostFeed extends NostrPostElement {
 
   @property({ type: Object })
   manifest?: NostrPostManifest;
+
+  /** Optional manifest reference (a-tag) to resolve and use for all rendered views */
+  @property({ type: String, attribute: 'manifest-ref' })
+  manifestRef?: string;
 
   @property({ type: Boolean })
   showKind?: boolean;
@@ -168,6 +172,25 @@ export class NostrPostFeed extends NostrPostElement {
       if (this.shouldLoad()) {
         this.loadEvents();
       }
+    }
+
+    if (changedProperties.has('manifestRef')) {
+      void this._resolveManifestRef();
+    }
+  }
+
+  private async _resolveManifestRef() {
+    // Do not override explicit manifest
+    if (this.manifest) return;
+    if (!this.manifestRef) return;
+
+    try {
+      const stored = await fetchManifestByATag(this.manifestRef, this.relays);
+      if (stored) {
+        this.manifest = stored.manifest;
+      }
+    } catch (err) {
+      // ignore
     }
   }
 
