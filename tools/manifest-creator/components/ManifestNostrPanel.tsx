@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   NIP78_KIND,
   type StoredManifest,
-  buildManifestDTag,
+  buildManifestATag,
   eventToManifest,
   manifestDeleteEvent,
   manifestToEvent,
@@ -388,8 +388,7 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
       const { publishResults } = await signAndPublish(event);
 
       if (publishResults.success > 0) {
-        const dTag = buildManifestDTag(manifest.id);
-        const aTag = `${NIP78_KIND}:${pubkey}:${dTag}`;
+        const aTag = buildManifestATag(pubkey, manifest.id);
         onManifestRef?.(aTag);
         showStatus('success', `Published to ${publishResults.success} relay(s)!`);
         // Refresh my manifests
