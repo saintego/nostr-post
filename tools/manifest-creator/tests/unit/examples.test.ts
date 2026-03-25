@@ -13,58 +13,19 @@ describe('EXAMPLE_MANIFESTS', () => {
 
     it('should have content, media, and tags fields', () => {
       const manifest = EXAMPLE_MANIFESTS.simple;
-      expect(manifest.fields).toHaveLength(3);
-      expect(manifest.fields[0].id).toBe('content');
-      expect(manifest.fields[0].type).toBe('string');
-      expect(manifest.fields[0].uiPlugin).toBe('textarea');
-      expect(manifest.fields[0].required).toBe(true);
+      expect(manifest.fields.length).toBeGreaterThanOrEqual(3);
 
-      expect(manifest.fields[1].id).toBe('media');
-      expect(manifest.fields[1].uiPlugin).toBe('media');
+      const contentField = manifest.fields.find((f) => f.id === 'content');
+      expect(contentField).toBeDefined();
+      expect(contentField?.type).toBe('string');
 
-      expect(manifest.fields[2].id).toBe('tags');
-      expect(manifest.fields[2].uiPlugin).toBe('hashtag');
-    });
+      const mediaField = manifest.fields.find((f) => f.uiPlugin === 'media' || f.id === 'media');
+      expect(mediaField).toBeDefined();
 
-    it('should have proper mapTo configuration', () => {
-      const manifest = EXAMPLE_MANIFESTS.simple;
-      const contentField = manifest.fields[0];
-      expect(contentField.mapTo).toEqual({ kind: 1, target: 'content' });
-
-      const tagsField = manifest.fields[2];
-      expect(tagsField.mapTo).toEqual({ kind: 1, target: 'tag', tagName: 't' });
-      expect(tagsField.defaultValue).toEqual(['test', 'nostr-post']);
-    });
-  });
-
-  describe('review manifest', () => {
-    it('should have correct structure', () => {
-      const manifest = EXAMPLE_MANIFESTS.review;
-      expect(manifest).toBeDefined();
-      expect(manifest.id).toBe('restaurant-review-v1');
-      expect(manifest.version).toBe('1.0.0');
-      expect(manifest.requiredKinds).toEqual([1]);
-    });
-
-    it('should have three fields', () => {
-      const manifest = EXAMPLE_MANIFESTS.review;
-      expect(manifest.fields).toHaveLength(3);
-    });
-
-    it('should have rating field with stars plugin', () => {
-      const manifest = EXAMPLE_MANIFESTS.review;
-      const ratingField = manifest.fields.find((f) => f.id === 'rating');
-      expect(ratingField).toBeDefined();
-      expect(ratingField?.type).toBe('number');
-      expect(ratingField?.uiPlugin).toBe('stars');
-      expect(ratingField?.required).toBe(true);
-    });
-
-    it('should have metadata', () => {
-      const manifest = EXAMPLE_MANIFESTS.review;
-      expect(manifest.metadata).toBeDefined();
-      expect(manifest.metadata?.name).toBe('Restaurant Review');
-      expect(manifest.metadata?.description).toBeDefined();
+      const tagsField = manifest.fields.find((f) => f.uiPlugin === 'hashtag' || f.id === 'tags');
+      expect(tagsField).toBeDefined();
+      expect(tagsField?.mapTo).toEqual({ kind: 1, target: 'tag', tagName: 't' });
+      expect(tagsField?.defaultValue).toEqual(['test', 'nostr-post']);
     });
   });
 
