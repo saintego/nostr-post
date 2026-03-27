@@ -1,8 +1,8 @@
 {
   "name": "nostr-post PWA Share Target",
   "short_name": "nostr-post-pwa",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/nostr-post/examples/pwa-share/?source=pwa",
+  "scope": "/nostr-post/examples/pwa-share/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0b5fff",
@@ -19,7 +19,7 @@
     }
   ],
   "share_target": {
-    "action": "share-target",
+    "action": "/nostr-post/examples/pwa-share/share-target",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
