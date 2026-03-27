@@ -165,11 +165,31 @@
           if (d.text) el.appendChild(Object.assign(document.createElement('p'), { textContent: d.text }));
           if (d.url) el.appendChild(Object.assign(document.createElement('a'), { textContent: d.url, href: d.url, target: '_blank' }));
           if (d.files && d.files.length) {
-            const list = document.createElement('ul');
+            const list = document.createElement('div');
+            list.style.display = 'grid';
+            list.style.gridTemplateColumns = 'repeat(auto-fit,minmax(100px,1fr))';
+            list.style.gap = '8px';
             for (const f of d.files) {
-              const li = document.createElement('li');
-              li.textContent = `${f.name} (${f.type || 'unknown'})`;
-              list.appendChild(li);
+              const box = document.createElement('div');
+              box.style.fontSize = '12px';
+              box.style.lineHeight = '1.2';
+              box.style.background = '#f3f5f9';
+              box.style.border = '1px solid #d8e1f5';
+              box.style.borderRadius = '8px';
+              box.style.padding = '8px';
+              if (f.type && f.type.startsWith('image/') && f.file) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(f.file);
+                img.style.maxWidth = '100%';
+                img.style.height = 'auto';
+                img.style.display = 'block';
+                img.style.borderRadius = '6px';
+                box.appendChild(img);
+              }
+              const name = document.createElement('div');
+              name.textContent = `${f.name} (${f.type || 'unknown'})`;
+              box.appendChild(name);
+              list.appendChild(box);
             }
             el.appendChild(list);
           }

@@ -27,7 +27,9 @@ async function handleShareTarget(event) {
     const files = fd.getAll('files') || [];
     const filesInfo = [];
     for (const f of files) {
-      if (f && f.name) filesInfo.push({ name: f.name, type: f.type });
+      if (f && f.name) {
+        filesInfo.push({ name: f.name, type: f.type, file: f });
+      }
     }
     form = { title, text, url, files: filesInfo };
   } catch (err) {
@@ -40,6 +42,8 @@ async function handleShareTarget(event) {
     client.postMessage({ type: 'shared', data: form });
   }
 
-  // Redirect to app start so the PWA opens
-  return Response.redirect('/examples/pwa-share/?shared=1', 303);
+  // Redirect to app start so the PWA opens (preserve same folder path)
+  const shareUrl = new URL(event.request.url);
+  const basePath = shareUrl.pathname.replace(/share-target$/, '');
+  return Response.redirect(basePath + '?shared=1', 303);
 }
