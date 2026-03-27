@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>nostr-post PWA — Web Share Target Example</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <script>
+    window.wnjParams = {
+      accent: 'cyan',
+      position: 'bottom',
+      compactMode: false,
+      startHidden: false,
+      nostrConnectRelays: [
+        'wss://bucket.coracle.social',
+        'wss://relay.nsec.app',
+        'wss://nos.lol',
+        'wss://relay.primal.net'
+      ],
+      appMetadata: {
+        name: 'nostr-post Manifest Creator',
+        url: 'https://nostr-post.dev'
+      }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/window.nostr.js/dist/window.nostr.min.js" defer></script>
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; }
+    pre { background:#f6f8fa; padding:12px; border-radius:6px }
+    .shared { margin-top:16px }
+  </style>
+</head>
+<body>
+  <h1>nostr-post — PWA Web Share Target demo</h1>
+  <p>This demo shows a minimal PWA that registers a Web Share Target. To test the Share Target you must:</p>
+  <ol>
+    <li>Serve this folder over <strong>http://localhost</strong> (or HTTPS).</li>
+    <li>Open the page, install the site as a PWA (Chrome on Android recommended).</li>
+    <li>Use another app to "share" text or files to this PWA — the service worker will capture the POST and forward the data to the client.</li>
+  </ol>
+
+  <button id="install" style="display:none">Check install prompt</button>
+
+  <h2>Last shared content</h2>
+  <div id="shared" class="shared"><em>No shared content yet.</em></div>
+
+  <h2>Quick manual test</h2>
+  <p>You can simulate a POST to <code>/examples/pwa-share/share-target</code> with curl to see the redirect:</p>
+  <pre>curl -v -X POST -F "title=Hello" -F "text=From curl" http://localhost:8080/examples/pwa-share/share-target</pre>
+
+  <script>
+    // Load nostr-post CDN bundle for composer/view components
+    const script = document.createElement('script');
+    script.type = 'module';
+    script.src = 'https://saintego.github.io/nostr-post/nostr-post.js';
+    document.head.appendChild(script);
+
+    // Simple NIP-07 login helper
+    async function nostrLogin() {
+      if (!window.nostr) return alert('No NIP-07 provider found (window.nostr)');
+      try {
+        const pubkey = await window.nostr.getPublicKey();
+        localStorage.setItem('nostr-pubkey', pubkey);
+        document.getElementById('login-btn').textContent = pubkey.slice(0, 10) + '...';
+        return pubkey;
+      } catch (err) {
+        console.error(err);
+        alert('Login failed');
+      }
+    }
+
+    // Add composer container after nostr-post bundle loads
+    script.addEventListener('load', () => {
+      const composerWrap = document.createElement('div');
+      composerWrap.innerHTML = `
+        <h2>Create a Nostr Post</h2>
+        <button id="login-btn">Login (NIP-07)</button>
+        <div style="margin-top:12px">
+          <label>Manifest ID or paste manifest JSON (optional)</label><br/>
+          <input id="manifest-input" style="width:60%" placeholder="manifest id or JSON" />
+          <button id="save-manifest">Save</button>
+        </div>
+        <div id="composer-host" style="margin-top:16px"></div>
+      `;
+      document.body.insertBefore(composerWrap, document.getElementById('shared'));
+
+      const loginBtn = document.getElementById('login-btn');
+      loginBtn.addEventListener('click', nostrLogin);
+
+      document.getElementById('save-manifest').addEventListener('click', () => {
+        const inputEl = document.getElementById('manifest-input');
+        const v = (inputEl && (inputEl.value !== undefined) ? inputEl.value : '').trim();
+        if (!v) return alert('Enter manifest id or JSON');
+        try {
+          // detect JSON vs id
+          if (v.startsWith('{')) {
+            const manifest = JSON.parse(v);
+            localStorage.setItem('pwa-manifest', JSON.stringify(manifest));
+            alert('Saved manifest JSON locally');
+          } else {
+            localStorage.setItem('pwa-manifest-id', v);
+            alert('Saved manifest id locally');
+          }
+          ensureComposer();
+        } catch (err) {
+          alert('Invalid JSON');
+        }
+      });
+
+      function ensureComposer() {
+        const host = document.getElementById('composer-host');
+        host.innerHTML = '';
+        const composer = document.createElement('nostr-post-composer');
+        // attach manifest if present
+        const manifestJSON = localStorage.getItem('pwa-manifest');
+        const manifestId = localStorage.getItem('pwa-manifest-id');
+        if (manifestJSON) {
+          try { composer.manifest = JSON.parse(manifestJSON); } catch(e){}
+        } else if (manifestId) {
+          composer.manifestRef = manifestId;
+        }
+        // prefilling from last shared data
+        const lastShared = localStorage.getItem('pwa-last-shared');
+        if (lastShared) {
+          try {
+            const d = JSON.parse(lastShared);
+            // set draft fields if composer exposes a simple API
+            // composer.setField is not guaranteed; we attempt common props
+            if (d.text) composer.value = d.text;
+          } catch(e){}
+        }
+        host.appendChild(composer);
+      }
+
+      ensureComposer();
+    });
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      // Persist globally so developers can trigger from console
+      window.deferredPrompt = e;
+      deferredPrompt = e;
+      document.getElementById('install').style.display = 'inline-block';
+    });
+
+    document.getElementById('install').addEventListener('click', async () => {
+      if (!deferredPrompt) return alert('No install prompt available');
+      deferredPrompt.prompt();
+      deferredPrompt = null;
+    });
+
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').then(reg => {
+        console.log('SW registered', reg);
+      }).catch(console.error);
+
+      navigator.serviceWorker.addEventListener('message', (ev) => {
+        const payload = ev.data;
+        if (payload?.type === 'shared') {
+          const el = document.getElementById('shared');
+          const d = payload.data;
+          el.innerHTML = '';
+          if (d.title) el.appendChild(Object.assign(document.createElement('h3'), { textContent: d.title }));
+          if (d.text) el.appendChild(Object.assign(document.createElement('p'), { textContent: d.text }));
+          if (d.url) el.appendChild(Object.assign(document.createElement('a'), { textContent: d.url, href: d.url, target: '_blank' }));
+          if (d.files && d.files.length) {
+            const list = document.createElement('ul');
+            for (const f of d.files) {
+              const li = document.createElement('li');
+              li.textContent = `${f.name} (${f.type || 'unknown'})`;
+              list.appendChild(li);
+            }
+            el.appendChild(list);
+          }
+        }
+      });
+    } else {
+      console.warn('Service workers not supported in this browser');
+    }
+  </script>
+</body>
+</html>

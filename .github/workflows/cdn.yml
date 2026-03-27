@@ -48,6 +48,7 @@ jobs:
       - run: cp -r examples/basic/dist .deploy/examples/basic
       - run: cp -r examples/react-demo/dist .deploy/examples/react-demo
       - run: cp -r examples/nextjs-demo/out .deploy/examples/nextjs-demo
+      - run: cp -r examples/pwa-share .deploy/examples/pwa-share
       
       # Build and copy manifest-creator
       - run: cd tools/manifest-creator && NOSTR_POST_BASE_PATH=/nostr-post/manifest-creator pnpm build

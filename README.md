@@ -512,6 +512,7 @@ nostr-post/
       versioning, and automated releases to the npm registry
 - [ ] User mention support: mention autocomplete, user tagging, and profile
       resolution (NIP-73 identity tags)
+- [ ] add integrity check for bundle integrity="sha384-Base64EncodedHashOfYourFileHere"
 
 ### Phase 2: Domain Scenarios (Planned)
 

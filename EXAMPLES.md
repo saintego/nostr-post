@@ -209,6 +209,23 @@ Built-in plugins are lazy-loaded when a manifest uses them, so manifests using `
 ````html
 <!DOCTYPE html>
 <html lang="en">
+
+## PWA Web Share Target Example
+
+This repository includes a small PWA example that demonstrates using the Web Share Target API
+with `nostr-post`'s CDN bundle. The example registers a share target, receives shared text/files,
+and forwards the payload into a `nostr-post-composer` instance (you can save a manifest id or paste
+manifest JSON which will be stored locally and used by the composer).
+
+Run locally:
+
+```bash
+npx serve examples/pwa-share -l 8080
+# open http://localhost:8080/examples/pwa-share/
+```
+
+The example also demonstrates a simple `window.nostr` (NIP-07) login flow to connect the composer
+to a signer provided by the user's browser extension.
   <head>
     <meta charset="UTF-8" />
     <title>Nostr Post Demo</title>
