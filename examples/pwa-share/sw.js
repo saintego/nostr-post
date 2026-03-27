@@ -8,10 +8,7 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (event) => {
   try {
     const url = new URL(event.request.url);
-    if (
-      url.pathname.endsWith('/examples/pwa-share/share-target') &&
-      event.request.method === 'POST'
-    ) {
+    if (url.pathname.endsWith('/share-target') && event.request.method === 'POST') {
       event.respondWith(handleShareTarget(event));
     }
   } catch (err) {
