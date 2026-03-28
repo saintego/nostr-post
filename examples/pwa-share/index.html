@@ -193,6 +193,18 @@
             }
             el.appendChild(list);
           }
+
+          const composer = document.querySelector('nostr-post-composer');
+          if (composer) {
+            const prefill = {
+              ...(composer.prefill || {}),
+              content: d.text || d.title || (d.url ? `Shared URL: ${d.url}` : ''),
+            };
+            if (d.files && d.files.length) {
+              prefill.media = d.files.map((f) => ({ name: f.name, type: f.type }));
+            }
+            composer.prefill = prefill;
+          }
         }
       });
     } else {
