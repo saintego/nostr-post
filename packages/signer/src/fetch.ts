@@ -1,4 +1,6 @@
 import type { FetchFilter, SignedEvent } from './index';
+/** Default relays to publish to */
+export const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 
 /**
  * Fetch events from a single relay
@@ -50,7 +52,7 @@ export function fetchEventsFromRelay(
  */
 export async function fetchEvents(
   filter: FetchFilter | FetchFilter[],
-  relays: string[] = []
+  relays: string[] = DEFAULT_RELAYS
 ): Promise<SignedEvent[]> {
   const results = await Promise.allSettled(
     relays.map((relay) => fetchEventsFromRelay(relay, filter))

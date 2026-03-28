@@ -45,5 +45,13 @@ async function handleShareTarget(event) {
   // Redirect to app start so the PWA opens (preserve same folder path)
   const shareUrl = new URL(event.request.url);
   const basePath = shareUrl.pathname.replace(/share-target$/, '');
-  return Response.redirect(basePath + '?shared=1', 303);
+  const params = new URLSearchParams();
+  if (title) params.set('title', title);
+  if (text) params.set('text', text);
+  if (url) params.set('url', url);
+  if (filesInfo.length > 0) {
+    params.set('fileNames', JSON.stringify(filesInfo.map((f) => ({ name: f.name, type: f.type }))));
+  }
+  params.set('shared', '1');
+  return Response.redirect(`${basePath}?${params.toString()}`, 303);
 }

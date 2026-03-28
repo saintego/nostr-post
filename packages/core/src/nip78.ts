@@ -112,8 +112,12 @@ export function parseManifestATag(aTagValue: string): ManifestRef | undefined {
  */
 export function manifestToEvent(manifest: NostrPostManifest, pubkey = ''): UnsignedNostrEvent {
   const dTag = buildManifestDTag(manifest.id);
+  const aTag = buildManifestATag(pubkey, manifest.id);
 
-  const tags: [string, ...string[]][] = [['d', dTag]];
+  const tags: [string, ...string[]][] = [
+    ['d', dTag],
+    ['a', aTag],
+  ];
 
   // Add name tag for discoverability
   if (manifest.metadata?.name) {

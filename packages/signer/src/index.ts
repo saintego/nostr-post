@@ -5,6 +5,7 @@
  */
 
 import type { UnsignedNostrEvent } from '@nostr-post/core/types';
+import { DEFAULT_RELAYS } from './fetch';
 
 /** Signed Nostr event with id and sig */
 export interface SignedEvent extends UnsignedNostrEvent {
@@ -24,9 +25,6 @@ declare global {
     nostr?: Nip07Provider;
   }
 }
-
-/** Default relays to publish to */
-export const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
 
 /**
  * Sign an event using NIP-07 (window.nostr)
@@ -168,6 +166,6 @@ export interface FetchFilter {
 /**
  * Fetch events from a single relay
  */
-export { fetchEventsFromRelay, fetchEvents } from './fetch';
+export { fetchEventsFromRelay, fetchEvents, DEFAULT_RELAYS } from './fetch';
 
 export * from './manifest';
