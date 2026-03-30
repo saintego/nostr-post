@@ -34,6 +34,7 @@ export const renderReplies = (
   root: SignedEvent,
   replies: SignedEvent[],
   commentManifest: NostrPostManifest | undefined,
+  excludeFields: string[] | undefined,
   renderEventActions: (event: SignedEvent, rootEvent?: SignedEvent) => TemplateResult
 ): TemplateResult | '' => {
   if (replies.length === 0) return '';
@@ -44,7 +45,11 @@ export const renderReplies = (
       ${replies.map(
         (reply) => html`
           <div>
-            <nostr-post-view .event=${reply} .manifest=${commentManifest}></nostr-post-view>
+            <nostr-post-view
+              .event=${reply}
+              .manifest=${commentManifest}
+              .excludeFields=${excludeFields}
+            ></nostr-post-view>
             ${renderEventActions(reply, root)}
           </div>
         `

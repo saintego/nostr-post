@@ -128,6 +128,9 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Object })
   tagFilters?: Record<string, string[]>;
 
+  @property({ type: Array, attribute: 'exclude-fields' })
+  excludeFields?: string[];
+
   /** Optional explicit list of REQ filters; if set, this is forwarded as-is. */
   @property({ type: Array })
   filters?: FetchFilter[];
@@ -456,6 +459,7 @@ export class NostrPostFeed extends NostrPostElement {
               <nostr-post-view
                 .event=${thread.root}
                 .manifest=${this.manifest}
+                .excludeFields=${this.excludeFields}
                 ?showKind=${this.showKind}
                 ?showTags=${this.showTags}
               ></nostr-post-view>
@@ -487,6 +491,7 @@ export class NostrPostFeed extends NostrPostElement {
                       <nostr-post-composer
                         auto-publish
                         .manifest=${this.commentManifest}
+                        .excludeFields=${this.excludeFields}
                         .replyToEventId=${this.activeReplyTarget?.replyToEventId}
                         .replyToPubkey=${this.activeReplyTarget?.replyToPubkey}
                         .rootEventId=${this.activeReplyTarget?.rootEventId}
@@ -501,6 +506,7 @@ export class NostrPostFeed extends NostrPostElement {
                 thread.root,
                 thread.replies,
                 this.commentManifest,
+                this.excludeFields,
                 (event, rootEvent) => this.renderEventActions(event, rootEvent)
               )}
             </div>
