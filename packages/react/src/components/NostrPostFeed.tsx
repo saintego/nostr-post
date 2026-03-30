@@ -20,6 +20,7 @@ interface NostrPostFeedElement extends HTMLElement {
   relays?: string[];
   filterTags?: string;
   tagFilters?: Record<string, string[]>;
+  excludeFields?: string[];
   filters?: FetchFilter[];
   manifest?: import('@nostr-post/core/types').NostrPostManifest;
   commentManifest?: import('@nostr-post/core/types').NostrPostManifest;
@@ -48,6 +49,7 @@ declare global {
         limit?: string;
         relays?: string;
         'filter-tags'?: string;
+        'exclude-fields'?: string;
         'show-kind'?: boolean;
         'show-tags'?: boolean;
       };
@@ -96,6 +98,8 @@ export interface NostrPostFeedProps {
   className?: string;
   /** Dark mode */
   dark?: boolean;
+  /** Field IDs to exclude from rendered posts */
+  excludeFields?: string[];
 }
 
 /**
@@ -122,6 +126,7 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       relays,
       filterTags,
       tagFilters,
+      excludeFields,
       filters,
       manifest,
       commentManifest,
@@ -173,6 +178,7 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       element.filters = filters;
       element.manifest = manifest;
       element.commentManifest = commentManifest;
+      element.excludeFields = excludeFields;
       element.showKind = showKind;
       element.showTags = showTags;
       element.commentsEnabled = commentsEnabled;
@@ -182,6 +188,7 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       ids,
       authors,
       kinds,
+      excludeFields,
       since,
       until,
       search,
