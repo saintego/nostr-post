@@ -272,16 +272,23 @@ export class NostrPostFeed extends NostrPostElement {
   private async loadEvents() {
     this.isLoading = true;
     try {
-      const events = await fetchEvents(this.buildFetchFilters(), this.relays);
+      const seen = new Set<string>();
+      const onEvent = (event: SignedEvent) => {
+        if (seen.has(event.id)) return;
+        seen.add(event.id);
+        this.events = [...this.events, event].sort((a, b) => b.created_at - a.created_at);
+        this.isLoading = false;
+      };
+
+      const events = await fetchEvents(this.buildFetchFilters(), this.relays, { onEvent });
+
+      // Ensure final deduped list
       this.events = events;
-      this.isLoading = false;
       this.interactionEvents = [];
-      await this.loadInteractions(events);
-      this.profileMap = await loadProfilesForEvents(
-        [...this.events, ...this.interactionEvents],
-        this.profileMap,
-        this.relays
-      );
+      this.isLoading = false;
+
+      // Load interactions and profiles in background (progressive)
+      void this.loadInteractionsAndProfiles(events);
     } catch (error) {
       console.error('Failed to load events:', error);
       this.events = [];
@@ -313,10 +320,34 @@ export class NostrPostFeed extends NostrPostElement {
     if (filters.length === 0) return;
 
     try {
-      this.interactionEvents = await fetchEvents(filters, this.relays);
+      const seen = new Set<string>();
+      const onEvent = (event: SignedEvent) => {
+        if (seen.has(event.id)) return;
+        seen.add(event.id);
+        this.interactionEvents = [...this.interactionEvents, event].sort(
+          (a, b) => b.created_at - a.created_at
+        );
+      };
+
+      const events = await fetchEvents(filters, this.relays, { onEvent });
+      // ensure final set
+      this.interactionEvents = events;
     } catch (error) {
       console.warn('Failed to load interaction events:', error);
       this.interactionEvents = [];
+    }
+  }
+
+  private async loadInteractionsAndProfiles(events: SignedEvent[]) {
+    try {
+      await this.loadInteractions(events);
+      this.profileMap = await loadProfilesForEvents(
+        [...this.events, ...this.interactionEvents],
+        this.profileMap,
+        this.relays
+      );
+    } catch (err) {
+      console.warn('Failed to load interactions/profiles:', err);
     }
   }
 

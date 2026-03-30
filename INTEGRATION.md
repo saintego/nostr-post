@@ -311,6 +311,33 @@ export default function ReviewPage({
 }
 ```
 
+### Progressive fetching (streaming)
+
+The signer `fetchEvents` supports progressive delivery so UIs can render results as relays respond.
+
+Signature:
+
+```ts
+fetchEvents(filter, relays?, { onEvent?: (event) => void, relayTimeoutMs?: number })
+```
+
+- `onEvent` — called for each event as it arrives (useful for incremental rendering).
+- `relayTimeoutMs` — per-relay timeout in ms (default 10000).
+
+Example:
+
+```ts
+// Render incrementally as events arrive, then receive final deduped array
+const events = await fetchEvents(filter, relays, {
+  onEvent: (ev) => {
+    // merge ev into local feed immediately
+    addEventToFeed(ev);
+  },
+  relayTimeoutMs: 3000,
+});
+```
+
+
 ### Feed/Discover Page
 
 Create `app/discover/page.tsx`:
