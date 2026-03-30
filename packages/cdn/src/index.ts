@@ -49,6 +49,10 @@ export {
   hasNostrSigner,
   fetchEvents,
   fetchEventsFromRelay,
+  fetchManifestByATag,
+  fetchManifestsByATags,
+  getCachedManifest,
+  clearManifestCache,
 } from '@nostr-post/signer';
 
 // Relay helpers (defined in web/signer, re-exported from web)

@@ -337,7 +337,6 @@ const events = await fetchEvents(filter, relays, {
 });
 ```
 
-
 ### Feed/Discover Page
 
 Create `app/discover/page.tsx`:

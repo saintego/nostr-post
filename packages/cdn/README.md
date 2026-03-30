@@ -90,6 +90,48 @@ The bundle re-exports utilities for advanced usage:
 - `getPublicKey`, `hasNostrSigner`, `fetchEvents`, `fetchEventsFromRelay`
 - `getUserRelays`, `getDefaultRelays`
 
+**Manifest helpers (preload & cache)**
+
+- `fetchManifestByATag(aTag, relays?, fallbackToD?)` — Resolve a NIP-78 `a:` tag and return a `StoredManifest` (cached).
+- `fetchManifestsByATags(aTags[], relays?, fallbackToD?)` — Batch fetch many aTags.
+- `getCachedManifest(aTag)` — Synchronously read the in-memory manifest cache.
+- `clearManifestCache(aTag?)` — Clear cache for a specific `aTag` or the whole cache.
+
+These are re-exported from `@nostr-post/signer` and are available from both the ESM and IIFE CDN bundles.
+
+### Preloading a manifest (recommended)
+
+If your page programmatically inserts a `<nostr-post-composer>` (for example when using `innerHTML` or client-side rendering), preload the manifest first and set the element's `manifest` property before appending to avoid duplicate network work and visual flicker.
+
+ESM example (recommended):
+
+```html
+<script type="module">
+  import { fetchManifestByATag } from "https://saintego.github.io/nostr-post/nostr-post.js";
+
+  const stored = await fetchManifestByATag("30078:..." /* aTag */);
+  const el = document.createElement('nostr-post-composer');
+  if (stored) el.manifest = stored.manifest; // set before appending
+  document.body.appendChild(el);
+</script>
+```
+
+IIFE/global example:
+
+```html
+<script src="https://saintego.github.io/nostr-post/nostr-post.iife.js"></script>
+<script>
+  const { fetchManifestByATag } = window.NostrPost;
+  fetchManifestByATag("30078:...").then(stored => {
+    const el = document.createElement('nostr-post-composer');
+    if (stored) el.manifest = stored.manifest;
+    document.body.appendChild(el);
+  });
+</script>
+```
+
+Note: importing the same ESM bundle URL multiple times is safe — the browser will instantiate the module once and reuse it for subsequent imports. Avoid loading both the ESM and IIFE bundles simultaneously.
+
 ## Full Example
 
 ```html
