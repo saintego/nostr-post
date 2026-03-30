@@ -101,7 +101,7 @@ These are re-exported from `@nostr-post/signer` and are available from both the 
 
 ### Preloading a manifest (recommended)
 
-If your page programmatically inserts a `<nostr-post-composer>` (for example when using `innerHTML` or client-side rendering), preload the manifest first and set the element's `manifest` property before appending to avoid duplicate network work and visual flicker.
+If your page programmatically inserts a `<nostr-post-composer>` (for example when using `innerHTML` or client-side rendering), preload the manifest first.
 
 ESM example (recommended):
 
@@ -109,9 +109,9 @@ ESM example (recommended):
 <script type="module">
   import { fetchManifestByATag } from "https://saintego.github.io/nostr-post/nostr-post.js";
 
-  const stored = await fetchManifestByATag("30078:..." /* aTag */);
-  const el = document.createElement("nostr-post-composer");
-  if (stored) el.manifest = stored.manifest; // set before appending
+  // Optional: preload the manifest into the in-memory cache so the composer
+  // can resolve it synchronously from `manifest-ref` when created.
+  await fetchManifestByATag("30078:..." /* aTag */);
   document.body.appendChild(el);
 </script>
 ```
@@ -122,11 +122,8 @@ IIFE/global example:
 <script src="https://saintego.github.io/nostr-post/nostr-post.iife.js"></script>
 <script>
   const { fetchManifestByATag } = window.NostrPost;
-  fetchManifestByATag("30078:...").then((stored) => {
-    const el = document.createElement("nostr-post-composer");
-    if (stored) el.manifest = stored.manifest;
-    document.body.appendChild(el);
-  });
+  // Optional: preload into the cache first so the composer reads it from cache.
+  fetchManifestByATag("30078:...");
 </script>
 ```
 
