@@ -274,6 +274,7 @@ export class NostrPostFeed extends NostrPostElement {
     try {
       const events = await fetchEvents(this.buildFetchFilters(), this.relays);
       this.events = events;
+      this.isLoading = false;
       this.interactionEvents = [];
       await this.loadInteractions(events);
       this.profileMap = await loadProfilesForEvents(
