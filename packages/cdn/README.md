@@ -110,7 +110,7 @@ ESM example (recommended):
   import { fetchManifestByATag } from "https://saintego.github.io/nostr-post/nostr-post.js";
 
   const stored = await fetchManifestByATag("30078:..." /* aTag */);
-  const el = document.createElement('nostr-post-composer');
+  const el = document.createElement("nostr-post-composer");
   if (stored) el.manifest = stored.manifest; // set before appending
   document.body.appendChild(el);
 </script>
@@ -122,8 +122,8 @@ IIFE/global example:
 <script src="https://saintego.github.io/nostr-post/nostr-post.iife.js"></script>
 <script>
   const { fetchManifestByATag } = window.NostrPost;
-  fetchManifestByATag("30078:...").then(stored => {
-    const el = document.createElement('nostr-post-composer');
+  fetchManifestByATag("30078:...").then((stored) => {
+    const el = document.createElement("nostr-post-composer");
     if (stored) el.manifest = stored.manifest;
     document.body.appendChild(el);
   });

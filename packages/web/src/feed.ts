@@ -212,6 +212,20 @@ export class NostrPostFeed extends NostrPostElement {
     );
   }
 
+  private makeOnEvent(
+    getCurrent: () => SignedEvent[],
+    setCurrent: (arr: SignedEvent[]) => void
+  ): (event: SignedEvent) => void {
+    const seen = new Set<string>();
+    return (event: SignedEvent) => {
+      const curr = getCurrent();
+      if (seen.has(event.id) || curr.some((e) => e.id === event.id)) return;
+      seen.add(event.id);
+      setCurrent([...curr, event].sort((a, b) => b.created_at - a.created_at));
+      this.isLoading = false;
+    };
+  }
+
   private parseFilterTags(input?: string): Record<string, string[]> {
     if (!input) return {};
 
@@ -272,13 +286,12 @@ export class NostrPostFeed extends NostrPostElement {
   private async loadEvents() {
     this.isLoading = true;
     try {
-      const seen = new Set<string>();
-      const onEvent = (event: SignedEvent) => {
-        if (seen.has(event.id)) return;
-        seen.add(event.id);
-        this.events = [...this.events, event].sort((a, b) => b.created_at - a.created_at);
-        this.isLoading = false;
-      };
+      const onEvent = this.makeOnEvent(
+        () => this.events,
+        (arr) => {
+          this.events = arr;
+        }
+      );
 
       const events = await fetchEvents(this.buildFetchFilters(), this.relays, { onEvent });
 
@@ -320,14 +333,12 @@ export class NostrPostFeed extends NostrPostElement {
     if (filters.length === 0) return;
 
     try {
-      const seen = new Set<string>();
-      const onEvent = (event: SignedEvent) => {
-        if (seen.has(event.id)) return;
-        seen.add(event.id);
-        this.interactionEvents = [...this.interactionEvents, event].sort(
-          (a, b) => b.created_at - a.created_at
-        );
-      };
+      const onEvent = this.makeOnEvent(
+        () => this.interactionEvents,
+        (arr) => {
+          this.interactionEvents = arr;
+        }
+      );
 
       const events = await fetchEvents(filters, this.relays, { onEvent });
       // ensure final set
