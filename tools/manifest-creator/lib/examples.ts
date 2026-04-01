@@ -132,6 +132,18 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         },
       },
       {
+        id: 'refs',
+        type: 'string',
+        uiPlugin: 'reference',
+        attachTo: 'review',
+        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        visibility: { view: 'hidden' },
+        metadata: {
+          label: 'Links',
+          expandable: true,
+        },
+      },
+      {
         id: 'list',
         type: 'string',
         uiPlugin: 'list',

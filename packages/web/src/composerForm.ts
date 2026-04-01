@@ -78,3 +78,24 @@ export const hiddenFieldErrorEntries = ({
 
   return Object.entries(errors).filter(([fieldId]) => !visibleFieldIds.has(fieldId));
 };
+
+/**
+ * Parse an extra-tags string into Nostr tag tuples.
+ * Format: "tagname:value,tagname2:value2" — splits on first colon so
+ * values containing colons (e.g. "i:osm:node:123") work correctly.
+ */
+export const parseExtraTags = (input?: string): [string, ...string[]][] => {
+  if (!input) return [];
+  return input
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .flatMap((entry) => {
+      const sep = entry.indexOf(':');
+      if (sep <= 0) return [];
+      const tagName = entry.slice(0, sep).trim();
+      const value = entry.slice(sep + 1).trim();
+      if (!tagName || !value) return [];
+      return [[tagName, value] as [string, string]];
+    });
+};

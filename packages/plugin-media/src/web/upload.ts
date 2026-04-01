@@ -78,7 +78,7 @@ export async function uploadToNostrBuild(
  */
 export async function handleMediaPaste(
   e: ClipboardEvent,
-  _field: PostField,
+  field: PostField,
   ctx: {
     formData: Record<string, unknown>;
     onUpdateField: (fieldId: string, value: unknown) => void;
@@ -94,7 +94,7 @@ export async function handleMediaPaste(
       if (file) {
         try {
           const url = await uploadToNostrBuild(file);
-          injectMediaUrlIntoContent(ctx, url);
+          injectMediaUrlIntoContent(ctx, field.id, url);
         } catch (err) {
           console.error('Media paste upload failed:', err);
         }
@@ -111,7 +111,7 @@ export async function handleMediaPaste(
  */
 export async function handleMediaDrop(
   e: DragEvent,
-  _field: PostField,
+  field: PostField,
   ctx: {
     formData: Record<string, unknown>;
     onUpdateField: (fieldId: string, value: unknown) => void;
@@ -129,7 +129,7 @@ export async function handleMediaDrop(
       }
       try {
         const url = await uploadToNostrBuild(file);
-        injectMediaUrlIntoContent(ctx, url);
+        injectMediaUrlIntoContent(ctx, field.id, url);
       } catch (err) {
         console.error('Media drop upload failed:', err);
       }
@@ -145,9 +145,10 @@ function injectMediaUrlIntoContent(
     formData: Record<string, unknown>;
     onUpdateField: (fieldId: string, value: unknown) => void;
   },
+  fieldId: string,
   url: string
 ): void {
-  const current = String(ctx.formData.content ?? '');
+  const current = String(ctx.formData[fieldId] ?? '');
   const newContent = current ? `${current}\n${url}` : url;
-  ctx.onUpdateField('content', newContent);
+  ctx.onUpdateField(fieldId, newContent);
 }

@@ -25,6 +25,7 @@ import {
   isExcludedButPrefilled,
   isFieldExcluded,
   isFieldReadonly,
+  parseExtraTags,
 } from './composerForm';
 import {
   applyReplyTargetToBundle,
@@ -98,6 +99,15 @@ export class NostrPostComposer extends NostrPostElement {
   /** Allow editing reply target ids/pubkeys directly in the composer panel. */
   @property({ type: Boolean, attribute: 'editable-reply-target' })
   editableReplyTarget = false;
+
+  /**
+   * Extra Nostr tags to append to every published event.
+   * Format: "tagname:value,tagname2:value2" (first colon is the separator, so
+   * values with colons — e.g. "i:osm:node:1234" — are handled correctly).
+   * Can also be set programmatically as a string property.
+   */
+  @property({ type: String, attribute: 'extra-tags' })
+  extraTags?: string;
 
   @state()
   private _formData!: Record<string, unknown>;
@@ -302,6 +312,13 @@ export class NostrPostComposer extends NostrPostElement {
         rootEventId: this.rootEventId,
         rootPubkey: this.rootPubkey,
       });
+
+      const parsedExtraTags = parseExtraTags(this.extraTags);
+      if (parsedExtraTags.length > 0) {
+        for (const event of bundle.events) {
+          event.tags.push(...parsedExtraTags);
+        }
+      }
 
       if (this.autoPublish) {
         const signedEvents = await this.signAndPublishBundle(bundle);
