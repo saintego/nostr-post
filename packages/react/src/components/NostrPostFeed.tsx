@@ -6,7 +6,7 @@
 
 import '@nostr-post/web'; // Register web components
 import type { FetchFilter } from '@nostr-post/signer';
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
+import { forwardRef } from 'react';
 
 // Extend HTMLElement for the web component
 interface NostrPostFeedElement extends HTMLElement {
@@ -114,8 +114,8 @@ export type NostrPostFeedRef = NostrPostFeedElement;
  * React wrapper around <nostr-post-feed> web component
  */
 export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps>(
-  function NostrPostFeed(
-    {
+  function NostrPostFeed(props, forwardedRef) {
+    const {
       ids,
       authors,
       kinds = [1],
@@ -137,43 +137,30 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       reactionOptions,
       className = '',
       dark,
-    },
-    forwardedRef
-  ) {
-    const elementRef = useRef<NostrPostFeedElement>(null);
+    } = props;
 
     // Build wrapper class for dark mode
     const wrapperClassName = dark ? 'dark' : '';
 
-    // Expose the web component's methods via ref
-    useImperativeHandle(forwardedRef, () => elementRef.current as NostrPostFeedElement, []);
-
-    // Set properties on the web component
-    useEffect(() => {
-      const element = elementRef.current;
+    // Ref callback to set all properties before connection
+    const setElementRef = (element: NostrPostFeedElement | null) => {
       if (!element) return;
-
-      // Set all properties
-      if (ids) {
-        element.ids = ids;
-      } else {
-        element.ids = undefined;
+      if (forwardedRef) {
+        if (typeof forwardedRef === 'function') {
+          forwardedRef(element);
+        } else {
+          forwardedRef.current = element;
+        }
       }
-      if (authors) {
-        element.authors = authors;
-      } else {
-        element.authors = undefined;
-      }
+      // Set all properties at once
+      element.ids = ids;
+      element.authors = authors;
       element.kinds = kinds;
       element.since = since;
       element.until = until;
       element.search = search;
       element.limit = limit;
-      if (relays) {
-        element.relays = relays;
-      } else {
-        element.relays = undefined;
-      }
+      element.relays = relays;
       element.tagFilters = tagFilters;
       element.filters = filters;
       element.manifest = manifest;
@@ -184,33 +171,12 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       element.commentsEnabled = commentsEnabled;
       element.reactionsEnabled = reactionsEnabled;
       element.reactionOptions = reactionOptions;
-    }, [
-      ids,
-      authors,
-      kinds,
-      excludeFields,
-      since,
-      until,
-      search,
-      limit,
-      relays,
-      tagFilters,
-      filters,
-      manifest,
-      commentManifest,
-      showKind,
-      showTags,
-      commentsEnabled,
-      reactionsEnabled,
-      reactionOptions,
-    ]);
+    };
 
-    // Don't pass authors/kinds/relays as attributes since we're setting them as properties
-    // This prevents conflicts and re-renders
     return (
       <div className={wrapperClassName}>
         <nostr-post-feed
-          ref={elementRef as React.RefObject<HTMLElement>}
+          ref={setElementRef}
           className={className}
           filter-tags={filterTags}
           show-kind={showKind}

@@ -353,12 +353,16 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
       const pubkey = await getPublicKey();
       setCurrentPubkey(pubkey);
 
-      const events = await fetchEvents({
-        kinds: [NIP78_KIND],
-        authors: [pubkey],
-        '#t': ['nostr-post'],
-        limit: 50,
-      });
+      const events = await fetchEvents(
+        {
+          kinds: [NIP78_KIND],
+          authors: [pubkey],
+          '#t': ['nostr-post'],
+          limit: 50,
+        },
+        undefined,
+        { waitForAll: true }
+      );
 
       const manifests: StoredManifest[] = [];
       for (const ev of events) {
@@ -448,11 +452,15 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
     try {
       const { fetchEvents } = await import('@nostr-post/signer');
 
-      const events = await fetchEvents({
-        kinds: [NIP78_KIND],
-        '#t': ['nostr-post'],
-        limit: 100,
-      });
+      const events = await fetchEvents(
+        {
+          kinds: [NIP78_KIND],
+          '#t': ['nostr-post'],
+          limit: 100,
+        },
+        undefined,
+        { waitForAll: true }
+      );
 
       const manifests: StoredManifest[] = [];
       for (const ev of events) {

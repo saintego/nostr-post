@@ -222,12 +222,16 @@ export class NostrPostView extends NostrPostElement {
     if (otherKinds.length === 0) return;
 
     try {
-      const events = await fetchEvents({
-        kinds: otherKinds,
-        '#e': [eventId],
-        authors: [eventPubkey],
-        limit: 10,
-      });
+      const events = await fetchEvents(
+        {
+          kinds: otherKinds,
+          '#e': [eventId],
+          authors: [eventPubkey],
+          limit: 10,
+        },
+        undefined,
+        { waitForAll: true }
+      );
 
       if (events.length > 0) {
         NostrPostView._linkedEventsCache.set(eventId, events);

@@ -513,6 +513,8 @@ nostr-post/
 - [ ] User mention support: mention autocomplete, user tagging, and profile
       resolution (NIP-73 identity tags)
 - [ ] add integrity check for bundle integrity="sha384-Base64EncodedHashOfYourFileHere"
+- [ ] fix pwa example share image
+- [ ] fix list plugin to use lists instead of manifests
 
 ### Phase 2: Domain Scenarios (Planned)
 

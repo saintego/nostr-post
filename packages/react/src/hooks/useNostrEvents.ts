@@ -13,6 +13,8 @@ export interface UseNostrEventsOptions {
   limit?: number;
   relays?: string[];
   enabled?: boolean;
+  waitForAll?: boolean;
+  progressive?: boolean; // if true, update events as they arrive
 }
 
 export interface UseNostrEventsReturn {
@@ -64,14 +66,23 @@ export function useNostrEvents(options: UseNostrEventsOptions = {}): UseNostrEve
         filter.authors = authors;
       }
 
-      const fetchedEvents = await fetchEvents(filter, relays);
-      setEvents(fetchedEvents);
+      if (options.progressive) {
+        await fetchEvents(filter, relays, {
+          onUpdate: (arr) => setEvents(arr),
+          waitForAll: options.waitForAll,
+        });
+      } else {
+        const fetchedEvents = await fetchEvents(filter, relays, {
+          waitForAll: options.waitForAll,
+        });
+        setEvents(fetchedEvents);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch events');
     } finally {
       setIsLoading(false);
     }
-  }, [kinds, authors, limit, relays, enabled]);
+  }, [kinds, authors, limit, relays, enabled, options.progressive, options.waitForAll]);
 
   const addEvent = useCallback((event: SignedEvent) => {
     setEvents((prev) => {

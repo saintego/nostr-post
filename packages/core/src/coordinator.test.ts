@@ -416,6 +416,34 @@ describe('coordinateEvents', () => {
     }
   });
 
+  it('should auto-extract hashtags from content', () => {
+    const manifest: NostrPostManifest = {
+      id: 'test',
+      version: '1.0.0',
+      requiredKinds: [1],
+      fields: [
+        {
+          id: 'content',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+        },
+      ],
+    };
+    const formData: FormData = {
+      content: 'Check out #nostr and #bitcoin!',
+    };
+
+    const result = coordinateEvents(manifest, formData);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      const event = result.data.events[0];
+      expect(event.tags).toContainEqual(['t', 'nostr']);
+      expect(event.tags).toContainEqual(['t', 'bitcoin']);
+    }
+  });
+
   it('should handle geohash with NIP-52 prefix emission', () => {
     const manifest: NostrPostManifest = {
       id: 'geo-test',

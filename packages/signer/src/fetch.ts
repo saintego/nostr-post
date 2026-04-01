@@ -57,41 +57,75 @@ export function fetchEventsFromRelay(
 }
 
 /**
- * Fetch events from multiple relays (deduplicated by event id)
- * Progressive fetching / streaming
+ * Fetch events from multiple relays in parallel.
  *
- * The `fetchEvents` API supports progressive delivery so clients can render
- * results as relays respond instead of waiting for all relays to finish.
- *
- * Signature:
- * fetchEvents(filter, relays?, { onEvent?: (event) => void, relayTimeoutMs?: number })
- *
- * - onEvent: called for each event as it arrives (useful for incremental rendering).
- * - relayTimeoutMs: per-relay timeout in ms (default 10000).
+ * - Resolves as soon as the **first** relay replies (EOSE or timeout).
+ *   Other relay connections continue running in the background.
+ * - `onEvent` fires for every unique event across all relays (deduplicated by id).
+ * - `relayTimeoutMs` controls per-relay timeout (default 10 000 ms).
  */
-export async function fetchEvents(
+/**
+ * Hybrid fetchEvents: resolves with first batch, continues to update via onUpdate.
+ * @param filter Nostr filter(s)
+ * @param relays List of relay URLs
+ * @param options.onUpdate Called with deduped array of all events so far as new events arrive
+ * @returns Promise that resolves with the first batch of events (from any relay)
+ */
+export const fetchEvents = (
   filter: FetchFilter | FetchFilter[],
   relays: string[] = DEFAULT_RELAYS,
-  options?: { onEvent?: (event: SignedEvent) => void; relayTimeoutMs?: number }
-): Promise<SignedEvent[]> {
-  const results = await Promise.allSettled(
-    relays.map((relay) => fetchEventsFromRelay(relay, filter, options))
+  options?: {
+    onUpdate?: (events: SignedEvent[]) => void;
+    relayTimeoutMs?: number;
+    waitForAll?: boolean;
+  }
+): Promise<SignedEvent[]> => {
+  const seenIds = new Set<string>();
+  const allEvents: SignedEvent[] = [];
+
+  const addEvent = (ev: SignedEvent): boolean => {
+    if (seenIds.has(ev.id)) return false;
+    seenIds.add(ev.id);
+    allEvents.push(ev);
+    allEvents.sort((a, b) => b.created_at - a.created_at);
+    return true;
+  };
+
+  const onEvent = (ev: SignedEvent) => {
+    if (addEvent(ev) && options?.onUpdate) {
+      options.onUpdate([...allEvents]);
+    }
+  };
+
+  const relayPromises = relays.map((relay) =>
+    fetchEventsFromRelay(relay, filter, {
+      onEvent,
+      relayTimeoutMs: options?.relayTimeoutMs,
+    })
   );
 
-  const allEvents: SignedEvent[] = [];
-  const seenIds = new Set<string>();
-
-  for (const result of results) {
-    if (result.status === 'fulfilled') {
-      for (const event of result.value) {
-        if (!seenIds.has(event.id)) {
-          seenIds.add(event.id);
-          allEvents.push(event);
+  if (options?.waitForAll) {
+    // Wait for all relays to settle
+    return Promise.allSettled(relayPromises).then((results) => {
+      for (const res of results) {
+        if (res.status === 'fulfilled') {
+          for (const ev of res.value) {
+            addEvent(ev);
+          }
         }
       }
-    }
+      if (options?.onUpdate) options.onUpdate([...allEvents]);
+      return [...allEvents];
+    });
   }
-
-  // Sort by created_at descending
-  return allEvents.sort((a, b) => b.created_at - a.created_at);
-}
+  // Wait for the first relay to respond
+  return Promise.any(relayPromises)
+    .then((firstBatch) => {
+      for (const ev of firstBatch) {
+        addEvent(ev);
+      }
+      if (options?.onUpdate) options.onUpdate([...allEvents]);
+      return allEvents.length ? [...allEvents] : firstBatch;
+    })
+    .catch(() => []);
+};

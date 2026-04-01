@@ -57,7 +57,8 @@ export const loadProfilesForEvents = async (
         authors: missing,
         limit: missing.length,
       },
-      relays
+      relays,
+      { waitForAll: true }
     );
 
     const nextProfiles = { ...profileMap };
@@ -88,11 +89,15 @@ export const fetchAuthorProfile = async ({
   if (cached) return cached;
 
   try {
-    const profileEvents = await fetchEvents({
-      kinds: [0],
-      authors: [pubkey],
-      limit: 1,
-    });
+    const profileEvents = await fetchEvents(
+      {
+        kinds: [0],
+        authors: [pubkey],
+        limit: 1,
+      },
+      undefined,
+      { waitForAll: true }
+    );
     const profileEvent = profileEvents[0];
     if (!profileEvent?.content) return undefined;
 

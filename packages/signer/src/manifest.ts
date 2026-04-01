@@ -24,6 +24,49 @@ export function clearManifestCache(aTag?: string): void {
   manifestCache.delete(aTag);
 }
 
+function storeAndReturn(
+  aTag: string,
+  event: {
+    kind: number;
+    content: string;
+    tags: string[][];
+    pubkey: string;
+    created_at: number;
+    id?: string;
+  }
+): StoredManifest | undefined {
+  const stored = eventToManifest(event);
+  if (!stored) return undefined;
+  manifestCache.set(aTag, stored);
+  manifestCache.set(`${NIP78_KIND}:${stored.pubkey}:${stored.dTag}`, stored);
+  return stored;
+}
+
+async function doFetchManifest(
+  aTag: string,
+  relays?: string[],
+  fallbackToD = true
+): Promise<StoredManifest | undefined> {
+  const ref = parseManifestATag(aTag);
+  try {
+    if (ref) {
+      const events = await fetchEvents(
+        { kinds: [NIP78_KIND], authors: [ref.pubkey], '#d': [ref.dTag] },
+        relays
+      );
+      const stored = events.length > 0 ? storeAndReturn(aTag, events[0]) : undefined;
+      if (stored) return stored;
+    }
+    if (fallbackToD && ref?.dTag) {
+      const events = await fetchEvents({ kinds: [NIP78_KIND], '#d': [ref.dTag], limit: 1 }, relays);
+      if (events.length > 0) return storeAndReturn(aTag, events[0]);
+    }
+  } catch {
+    // swallow errors - caller handles undefined
+  }
+  return undefined;
+}
+
 /**
  * Fetch a manifest referenced by an `a` tag (e.g. "30078:<pubkey>:nostr-post:...")
  * Optionally fallback to querying by the `d` tag across authors when `fallbackToD` is true.
@@ -42,56 +85,7 @@ export async function fetchManifestByATag(
   const existing = inflight.get(aTag);
   if (existing) return existing;
 
-  const promise = (async () => {
-    // Try parsing as an `a` tag first
-    const ref = parseManifestATag(aTag);
-    try {
-      if (ref) {
-        const events = await fetchEvents(
-          {
-            kinds: [NIP78_KIND],
-            authors: [ref.pubkey],
-            '#d': [ref.dTag],
-          },
-          relays
-        );
-
-        if (events.length > 0) {
-          const stored = eventToManifest(events[0]);
-          if (stored) {
-            manifestCache.set(aTag, stored);
-            // also cache under canonical a tag (kind:pubkey:dTag)
-            const canonical = `${NIP78_KIND}:${stored.pubkey}:${stored.dTag}`;
-            manifestCache.set(canonical, stored);
-            return stored;
-          }
-        }
-      }
-
-      // Optional: fallback to querying by d-tag across all authors
-      if (fallbackToD) {
-        // If we were given an aTag, extract dTag; otherwise treat aTag as dTag if it looks like one
-        const dTag = ref?.dTag;
-        if (dTag) {
-          const events = await fetchEvents({ kinds: [NIP78_KIND], '#d': [dTag], limit: 1 }, relays);
-          if (events.length > 0) {
-            const stored = eventToManifest(events[0]);
-            if (stored) {
-              const canonical = `${NIP78_KIND}:${stored.pubkey}:${stored.dTag}`;
-              manifestCache.set(canonical, stored);
-              manifestCache.set(aTag, stored);
-              return stored;
-            }
-          }
-        }
-      }
-    } catch (err) {
-      // swallow - caller can decide what to do
-      // keep undefined result
-    }
-
-    return undefined;
-  })();
+  const promise = doFetchManifest(aTag, relays, fallbackToD);
 
   inflight.set(aTag, promise);
   try {

@@ -318,7 +318,12 @@ The signer `fetchEvents` supports progressive delivery so UIs can render results
 Signature:
 
 ```ts
-fetchEvents(filter, relays?, { onEvent?: (event) => void, relayTimeoutMs?: number })
+
+fetchEvents(filter, relays?, {
+  onUpdate?: (events) => void, // progressive updates with deduped array
+  relayTimeoutMs?: number,
+  waitForAll?: boolean // if true, waits for all relays, else resolves on first
+})
 ```
 
 - `onEvent` — called for each event as it arrives (useful for incremental rendering).
@@ -328,12 +333,15 @@ Example:
 
 ```ts
 // Render incrementally as events arrive, then receive final deduped array
-const events = await fetchEvents(filter, relays, {
-  onEvent: (ev) => {
-    // merge ev into local feed immediately
-    addEventToFeed(ev);
+let events: SignedEvent[] = [];
+await fetchEvents(filter, relays, {
+  onUpdate: (arr) => {
+    events = arr;
+    // update UI with deduped array
+    renderFeed(events);
   },
   relayTimeoutMs: 3000,
+  waitForAll: false, // set true to wait for all relays
 });
 ```
 
