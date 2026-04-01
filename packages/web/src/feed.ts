@@ -124,6 +124,9 @@ export class NostrPostFeed extends NostrPostElement {
   @state()
   private profileMap: Record<string, NostrProfile> = {};
 
+  /** Tracks current root event set to avoid redundant interaction/profile fetches. */
+  private interactionLoadKey = '';
+
   /** Tag filters: e.g. { '#i': ['osm:node:123'] } */
   @property({ type: Object })
   tagFilters?: Record<string, string[]>;
@@ -269,26 +272,45 @@ export class NostrPostFeed extends NostrPostElement {
     return this.buildFetchFilter();
   }
 
+  private buildInteractionLoadKey(events: SignedEvent[]): string {
+    return events
+      .map((event) => event.id)
+      .sort()
+      .join(',');
+  }
+
+  private scheduleInteractionsAndProfiles(events: SignedEvent[]) {
+    const nextKey = this.buildInteractionLoadKey(events);
+    if (!nextKey || nextKey === this.interactionLoadKey) return;
+
+    this.interactionLoadKey = nextKey;
+    void this.loadInteractionsAndProfiles(events);
+  }
+
   private async loadEvents() {
     this.isLoading = true;
+    this.interactionEvents = [];
+    this.interactionLoadKey = '';
+
     try {
       const onUpdate = (arr: SignedEvent[]) => {
         this.events = arr;
         this.isLoading = false;
+        this.scheduleInteractionsAndProfiles(arr);
       };
       const events = await fetchEvents(this.buildFetchFilters(), this.relays, { onUpdate });
 
       // Ensure final deduped list
       this.events = events;
-      this.interactionEvents = [];
       this.isLoading = false;
 
-      // Load interactions and profiles in background (progressive)
-      void this.loadInteractionsAndProfiles(events);
+      // Ensure we process final root set if it differs from progressive updates
+      this.scheduleInteractionsAndProfiles(events);
     } catch (error) {
       console.error('Failed to load events:', error);
       this.events = [];
       this.interactionEvents = [];
+      this.interactionLoadKey = '';
     } finally {
       this.isLoading = false;
     }
@@ -316,23 +338,31 @@ export class NostrPostFeed extends NostrPostElement {
     if (filters.length === 0) return;
 
     try {
-      const events = await fetchEvents(filters, this.relays, { waitForAll: true });
-      // ensure final set
-      this.interactionEvents = events;
+      const fetched = await fetchEvents(filters, this.relays, { waitForAll: true });
+
+      // Merge progressively loaded interaction events by id.
+      const mergedById = new Map(this.interactionEvents.map((event) => [event.id, event]));
+      for (const event of fetched) {
+        mergedById.set(event.id, event);
+      }
+      this.interactionEvents = [...mergedById.values()];
     } catch (error) {
       console.warn('Failed to load interaction events:', error);
-      this.interactionEvents = [];
     }
   }
 
   private async loadInteractionsAndProfiles(events: SignedEvent[]) {
     try {
       await this.loadInteractions(events);
-      this.profileMap = await loadProfilesForEvents(
+
+      const loadedProfiles = await loadProfilesForEvents(
         [...this.events, ...this.interactionEvents],
         this.profileMap,
         this.relays
       );
+
+      // Merge progressively loaded profiles by pubkey.
+      this.profileMap = { ...this.profileMap, ...loadedProfiles };
     } catch (err) {
       console.warn('Failed to load interactions/profiles:', err);
     }

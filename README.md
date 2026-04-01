@@ -508,13 +508,14 @@ nostr-post/
 ### Phase 1: Core Engine ✅ (Complete)
 
 - [x] Type definitions
+- [ ] fix pwa example share image
+- [ ] fix list plugin to use lists instead of manifests
+- [ ] fix posting events when used manifestRef in composer
 - [ ] Publish npm packages for each package (packages/\*) with CI, semantic
       versioning, and automated releases to the npm registry
 - [ ] User mention support: mention autocomplete, user tagging, and profile
       resolution (NIP-73 identity tags)
 - [ ] add integrity check for bundle integrity="sha384-Base64EncodedHashOfYourFileHere"
-- [ ] fix pwa example share image
-- [ ] fix list plugin to use lists instead of manifests
 
 ### Phase 2: Domain Scenarios (Planned)
 
