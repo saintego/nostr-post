@@ -14,6 +14,7 @@ import {
   isReplyComposerOpen,
   renderReplies,
 } from './feedComments';
+import { buildFetchFilters, buildInteractionLoadKey, mergeUniqueEventsById } from './feedData';
 import { publishReaction, summarizeReactionsWithAuthors } from './feedReactions';
 import {
   DEFAULT_COMMENT_MANIFEST,
@@ -28,18 +29,6 @@ import { type NostrProfile, displayNameForPubkey, loadProfilesForEvents } from '
 import './composer';
 import './view';
 
-/**
- * Feed Web Component for displaying a list of Nostr events
- *
- * @example
- * ```html
- * <nostr-post-feed
- *   authors='["npub1..."]'
- *   kinds='[1]'
- *   limit="20"
- * ></nostr-post-feed>
- * ```
- */
 @customElement('nostr-post-feed')
 export class NostrPostFeed extends NostrPostElement {
   static styles = [baseStyles, feedStyle];
@@ -71,7 +60,6 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Object })
   manifest?: NostrPostManifest;
 
-  /** Optional manifest reference (a-tag) to resolve and use for all rendered views */
   @property({ type: String, attribute: 'manifest-ref' })
   manifestRef?: string;
 
@@ -93,10 +81,6 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Array, attribute: false })
   reactionOptions?: string[];
 
-  /**
-   * Comma-separated tag filters, e.g. "#i:osm:node:123,#g:u09tvw"
-   * Useful for plain HTML attribute usage.
-   */
   @property({ type: String, attribute: 'filter-tags' })
   filterTags?: string;
 
@@ -124,17 +108,14 @@ export class NostrPostFeed extends NostrPostElement {
   @state()
   private profileMap: Record<string, NostrProfile> = {};
 
-  /** Tracks current root event set to avoid redundant interaction/profile fetches. */
   private interactionLoadKey = '';
 
-  /** Tag filters: e.g. { '#i': ['osm:node:123'] } */
   @property({ type: Object })
   tagFilters?: Record<string, string[]>;
 
   @property({ type: Array, attribute: 'exclude-fields' })
   excludeFields?: string[];
 
-  /** Optional explicit list of REQ filters; if set, this is forwarded as-is. */
   @property({ type: Array })
   filters?: FetchFilter[];
 
@@ -215,72 +196,8 @@ export class NostrPostFeed extends NostrPostElement {
     );
   }
 
-  private parseFilterTags(input?: string): Record<string, string[]> {
-    if (!input) return {};
-
-    const parsed: Record<string, string[]> = {};
-    const entries = input
-      .split(',')
-      .map((entry) => entry.trim())
-      .filter(Boolean);
-
-    for (const entry of entries) {
-      const separatorIndex = entry.indexOf(':');
-      if (separatorIndex <= 0) continue;
-
-      const rawTag = entry.slice(0, separatorIndex).trim();
-      const value = entry.slice(separatorIndex + 1).trim();
-      if (!rawTag || !value) continue;
-
-      const tag = rawTag.startsWith('#') ? rawTag : `#${rawTag}`;
-      if (!parsed[tag]) parsed[tag] = [];
-      parsed[tag].push(value);
-    }
-
-    return parsed;
-  }
-
-  private buildFetchFilter(): FetchFilter {
-    const filter: FetchFilter = {
-      ids: this.ids,
-      authors: this.authors,
-      kinds: this.kinds,
-      search: this.search,
-      limit: this.limit,
-      since: this.since,
-      until: this.until,
-    };
-
-    const fromAttribute = this.parseFilterTags(this.filterTags);
-    const mergedTagFilters: Record<string, string[]> = {
-      ...fromAttribute,
-      ...(this.tagFilters ?? {}),
-    };
-
-    for (const [tag, values] of Object.entries(mergedTagFilters)) {
-      if (!tag.startsWith('#') || values.length === 0) continue;
-      filter[tag as `#${string}`] = values;
-    }
-
-    return filter;
-  }
-
-  private buildFetchFilters(): FetchFilter | FetchFilter[] {
-    if (this.filters && this.filters.length > 0) {
-      return this.filters;
-    }
-    return this.buildFetchFilter();
-  }
-
-  private buildInteractionLoadKey(events: SignedEvent[]): string {
-    return events
-      .map((event) => event.id)
-      .sort()
-      .join(',');
-  }
-
   private scheduleInteractionsAndProfiles(events: SignedEvent[]) {
-    const nextKey = this.buildInteractionLoadKey(events);
+    const nextKey = buildInteractionLoadKey(events);
     if (!nextKey || nextKey === this.interactionLoadKey) return;
 
     this.interactionLoadKey = nextKey;
@@ -298,7 +215,22 @@ export class NostrPostFeed extends NostrPostElement {
         this.isLoading = false;
         this.scheduleInteractionsAndProfiles(arr);
       };
-      const events = await fetchEvents(this.buildFetchFilters(), this.relays, { onUpdate });
+      const events = await fetchEvents(
+        buildFetchFilters({
+          filters: this.filters,
+          ids: this.ids,
+          authors: this.authors,
+          kinds: this.kinds,
+          search: this.search,
+          limit: this.limit,
+          since: this.since,
+          until: this.until,
+          filterTags: this.filterTags,
+          tagFilters: this.tagFilters,
+        }),
+        this.relays,
+        { onUpdate }
+      );
 
       // Ensure final deduped list
       this.events = events;
@@ -340,12 +272,7 @@ export class NostrPostFeed extends NostrPostElement {
     try {
       const fetched = await fetchEvents(filters, this.relays, { waitForAll: true });
 
-      // Merge progressively loaded interaction events by id.
-      const mergedById = new Map(this.interactionEvents.map((event) => [event.id, event]));
-      for (const event of fetched) {
-        mergedById.set(event.id, event);
-      }
-      this.interactionEvents = [...mergedById.values()];
+      this.interactionEvents = mergeUniqueEventsById(this.interactionEvents, fetched);
     } catch (error) {
       console.warn('Failed to load interaction events:', error);
     }
@@ -457,10 +384,6 @@ export class NostrPostFeed extends NostrPostElement {
     `;
   }
 
-  /**
-   * Public method to refresh the feed
-   * Useful for reloading after publishing new events
-   */
   public async refresh(): Promise<void> {
     if (this.shouldLoad()) {
       await this.loadEvents();

@@ -101,6 +101,29 @@ export const composerStyle = css`
     margin-bottom: 1rem;
   }
 
+  .hidden-field-errors {
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+
+  .hidden-field-errors-title {
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+  }
+
+  .hidden-field-errors ul {
+    margin: 0;
+    padding-left: 1rem;
+  }
+
+  .hidden-field-errors li {
+    margin: 0.15rem 0;
+  }
+
   .field-readonly {
     opacity: 0.75;
     pointer-events: none;
@@ -174,5 +197,11 @@ export const composerStyle = css`
     background: #064e3b;
     border-color: #059669;
     color: #6ee7b7;
+  }
+
+  :host-context(.dark) .hidden-field-errors {
+    background: #450a0a;
+    border-color: #b91c1c;
+    color: #fecaca;
   }
 `;

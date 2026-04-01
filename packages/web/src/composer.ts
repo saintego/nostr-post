@@ -20,6 +20,13 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { NostrPostElement, baseStyles } from './base-component';
 import { type FieldRenderContext, renderExpandableField, renderField } from './composerField';
 import {
+  buildInitialFormData,
+  hiddenFieldErrorEntries,
+  isExcludedButPrefilled,
+  isFieldExcluded,
+  isFieldReadonly,
+} from './composerForm';
+import {
   applyReplyTargetToBundle,
   hasReplyTarget,
   renderReplyTargetPanel,
@@ -34,28 +41,6 @@ import {
   getUserRelays,
   signAndPublish,
 } from './signer';
-/**
- * Composer Web Component
- * @fires nostr-post-submit - Fired when form is submitted with event bundle (before signing if autoPublish=false)
- * @fires nostr-post-published - Fired after events are signed and published (if autoPublish=true)
- * @fires nostr-post-error - Fired when validation, signing, or publishing fails
- *
- * @example
- * ```html
- * <!-- Auto-publish mode (recommended) -->
- * <nostr-post-composer auto-publish></nostr-post-composer>
- *
- * <!-- Manual mode (handle signing yourself) -->
- * <nostr-post-composer></nostr-post-composer>
- * <script>
- *   const composer = document.querySelector('nostr-post-composer');
- *   composer.manifest = myManifest;
- *   composer.addEventListener('nostr-post-submit', (e) => {
- *     console.log('Events to sign:', e.detail.bundle);
- *   });
- * </script>
- * ```
- */
 @customElement('nostr-post-composer')
 export class NostrPostComposer extends NostrPostElement {
   static styles = [baseStyles, composerStyle];
@@ -134,6 +119,9 @@ export class NostrPostComposer extends NostrPostElement {
   @state()
   private _expandedFields: Set<string> = new Set();
 
+  @state()
+  private isResolvingManifestRef = false;
+
   constructor() {
     super();
     this._formData = {};
@@ -142,9 +130,6 @@ export class NostrPostComposer extends NostrPostElement {
     this.successMessage = '';
   }
 
-  /**
-   * When the manifest or prefill changes, seed _formData with defaults.
-   */
   updated(changed: Map<string, unknown>) {
     super.updated(changed);
     const manifestChanged = changed.has('manifest');
@@ -172,27 +157,29 @@ export class NostrPostComposer extends NostrPostElement {
     void this.ensureManifestPlugins();
   }
 
-  private async _resolveManifestRef() {
-    // If an explicit manifest prop is provided, do not override it.
-    if (this.manifest) return;
-    if (!this.manifestRef) return;
+  private async _resolveManifestRef(): Promise<boolean> {
+    if (this.manifest) return true;
+    if (!this.manifestRef) return false;
+
+    this.isResolvingManifestRef = true;
 
     try {
       const stored = await fetchManifestByATag(this.manifestRef, this.relays);
       if (stored) {
         this.manifest = stored.manifest;
-        // initialize defaults for the newly resolved manifest
         this.initDefaults({ resetUnknownFields: true });
         this.errors = {};
         this.successMessage = '';
         this._expandedFields = new Set();
         this.dispatchFormChange();
         void this.ensureManifestPlugins();
+        return true;
       }
+      return false;
     } catch (err) {
-      // ignore - it's optional
-      // Could emit an event in future to surface errors
-      // console.warn('Failed to resolve manifestRef', err);
+      return false;
+    } finally {
+      this.isResolvingManifestRef = false;
     }
   }
 
@@ -203,26 +190,12 @@ export class NostrPostComposer extends NostrPostElement {
 
   private initDefaults({ resetUnknownFields = false }: { resetUnknownFields?: boolean } = {}) {
     const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
-    const defaults: Record<string, unknown> = {};
-    for (const field of manifest.fields) {
-      if (field.defaultValue !== undefined) {
-        defaults[field.id] = field.defaultValue;
-      }
-    }
-    // Prefill overrides field-level defaults
-    if (this.prefill) {
-      Object.assign(defaults, this.prefill);
-    }
-
-    const allowedIds = new Set(manifest.fields.map((field) => field.id));
-    const currentFormData = resetUnknownFields
-      ? Object.fromEntries(
-          Object.entries(this._formData).filter(([fieldId]) => allowedIds.has(fieldId))
-        )
-      : this._formData;
-
-    // Merge with existing form data (user edits take priority)
-    this._formData = { ...defaults, ...currentFormData };
+    this._formData = buildInitialFormData({
+      manifest,
+      prefill: this.prefill,
+      currentFormData: this._formData,
+      resetUnknownFields,
+    });
   }
 
   private dispatchFormChange(): void {
@@ -235,38 +208,6 @@ export class NostrPostComposer extends NostrPostElement {
     );
   }
 
-  /**
-   * Check if a field should be excluded from rendering.
-   */
-  private isFieldExcluded(field: PostField): boolean {
-    if (this.excludeFields?.includes(field.id)) return true;
-    if (field.visibility?.edit === 'hidden') return true;
-    return false;
-  }
-
-  /**
-   * Check if a field is excluded but has a prefilled value.
-   * These should still be rendered (but hidden) so they can process input events.
-   */
-  private isExcludedButPrefilled(field: PostField): boolean {
-    return (
-      this.isFieldExcluded(field) &&
-      (this.prefill?.[field.id] !== undefined || field.defaultValue !== undefined)
-    );
-  }
-
-  /**
-   * Check if a field is read-only.
-   */
-  private isFieldReadonly(field: PostField): boolean {
-    if (this.readonlyFields?.includes(field.id)) return true;
-    if (field.visibility?.edit === 'readonly') return true;
-    return false;
-  }
-
-  /**
-   * Handle form field changes
-   */
   private handleFieldChange(fieldId: string, value: unknown): void {
     const nextFormData = { ...this._formData };
     if (value === undefined) {
@@ -275,23 +216,27 @@ export class NostrPostComposer extends NostrPostElement {
       nextFormData[fieldId] = value;
     }
     this._formData = nextFormData;
-    // Clear field error on change
     if (this.errors[fieldId]) {
       const newErrors = { ...this.errors };
       delete newErrors[fieldId];
       this.errors = newErrors;
     }
-    // Dispatch event for external consumers (live event preview)
     this.dispatchFormChange();
   }
 
-  /**
-   * Validate and submit the form
-   */
   private async handleSubmit(e: Event): Promise<void> {
     e.preventDefault();
     this.successMessage = '';
     this.errors = {};
+
+    // If manifestRef is provided, resolve it before using fallback manifest.
+    if (!this.manifest && this.manifestRef) {
+      const resolved = await this._resolveManifestRef();
+      if (!resolved || !this.manifest) {
+        this.showError('Failed to resolve manifestRef. Unable to submit post.');
+        return;
+      }
+    }
 
     // Use default Kind 1 manifest if none provided
     const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
@@ -370,7 +315,7 @@ export class NostrPostComposer extends NostrPostElement {
         this.successMessage = 'Post created successfully!';
       }
 
-      this._formData = {}; // Reset form
+      this._formData = {};
     } catch (error) {
       this.showError(error instanceof Error ? error.message : 'Unknown error occurred');
     } finally {
@@ -378,10 +323,6 @@ export class NostrPostComposer extends NostrPostElement {
     }
   }
 
-  /**
-   * Sign and publish all events in a bundle, cross-linking secondary events
-   * back to the primary event via an `e` tag with "root" marker.
-   */
   private async signAndPublishBundle(bundle: EventBundle): Promise<SignedEvent[]> {
     const relays = this.relays || (await getUserRelays());
     const signedEvents: SignedEvent[] = [];
@@ -424,6 +365,12 @@ export class NostrPostComposer extends NostrPostElement {
     // Use standard Kind 1 manifest if none provided
     const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
     const { metadata } = manifest;
+    const hiddenErrors = hiddenFieldErrorEntries({
+      manifest,
+      errors: this.errors,
+      excludeFields: this.excludeFields,
+      prefill: this.prefill,
+    });
 
     return html`
       <div class="composer">
@@ -445,6 +392,20 @@ export class NostrPostComposer extends NostrPostElement {
         }
         ${
           this.successMessage ? html`<div class="success-message">${this.successMessage}</div>` : ''
+        }
+        ${
+          hiddenErrors.length > 0
+            ? html`
+              <div class="hidden-field-errors" role="alert" aria-live="polite">
+                <div class="hidden-field-errors-title">Some hidden fields failed validation:</div>
+                <ul>
+                  ${hiddenErrors.map(
+                    ([fieldId, message]) => html`<li><strong>${fieldId}</strong>: ${message}</li>`
+                  )}
+                </ul>
+              </div>
+            `
+            : ''
         }
 
         <form @submit=${this.handleSubmit}>
@@ -484,12 +445,16 @@ export class NostrPostComposer extends NostrPostElement {
               if (field.attachTo && field.visibility?.edit !== 'hidden') {
                 return '';
               }
-              if (this.isFieldExcluded(field) && !this.isExcludedButPrefilled(field)) {
+              if (
+                isFieldExcluded(field, this.excludeFields) &&
+                !isExcludedButPrefilled(field, this.excludeFields, this.prefill)
+              ) {
                 return '';
               }
 
               const isHidden =
-                this.isExcludedButPrefilled(field) || field.visibility?.edit === 'hidden';
+                isExcludedButPrefilled(field, this.excludeFields, this.prefill) ||
+                field.visibility?.edit === 'hidden';
 
               const ctx: FieldRenderContext = {
                 formData: this._formData,
@@ -497,7 +462,7 @@ export class NostrPostComposer extends NostrPostElement {
                 expandedFields: this._expandedFields,
                 attachedByTarget,
                 manifest,
-                isReadonly: (f) => this.isFieldReadonly(f),
+                isReadonly: (f) => isFieldReadonly(f, this.readonlyFields),
                 onFieldChange: (id, val) => this.handleFieldChange(id, val),
                 onToggleExpanded: (fieldId) => {
                   const next = new Set(this._expandedFields);
@@ -518,9 +483,15 @@ export class NostrPostComposer extends NostrPostElement {
             <button
               type="submit"
               class="primary"
-              ?disabled=${this.isSubmitting}
+              ?disabled=${this.isSubmitting || this.isResolvingManifestRef}
             >
-              ${this.isSubmitting ? 'Creating...' : 'Create Post'}
+              ${
+                this.isSubmitting
+                  ? 'Creating...'
+                  : this.isResolvingManifestRef
+                    ? 'Loading Manifest...'
+                    : 'Create Post'
+              }
             </button>
           </div>
         </form>
