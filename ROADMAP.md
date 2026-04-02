@@ -7,7 +7,7 @@
 - [ ] fix list plugin to use lists(nip-51?) instead of manifests
 - [ ] fix posting events with images when used different name for content field (e.g. "review" instead of "content")
 - [ ] allow user to choose between kind1 and nip-78 event if manifest allows that
-- [ ] Publish npm packages for each package (packages/*) with CI, semantic
+- [ ] Publish npm packages for each package (packages/\*) with CI, semantic
       versioning, and automated releases to the npm registry
 - [ ] User mention support: mention autocomplete, user tagging, and profile
       resolution (NIP-73 identity tags)
