@@ -505,36 +505,7 @@ nostr-post/
 
 ## 🎯 Roadmap
 
-### Phase 1: Core Engine
-
-- [x] Type definitions
-- [ ] fix pwa example share image
-- [ ] fix list plugin to use lists(nip-51?) instead of manifests
-- [ ] fix posting events with images when used different name for content field (e.g. "review" instead of "content")
-- [ ] allow user to choose between kind1 and nip-78 event if manifest allows that
-- [ ] Publish npm packages for each package (packages/\*) with CI, semantic
-      versioning, and automated releases to the npm registry
-- [ ] User mention support: mention autocomplete, user tagging, and profile
-      resolution (NIP-73 identity tags)
-- [ ] add integrity check for bundle integrity="sha384-Base64EncodedHashOfYourFileHere"
-- [ ] add multi-language support (i18n) for built-in plugins UI components and manifest
-- [ ] add style customization options for web components (CSS custom properties, theming)
-- [ ] allow updating nip-78 events when content changes (currently they are immutable after creation)
-- [ ] manifest creator should show latest version of user manifest when updated
-- [ ] add link to library in web component footers for better discoverability
-
-### Phase 2: Domain Scenarios (Planned)
-
-- [x] Comments support (kind 1) with manifest presets, examples, and protocol-standard reply tags
-- [ ] pool plugin
-- [ ] Calendar events support (NIP-52) with agenda-oriented rendering
-- [ ] P2P offers support (NIP-69) with filtered feed presets/views
-- [ ] Zap support (NIP-57): zap requests/receipts with amount + payer views and filtering
-- [ ] Add scenario manifests for:
-  - offer creation (NIP-69)
-  - offer confirmation messages (NIP-17 formatted payload)
-  - deal closing flow events
-  - review snapshots
+See [ROADMAP.md](./ROADMAP.md) for the full feature plan and status checklist.
 
 ## 🚀 Getting Started
 
