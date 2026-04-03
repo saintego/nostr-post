@@ -361,6 +361,20 @@ const appendExtraTags = (
   }
 };
 
+const dedupeTags = (tags: NostrTag[]): NostrTag[] => {
+  const seen = new Set<string>();
+  const deduped: NostrTag[] = [];
+
+  for (const tag of tags) {
+    const key = JSON.stringify(tag);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(tag);
+  }
+
+  return deduped;
+};
+
 /**
  * Creates an unsigned Nostr event for a specific kind.
  */
@@ -389,7 +403,7 @@ const createEventForKind = (
   return {
     kind,
     created_at: config.createdAt || Math.floor(Date.now() / 1000),
-    tags,
+    tags: dedupeTags(tags),
     content,
     pubkey: config.pubkey || '',
   };

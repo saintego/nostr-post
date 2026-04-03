@@ -32,7 +32,7 @@ pluginRegistry.register({
       id: 'media-upload',
       icon: '🖼️',
       label: 'Add media',
-      onClick: ({ onUpdateField }) => {
+      onClick: ({ targetField, formData, onUpdateField }) => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept =
@@ -48,8 +48,8 @@ pluginRegistry.register({
           for (const file of files) {
             fakeClipboard.clipboardData?.items.add(file);
           }
-          await handleMediaPaste(fakeClipboard, field, {
-            formData: {},
+          await handleMediaPaste(fakeClipboard, targetField, {
+            formData,
             onUpdateField,
           });
         };
