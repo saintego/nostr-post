@@ -4,18 +4,19 @@
 
 - [x] Type definitions
 - [ ] allow user to choose between kind1 and nip-78 event if manifest allows that
+- [ ] manifest can inherit from other manifest
 - [ ] add multi-language support (i18n) for built-in plugins UI components and manifest
-- [ ] add style customization options for web components (CSS custom properties, theming)
 - [ ] allow updating nip-78 events when content changes (currently they are immutable after creation)
 - [ ] manifest creator should show latest version of user manifest when updated
+- [ ] add style customization options for web components (CSS custom properties, theming)
 - [ ] fix pwa example share image
 - [ ] fix list plugin to use lists(nip-51?) instead of manifests
+- [ ] User mention support: mention autocomplete, user tagging, and profile
+- [ ] add link to library in web component footers for better discoverability
 - [ ] Publish npm packages for each package (packages/\*) with CI, semantic
       versioning, and automated releases to the npm registry
-- [ ] User mention support: mention autocomplete, user tagging, and profile
       resolution (NIP-73 identity tags)
 - [ ] add integrity check for bundle integrity="sha384-Base64EncodedHashOfYourFileHere"
-- [ ] add link to library in web component footers for better discoverability
 
 ### Phase 2: Domain Scenarios (Planned)
 
