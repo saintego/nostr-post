@@ -1,5 +1,6 @@
 'use client';
 
+import { getFieldTargets } from '@nostr-post/core/manifestMappings';
 import type { PostField } from '@nostr-post/core/types';
 
 interface FieldEditorProps {
@@ -70,6 +71,11 @@ const styles = {
 } as const;
 
 export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }: FieldEditorProps) {
+  const primaryTarget = getFieldTargets(field)[0] ?? {
+    kind: kinds[0] ?? 1,
+    target: 'content' as const,
+  };
+
   const update = (key: keyof PostField, value: unknown) => {
     onChange({
       ...field,
@@ -88,12 +94,17 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
   };
 
   const updateMapTo = (key: string, value: unknown) => {
+    const currentTargets = getFieldTargets(field);
+    const nextPrimaryTarget = {
+      ...primaryTarget,
+      [key]: value,
+    };
     onChange({
       ...field,
-      mapTo: {
-        ...field.mapTo,
-        [key]: value,
-      },
+      mapTo:
+        currentTargets.length > 1
+          ? [nextPrimaryTarget, ...currentTargets.slice(1)]
+          : nextPrimaryTarget,
     });
   };
 
@@ -208,7 +219,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
           <select
             id="field-map-kind"
             style={styles.select}
-            value={field.mapTo.kind}
+            value={primaryTarget.kind}
             onChange={(e) => updateMapTo('kind', Number(e.target.value))}
           >
             {kinds.map((kind) => (
@@ -232,7 +243,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
           <select
             id="field-target"
             style={styles.select}
-            value={field.mapTo.target}
+            value={primaryTarget.target}
             onChange={(e) => updateMapTo('target', e.target.value)}
           >
             <option value="content">content</option>
@@ -240,7 +251,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
           </select>
         </div>
 
-        {field.mapTo.target === 'tag' && (
+        {primaryTarget.target === 'tag' && (
           <div style={styles.formGroup}>
             <label style={styles.label} htmlFor="field-tag-name">
               Tag Name:
@@ -249,14 +260,14 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
               id="field-tag-name"
               style={styles.input}
               type="text"
-              value={field.mapTo.tagName || ''}
+              value={primaryTarget.tagName || ''}
               onChange={(e) => updateMapTo('tagName', e.target.value)}
               placeholder="tagName"
             />
           </div>
         )}
 
-        {field.mapTo.kind === 30078 && field.mapTo.target === 'content' && (
+        {primaryTarget.kind === 30078 && primaryTarget.target === 'content' && (
           <div style={styles.formGroup}>
             <label style={styles.label} htmlFor="field-path">
               JSON Path:
@@ -265,7 +276,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
               id="field-path"
               style={styles.input}
               type="text"
-              value={field.mapTo.path || ''}
+              value={primaryTarget.path || ''}
               onChange={(e) => updateMapTo('path', e.target.value || undefined)}
               placeholder="e.g. ratings.wifi"
             />

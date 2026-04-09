@@ -2,6 +2,7 @@
 
 import { coordinateEvents } from '@nostr-post/core/coordinator';
 import { prepareFormData } from '@nostr-post/core/enrichment';
+import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { NostrPostFeed, type NostrPostFeedRef, type SignedEvent } from '@nostr-post/react';
@@ -62,7 +63,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
       setCurrentPubkey(pubkey);
       setIsLoadingEvents(true);
 
-      const kinds = manifest.requiredKinds ?? [1];
+      const kinds = getManifestAvailableKinds(manifest);
       const events = await fetchEvents({ authors: [pubkey], kinds, limit: 20 });
       if (events.length > 0) {
         setPublishedEvents(events);
@@ -73,7 +74,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
     } finally {
       setIsLoadingEvents(false);
     }
-  }, [manifest.requiredKinds]);
+  }, [manifest]);
 
   // Load events: show cache immediately, then fetch from relays
   useEffect(() => {
@@ -273,7 +274,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
             <NostrPostFeed
               ref={feedRef}
               authors={[currentPubkey]}
-              kinds={manifest.requiredKinds ?? [1]}
+              kinds={getManifestAvailableKinds(manifest)}
               limit={20}
               manifest={manifest}
               commentsEnabled

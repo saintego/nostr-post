@@ -124,6 +124,38 @@ const result = coordinateEvents(manifest, formData, { pubkey });
 // returns: { events: [Kind 30023, Kind 30078 (manifest)] }
 ```
 
+### 3. **Selectable Publish Formats**
+
+Manifests can offer multiple user-facing publish formats, each activating a different set of kinds.
+This lets a composer keep one form while publishing, for example, either as a public Kind 1 note or as a structured NIP-78 event.
+
+```typescript
+const manifest: NostrPostManifest = {
+  id: 'review-v2',
+  version: '2.0.0',
+  publishFormats: [
+    { id: 'kind1', label: 'Public note', kinds: [1], default: true },
+    { id: 'nip78', label: 'Structured review', kinds: [30078] },
+  ],
+  fields: [
+    {
+      id: 'review',
+      type: 'string',
+      uiPlugin: 'textarea',
+      mapTo: [
+        { kind: 1, target: 'content' },
+        { kind: 30078, target: 'content', path: 'review' },
+      ],
+    },
+  ],
+};
+```
+
+If a field has multiple targets, `mapBehavior` controls how it publishes:
+
+- `first-active` (default): publish to the first mapping whose kind is active
+- `all-active`: publish to every active mapping for that field
+
 ### 3. **7 Production Plugins**
 
 Ready-to-use UI components via Web Components or React:

@@ -20,6 +20,17 @@ export type NostrTarget = {
   path?: string;
 };
 
+export type FieldMapBehavior = 'first-active' | 'all-active';
+
+export interface PublishFormat {
+  id: string;
+  label: string;
+  description?: string;
+  kinds: number[];
+  default?: boolean;
+  userSelectable?: boolean;
+}
+
 /**
  * Supported field types for the manifest system.
  * Each type corresponds to a validation schema and UI plugin interface.
@@ -52,7 +63,9 @@ export interface PostField {
   id: string;
   type: FieldType;
   uiPlugin: string;
-  mapTo: NostrTarget;
+  mapTo: NostrTarget | NostrTarget[];
+  /** How to apply multiple mappings when more than one active kind matches. Defaults to 'first-active'. */
+  mapBehavior?: FieldMapBehavior;
   required?: boolean;
   options?: string[];
   metadata?: Record<string, unknown>;
@@ -93,7 +106,8 @@ export interface PostField {
 export interface NostrPostManifest {
   id: string;
   version: string;
-  requiredKinds: number[];
+  requiredKinds?: number[];
+  publishFormats?: PublishFormat[];
   fields: PostField[];
   /**
    * Whether to embed an `a` tag referencing this manifest in published events.

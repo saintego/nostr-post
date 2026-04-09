@@ -5,6 +5,7 @@
  * using manifest field definitions and plugin view components.
  */
 
+import { type ResolvedPostField, getFieldsByKind } from '@nostr-post/core/manifestMappings';
 import { NIP78_KIND } from '@nostr-post/core/nip78';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
@@ -86,7 +87,7 @@ const renderLinkedFieldValue = (
 const buildFieldByTag = (fields: PostField[]): Map<string, PostField> => {
   const fieldByTag = new Map<string, PostField>();
   for (const field of fields) {
-    if (field.mapTo.tagName) {
+    if (!Array.isArray(field.mapTo) && field.mapTo.tagName) {
       fieldByTag.set(field.mapTo.tagName, field);
     }
   }
@@ -169,7 +170,7 @@ const renderNip78Fields = (fields: PostField[], data: Record<string, unknown>) =
 
     // Resolve value from JSON data (supports dot-notation paths)
     let value: unknown;
-    if (field.mapTo.path) {
+    if (!Array.isArray(field.mapTo) && field.mapTo.path) {
       value = getNestedValue(data, field.mapTo.path);
     } else {
       value = data[field.id];
@@ -208,7 +209,9 @@ const renderNip78Fields = (fields: PostField[], data: Record<string, unknown>) =
  */
 const renderSingleLinkedEvent = (linkedEvent: DisplayableEvent, m: NostrPostManifest) => {
   const results: unknown[] = [];
-  const fieldsForKind = m.fields.filter((f) => f.mapTo.kind === linkedEvent.kind);
+  const fieldsForKind: ResolvedPostField[] = getFieldsByKind(m, linkedEvent.kind, [
+    linkedEvent.kind,
+  ]);
   if (fieldsForKind.length === 0) return results;
 
   // For NIP-78 events, parse JSON content
@@ -253,4 +256,16 @@ export const renderLinkedEvents = (
   if (results.length === 0) return '';
 
   return html` <div class="linked-data">${results}</div> `;
+};
+
+export const renderManifestEventData = (
+  event: DisplayableEvent,
+  manifest: NostrPostManifest | undefined
+) => {
+  if (!manifest) return '';
+
+  const results = renderSingleLinkedEvent(event, manifest);
+  if (results.length === 0) return '';
+
+  return html`${results}`;
 };

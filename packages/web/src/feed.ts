@@ -4,6 +4,7 @@
  * Displays a list of Nostr events
  */
 
+import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { type FetchFilter, fetchEvents, fetchManifestByATag } from '@nostr-post/signer';
 import { html } from 'lit';
@@ -121,7 +122,6 @@ export class NostrPostFeed extends NostrPostElement {
 
   constructor() {
     super();
-    this.kinds = [1];
     this.limit = 20;
     this.showKind = false;
     this.showTags = false;
@@ -150,6 +150,7 @@ export class NostrPostFeed extends NostrPostElement {
       changedProperties.has('until') ||
       changedProperties.has('search') ||
       changedProperties.has('relays') ||
+      changedProperties.has('manifest') ||
       changedProperties.has('filterTags') ||
       changedProperties.has('tagFilters') ||
       changedProperties.has('filters') ||
@@ -208,6 +209,8 @@ export class NostrPostFeed extends NostrPostElement {
     this.isLoading = true;
     this.interactionEvents = [];
     this.interactionLoadKey = '';
+    const resolvedKinds =
+      this.kinds ?? (this.manifest ? getManifestAvailableKinds(this.manifest) : [1]);
 
     try {
       const onUpdate = (arr: SignedEvent[]) => {
@@ -220,7 +223,7 @@ export class NostrPostFeed extends NostrPostElement {
           filters: this.filters,
           ids: this.ids,
           authors: this.authors,
-          kinds: this.kinds,
+          kinds: resolvedKinds,
           search: this.search,
           limit: this.limit,
           since: this.since,

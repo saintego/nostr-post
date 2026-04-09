@@ -7,6 +7,15 @@
 
 export type FieldType = 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref';
 
+export interface NostrTarget {
+  kind: number;
+  target: 'content' | 'tag';
+  tagName?: string;
+  path?: string;
+}
+
+export type FieldMapBehavior = 'first-active' | 'all-active';
+
 export interface FieldVisibility {
   edit?: 'visible' | 'hidden' | 'readonly';
   view?: 'visible' | 'hidden';
@@ -16,12 +25,8 @@ export interface PostField {
   id: string;
   type: FieldType;
   uiPlugin: string;
-  mapTo: {
-    kind: number;
-    target: 'content' | 'tag';
-    tagName?: string;
-    path?: string;
-  };
+  mapTo: NostrTarget | NostrTarget[];
+  mapBehavior?: FieldMapBehavior;
   required?: boolean;
   options?: string[];
   metadata?: Record<string, unknown>;

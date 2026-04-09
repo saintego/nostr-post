@@ -6,6 +6,7 @@
  * secondary events (e.g. kind 30078 NIP-78 structured data) shown as one post.
  */
 
+import { getFieldsByKind, getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import { parseManifestATag } from '@nostr-post/core/nip78';
 import {
   type NostrPostManifest,
@@ -28,7 +29,7 @@ import {
   fetchAuthorProfile,
   truncatePubkey,
 } from './userProfile';
-import { renderLinkedEvents } from './viewLinked';
+import { renderLinkedEvents, renderManifestEventData } from './viewLinked';
 import { viewStyle } from './viewStyle';
 
 /** Event type that can be either unsigned or signed */
@@ -201,7 +202,9 @@ export class NostrPostView extends NostrPostElement {
 
     // Only fetch if the manifest has kinds beyond the primary event's kind
     const m = this.effectiveManifest;
-    if (!m || m.requiredKinds.length <= 1) return;
+    if (!m) return;
+    const availableKinds = getManifestAvailableKinds(m);
+    if (availableKinds.length <= 1) return;
 
     // Skip if we already fetched for this event
     if (this._lastFetchedLinkedId === eventId) return;
@@ -218,7 +221,7 @@ export class NostrPostView extends NostrPostElement {
     const eventPubkey = this.event?.pubkey;
     if (!eventKind || !eventPubkey) return;
 
-    const otherKinds = m.requiredKinds.filter((k) => k !== eventKind);
+    const otherKinds = availableKinds.filter((k) => k !== eventKind);
     if (otherKinds.length === 0) return;
 
     try {
@@ -268,6 +271,8 @@ export class NostrPostView extends NostrPostElement {
     const pubkey = event.pubkey;
     const eventId = 'id' in event ? (event as SignedEvent).id : undefined;
     const showTechnicalMeta = Boolean(this.showKind || this.showTags);
+    const manifestRenderedData = renderManifestEventData(event, this.effectiveManifest);
+    const shouldUseManifestRendering = Boolean(manifestRenderedData);
 
     return html`
       <div class="view">
@@ -297,9 +302,16 @@ export class NostrPostView extends NostrPostElement {
           >
         </div>
 
-        <div class="view-content">${
-          content ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>` : nothing
-        }${this.renderTagPlugins(tags)}</div>
+        <div class="view-content">
+          ${
+            shouldUseManifestRendering
+              ? manifestRenderedData
+              : content
+                ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>`
+                : nothing
+          }
+          ${shouldUseManifestRendering ? nothing : this.renderTagPlugins(tags)}
+        </div>
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
         ${
@@ -329,9 +341,10 @@ export class NostrPostView extends NostrPostElement {
   private getTagFieldMap(): Map<string, PostField> {
     const map = new Map<string, PostField>();
     const m = this.effectiveManifest;
-    if (m) {
-      for (const field of m.fields) {
-        if (field.mapTo.target === 'tag' && field.mapTo.tagName) {
+    const kind = this.event?.kind;
+    if (m && kind !== undefined) {
+      for (const field of getFieldsByKind(m, kind, [kind])) {
+        if (!Array.isArray(field.mapTo) && field.mapTo.target === 'tag' && field.mapTo.tagName) {
           map.set(field.mapTo.tagName, field);
         }
       }

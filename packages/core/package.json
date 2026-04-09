@@ -25,6 +25,10 @@
     "./enrichment": {
       "types": "./dist/enrichment.d.ts",
       "import": "./dist/enrichment.js"
+    },
+    "./manifestMappings": {
+      "types": "./dist/manifestMappings.d.ts",
+      "import": "./dist/manifestMappings.js"
     }
   },
   "scripts": {

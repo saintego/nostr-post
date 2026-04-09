@@ -5,7 +5,19 @@
  * All functions are immutable and side-effect free.
  */
 
-import type { NostrPostManifest, NostrTarget, PostField, Result, ValidationError } from './types';
+import {
+  getFieldTargets,
+  getFieldsByKind as getFieldsByKindFromMappings,
+  getUsedKinds as getUsedKindsFromMappings,
+} from './manifestMappings';
+import type {
+  NostrPostManifest,
+  NostrTarget,
+  PostField,
+  PublishFormat,
+  Result,
+  ValidationError,
+} from './types';
 
 /**
  * Validates that a NostrTarget is properly configured.
@@ -62,9 +74,23 @@ export const validatePostField = (field: PostField): Result<void, ValidationErro
     };
   }
 
-  const targetValidation = validateNostrTarget(field.mapTo);
-  if (!targetValidation.success) {
-    return targetValidation;
+  const targets = getFieldTargets(field);
+  if (targets.length === 0) {
+    return {
+      success: false,
+      error: {
+        field: 'mapTo',
+        message: 'Field must define at least one mapping target',
+        code: 'MISSING_MAP_TARGET',
+      },
+    };
+  }
+
+  for (const target of targets) {
+    const targetValidation = validateNostrTarget(target);
+    if (!targetValidation.success) {
+      return targetValidation;
+    }
   }
 
   if (field.type === 'enum' && (!field.options || field.options.length === 0)) {
@@ -123,10 +149,13 @@ const validateManifestBasics = (manifest: NostrPostManifest, errors: ValidationE
     });
   }
 
-  if (!manifest.requiredKinds || manifest.requiredKinds.length === 0) {
+  if (
+    (!manifest.requiredKinds || manifest.requiredKinds.length === 0) &&
+    (!manifest.publishFormats || manifest.publishFormats.length === 0)
+  ) {
     errors.push({
       field: 'requiredKinds',
-      message: 'Manifest must specify at least one required kind',
+      message: 'Manifest must specify requiredKinds or publishFormats',
       code: 'MISSING_REQUIRED_KINDS',
     });
   }
@@ -140,10 +169,57 @@ const validateManifestBasics = (manifest: NostrPostManifest, errors: ValidationE
   }
 };
 
+const validatePublishFormat = (format: PublishFormat): Result<void, ValidationError> => {
+  if (!format.id || format.id.trim() === '') {
+    return {
+      success: false,
+      error: {
+        field: 'id',
+        message: 'Publish format id is required',
+        code: 'MISSING_PUBLISH_FORMAT_ID',
+      },
+    };
+  }
+
+  if (!format.label || format.label.trim() === '') {
+    return {
+      success: false,
+      error: {
+        field: 'label',
+        message: 'Publish format label is required',
+        code: 'MISSING_PUBLISH_FORMAT_LABEL',
+      },
+    };
+  }
+
+  if (!format.kinds || format.kinds.length === 0) {
+    return {
+      success: false,
+      error: {
+        field: 'kinds',
+        message: 'Publish format must define at least one kind',
+        code: 'MISSING_PUBLISH_FORMAT_KINDS',
+      },
+    };
+  }
+
+  return { success: true, data: undefined };
+};
+
 /**
  * Validates individual fields in the manifest.
  */
 const validateManifestFields = (manifest: NostrPostManifest, errors: ValidationError[]): void => {
+  for (const [index, format] of (manifest.publishFormats ?? []).entries()) {
+    const formatValidation = validatePublishFormat(format);
+    if (!formatValidation.success) {
+      errors.push({
+        ...formatValidation.error,
+        field: `publishFormats.${index}.${formatValidation.error.field}`,
+      });
+    }
+  }
+
   for (const field of manifest.fields || []) {
     const fieldValidation = validatePostField(field);
     if (!fieldValidation.success) {
@@ -164,6 +240,28 @@ const validateFieldRelationships = (
 ): void => {
   // Check for duplicate field IDs
   const fieldIds = new Set<string>();
+  const formatIds = new Set<string>();
+  let defaultFormatCount = 0;
+  for (const [index, format] of (manifest.publishFormats ?? []).entries()) {
+    if (formatIds.has(format.id)) {
+      errors.push({
+        field: `publishFormats.${index}.id`,
+        message: `Duplicate publish format id: ${format.id}`,
+        code: 'DUPLICATE_PUBLISH_FORMAT_ID',
+      });
+    }
+    formatIds.add(format.id);
+    if (format.default) defaultFormatCount += 1;
+  }
+
+  if (defaultFormatCount > 1) {
+    errors.push({
+      field: 'publishFormats',
+      message: 'Only one publish format can be the default',
+      code: 'MULTIPLE_DEFAULT_PUBLISH_FORMATS',
+    });
+  }
+
   for (const field of manifest.fields || []) {
     if (fieldIds.has(field.id)) {
       errors.push({
@@ -197,7 +295,7 @@ const validateFieldRelationships = (
   }
 
   // Verify all requiredKinds are actually used in field mappings
-  const usedKinds = new Set(manifest.fields?.map((f) => f.mapTo.kind) || []);
+  const usedKinds = new Set(getUsedKindsFromMappings(manifest));
   for (const kind of manifest.requiredKinds || []) {
     if (!usedKinds.has(kind)) {
       errors.push({
@@ -207,21 +305,32 @@ const validateFieldRelationships = (
       });
     }
   }
+
+  for (const [index, format] of (manifest.publishFormats ?? []).entries()) {
+    for (const kind of format.kinds) {
+      if (!usedKinds.has(kind)) {
+        errors.push({
+          field: `publishFormats.${index}.kinds`,
+          message: `Publish format ${format.id} includes kind ${kind} that is not used in any field mapping`,
+          code: 'UNUSED_PUBLISH_FORMAT_KIND',
+        });
+      }
+    }
+  }
 };
 
 /**
  * Gets all fields that map to a specific Nostr kind.
  */
 export const getFieldsByKind = (manifest: NostrPostManifest, kind: number): PostField[] => {
-  return manifest.fields.filter((field) => field.mapTo.kind === kind);
+  return getFieldsByKindFromMappings(manifest, kind);
 };
 
 /**
  * Gets all unique Nostr kinds used in the manifest.
  */
 export const getUsedKinds = (manifest: NostrPostManifest): number[] => {
-  const kinds = new Set(manifest.fields.map((field) => field.mapTo.kind));
-  return Array.from(kinds).sort((a, b) => a - b);
+  return getUsedKindsFromMappings(manifest);
 };
 
 /**

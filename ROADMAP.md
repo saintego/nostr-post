@@ -3,7 +3,7 @@
 ### Phase 1: Core Engine
 
 - [x] Type definitions
-- [ ] allow user to choose between kind1 and nip-78 event if manifest allows that
+- [x] allow user to choose between kind1 and nip-78 event if manifest allows that
 - [ ] manifest can inherit from other manifest
 - [ ] add multi-language support (i18n) for built-in plugins UI components and manifest
 - [ ] allow updating nip-78 events when content changes (currently they are immutable after creation)

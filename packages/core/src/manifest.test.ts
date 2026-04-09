@@ -11,6 +11,11 @@ import {
   validateNostrTarget,
   validatePostField,
 } from './manifest';
+import {
+  getActiveKinds,
+  getDefaultPublishFormat,
+  getManifestAvailableKinds,
+} from './manifestMappings';
 import type { NostrPostManifest, NostrTarget, PostField } from './types';
 
 describe('validateNostrTarget', () => {
@@ -361,6 +366,31 @@ describe('validateManifest', () => {
     const result = validateManifest(manifest);
     expect(result.success).toBe(true);
   });
+
+  it('should validate manifest using publishFormats without requiredKinds', () => {
+    const manifest: NostrPostManifest = {
+      id: 'format-test',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Public note', kinds: [1], default: true },
+        { id: 'nip78', label: 'Structured only', kinds: [30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(true);
+  });
 });
 
 describe('getFieldsByKind', () => {
@@ -405,6 +435,39 @@ describe('getFieldsByKind', () => {
   it('should return empty array for unused kind', () => {
     const fields = getFieldsByKind(manifest, 999);
     expect(fields).toHaveLength(0);
+  });
+
+  it('should resolve first-active fields to the selected kind only', () => {
+    const formatManifest: NostrPostManifest = {
+      id: 'formats',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Kind 1', kinds: [1], default: true },
+        { id: 'nip78', label: 'NIP-78', kinds: [30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    const fields = getFieldsByKind(
+      formatManifest,
+      30078,
+      getActiveKinds(formatManifest, { selectedFormatId: 'nip78' })
+    );
+    expect(fields).toHaveLength(1);
+    expect(Array.isArray(fields[0].mapTo)).toBe(false);
+    if (!Array.isArray(fields[0].mapTo)) {
+      expect(fields[0].mapTo.kind).toBe(30078);
+    }
   });
 });
 
@@ -467,6 +530,31 @@ describe('getUsedKinds', () => {
     };
     const kinds = getUsedKinds(manifest);
     expect(kinds).toEqual([1, 30023, 30078]);
+  });
+
+  it('should expose default and available kinds from publish formats', () => {
+    const manifest: NostrPostManifest = {
+      id: 'formats',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Kind 1', kinds: [1], default: true },
+        { id: 'hybrid', label: 'Hybrid', kinds: [1, 30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    expect(getDefaultPublishFormat(manifest)?.id).toBe('kind1');
+    expect(getManifestAvailableKinds(manifest)).toEqual([1, 30078]);
   });
 });
 

@@ -1,5 +1,6 @@
 'use client';
 
+import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { useRef } from 'react';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
@@ -88,6 +89,8 @@ const styles = {
 } as const;
 
 export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
+  const manifestKinds = manifest.requiredKinds ?? getManifestAvailableKinds(manifest);
+
   const fieldEditorKeysRef = useRef<string[]>(manifest.fields.map(() => crypto.randomUUID()));
 
   const ensureEditorKeys = (fieldCount: number) => {
@@ -123,7 +126,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       id: `field_${Date.now()}`,
       type: 'string',
       uiPlugin: 'text',
-      mapTo: { kind: manifest.requiredKinds[0], target: 'content' },
+      mapTo: { kind: manifestKinds[0] ?? 1, target: 'content' },
       required: false,
       metadata: {
         label: 'New Field',
@@ -284,7 +287,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       <fieldset style={{ ...styles.section, border: 'none', margin: 0, padding: 0 }}>
         <legend style={styles.label}>Required Kinds:</legend>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-          {manifest.requiredKinds.map((kind, i) => (
+          {manifestKinds.map((kind, i) => (
             <span
               key={kind}
               style={{
@@ -309,7 +312,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
               <button
                 type="button"
                 onClick={() => {
-                  const newKinds = manifest.requiredKinds.filter((_, idx) => idx !== i);
+                  const newKinds = manifestKinds.filter((_, idx) => idx !== i);
                   if (newKinds.length > 0) updateBasic('requiredKinds', newKinds);
                 }}
                 style={{
@@ -334,8 +337,8 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
             defaultValue=""
             onChange={(e) => {
               const kind = Number(e.target.value);
-              if (kind && !manifest.requiredKinds.includes(kind)) {
-                updateBasic('requiredKinds', [...manifest.requiredKinds, kind]);
+              if (kind && !manifestKinds.includes(kind)) {
+                updateBasic('requiredKinds', [...manifestKinds, kind]);
               }
               e.target.value = '';
             }}
@@ -344,7 +347,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
               Add kind...
             </option>
             {[1, 30023, 30078]
-              .filter((k) => !manifest.requiredKinds.includes(k))
+              .filter((k) => !manifestKinds.includes(k))
               .map((k) => (
                 <option key={k} value={k}>
                   {k === 1
@@ -363,8 +366,8 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
               if (e.key === 'Enter') {
                 e.preventDefault();
                 const kind = Number((e.target as HTMLInputElement).value);
-                if (kind > 0 && !manifest.requiredKinds.includes(kind)) {
-                  updateBasic('requiredKinds', [...manifest.requiredKinds, kind]);
+                if (kind > 0 && !manifestKinds.includes(kind)) {
+                  updateBasic('requiredKinds', [...manifestKinds, kind]);
                   (e.target as HTMLInputElement).value = '';
                 }
               }
@@ -414,7 +417,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
             <FieldEditor
               key={fieldEditorKeysRef.current[index]}
               field={field}
-              kinds={manifest.requiredKinds}
+              kinds={manifestKinds}
               fieldIds={manifest.fields.map((candidate) => candidate.id)}
               onChange={(f) => updateField(index, f)}
               onDelete={() => deleteField(index)}
