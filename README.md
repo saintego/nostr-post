@@ -131,20 +131,20 @@ This lets a composer keep one form while publishing, for example, either as a pu
 
 ```typescript
 const manifest: NostrPostManifest = {
-  id: 'review-v2',
-  version: '2.0.0',
+  id: "review-v2",
+  version: "2.0.0",
   publishFormats: [
-    { id: 'kind1', label: 'Public note', kinds: [1], default: true },
-    { id: 'nip78', label: 'Structured review', kinds: [30078] },
+    { id: "kind1", label: "Public note", kinds: [1], default: true },
+    { id: "nip78", label: "Structured review", kinds: [30078] },
   ],
   fields: [
     {
-      id: 'review',
-      type: 'string',
-      uiPlugin: 'textarea',
+      id: "review",
+      type: "string",
+      uiPlugin: "textarea",
       mapTo: [
-        { kind: 1, target: 'content' },
-        { kind: 30078, target: 'content', path: 'review' },
+        { kind: 1, target: "content" },
+        { kind: 30078, target: "content", path: "review" },
       ],
     },
   ],
