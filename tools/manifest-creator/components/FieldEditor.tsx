@@ -1,7 +1,7 @@
 'use client';
 
 import { getFieldTargets } from '@nostr-post/core/manifestMappings';
-import type { PostField } from '@nostr-post/core/types';
+import type { NostrTarget, PostField } from '@nostr-post/core/types';
 
 interface FieldEditorProps {
   field: PostField;
@@ -68,10 +68,30 @@ const styles = {
     width: '1rem',
     height: '1rem',
   },
+  helperText: {
+    fontSize: '0.75rem',
+    color: '#6b7280',
+  },
+  mappingCard: {
+    border: '1px dashed #d1d5db',
+    borderRadius: '0.375rem',
+    padding: '0.75rem',
+    background: 'white',
+  },
+  smallButton: {
+    padding: '0.35rem 0.65rem',
+    background: '#6b7280',
+    color: 'white',
+    border: 'none',
+    borderRadius: '0.375rem',
+    fontSize: '0.75rem',
+    cursor: 'pointer',
+  },
 } as const;
 
 export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }: FieldEditorProps) {
-  const primaryTarget = getFieldTargets(field)[0] ?? {
+  const currentTargets = getFieldTargets(field);
+  const primaryTarget = currentTargets[0] ?? {
     kind: kinds[0] ?? 1,
     target: 'content' as const,
   };
@@ -93,19 +113,51 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
     });
   };
 
-  const updateMapTo = (key: string, value: unknown) => {
-    const currentTargets = getFieldTargets(field);
-    const nextPrimaryTarget = {
-      ...primaryTarget,
-      [key]: value,
+  const normalizeTarget = (target: NostrTarget): NostrTarget => {
+    const normalized: NostrTarget = {
+      kind: target.kind,
+      target: target.target,
     };
+
+    if (target.target === 'tag' && target.tagName) {
+      normalized.tagName = target.tagName;
+    }
+
+    if (target.target === 'content' && target.path) {
+      normalized.path = target.path;
+    }
+
+    return normalized;
+  };
+
+  const commitTargets = (targets: NostrTarget[]) => {
+    const normalizedTargets = targets.map(normalizeTarget);
     onChange({
       ...field,
-      mapTo:
-        currentTargets.length > 1
-          ? [nextPrimaryTarget, ...currentTargets.slice(1)]
-          : nextPrimaryTarget,
+      mapTo: normalizedTargets.length === 1 ? normalizedTargets[0] : normalizedTargets,
     });
+  };
+
+  const updateTargetAt = (index: number, patch: Partial<NostrTarget>) => {
+    const nextTargets = [...currentTargets];
+    const existing = nextTargets[index] ?? { kind: kinds[0] ?? 1, target: 'content' as const };
+    nextTargets[index] = { ...existing, ...patch };
+    commitTargets(nextTargets);
+  };
+
+  const updateMapTo = (key: string, value: unknown) => {
+    updateTargetAt(0, { [key]: value } as Partial<NostrTarget>);
+  };
+
+  const addMapping = () => {
+    commitTargets([...currentTargets, { kind: kinds[0] ?? 1, target: 'content' }]);
+  };
+
+  const removeMapping = (index: number) => {
+    const nextTargets = currentTargets.filter((_, targetIndex) => targetIndex !== index);
+    if (nextTargets.length > 0) {
+      commitTargets(nextTargets);
+    }
   };
 
   const label = (field.metadata?.label as string) || field.id;
@@ -188,6 +240,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             <option value="venue">venue</option>
             <option value="hashtag">hashtag</option>
             <option value="reference">reference</option>
+            <option value="list">list</option>
           </select>
         </div>
 
@@ -282,6 +335,21 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             />
           </div>
         )}
+
+        <div style={styles.formGroup}>
+          <label style={styles.label} htmlFor="field-map-behavior">
+            Map Behavior:
+          </label>
+          <select
+            id="field-map-behavior"
+            style={styles.select}
+            value={field.mapBehavior || 'first-active'}
+            onChange={(e) => update('mapBehavior', e.target.value)}
+          >
+            <option value="first-active">first-active</option>
+            <option value="all-active">all-active</option>
+          </select>
+        </div>
 
         <div style={styles.formGroup}>
           <label style={styles.label} htmlFor="field-placeholder">
@@ -381,6 +449,117 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             />
             Required
           </label>
+        </div>
+
+        <div
+          style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <label style={styles.label}>Additional Event Mappings</label>
+              <div style={styles.helperText}>
+                Add extra targets when this field should publish to both Kind 1 and NIP-78.
+              </div>
+            </div>
+            <button type="button" style={styles.smallButton} onClick={addMapping}>
+              + Add Mapping
+            </button>
+          </div>
+
+          {currentTargets.length === 1 ? (
+            <div style={styles.helperText}>Only the primary mapping is configured.</div>
+          ) : (
+            currentTargets.slice(1).map((target, index) => (
+              <div key={`${field.id}-mapping-${index + 1}`} style={styles.mappingCard}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '0.75rem',
+                  }}
+                >
+                  <strong style={{ fontSize: '0.875rem', color: '#111827' }}>
+                    Mapping {index + 2}
+                  </strong>
+                  <button
+                    type="button"
+                    style={{ ...styles.smallButton, background: '#dc2626' }}
+                    onClick={() => removeMapping(index + 1)}
+                  >
+                    Remove
+                  </button>
+                </div>
+
+                <div style={styles.grid}>
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Kind</label>
+                    <select
+                      style={styles.select}
+                      value={target.kind}
+                      onChange={(e) => updateTargetAt(index + 1, { kind: Number(e.target.value) })}
+                    >
+                      {kinds.map((kind) => (
+                        <option key={kind} value={kind}>
+                          {kind === 1
+                            ? '1 (Note)'
+                            : kind === 30023
+                              ? '30023 (Article)'
+                              : kind === 30078
+                                ? '30078 (NIP-78)'
+                                : kind}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Target</label>
+                    <select
+                      style={styles.select}
+                      value={target.target}
+                      onChange={(e) =>
+                        updateTargetAt(index + 1, { target: e.target.value as 'content' | 'tag' })
+                      }
+                    >
+                      <option value="content">content</option>
+                      <option value="tag">tag</option>
+                    </select>
+                  </div>
+
+                  {target.target === 'tag' && (
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>Tag Name</label>
+                      <input
+                        style={styles.input}
+                        type="text"
+                        value={target.tagName || ''}
+                        onChange={(e) =>
+                          updateTargetAt(index + 1, { tagName: e.target.value || undefined })
+                        }
+                        placeholder="tagName"
+                      />
+                    </div>
+                  )}
+
+                  {target.target === 'content' && (
+                    <div style={styles.formGroup}>
+                      <label style={styles.label}>JSON Path</label>
+                      <input
+                        style={styles.input}
+                        type="text"
+                        value={target.path || ''}
+                        onChange={(e) =>
+                          updateTargetAt(index + 1, { path: e.target.value || undefined })
+                        }
+                        placeholder="e.g. ratings.overall"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>

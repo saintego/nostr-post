@@ -13,7 +13,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   'geo-review': {
     id: 'geo-review-v1',
     version: '1.0.0',
-    requiredKinds: [1],
     fields: [
       {
         id: 'review',
@@ -82,13 +81,40 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   'venue-review': {
     id: 'venue-review-v1',
     version: '1.0.0',
-    requiredKinds: [1],
+    publishFormats: [
+      {
+        id: 'kind1-note',
+        label: 'Kind 1 note',
+        description: 'Publish a regular public note that works in any Nostr client.',
+        kinds: [1],
+        default: true,
+        userSelectable: true,
+      },
+      {
+        id: 'nip78-review',
+        label: 'NIP-78 review',
+        description: 'Publish only structured venue review data for richer clients and filtering.',
+        kinds: [30078],
+        userSelectable: true,
+      },
+      {
+        id: 'hybrid-review',
+        label: 'Kind 1 + NIP-78',
+        description: 'Publish both a public note and a structured companion review event.',
+        kinds: [1, 30078],
+        userSelectable: true,
+      },
+    ],
     fields: [
       {
         id: 'review',
         type: 'string',
         uiPlugin: 'textarea',
-        mapTo: { kind: 1, target: 'content' },
+        mapBehavior: 'all-active',
+        mapTo: [
+          { kind: 1, target: 'content' },
+          { kind: 30078, target: 'content', path: 'review' },
+        ],
         required: true,
         metadata: {
           label: 'Review',
@@ -99,7 +125,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         id: 'rating',
         type: 'number',
         uiPlugin: 'stars',
-        mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
+        mapBehavior: 'all-active',
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'rating' },
+          { kind: 30078, target: 'content', path: 'ratings.overall' },
+        ],
         required: true,
         metadata: {
           label: 'Rating',
@@ -111,7 +141,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         id: 'venue',
         type: 'geo',
         uiPlugin: 'venue',
-        mapTo: { kind: 1, target: 'tag', tagName: 'g' },
+        mapBehavior: 'all-active',
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'g' },
+          { kind: 30078, target: 'content', path: 'venue' },
+        ],
         required: true,
         metadata: {
           label: 'Venue',
@@ -123,7 +157,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         id: 'photos',
         type: 'string',
         uiPlugin: 'media',
-        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        mapBehavior: 'all-active',
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'r' },
+          { kind: 30078, target: 'content', path: 'media.photos' },
+        ],
         attachTo: 'review',
         metadata: {
           label: 'Photos',
@@ -136,7 +174,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         type: 'string',
         uiPlugin: 'reference',
         attachTo: 'review',
-        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        mapBehavior: 'all-active',
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'r' },
+          { kind: 30078, target: 'content', path: 'references' },
+        ],
         visibility: { view: 'hidden' },
         metadata: {
           label: 'Links',
@@ -144,23 +186,15 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         },
       },
       {
-        id: 'list',
-        type: 'string',
-        uiPlugin: 'list',
-        mapTo: { kind: 30023, target: 'tag', tagName: 'L' },
-        metadata: {
-          label: 'List',
-          allowCreate: true,
-          allowDelete: true,
-          defaultList: 'trusted-reviewers',
-        },
-      },
-      {
         id: 'tags',
         type: 'string',
         uiPlugin: 'hashtag',
         attachTo: 'review',
-        mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        mapBehavior: 'all-active',
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 't' },
+          { kind: 30078, target: 'content', path: 'hashtags' },
+        ],
         metadata: {
           label: 'Tags',
           suggestions: ['restaurant', 'cafe', 'bar', 'park', 'museum', 'hotel'],
@@ -169,14 +203,24 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
     ],
     metadata: {
       name: 'Venue Review',
-      description: 'Review a specific venue with OSM linking, star rating, photos, and hashtags',
+      description:
+        'Review a venue as a public Kind 1 note, a structured NIP-78 review, or both using one form.',
+      tags: ['venue', 'review', 'kind1', 'nip78'],
     },
   },
 
   article: {
     id: 'article-v1',
     version: '1.0.0',
-    requiredKinds: [30023],
+    publishFormats: [
+      {
+        id: 'nip23-article',
+        label: 'NIP-23 Article',
+        kinds: [30023],
+        default: true,
+        userSelectable: true,
+      },
+    ],
     fields: [
       {
         id: 'title',
@@ -220,7 +264,15 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   'blog-post': {
     id: 'blog-post-v1',
     version: '1.0.0',
-    requiredKinds: [30023],
+    publishFormats: [
+      {
+        id: 'nip23-article',
+        label: 'NIP-23 Article',
+        kinds: [30023],
+        default: true,
+        userSelectable: true,
+      },
+    ],
     fields: [
       {
         id: 'title',
@@ -266,7 +318,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   'cafe-review': {
     id: 'cafe-review-v1',
     version: '1.0.0',
-    requiredKinds: [1, 30078],
     fields: [
       // Kind 1: the main review text (visible to all Nostr clients)
       {
@@ -400,7 +451,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   'movie-review': {
     id: 'movie-review-v1',
     version: '1.0.0',
-    requiredKinds: [1],
     fields: [
       {
         id: 'review',
@@ -491,7 +541,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   'product-review': {
     id: 'product-review-v1',
     version: '1.0.0',
-    requiredKinds: [1],
     fields: [
       {
         id: 'review',
@@ -606,7 +655,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   'beer-review': {
     id: 'beer-review-v1',
     version: '1.0.0',
-    requiredKinds: [1],
     fields: [
       {
         id: 'review',

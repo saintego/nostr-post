@@ -33,10 +33,6 @@ export const getManifestAvailableKinds = (manifest: NostrPostManifest): number[]
     return [...kinds].sort((a, b) => a - b);
   }
 
-  if (manifest.requiredKinds && manifest.requiredKinds.length > 0) {
-    return [...manifest.requiredKinds].sort((a, b) => a - b);
-  }
-
   return getUsedKinds(manifest);
 };
 

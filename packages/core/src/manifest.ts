@@ -149,14 +149,11 @@ const validateManifestBasics = (manifest: NostrPostManifest, errors: ValidationE
     });
   }
 
-  if (
-    (!manifest.requiredKinds || manifest.requiredKinds.length === 0) &&
-    (!manifest.publishFormats || manifest.publishFormats.length === 0)
-  ) {
+  if (!manifest.publishFormats || manifest.publishFormats.length === 0) {
     errors.push({
-      field: 'requiredKinds',
-      message: 'Manifest must specify requiredKinds or publishFormats',
-      code: 'MISSING_REQUIRED_KINDS',
+      field: 'publishFormats',
+      message: 'Manifest must specify publishFormats',
+      code: 'MISSING_PUBLISH_FORMATS',
     });
   }
 
@@ -294,17 +291,8 @@ const validateFieldRelationships = (
     }
   }
 
-  // Verify all requiredKinds are actually used in field mappings
+  // Verify all publishFormats kinds are actually used in field mappings
   const usedKinds = new Set(getUsedKindsFromMappings(manifest));
-  for (const kind of manifest.requiredKinds || []) {
-    if (!usedKinds.has(kind)) {
-      errors.push({
-        field: 'requiredKinds',
-        message: `Required kind ${kind} is not used in any field mapping`,
-        code: 'UNUSED_REQUIRED_KIND',
-      });
-    }
-  }
 
   for (const [index, format] of (manifest.publishFormats ?? []).entries()) {
     for (const kind of format.kinds) {

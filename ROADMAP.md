@@ -5,6 +5,7 @@
 - [x] Type definitions
 - [x] allow user to choose between kind1 and nip-78 event if manifest allows that
 - [ ] manifest can inherit from other manifest
+- [ ] add kind:30818 for object that are used for review(beer, product, map venue detail)
 - [ ] add multi-language support (i18n) for built-in plugins UI components and manifest
 - [ ] allow updating nip-78 events when content changes (currently they are immutable after creation)
 - [ ] manifest creator should show latest version of user manifest when updated
@@ -17,12 +18,16 @@
       versioning, and automated releases to the npm registry
       resolution (NIP-73 identity tags)
 - [ ] add integrity check for bundle integrity="sha384-Base64EncodedHashOfYourFileHere"
+- [ ] photo view(see photos of venue)
+- [ ] search web component
+- [ ] allow to share NIP-78 data to Kind 1 events (for better compatibility with existing clients)
 
 ### Phase 2: Domain Scenarios (Planned)
 
 - [x] Comments support (kind 1) with manifest presets, examples, and protocol-standard reply tags
 - [ ] pool plugin
 - [ ] Calendar events support (NIP-52) with agenda-oriented rendering
+- [ ] calendar view
 - [ ] P2P offers support (NIP-69) with filtered feed presets/views
 - [ ] Zap support (NIP-57): zap requests/receipts with amount + payer views and filtering
 - [ ] Add scenario manifests for:
