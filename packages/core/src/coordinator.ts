@@ -499,6 +499,9 @@ export const coordinateEvents = (
 
   for (const kind of activeKinds) {
     const fieldsForKind = getFieldsByKind(manifest, kind, activeKinds);
+    if (fieldsForKind.length === 0) {
+      continue;
+    }
     const event = createEventForKind(kind, fieldsForKind, formData, effectiveConfig);
     events.push(event);
   }

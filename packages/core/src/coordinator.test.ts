@@ -632,10 +632,45 @@ describe('coordinateEvents', () => {
 
     expect(result.success).toBe(true);
     if (result.success) {
-      const kind1 = result.data.events.find((event) => event.kind === 1);
-      const kind30078 = result.data.events.find((event) => event.kind === 30078);
+      expect(result.data.events).toHaveLength(1);
+      const kind1 = result.data.events[0];
       expect(kind1?.content).toBe('Single target');
-      expect(kind30078?.content).toBe('{}');
+      expect(kind1?.kind).toBe(1);
+    }
+  });
+
+  it('should fall back to the default format when selectedFormatId is unknown', () => {
+    const manifest: NostrPostManifest = {
+      id: 'fallback-format',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Kind 1', kinds: [1], default: true },
+        { id: 'nip78', label: 'NIP-78', kinds: [30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    const result = coordinateEvents(
+      manifest,
+      { review: 'Default only' },
+      { selectedFormatId: 'stale-selection' }
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.events).toHaveLength(1);
+      expect(result.data.events[0].kind).toBe(1);
+      expect(result.data.events[0].content).toBe('Default only');
     }
   });
 

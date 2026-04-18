@@ -485,6 +485,30 @@ describe('getFieldsByKind', () => {
       expect(fields[0].mapTo.kind).toBe(30078);
     }
   });
+
+  it('should fall back to the default publish format when selectedFormatId is unknown', () => {
+    const formatManifest: NostrPostManifest = {
+      id: 'formats',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Kind 1', kinds: [1], default: true },
+        { id: 'nip78', label: 'NIP-78', kinds: [30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    expect(getActiveKinds(formatManifest, { selectedFormatId: 'missing-format' })).toEqual([1]);
+  });
 });
 
 describe('getUsedKinds', () => {

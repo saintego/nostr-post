@@ -67,7 +67,8 @@ export const getActiveKinds = (
 
   if (manifest.publishFormats && manifest.publishFormats.length > 0) {
     const selected = selectedFormatId
-      ? manifest.publishFormats.find((format) => format.id === selectedFormatId)
+      ? (manifest.publishFormats.find((format) => format.id === selectedFormatId) ??
+        getDefaultPublishFormat(manifest))
       : getDefaultPublishFormat(manifest);
     if (selected) {
       return stableUniqueKinds(selected.kinds);
