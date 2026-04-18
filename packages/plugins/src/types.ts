@@ -5,16 +5,13 @@
  * that registers itself with the shared PluginRegistry.
  */
 
-export type FieldType = 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref';
+import type { FieldMapBehavior, FieldType, NostrTarget } from '@nostr-post/core/types';
 
-export interface NostrTarget {
-  kind: number;
-  target: 'content' | 'tag';
-  tagName?: string;
-  path?: string;
-}
-
-export type FieldMapBehavior = 'first-active' | 'all-active';
+export type {
+  FieldMapBehavior,
+  FieldType,
+  NostrTarget,
+} from '@nostr-post/core/types';
 
 export interface FieldVisibility {
   edit?: 'visible' | 'hidden' | 'readonly';

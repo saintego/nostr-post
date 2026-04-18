@@ -6,6 +6,7 @@
  */
 
 import { type ResolvedPostField, getFieldsByKind } from '@nostr-post/core/manifestMappings';
+import { isStructuredContentKind } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html } from 'lit';
@@ -217,7 +218,8 @@ const renderSingleLinkedEvent = (linkedEvent: DisplayableEvent, m: NostrPostMani
   if (fieldsForKind.length === 0) return results;
 
   const contentFields = fieldsForKind.filter((f) => f.mapTo.target === 'content');
-  const hasStructuredContentFields = contentFields.some((field) => Boolean(field.mapTo.path));
+  const hasStructuredContentFields =
+    contentFields.length > 0 && isStructuredContentKind(linkedEvent.kind);
 
   if (hasStructuredContentFields && linkedEvent.content) {
     try {
@@ -276,8 +278,9 @@ export const hasStructuredContentMappings = (
   manifest: NostrPostManifest | undefined
 ): boolean => {
   if (!manifest) return false;
+  if (!isStructuredContentKind(event.kind)) return false;
 
   return getFieldsByKind(manifest, event.kind, [event.kind]).some(
-    (field) => field.mapTo.target === 'content' && Boolean(field.mapTo.path)
+    (field) => field.mapTo.target === 'content'
   );
 };

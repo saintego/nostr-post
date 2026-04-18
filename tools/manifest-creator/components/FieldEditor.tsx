@@ -1,6 +1,6 @@
 'use client';
 
-import { getFieldTargets } from '@nostr-post/core/manifestMappings';
+import { getFieldTargets, isStructuredContentKind } from '@nostr-post/core/manifestMappings';
 import type { NostrTarget, PostField } from '@nostr-post/core/types';
 
 interface FieldEditorProps {
@@ -95,6 +95,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
     kind: kinds[0] ?? 1,
     target: 'content' as const,
   };
+  const additionalMappingsHeadingId = `${field.id}-additional-mappings`;
 
   const update = (key: keyof PostField, value: unknown) => {
     onChange({
@@ -320,7 +321,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
           </div>
         )}
 
-        {primaryTarget.kind === 30078 && primaryTarget.target === 'content' && (
+        {primaryTarget.target === 'content' && isStructuredContentKind(primaryTarget.kind) && (
           <div style={styles.formGroup}>
             <label style={styles.label} htmlFor="field-path">
               JSON Path:
@@ -456,7 +457,9 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <label style={styles.label}>Additional Event Mappings</label>
+              <div id={additionalMappingsHeadingId} style={styles.label}>
+                Additional Event Mappings
+              </div>
               <div style={styles.helperText}>
                 Add extra targets when this field should publish to both Kind 1 and NIP-78.
               </div>
@@ -471,92 +474,120 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
           ) : (
             currentTargets.slice(1).map((target, index) => (
               <div key={`${field.id}-mapping-${index + 1}`} style={styles.mappingCard}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '0.75rem',
-                  }}
-                >
-                  <strong style={{ fontSize: '0.875rem', color: '#111827' }}>
-                    Mapping {index + 2}
-                  </strong>
-                  <button
-                    type="button"
-                    style={{ ...styles.smallButton, background: '#dc2626' }}
-                    onClick={() => removeMapping(index + 1)}
-                  >
-                    Remove
-                  </button>
-                </div>
+                {(() => {
+                  const mappingIndex = index + 1;
+                  const kindInputId = `${field.id}-mapping-kind-${mappingIndex}`;
+                  const targetInputId = `${field.id}-mapping-target-${mappingIndex}`;
+                  const tagNameInputId = `${field.id}-mapping-tag-${mappingIndex}`;
+                  const pathInputId = `${field.id}-mapping-path-${mappingIndex}`;
 
-                <div style={styles.grid}>
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Kind</label>
-                    <select
-                      style={styles.select}
-                      value={target.kind}
-                      onChange={(e) => updateTargetAt(index + 1, { kind: Number(e.target.value) })}
-                    >
-                      {kinds.map((kind) => (
-                        <option key={kind} value={kind}>
-                          {kind === 1
-                            ? '1 (Note)'
-                            : kind === 30023
-                              ? '30023 (Article)'
-                              : kind === 30078
-                                ? '30078 (NIP-78)'
-                                : kind}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                  return (
+                    <>
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '0.75rem',
+                        }}
+                      >
+                        <strong style={{ fontSize: '0.875rem', color: '#111827' }}>
+                          Mapping {index + 2}
+                        </strong>
+                        <button
+                          type="button"
+                          style={{ ...styles.smallButton, background: '#dc2626' }}
+                          onClick={() => removeMapping(index + 1)}
+                        >
+                          Remove
+                        </button>
+                      </div>
 
-                  <div style={styles.formGroup}>
-                    <label style={styles.label}>Target</label>
-                    <select
-                      style={styles.select}
-                      value={target.target}
-                      onChange={(e) =>
-                        updateTargetAt(index + 1, { target: e.target.value as 'content' | 'tag' })
-                      }
-                    >
-                      <option value="content">content</option>
-                      <option value="tag">tag</option>
-                    </select>
-                  </div>
+                      <div style={styles.grid}>
+                        <div style={styles.formGroup}>
+                          <label style={styles.label} htmlFor={kindInputId}>
+                            Kind
+                          </label>
+                          <select
+                            id={kindInputId}
+                            style={styles.select}
+                            value={target.kind}
+                            onChange={(e) =>
+                              updateTargetAt(index + 1, { kind: Number(e.target.value) })
+                            }
+                          >
+                            {kinds.map((kind) => (
+                              <option key={kind} value={kind}>
+                                {kind === 1
+                                  ? '1 (Note)'
+                                  : kind === 30023
+                                    ? '30023 (Article)'
+                                    : kind === 30078
+                                      ? '30078 (NIP-78)'
+                                      : kind}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
 
-                  {target.target === 'tag' && (
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>Tag Name</label>
-                      <input
-                        style={styles.input}
-                        type="text"
-                        value={target.tagName || ''}
-                        onChange={(e) =>
-                          updateTargetAt(index + 1, { tagName: e.target.value || undefined })
-                        }
-                        placeholder="tagName"
-                      />
-                    </div>
-                  )}
+                        <div style={styles.formGroup}>
+                          <label style={styles.label} htmlFor={targetInputId}>
+                            Target
+                          </label>
+                          <select
+                            id={targetInputId}
+                            style={styles.select}
+                            value={target.target}
+                            onChange={(e) =>
+                              updateTargetAt(index + 1, {
+                                target: e.target.value as 'content' | 'tag',
+                              })
+                            }
+                          >
+                            <option value="content">content</option>
+                            <option value="tag">tag</option>
+                          </select>
+                        </div>
 
-                  {target.target === 'content' && (
-                    <div style={styles.formGroup}>
-                      <label style={styles.label}>JSON Path</label>
-                      <input
-                        style={styles.input}
-                        type="text"
-                        value={target.path || ''}
-                        onChange={(e) =>
-                          updateTargetAt(index + 1, { path: e.target.value || undefined })
-                        }
-                        placeholder="e.g. ratings.overall"
-                      />
-                    </div>
-                  )}
-                </div>
+                        {target.target === 'tag' && (
+                          <div style={styles.formGroup}>
+                            <label style={styles.label} htmlFor={tagNameInputId}>
+                              Tag Name
+                            </label>
+                            <input
+                              id={tagNameInputId}
+                              style={styles.input}
+                              type="text"
+                              value={target.tagName || ''}
+                              onChange={(e) =>
+                                updateTargetAt(index + 1, { tagName: e.target.value || undefined })
+                              }
+                              placeholder="tagName"
+                            />
+                          </div>
+                        )}
+
+                        {target.target === 'content' && isStructuredContentKind(target.kind) && (
+                          <div style={styles.formGroup}>
+                            <label style={styles.label} htmlFor={pathInputId}>
+                              JSON Path
+                            </label>
+                            <input
+                              id={pathInputId}
+                              style={styles.input}
+                              type="text"
+                              value={target.path || ''}
+                              onChange={(e) =>
+                                updateTargetAt(index + 1, { path: e.target.value || undefined })
+                              }
+                              placeholder="e.g. ratings.overall"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
               </div>
             ))
           )}

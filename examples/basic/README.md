@@ -192,7 +192,8 @@ If nostr-login doesn't load, check:
 
 Common issues:
 
-- Missing required fields (`id`, `version`, `publishFormats`)
+- Missing required fields (`id`, `version`, `fields`)
+- Missing at least one `mapTo` target in field mappings
 - Invalid kind numbers
 - Missing `mapTo` configuration
 

@@ -14,6 +14,7 @@ import {
   getActiveKinds,
   getFieldTargets,
   getFieldsByKind,
+  isStructuredContentKind,
 } from './manifestMappings';
 import type {
   EventBundle,
@@ -258,10 +259,10 @@ const buildContentForKind = (
   formData: FormData
 ): string => {
   if (contentFields.length === 0) {
-    return kind === 30078 || kind === 30079 ? '{}' : '';
+    return isStructuredContentKind(kind) ? '{}' : '';
   }
 
-  if (kind !== 30078 && kind !== 30079) {
+  if (!isStructuredContentKind(kind)) {
     return contentFields
       .map((field) => formData[field.id])
       .filter((value) => value !== undefined)

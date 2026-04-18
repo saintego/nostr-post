@@ -35,6 +35,8 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
   const [previewValidationErrors, setPreviewValidationErrors] = useState<string[]>([]);
   const composerRef = useRef<NostrPostComposerElement>(null);
   const feedRef = useRef<NostrPostFeedRef>(null);
+  const manifestKinds = getManifestAvailableKinds(manifest);
+  const manifestKindsKey = manifestKinds.join(',');
 
   // Dynamically import web components and plugins (client-only, avoids SSR issues)
   useEffect(() => {
@@ -63,7 +65,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
       setCurrentPubkey(pubkey);
       setIsLoadingEvents(true);
 
-      const kinds = getManifestAvailableKinds(manifest);
+      const kinds = manifestKindsKey ? manifestKindsKey.split(',').map((kind) => Number(kind)) : [];
       const events = await fetchEvents({ authors: [pubkey], kinds, limit: 20 });
       if (events.length > 0) {
         setPublishedEvents(events);
@@ -74,7 +76,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
     } finally {
       setIsLoadingEvents(false);
     }
-  }, [manifest]);
+  }, [manifestKindsKey]);
 
   // Load events: show cache immediately, then fetch from relays
   useEffect(() => {
@@ -274,7 +276,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
             <NostrPostFeed
               ref={feedRef}
               authors={[currentPubkey]}
-              kinds={getManifestAvailableKinds(manifest)}
+              kinds={manifestKinds}
               limit={20}
               manifest={manifest}
               commentsEnabled

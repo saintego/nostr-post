@@ -14,6 +14,8 @@ export const getFieldTargets = (field: PostField): NostrTarget[] =>
 export const getFieldMapBehavior = (field: PostField): FieldMapBehavior =>
   field.mapBehavior ?? 'first-active';
 
+export const isStructuredContentKind = (kind: number): boolean => kind === 30078 || kind === 30079;
+
 export const getUsedKinds = (manifest: NostrPostManifest): number[] => {
   const kinds = new Set<number>();
   for (const field of manifest.fields) {
