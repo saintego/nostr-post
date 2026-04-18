@@ -78,7 +78,9 @@ element.addEventListener("nlAuth", (e) => {
 {
   "id": "simple-post-v1",
   "version": "1.0.0",
-  "publishFormats": [{ "id": "note", "label": "Note", "kinds": [1], "default": true }],
+  "publishFormats": [
+    { "id": "note", "label": "Note", "kinds": [1], "default": true }
+  ],
   "fields": [
     {
       "id": "content",
@@ -97,7 +99,9 @@ element.addEventListener("nlAuth", (e) => {
 {
   "id": "restaurant-review-v1",
   "version": "1.0.0",
-  "publishFormats": [{ "id": "hybrid", "label": "Hybrid", "kinds": [1, 30078], "default": true }],
+  "publishFormats": [
+    { "id": "hybrid", "label": "Hybrid", "kinds": [1, 30078], "default": true }
+  ],
   "fields": [
     {
       "id": "reviewText",
