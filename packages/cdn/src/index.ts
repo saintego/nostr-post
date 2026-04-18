@@ -39,6 +39,15 @@ export { coordinateEvents, validateFormData } from '@nostr-post/core/coordinator
 // Plugin registry
 export { pluginRegistry } from '@nostr-post/plugins/registry';
 
+// Geo helpers
+export {
+  geoPlugin,
+  encodeGeohash,
+  decodeGeohash,
+  type GeoPluginConfig,
+  type GeoCoordinates,
+} from '@nostr-post/plugin-geo';
+
 // Signing & relay utilities
 export {
   signEvent,

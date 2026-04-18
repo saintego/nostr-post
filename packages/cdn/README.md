@@ -57,10 +57,12 @@ The bundle re-exports utilities for advanced usage:
     signAndPublish,
     getUserRelays,
     validateManifest,
+    encodeGeohash,
   } from "https://saintego.github.io/nostr-post/nostr-post.js";
 
   const relays = await getUserRelays();
   console.log("User relays:", relays);
+  console.log("NYC geohash:", encodeGeohash(40.7128, -74.006, 6));
 </script>
 ```
 
@@ -69,7 +71,9 @@ The bundle re-exports utilities for advanced usage:
 ```html
 <script src="https://saintego.github.io/nostr-post/nostr-post.iife.js"></script>
 <script>
-  const { pluginRegistry, signAndPublish, getUserRelays } = NostrPost;
+  const { pluginRegistry, signAndPublish, getUserRelays, decodeGeohash } = NostrPost;
+
+  console.log(decodeGeohash("dr5reg"));
 </script>
 ```
 
@@ -83,6 +87,13 @@ The bundle re-exports utilities for advanced usage:
 **Plugin Registry**
 
 - `pluginRegistry`
+
+**Geo helpers**
+
+- `geoPlugin`
+- `encodeGeohash(lat, lon, precision?)`
+- `decodeGeohash(hash)`
+- `GeoPluginConfig`, `GeoCoordinates`
 
 **Signing & Relays**
 
