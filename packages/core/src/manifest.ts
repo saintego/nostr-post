@@ -19,6 +19,9 @@ import type {
   ValidationError,
 } from './types';
 
+const isValidKindNumber = (kind: number): boolean =>
+  Number.isInteger(kind) && Number.isFinite(kind) && kind >= 0 && kind <= 65535;
+
 /**
  * Validates that a NostrTarget is properly configured.
  */
@@ -34,12 +37,12 @@ export const validateNostrTarget = (target: NostrTarget): Result<void, Validatio
     };
   }
 
-  if (target.kind < 0 || target.kind > 65535) {
+  if (!isValidKindNumber(target.kind)) {
     return {
       success: false,
       error: {
         field: 'kind',
-        message: 'kind must be between 0 and 65535',
+        message: 'kind must be an integer between 0 and 65535',
         code: 'INVALID_KIND',
       },
     };
@@ -190,6 +193,19 @@ const validatePublishFormat = (format: PublishFormat): Result<void, ValidationEr
         code: 'MISSING_PUBLISH_FORMAT_KINDS',
       },
     };
+  }
+
+  for (const kind of format.kinds) {
+    if (!isValidKindNumber(kind)) {
+      return {
+        success: false,
+        error: {
+          field: 'kinds',
+          message: 'Publish format kinds must be integers between 0 and 65535',
+          code: 'INVALID_KIND',
+        },
+      };
+    }
   }
 
   return { success: true, data: undefined };

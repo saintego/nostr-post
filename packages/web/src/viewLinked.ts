@@ -5,8 +5,12 @@
  * using manifest field definitions and plugin view components.
  */
 
-import { type ResolvedPostField, getFieldsByKind } from '@nostr-post/core/manifestMappings';
-import { isStructuredContentKind } from '@nostr-post/core/manifestMappings';
+import {
+  type ResolvedPostField,
+  getFieldTargets,
+  getFieldsByKind,
+  isStructuredContentKind,
+} from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html } from 'lit';
@@ -87,10 +91,12 @@ const renderLinkedFieldValue = (
 const buildFieldByTag = (fields: PostField[]): Map<string, PostField[]> => {
   const fieldByTag = new Map<string, PostField[]>();
   for (const field of fields) {
-    if (!Array.isArray(field.mapTo) && field.mapTo.tagName) {
-      const existing = fieldByTag.get(field.mapTo.tagName) ?? [];
+    for (const target of getFieldTargets(field)) {
+      if (target.target !== 'tag' || !target.tagName) continue;
+
+      const existing = fieldByTag.get(target.tagName) ?? [];
       existing.push(field);
-      fieldByTag.set(field.mapTo.tagName, existing);
+      fieldByTag.set(target.tagName, existing);
     }
   }
   return fieldByTag;

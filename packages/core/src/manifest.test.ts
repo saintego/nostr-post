@@ -71,6 +71,30 @@ describe('validateNostrTarget', () => {
     const result = validateNostrTarget(target);
     expect(result.success).toBe(false);
   });
+
+  it('should reject NaN kind numbers', () => {
+    const target: NostrTarget = {
+      kind: Number.NaN,
+      target: 'content',
+    };
+    const result = validateNostrTarget(target);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.code).toBe('INVALID_KIND');
+    }
+  });
+
+  it('should reject non-integer kind numbers', () => {
+    const target: NostrTarget = {
+      kind: 1.5,
+      target: 'content',
+    };
+    const result = validateNostrTarget(target);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.code).toBe('INVALID_KIND');
+    }
+  });
 });
 
 describe('validatePostField', () => {
@@ -236,6 +260,50 @@ describe('validateManifest', () => {
     expect(result.success).toBe(false);
     if (!result.success) {
       expect(result.error.some((e) => e.code === 'MISSING_FIELDS')).toBe(true);
+    }
+  });
+
+  it('should reject publish formats with NaN kinds', () => {
+    const manifest = {
+      id: 'test',
+      version: '1.0.0',
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [Number.NaN], default: true }],
+      fields: [
+        {
+          id: 'content',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+        },
+      ],
+    } as NostrPostManifest;
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.some((e) => e.field === 'publishFormats.0.kinds')).toBe(true);
+      expect(result.error.some((e) => e.code === 'INVALID_KIND')).toBe(true);
+    }
+  });
+
+  it('should reject publish formats with non-integer kinds', () => {
+    const manifest = {
+      id: 'test',
+      version: '1.0.0',
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1.25], default: true }],
+      fields: [
+        {
+          id: 'content',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+        },
+      ],
+    } as NostrPostManifest;
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.some((e) => e.field === 'publishFormats.0.kinds')).toBe(true);
+      expect(result.error.some((e) => e.code === 'INVALID_KIND')).toBe(true);
     }
   });
 

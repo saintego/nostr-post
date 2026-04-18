@@ -6,7 +6,7 @@
 - [x] allow user to choose between kind1 and nip-78 event if manifest allows that
 - [ ] allow updating nip-78 events when content changes (currently they have empty d tag and override each other)
 - [ ] manifest can inherit from other manifest
-- [ ] add kind:30818 for object that are used for review(beer, product, map venue detail)
+- [ ] add kind:30818 for objects that are used for review (beer, product, map venue detail)
 - [ ] add multi-language support (i18n) for built-in plugins UI components and manifest
 - [ ] manifest creator should show latest version of user manifest when updated
 - [ ] add style customization options for web components (CSS custom properties, theming)
