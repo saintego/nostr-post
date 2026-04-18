@@ -21,7 +21,7 @@
 - [ ] photo view(see photos of venue)
 - [ ] search web component
 - [ ] allow to share NIP-78 data to Kind 1 events (for better compatibility with existing clients)
-- [ ] allow kind 1 comments to update content of main event(so user can update review in case they are using out vie, in other clietns it'd look like comment)
+- [ ] allow kind 1 comments to update content of main event (so user can update review in case they are using our view; in other clients it'd look like a comment)
 
 ### Phase 2: Domain Scenarios (Planned)
 

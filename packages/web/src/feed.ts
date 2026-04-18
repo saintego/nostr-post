@@ -210,7 +210,11 @@ export class NostrPostFeed extends NostrPostElement {
     this.interactionEvents = [];
     this.interactionLoadKey = '';
     const resolvedKinds =
-      this.kinds ?? (this.manifest ? getManifestAvailableKinds(this.manifest) : [1]);
+      this.kinds && this.kinds.length > 0
+        ? this.kinds
+        : this.manifest
+          ? getManifestAvailableKinds(this.manifest)
+          : [1];
 
     try {
       const onUpdate = (arr: SignedEvent[]) => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
+import { getManifestAvailableKinds, getUsedKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest, PostField, PublishFormat } from '@nostr-post/core/types';
 import { useRef } from 'react';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
@@ -90,8 +90,15 @@ const styles = {
   },
 } as const;
 
+const getEditorAvailableKinds = (manifest: NostrPostManifest): number[] => {
+  const availableKinds = getManifestAvailableKinds(manifest);
+  const mappingKinds = getUsedKinds(manifest);
+
+  return Array.from(new Set([...availableKinds, ...mappingKinds])).sort((a, b) => a - b);
+};
+
 export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
-  const manifestKinds = getManifestAvailableKinds(manifest);
+  const manifestKinds = getEditorAvailableKinds(manifest);
 
   const fieldEditorKeysRef = useRef<string[]>(manifest.fields.map(() => crypto.randomUUID()));
 
