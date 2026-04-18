@@ -45,7 +45,7 @@ import type { NostrPostManifest } from '@nostr-post/core/types';
 const venueReviewManifest: NostrPostManifest = {
   id: 'venue-review-v1',
   version: '1.0.0',
-  requiredKinds: [30023],
+  publishFormats: [{ id: 'article', label: 'Article', kinds: [30023], default: true }],
   fields: [
     {
       id: 'review',

@@ -95,7 +95,9 @@ Define content structure once, deploy everywhere:
 const manifest: NostrPostManifest = {
   id: "blog-v1",
   version: "1.0.0",
-  requiredKinds: [30023], // Long-form articles
+  publishFormats: [
+    { id: "article", label: "Article", kinds: [30023], default: true },
+  ], // Long-form articles
   fields: [
     {
       id: "title",
@@ -156,7 +158,7 @@ If a field has multiple targets, `mapBehavior` controls how it publishes:
 - `first-active` (default): publish to the first mapping whose kind is active
 - `all-active`: publish to every active mapping for that field
 
-### 3. **7 Production Plugins**
+### 4. **7 Production Plugins**
 
 Ready-to-use UI components via Web Components or React:
 
@@ -168,7 +170,7 @@ Ready-to-use UI components via Web Components or React:
 - **plugin-reference** - URL/nostr reference list with optional auto-extraction via `attachTo`
 - **plugin-stars** - Customizable rating (1-5 scale)
 
-### 4. **Field-Level Controls**
+### 5. **Field-Level Controls**
 
 Visibility, defaults, prefill, readonly, exclusion, and field attachment:
 

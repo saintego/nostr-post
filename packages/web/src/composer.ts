@@ -152,6 +152,24 @@ export class NostrPostComposer extends NostrPostElement {
     this.successMessage = '';
   }
 
+  private getInitialSelectedPublishFormatId(manifest: NostrPostManifest): string {
+    const defaultFormat = getDefaultPublishFormat(manifest);
+    if (this.hidePublishFormatSelector) {
+      return defaultFormat?.id ?? '';
+    }
+
+    const selectableFormats = getSelectablePublishFormats(manifest);
+    if (selectableFormats.length === 0) {
+      return defaultFormat?.id ?? '';
+    }
+
+    if (defaultFormat && selectableFormats.some((format) => format.id === defaultFormat.id)) {
+      return defaultFormat.id;
+    }
+
+    return selectableFormats[0]?.id ?? '';
+  }
+
   updated(changed: Map<string, unknown>) {
     super.updated(changed);
     const manifestChanged = changed.has('manifest');
@@ -161,8 +179,9 @@ export class NostrPostComposer extends NostrPostElement {
     if (manifestChanged || prefillChanged) {
       this.initDefaults({ resetUnknownFields: manifestChanged });
       if (manifestChanged) {
-        this.selectedPublishFormatId =
-          getDefaultPublishFormat(this.manifest || STANDARD_KIND1_POST_MANIFEST)?.id ?? '';
+        this.selectedPublishFormatId = this.getInitialSelectedPublishFormatId(
+          this.manifest || STANDARD_KIND1_POST_MANIFEST
+        );
         this.errors = {};
         this.successMessage = '';
         this._expandedFields = new Set();
@@ -192,7 +211,7 @@ export class NostrPostComposer extends NostrPostElement {
       if (stored) {
         this.manifest = stored.manifest;
         this.initDefaults({ resetUnknownFields: true });
-        this.selectedPublishFormatId = getDefaultPublishFormat(stored.manifest)?.id ?? '';
+        this.selectedPublishFormatId = this.getInitialSelectedPublishFormatId(stored.manifest);
         this.errors = {};
         this.successMessage = '';
         this._expandedFields = new Set();

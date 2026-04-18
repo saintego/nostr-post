@@ -44,12 +44,25 @@ export const getDefaultPublishFormat = (manifest: NostrPostManifest): PublishFor
   return manifest.publishFormats.find((format) => format.default) ?? manifest.publishFormats[0];
 };
 
+const stableUniqueKinds = (kinds: number[]): number[] => {
+  const seen = new Set<number>();
+  const orderedKinds: number[] = [];
+
+  for (const kind of kinds) {
+    if (seen.has(kind)) continue;
+    seen.add(kind);
+    orderedKinds.push(kind);
+  }
+
+  return orderedKinds;
+};
+
 export const getActiveKinds = (
   manifest: NostrPostManifest,
   { activeKinds, selectedFormatId }: { activeKinds?: number[]; selectedFormatId?: string } = {}
 ): number[] => {
   if (activeKinds && activeKinds.length > 0) {
-    return [...new Set(activeKinds)].sort((a, b) => a - b);
+    return stableUniqueKinds(activeKinds);
   }
 
   if (manifest.publishFormats && manifest.publishFormats.length > 0) {
@@ -57,7 +70,7 @@ export const getActiveKinds = (
       ? manifest.publishFormats.find((format) => format.id === selectedFormatId)
       : getDefaultPublishFormat(manifest);
     if (selected) {
-      return [...new Set(selected.kinds)].sort((a, b) => a - b);
+      return stableUniqueKinds(selected.kinds);
     }
   }
 

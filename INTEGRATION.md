@@ -108,7 +108,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 export const venueReviewManifest: NostrPostManifest = {
   id: "venue-review-osm-v1",
   version: "1.0.0",
-  requiredKinds: [30023], // Long-form for detailed reviews
+  publishFormats: [
+    { id: "article", label: "Article", kinds: [30023], default: true },
+  ], // Long-form for detailed reviews
   fields: [
     {
       id: "venueName",
@@ -599,7 +601,7 @@ author: your-npub
 content: {
   "id": "venue-review-osm-v1",
   "version": "1.0.0",
-  "requiredKinds": [30023],
+  "publishFormats": [{ "id": "article", "label": "Article", "kinds": [30023], "default": true }],
   "fields": [
     { "id": "venue", "uiPlugin": "venue", ... },
     { "id": "rating", "uiPlugin": "stars", ... },

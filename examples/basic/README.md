@@ -78,7 +78,7 @@ element.addEventListener("nlAuth", (e) => {
 {
   "id": "simple-post-v1",
   "version": "1.0.0",
-  "requiredKinds": [1],
+  "publishFormats": [{ "id": "note", "label": "Note", "kinds": [1], "default": true }],
   "fields": [
     {
       "id": "content",
@@ -97,7 +97,7 @@ element.addEventListener("nlAuth", (e) => {
 {
   "id": "restaurant-review-v1",
   "version": "1.0.0",
-  "requiredKinds": [1, 30078],
+  "publishFormats": [{ "id": "hybrid", "label": "Hybrid", "kinds": [1, 30078], "default": true }],
   "fields": [
     {
       "id": "reviewText",
@@ -188,7 +188,7 @@ If nostr-login doesn't load, check:
 
 Common issues:
 
-- Missing required fields (`id`, `version`, `requiredKinds`)
+- Missing required fields (`id`, `version`, `publishFormats`)
 - Invalid kind numbers
 - Missing `mapTo` configuration
 

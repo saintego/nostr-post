@@ -269,3 +269,14 @@ export const renderManifestEventData = (
 
   return html`${results}`;
 };
+
+export const hasStructuredContentMappings = (
+  event: DisplayableEvent,
+  manifest: NostrPostManifest | undefined
+): boolean => {
+  if (!manifest) return false;
+
+  return getFieldsByKind(manifest, event.kind, [event.kind]).some(
+    (field) => field.mapTo.target === 'content' && Boolean(field.mapTo.path)
+  );
+};

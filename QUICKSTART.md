@@ -149,7 +149,9 @@ import "@nostr-post/plugin-media";
 const articleManifest: NostrPostManifest = {
   id: "article-v1",
   version: "1.0.0",
-  requiredKinds: [30023], // Long-form article
+  publishFormats: [
+    { id: "article", label: "Article", kinds: [30023], default: true },
+  ], // Long-form article
   fields: [
     {
       id: "title",
@@ -323,7 +325,7 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const manifest: NostrPostManifest = {
   id: "simple-post-v1",
   version: "1.0.0",
-  requiredKinds: [1],
+  publishFormats: [{ id: "note", label: "Note", kinds: [1], default: true }],
   fields: [
     {
       id: "content",
@@ -478,7 +480,7 @@ const [draft, setDraft] = useState(() => {
 const manifest: NostrPostManifest = {
   id: "post-v1",
   version: "1.0.0",
-  requiredKinds: [1],
+  publishFormats: [{ id: "note", label: "Note", kinds: [1], default: true }],
   fields: [
     {
       id: "public-content",

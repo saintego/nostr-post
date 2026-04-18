@@ -40,7 +40,7 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const manifest: NostrPostManifest = {
   id: "my-app-v1",
   version: "1.0.0",
-  requiredKinds: [1],
+  publishFormats: [{ id: "note", label: "Note", kinds: [1], default: true }],
   fields: [
     {
       id: "content",

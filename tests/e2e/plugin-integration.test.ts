@@ -21,7 +21,7 @@ describe('E2E: Plugin Integration', () => {
     const manifest: NostrPostManifest = {
       id: 'hashtag-post',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -72,7 +72,7 @@ describe('E2E: Plugin Integration', () => {
     const manifest: NostrPostManifest = {
       id: 'hashtag-normalize',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -118,7 +118,7 @@ describe('E2E: Plugin Integration', () => {
     const manifest: NostrPostManifest = {
       id: 'geo-post',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -169,7 +169,7 @@ describe('E2E: Plugin Integration', () => {
     const manifest: NostrPostManifest = {
       id: 'complex-post',
       version: '1.0.0',
-      requiredKinds: [1, 30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30078], default: true }],
       fields: [
         {
           id: 'review',
@@ -267,7 +267,7 @@ describe('E2E: Plugin Integration', () => {
     const manifest: NostrPostManifest = {
       id: 'auto-extract-test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',

@@ -50,7 +50,7 @@ describe('Manifest Creator E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'simple-note-v1',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'content',
@@ -76,7 +76,7 @@ describe('Manifest Creator E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'review-v1',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'review',
@@ -117,7 +117,7 @@ describe('Manifest Creator E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'test-manifest',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'content',
@@ -173,7 +173,7 @@ describe('Manifest Creator E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'test',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'required-field',
@@ -194,7 +194,7 @@ describe('Manifest Creator E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'test',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'content',
@@ -228,7 +228,7 @@ describe('Manifest Creator E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'test',
         version: '1.2.3',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [],
       };
 
@@ -241,7 +241,7 @@ describe('Manifest Creator E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'multi-kind-manifest',
         version: '1.0.0',
-        requiredKinds: [1, 30023],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30023], default: true }],
         fields: [
           {
             id: 'title',
@@ -319,7 +319,7 @@ describe('Manifest Creator E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'geo-test',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'location',
@@ -350,7 +350,7 @@ describe('Manifest Creator E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'media-test',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'image',
@@ -381,7 +381,7 @@ describe('Manifest Creator E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'hashtag-test',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'tags',

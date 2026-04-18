@@ -2,15 +2,15 @@
  * Unit tests for EventCoordinator
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { coordinateEvents, validateFormData } from './coordinator';
+import { type CoordinatorConfig, coordinateEvents, validateFormData } from './coordinator';
 import { prepareFormData } from './enrichment';
-import type { CoordinatorConfig, FormData, NostrPostManifest } from './types';
+import type { FormData, NostrPostManifest } from './types';
 
 describe('validateFormData', () => {
   const manifest: NostrPostManifest = {
     id: 'test-manifest',
     version: '1.0.0',
-    requiredKinds: [1],
+    publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
     fields: [
       {
         id: 'content',
@@ -252,7 +252,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'simple-note',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -287,7 +287,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'hashtag-note',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -322,7 +322,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'nip78-test',
       version: '1.0.0',
-      requiredKinds: [30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [30078], default: true }],
       fields: [
         {
           id: 'venue',
@@ -364,7 +364,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -392,7 +392,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       linkManifest: false,
       fields: [
         {
@@ -421,7 +421,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -472,7 +472,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'geo-test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'location',
@@ -504,7 +504,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'venue-test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'venue',
@@ -532,7 +532,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'multi-kind',
       version: '1.0.0',
-      requiredKinds: [1, 30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30078], default: true }],
       fields: [
         {
           id: 'review',
@@ -707,7 +707,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'custom-serializer',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'tags',
@@ -743,7 +743,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'replaceable-test',
       version: '1.0.0',
-      requiredKinds: [30000],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [30000], default: true }],
       fields: [
         {
           id: 'data',
@@ -768,7 +768,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: '',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [],
     };
     const formData: FormData = {};
@@ -782,7 +782,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',

@@ -29,7 +29,11 @@ import {
   fetchAuthorProfile,
   truncatePubkey,
 } from './userProfile';
-import { renderLinkedEvents, renderManifestEventData } from './viewLinked';
+import {
+  hasStructuredContentMappings,
+  renderLinkedEvents,
+  renderManifestEventData,
+} from './viewLinked';
 import { viewStyle } from './viewStyle';
 
 /** Event type that can be either unsigned or signed */
@@ -272,7 +276,8 @@ export class NostrPostView extends NostrPostElement {
     const eventId = 'id' in event ? (event as SignedEvent).id : undefined;
     const showTechnicalMeta = Boolean(this.showKind || this.showTags);
     const manifestRenderedData = renderManifestEventData(event, this.effectiveManifest);
-    const shouldUseManifestRendering = Boolean(manifestRenderedData);
+    const shouldUseManifestRendering =
+      hasStructuredContentMappings(event, this.effectiveManifest) && Boolean(manifestRenderedData);
 
     return html`
       <div class="view">
@@ -303,13 +308,8 @@ export class NostrPostView extends NostrPostElement {
         </div>
 
         <div class="view-content">
-          ${
-            shouldUseManifestRendering
-              ? manifestRenderedData
-              : content
-                ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>`
-                : nothing
-          }
+          ${content ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>` : nothing}
+          ${shouldUseManifestRendering ? manifestRenderedData : nothing}
           ${shouldUseManifestRendering ? nothing : this.renderTagPlugins(tags)}
         </div>
 
