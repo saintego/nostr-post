@@ -308,7 +308,11 @@ export class NostrPostView extends NostrPostElement {
         </div>
 
         <div class="view-content">
-          ${content ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>` : nothing}
+          ${
+            content && !shouldUseManifestRendering
+              ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>`
+              : nothing
+          }
           ${shouldUseManifestRendering ? manifestRenderedData : nothing}
           ${shouldUseManifestRendering ? nothing : this.renderTagPlugins(tags)}
         </div>
@@ -338,14 +342,16 @@ export class NostrPostView extends NostrPostElement {
   /**
    * Build a map from tag name -> manifest field for plugin lookup.
    */
-  private getTagFieldMap(): Map<string, PostField> {
-    const map = new Map<string, PostField>();
+  private getTagFieldMap(): Map<string, PostField[]> {
+    const map = new Map<string, PostField[]>();
     const m = this.effectiveManifest;
     const kind = this.event?.kind;
     if (m && kind !== undefined) {
       for (const field of getFieldsByKind(m, kind, [kind])) {
         if (!Array.isArray(field.mapTo) && field.mapTo.target === 'tag' && field.mapTo.tagName) {
-          map.set(field.mapTo.tagName, field);
+          const fields = map.get(field.mapTo.tagName) ?? [];
+          fields.push(field);
+          map.set(field.mapTo.tagName, fields);
         }
       }
     }
@@ -354,7 +360,7 @@ export class NostrPostView extends NostrPostElement {
 
   private groupTagValues(
     tags: string[][],
-    tagFieldMap: Map<string, PostField>
+    tagFieldMap: Map<string, PostField[]>
   ): Map<string, string[]> {
     const tagGroups = new Map<string, string[]>();
     for (const [tagName, rawValue] of tags) {
@@ -415,18 +421,18 @@ export class NostrPostView extends NostrPostElement {
 
     const results = [];
     for (const [tagName, values] of tagGroups) {
-      const field = tagFieldMap.get(tagName);
-      if (!field) continue;
+      const fields = tagFieldMap.get(tagName) ?? [];
+      for (const field of fields) {
+        if (this.shouldSkipTagField(field)) continue;
 
-      if (this.shouldSkipTagField(field)) continue;
+        const plugin = pluginRegistry.get(field.uiPlugin);
+        if (!plugin?.viewTagName) continue;
 
-      const plugin = pluginRegistry.get(field.uiPlugin);
-      if (!plugin?.viewTagName) continue;
+        const value = this.resolveTagPluginValue(plugin, field, values, tags);
 
-      const value = this.resolveTagPluginValue(plugin, field, values, tags);
-
-      const viewTag = unsafeStatic(plugin.viewTagName);
-      results.push(staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`);
+        const viewTag = unsafeStatic(plugin.viewTagName);
+        results.push(staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`);
+      }
     }
     return results;
   }

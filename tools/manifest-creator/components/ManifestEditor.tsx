@@ -46,6 +46,7 @@ const styles = {
     border: '1px solid #d1d5db',
     borderRadius: '0.375rem',
     fontSize: '1rem',
+    boxSizing: 'border-box' as const,
   },
   textarea: {
     width: '100%',
@@ -55,6 +56,7 @@ const styles = {
     fontSize: '1rem',
     minHeight: '80px',
     fontFamily: 'inherit',
+    boxSizing: 'border-box' as const,
   },
   button: {
     padding: '0.5rem 1rem',
@@ -402,7 +404,11 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
                 }}
               >
                 <div
-                  style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: '0.75rem',
+                  }}
                 >
                   {(() => {
                     const formatIdInputId = `publish-format-id-${index}`;
@@ -412,7 +418,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
 
                     return (
                       <>
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                           <label style={styles.label} htmlFor={formatIdInputId}>
                             Format ID
                           </label>
@@ -425,7 +431,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
                             placeholder="kind1-note"
                           />
                         </div>
-                        <div>
+                        <div style={{ minWidth: 0 }}>
                           <label style={styles.label} htmlFor={formatLabelInputId}>
                             Label
                           </label>
