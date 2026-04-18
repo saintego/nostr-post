@@ -5,7 +5,13 @@
  * that registers itself with the shared PluginRegistry.
  */
 
-export type FieldType = 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref';
+import type { FieldMapBehavior, FieldType, NostrTarget } from '@nostr-post/core/types';
+
+export type {
+  FieldMapBehavior,
+  FieldType,
+  NostrTarget,
+} from '@nostr-post/core/types';
 
 export interface FieldVisibility {
   edit?: 'visible' | 'hidden' | 'readonly';
@@ -16,12 +22,8 @@ export interface PostField {
   id: string;
   type: FieldType;
   uiPlugin: string;
-  mapTo: {
-    kind: number;
-    target: 'content' | 'tag';
-    tagName?: string;
-    path?: string;
-  };
+  mapTo: NostrTarget | NostrTarget[];
+  mapBehavior?: FieldMapBehavior;
   required?: boolean;
   options?: string[];
   metadata?: Record<string, unknown>;

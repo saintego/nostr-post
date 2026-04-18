@@ -1,5 +1,6 @@
 'use client';
 
+import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useState } from 'react';
@@ -499,7 +500,7 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
       </p>
       <p style={styles.manifestCardMeta}>
         v{stored.manifest.version} &bull; {stored.manifest.fields.length} fields &bull; kinds:{' '}
-        {stored.manifest.requiredKinds.join(', ')}
+        {getManifestAvailableKinds(stored.manifest).join(', ')}
         {showAuthor && (
           <>
             {' '}

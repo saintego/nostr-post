@@ -95,7 +95,9 @@ Define content structure once, deploy everywhere:
 const manifest: NostrPostManifest = {
   id: "blog-v1",
   version: "1.0.0",
-  requiredKinds: [30023], // Long-form articles
+  publishFormats: [
+    { id: "article", label: "Article", kinds: [30023], default: true },
+  ], // Long-form articles
   fields: [
     {
       id: "title",
@@ -124,7 +126,39 @@ const result = coordinateEvents(manifest, formData, { pubkey });
 // returns: { events: [Kind 30023, Kind 30078 (manifest)] }
 ```
 
-### 3. **7 Production Plugins**
+### 3. **Selectable Publish Formats**
+
+Manifests can offer multiple user-facing publish formats, each activating a different set of kinds.
+This lets a composer keep one form while publishing, for example, either as a public Kind 1 note or as a structured NIP-78 event.
+
+```typescript
+const manifest: NostrPostManifest = {
+  id: "review-v2",
+  version: "2.0.0",
+  publishFormats: [
+    { id: "kind1", label: "Public note", kinds: [1], default: true },
+    { id: "nip78", label: "Structured review", kinds: [30078] },
+  ],
+  fields: [
+    {
+      id: "review",
+      type: "string",
+      uiPlugin: "textarea",
+      mapTo: [
+        { kind: 1, target: "content" },
+        { kind: 30078, target: "content", path: "review" },
+      ],
+    },
+  ],
+};
+```
+
+If a field has multiple targets, `mapBehavior` controls how it publishes:
+
+- `first-active` (default): publish to the first mapping whose kind is active
+- `all-active`: publish to every active mapping for that field
+
+### 4. **7 Production Plugins**
 
 Ready-to-use UI components via Web Components or React:
 
@@ -136,7 +170,7 @@ Ready-to-use UI components via Web Components or React:
 - **plugin-reference** - URL/nostr reference list with optional auto-extraction via `attachTo`
 - **plugin-stars** - Customizable rating (1-5 scale)
 
-### 4. **Field-Level Controls**
+### 5. **Field-Level Controls**
 
 Visibility, defaults, prefill, readonly, exclusion, and field attachment:
 

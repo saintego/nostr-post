@@ -1,3 +1,4 @@
+import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import { describe, expect, it } from 'vitest';
 import { EXAMPLE_MANIFESTS } from '../../lib/examples';
 
@@ -8,7 +9,7 @@ describe('EXAMPLE_MANIFESTS', () => {
       expect(manifest).toBeDefined();
       expect(manifest.id).toBe('kind1-simple-post');
       expect(manifest.version).toBe('1.0.0');
-      expect(manifest.requiredKinds).toEqual([1]);
+      expect(getManifestAvailableKinds(manifest)).toEqual([1]);
     });
 
     it('should have content, media, and tags fields', () => {
@@ -93,10 +94,9 @@ describe('EXAMPLE_MANIFESTS', () => {
       }
     });
 
-    it('should have at least one required kind', () => {
+    it('should have at least one publish kind', () => {
       for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
-        expect(manifest.requiredKinds).toBeDefined();
-        expect(manifest.requiredKinds.length).toBeGreaterThan(0);
+        expect(getManifestAvailableKinds(manifest).length).toBeGreaterThan(0);
       }
     });
 
@@ -119,9 +119,12 @@ describe('EXAMPLE_MANIFESTS', () => {
       for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
         for (const field of manifest.fields) {
           expect(field.mapTo).toBeDefined();
-          expect(field.mapTo.kind).toBeTypeOf('number');
-          expect(field.mapTo.target).toBeDefined();
-          expect(['content', 'tag', 'created_at', 'kind']).toContain(field.mapTo.target);
+          const targets = Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo];
+          for (const target of targets) {
+            expect(target.kind).toBeTypeOf('number');
+            expect(target.target).toBeDefined();
+            expect(['content', 'tag']).toContain(target.target);
+          }
         }
       }
     });

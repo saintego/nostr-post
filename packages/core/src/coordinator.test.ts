@@ -2,14 +2,15 @@
  * Unit tests for EventCoordinator
  */
 import { beforeEach, describe, expect, it } from 'vitest';
-import { coordinateEvents, validateFormData } from './coordinator';
-import type { CoordinatorConfig, FormData, NostrPostManifest } from './types';
+import { type CoordinatorConfig, coordinateEvents, validateFormData } from './coordinator';
+import { prepareFormData } from './enrichment';
+import type { FormData, NostrPostManifest } from './types';
 
 describe('validateFormData', () => {
   const manifest: NostrPostManifest = {
     id: 'test-manifest',
     version: '1.0.0',
-    requiredKinds: [1],
+    publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
     fields: [
       {
         id: 'content',
@@ -251,7 +252,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'simple-note',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -286,7 +287,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'hashtag-note',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -321,7 +322,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'nip78-test',
       version: '1.0.0',
-      requiredKinds: [30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [30078], default: true }],
       fields: [
         {
           id: 'venue',
@@ -363,7 +364,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -391,7 +392,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       linkManifest: false,
       fields: [
         {
@@ -420,7 +421,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -428,13 +429,36 @@ describe('coordinateEvents', () => {
           uiPlugin: 'textarea',
           mapTo: { kind: 1, target: 'content' },
         },
+        {
+          id: 'tags',
+          type: 'string',
+          uiPlugin: 'hashtag',
+          attachTo: 'content',
+          mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        },
       ],
     };
     const formData: FormData = {
       content: 'Check out #nostr and #bitcoin!',
     };
 
-    const result = coordinateEvents(manifest, formData);
+    const enrichedData = prepareFormData(manifest, formData, (pluginId) => {
+      if (pluginId !== 'hashtag') return undefined;
+      return {
+        enrichFormData: (data, field) => {
+          const sourceField = field.attachTo;
+          const source =
+            sourceField && typeof data[sourceField] === 'string'
+              ? (data[sourceField] as string)
+              : '';
+          const matches = source.match(/#[\w\u0080-\uffff][\w\u0080-\uffff-]*/g) ?? [];
+          const tags = [...new Set(matches.map((tag) => tag.replace(/^#+/, '').toLowerCase()))];
+          return tags.length > 0 ? { [field.id]: tags } : {};
+        },
+      };
+    });
+
+    const result = coordinateEvents(manifest, enrichedData);
 
     expect(result.success).toBe(true);
     if (result.success) {
@@ -448,7 +472,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'geo-test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'location',
@@ -480,7 +504,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'venue-test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'venue',
@@ -508,7 +532,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'multi-kind',
       version: '1.0.0',
-      requiredKinds: [1, 30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30078], default: true }],
       fields: [
         {
           id: 'review',
@@ -551,11 +575,209 @@ describe('coordinateEvents', () => {
     }
   });
 
+  it('should publish only the selected format kinds', () => {
+    const manifest: NostrPostManifest = {
+      id: 'format-only',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Kind 1', kinds: [1], default: true },
+        { id: 'nip78', label: 'NIP-78', kinds: [30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    const result = coordinateEvents(
+      manifest,
+      { review: 'Structured only' },
+      { selectedFormatId: 'nip78' }
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.events).toHaveLength(1);
+      expect(result.data.events[0].kind).toBe(30078);
+      expect(JSON.parse(result.data.events[0].content).review).toBe('Structured only');
+    }
+  });
+
+  it('should keep default first-active behavior when multiple active kinds exist', () => {
+    const manifest: NostrPostManifest = {
+      id: 'first-active',
+      version: '1.0.0',
+      publishFormats: [{ id: 'hybrid', label: 'Hybrid', kinds: [1, 30078], default: true }],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    const result = coordinateEvents(manifest, { review: 'Single target' });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.events).toHaveLength(1);
+      const kind1 = result.data.events[0];
+      expect(kind1?.content).toBe('Single target');
+      expect(kind1?.kind).toBe(1);
+    }
+  });
+
+  it('should fall back to the default format when selectedFormatId is unknown', () => {
+    const manifest: NostrPostManifest = {
+      id: 'fallback-format',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Kind 1', kinds: [1], default: true },
+        { id: 'nip78', label: 'NIP-78', kinds: [30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    const result = coordinateEvents(
+      manifest,
+      { review: 'Default only' },
+      { selectedFormatId: 'stale-selection' }
+    );
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.events).toHaveLength(1);
+      expect(result.data.events[0].kind).toBe(1);
+      expect(result.data.events[0].content).toBe('Default only');
+    }
+  });
+
+  it('should derive active kinds from field mappings when publishFormats is omitted', () => {
+    const manifest: NostrPostManifest = {
+      id: 'derived-kinds',
+      version: '1.0.0',
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+          required: true,
+        },
+        {
+          id: 'structuredRating',
+          type: 'number',
+          uiPlugin: 'stars',
+          mapTo: { kind: 30078, target: 'content', path: 'ratings.overall' },
+        },
+      ],
+    };
+
+    const result = coordinateEvents(manifest, {
+      review: 'Derived from mappings',
+      structuredRating: 5,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.events).toHaveLength(2);
+      expect(result.data.events.map((event) => event.kind)).toEqual([1, 30078]);
+      expect(result.data.events[0].content).toBe('Derived from mappings');
+      expect(JSON.parse(result.data.events[1].content)).toEqual({ ratings: { overall: 5 } });
+    }
+  });
+
+  it('should publish to all active mappings when mapBehavior is all-active', () => {
+    const manifest: NostrPostManifest = {
+      id: 'all-active',
+      version: '1.0.0',
+      publishFormats: [{ id: 'hybrid', label: 'Hybrid', kinds: [1, 30078], default: true }],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapBehavior: 'all-active',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    const result = coordinateEvents(manifest, { review: 'Both events' });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      const kind1 = result.data.events.find((event) => event.kind === 1);
+      const kind30078 = result.data.events.find((event) => event.kind === 30078);
+      expect(kind1?.content).toBe('Both events');
+      expect(JSON.parse(kind30078?.content ?? '{}').review).toBe('Both events');
+    }
+  });
+
+  it('should not require inactive required fields', () => {
+    const manifest: NostrPostManifest = {
+      id: 'inactive-required',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Kind 1', kinds: [1], default: true },
+        { id: 'nip78', label: 'NIP-78', kinds: [30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+          required: true,
+        },
+        {
+          id: 'structuredOnly',
+          type: 'string',
+          uiPlugin: 'text',
+          mapTo: { kind: 30078, target: 'content', path: 'structuredOnly' },
+          required: true,
+        },
+      ],
+    };
+
+    const result = coordinateEvents(
+      manifest,
+      { review: 'Public only' },
+      { selectedFormatId: 'kind1' }
+    );
+    expect(result.success).toBe(true);
+  });
+
   it('should use custom tagSerializer', () => {
     const manifest: NostrPostManifest = {
       id: 'custom-serializer',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'tags',
@@ -591,7 +813,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'replaceable-test',
       version: '1.0.0',
-      requiredKinds: [30000],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [30000], default: true }],
       fields: [
         {
           id: 'data',
@@ -616,7 +838,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: '',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [],
     };
     const formData: FormData = {};
@@ -630,7 +852,7 @@ describe('coordinateEvents', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',

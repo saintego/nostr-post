@@ -101,6 +101,34 @@ export const composerStyle = css`
     margin-bottom: 1rem;
   }
 
+  .publish-format-panel {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .publish-format-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--nl-text, #111827);
+  }
+
+  .publish-format-select {
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--nl-border, #d1d5db);
+    border-radius: 8px;
+    background: var(--nl-bg, white);
+    color: var(--nl-text, #111827);
+    font: inherit;
+  }
+
+  .publish-format-description {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--nl-text-secondary, #6b7280);
+  }
+
   .hidden-field-errors {
     margin-bottom: 1rem;
     padding: 0.75rem;
@@ -203,5 +231,19 @@ export const composerStyle = css`
     background: #450a0a;
     border-color: #b91c1c;
     color: #fecaca;
+  }
+
+  :host-context(.dark) .publish-format-label {
+    color: #f3f4f6;
+  }
+
+  :host-context(.dark) .publish-format-select {
+    background: #1f2937;
+    border-color: #4b5563;
+    color: #f3f4f6;
+  }
+
+  :host-context(.dark) .publish-format-description {
+    color: #d1d5db;
   }
 `;

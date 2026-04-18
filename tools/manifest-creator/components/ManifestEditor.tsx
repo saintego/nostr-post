@@ -1,6 +1,7 @@
 'use client';
 
-import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
+import { getManifestAvailableKinds, getUsedKinds } from '@nostr-post/core/manifestMappings';
+import type { NostrPostManifest, PostField, PublishFormat } from '@nostr-post/core/types';
 import { useRef } from 'react';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
 import { FieldEditor } from './FieldEditor';
@@ -45,6 +46,7 @@ const styles = {
     border: '1px solid #d1d5db',
     borderRadius: '0.375rem',
     fontSize: '1rem',
+    boxSizing: 'border-box' as const,
   },
   textarea: {
     width: '100%',
@@ -54,6 +56,7 @@ const styles = {
     fontSize: '1rem',
     minHeight: '80px',
     fontFamily: 'inherit',
+    boxSizing: 'border-box' as const,
   },
   button: {
     padding: '0.5rem 1rem',
@@ -87,7 +90,16 @@ const styles = {
   },
 } as const;
 
+const getEditorAvailableKinds = (manifest: NostrPostManifest): number[] => {
+  const availableKinds = getManifestAvailableKinds(manifest);
+  const mappingKinds = getUsedKinds(manifest);
+
+  return Array.from(new Set([...availableKinds, ...mappingKinds])).sort((a, b) => a - b);
+};
+
 export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
+  const manifestKinds = getEditorAvailableKinds(manifest);
+
   const fieldEditorKeysRef = useRef<string[]>(manifest.fields.map(() => crypto.randomUUID()));
 
   const ensureEditorKeys = (fieldCount: number) => {
@@ -118,12 +130,51 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
     });
   };
 
+  const updatePublishFormats = (publishFormats: PublishFormat[] | undefined) => {
+    onChange({
+      ...manifest,
+      publishFormats: publishFormats && publishFormats.length > 0 ? publishFormats : undefined,
+    });
+  };
+
+  const addPublishFormat = () => {
+    const existingFormats = manifest.publishFormats ?? [];
+    const nextFormat: PublishFormat = {
+      id: `format-${Date.now()}`,
+      label: `Format ${existingFormats.length + 1}`,
+      description: '',
+      kinds: [manifestKinds[0] ?? 1],
+      userSelectable: true,
+      default: !existingFormats.some((format) => format.default),
+    };
+    updatePublishFormats([...existingFormats, nextFormat]);
+  };
+
+  const updatePublishFormat = (index: number, patch: Partial<PublishFormat>) => {
+    const nextFormats = (manifest.publishFormats ?? []).map((format, formatIndex) => {
+      if (formatIndex === index) return { ...format, ...patch };
+      if (patch.default) return { ...format, default: false };
+      return format;
+    });
+    updatePublishFormats(nextFormats);
+  };
+
+  const deletePublishFormat = (index: number) => {
+    const nextFormats = (manifest.publishFormats ?? []).filter(
+      (_, formatIndex) => formatIndex !== index
+    );
+    if (nextFormats.length > 0 && !nextFormats.some((format) => format.default)) {
+      nextFormats[0] = { ...nextFormats[0], default: true };
+    }
+    updatePublishFormats(nextFormats);
+  };
+
   const addField = () => {
     const newField: PostField = {
       id: `field_${Date.now()}`,
       type: 'string',
       uiPlugin: 'text',
-      mapTo: { kind: manifest.requiredKinds[0], target: 'content' },
+      mapTo: { kind: manifestKinds[0] ?? 1, target: 'content' },
       required: false,
       metadata: {
         label: 'New Field',
@@ -282,96 +333,267 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       </div>
 
       <fieldset style={{ ...styles.section, border: 'none', margin: 0, padding: 0 }}>
-        <legend style={styles.label}>Required Kinds:</legend>
+        <legend style={styles.label}>Available Kinds:</legend>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-          {manifest.requiredKinds.map((kind, i) => (
-            <span
-              key={kind}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.25rem',
-                padding: '0.25rem 0.5rem',
-                background: '#ede9fe',
-                borderRadius: '0.375rem',
-                fontSize: '0.875rem',
-                color: '#6d28d9',
-                fontWeight: 500,
-              }}
-            >
-              {kind === 1
-                ? '1 (Note)'
-                : kind === 30023
-                  ? '30023 (Article)'
-                  : kind === 30078
-                    ? '30078 (NIP-78)'
-                    : kind}
-              <button
-                type="button"
-                onClick={() => {
-                  const newKinds = manifest.requiredKinds.filter((_, idx) => idx !== i);
-                  if (newKinds.length > 0) updateBasic('requiredKinds', newKinds);
-                }}
+          {manifestKinds.length > 0 ? (
+            manifestKinds.map((kind) => (
+              <span
+                key={kind}
                 style={{
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.25rem',
+                  padding: '0.25rem 0.5rem',
+                  background: '#ede9fe',
+                  borderRadius: '0.375rem',
+                  fontSize: '0.875rem',
                   color: '#6d28d9',
-                  padding: '0 2px',
-                  fontSize: '1rem',
-                  lineHeight: 1,
+                  fontWeight: 500,
                 }}
               >
-                ×
-              </button>
+                {kind === 1
+                  ? '1 (Note)'
+                  : kind === 30023
+                    ? '30023 (Article)'
+                    : kind === 30078
+                      ? '30078 (NIP-78)'
+                      : kind}
+              </span>
+            ))
+          ) : (
+            <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+              Add a publish format or field mapping to define event kinds.
             </span>
-          ))}
+          )}
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <select
-            id="add-kind"
-            style={{ ...styles.input, width: 'auto', flex: 1 }}
-            defaultValue=""
-            onChange={(e) => {
-              const kind = Number(e.target.value);
-              if (kind && !manifest.requiredKinds.includes(kind)) {
-                updateBasic('requiredKinds', [...manifest.requiredKinds, kind]);
-              }
-              e.target.value = '';
+        <p style={{ margin: 0, fontSize: '0.8125rem', color: '#6b7280' }}>
+          This list is derived from your publish formats and field mappings.
+        </p>
+      </fieldset>
+
+      <div style={styles.section}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '1rem',
+          }}
+        >
+          <div>
+            <div style={styles.label}>Publish Formats:</div>
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#6b7280' }}>
+              Optional event-selection choices shown in the composer UI.
+            </p>
+          </div>
+          <button type="button" style={styles.secondaryButton} onClick={addPublishFormat}>
+            + Add Format
+          </button>
+        </div>
+
+        {manifest.publishFormats && manifest.publishFormats.length > 0 ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.75rem',
+              marginTop: '0.75rem',
             }}
           >
-            <option value="" disabled>
-              Add kind...
-            </option>
-            {[1, 30023, 30078]
-              .filter((k) => !manifest.requiredKinds.includes(k))
-              .map((k) => (
-                <option key={k} value={k}>
-                  {k === 1
-                    ? '1 — Note'
-                    : k === 30023
-                      ? '30023 — Article (NIP-23)'
-                      : '30078 — App Data (NIP-78)'}
-                </option>
-              ))}
-          </select>
-          <input
-            style={{ ...styles.input, width: '100px' }}
-            type="number"
-            placeholder="Custom"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                const kind = Number((e.target as HTMLInputElement).value);
-                if (kind > 0 && !manifest.requiredKinds.includes(kind)) {
-                  updateBasic('requiredKinds', [...manifest.requiredKinds, kind]);
-                  (e.target as HTMLInputElement).value = '';
-                }
-              }
+            {manifest.publishFormats.map((format, index) => (
+              <div
+                key={`${format.id}-${index}`}
+                style={{
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '0.5rem',
+                  padding: '0.75rem',
+                  background: '#f9fafb',
+                }}
+              >
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                    gap: '0.75rem',
+                  }}
+                >
+                  {(() => {
+                    const formatIdInputId = `publish-format-id-${index}`;
+                    const formatLabelInputId = `publish-format-label-${index}`;
+                    const formatDescriptionInputId = `publish-format-description-${index}`;
+                    const formatKindsGroupId = `publish-format-kinds-${index}`;
+
+                    return (
+                      <>
+                        <div style={{ minWidth: 0 }}>
+                          <label style={styles.label} htmlFor={formatIdInputId}>
+                            Format ID
+                          </label>
+                          <input
+                            id={formatIdInputId}
+                            style={styles.input}
+                            type="text"
+                            value={format.id}
+                            onChange={(e) => updatePublishFormat(index, { id: e.target.value })}
+                            placeholder="kind1-note"
+                          />
+                        </div>
+                        <div style={{ minWidth: 0 }}>
+                          <label style={styles.label} htmlFor={formatLabelInputId}>
+                            Label
+                          </label>
+                          <input
+                            id={formatLabelInputId}
+                            style={styles.input}
+                            type="text"
+                            value={format.label}
+                            onChange={(e) => updatePublishFormat(index, { label: e.target.value })}
+                            placeholder="Kind 1 note"
+                          />
+                        </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <label style={styles.label} htmlFor={formatDescriptionInputId}>
+                            Description
+                          </label>
+                          <input
+                            id={formatDescriptionInputId}
+                            style={styles.input}
+                            type="text"
+                            value={format.description || ''}
+                            onChange={(e) =>
+                              updatePublishFormat(index, {
+                                description: e.target.value || undefined,
+                              })
+                            }
+                            placeholder="Describe when this publish option should be used"
+                          />
+                        </div>
+                        <div style={{ gridColumn: '1 / -1' }}>
+                          <div id={formatKindsGroupId} style={styles.label}>
+                            Included Kinds
+                          </div>
+                          <div
+                            aria-labelledby={formatKindsGroupId}
+                            style={{
+                              display: 'flex',
+                              gap: '0.75rem',
+                              flexWrap: 'wrap',
+                              marginTop: '0.25rem',
+                            }}
+                          >
+                            {manifestKinds.map((kind) => {
+                              const checked = format.kinds.includes(kind);
+                              return (
+                                <label
+                                  key={`${format.id}-kind-${kind}`}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '0.35rem',
+                                    fontSize: '0.875rem',
+                                  }}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={(e) => {
+                                      const nextKinds = e.target.checked
+                                        ? [...format.kinds, kind]
+                                        : format.kinds.filter(
+                                            (existingKind) => existingKind !== kind
+                                          );
+                                      if (nextKinds.length > 0) {
+                                        updatePublishFormat(index, {
+                                          kinds: Array.from(new Set(nextKinds)).sort(
+                                            (a, b) => a - b
+                                          ),
+                                        });
+                                      }
+                                    }}
+                                  />
+                                  {kind === 1
+                                    ? '1 (Note)'
+                                    : kind === 30023
+                                      ? '30023 (Article)'
+                                      : kind === 30078
+                                        ? '30078 (NIP-78)'
+                                        : kind}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                          <label
+                            style={{
+                              ...styles.label,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              marginBottom: 0,
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={format.default === true}
+                              onChange={(e) =>
+                                updatePublishFormat(index, { default: e.target.checked })
+                              }
+                            />
+                            Default format
+                          </label>
+                          <label
+                            style={{
+                              ...styles.label,
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              marginBottom: 0,
+                            }}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={format.userSelectable !== false}
+                              onChange={(e) =>
+                                updatePublishFormat(index, { userSelectable: e.target.checked })
+                              }
+                            />
+                            User selectable
+                          </label>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+
+                <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    type="button"
+                    style={{ ...styles.secondaryButton, background: '#dc2626' }}
+                    onClick={() => deletePublishFormat(index)}
+                  >
+                    Delete Format
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div
+            style={{
+              marginTop: '0.75rem',
+              padding: '0.75rem',
+              borderRadius: '0.5rem',
+              background: '#f5f3ff',
+              color: '#5b21b6',
+              fontSize: '0.875rem',
             }}
-          />
-        </div>
-      </fieldset>
+          >
+            No publish formats yet. Add one to let users choose between Kind 1, NIP-78, or hybrid
+            publishing.
+          </div>
+        )}
+      </div>
 
       <div style={styles.section}>
         <label style={styles.label} htmlFor="manifest-name">
@@ -414,7 +636,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
             <FieldEditor
               key={fieldEditorKeysRef.current[index]}
               field={field}
-              kinds={manifest.requiredKinds}
+              kinds={manifestKinds}
               fieldIds={manifest.fields.map((candidate) => candidate.id)}
               onChange={(f) => updateField(index, f)}
               onDelete={() => deleteField(index)}

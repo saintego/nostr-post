@@ -5,7 +5,12 @@
  * using manifest field definitions and plugin view components.
  */
 
-import { NIP78_KIND } from '@nostr-post/core/nip78';
+import {
+  type ResolvedPostField,
+  getFieldTargets,
+  getFieldsByKind,
+  isStructuredContentKind,
+} from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html } from 'lit';
@@ -83,11 +88,15 @@ const renderLinkedFieldValue = (
   `;
 };
 
-const buildFieldByTag = (fields: PostField[]): Map<string, PostField> => {
-  const fieldByTag = new Map<string, PostField>();
+const buildFieldByTag = (fields: PostField[]): Map<string, PostField[]> => {
+  const fieldByTag = new Map<string, PostField[]>();
   for (const field of fields) {
-    if (field.mapTo.tagName) {
-      fieldByTag.set(field.mapTo.tagName, field);
+    for (const target of getFieldTargets(field)) {
+      if (target.target !== 'tag' || !target.tagName) continue;
+
+      const existing = fieldByTag.get(target.tagName) ?? [];
+      existing.push(field);
+      fieldByTag.set(target.tagName, existing);
     }
   }
   return fieldByTag;
@@ -95,7 +104,7 @@ const buildFieldByTag = (fields: PostField[]): Map<string, PostField> => {
 
 const groupTagsByName = (
   tags: string[][],
-  fieldByTag: Map<string, PostField>
+  fieldByTag: Map<string, PostField[]>
 ): Map<string, string[][]> => {
   const tagGroups = new Map<string, string[][]>();
   for (const tag of tags) {
@@ -139,20 +148,21 @@ const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
 
   const results: unknown[] = [];
   for (const [tagName, group] of tagGroups) {
-    const field = fieldByTag.get(tagName);
-    if (!field) continue;
-    if (field.visibility?.view === 'hidden') continue;
+    const tagFields = fieldByTag.get(tagName) ?? [];
+    for (const field of tagFields) {
+      if (field.visibility?.view === 'hidden') continue;
 
-    const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
-    const label = (field.metadata?.label as string) || field.id;
+      const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
+      const label = (field.metadata?.label as string) || field.id;
 
-    const groupValue = getLinkedTagGroupValue(plugin, field, group, tags);
-    if (groupValue !== undefined) {
-      results.push(renderLinkedFieldValue(label, groupValue, field, plugin));
-      continue;
+      const groupValue = getLinkedTagGroupValue(plugin, field, group, tags);
+      if (groupValue !== undefined) {
+        results.push(renderLinkedFieldValue(label, groupValue, field, plugin));
+        continue;
+      }
+
+      results.push(renderLinkedTagField(group[0], field));
     }
-
-    results.push(renderLinkedTagField(group[0], field));
   }
   return results;
 };
@@ -160,7 +170,7 @@ const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
 /**
  * Render NIP-78 JSON content fields using manifest definitions + plugins.
  */
-const renderNip78Fields = (fields: PostField[], data: Record<string, unknown>) => {
+const renderStructuredContentFields = (fields: PostField[], data: Record<string, unknown>) => {
   const results = [];
 
   for (const field of fields) {
@@ -169,7 +179,7 @@ const renderNip78Fields = (fields: PostField[], data: Record<string, unknown>) =
 
     // Resolve value from JSON data (supports dot-notation paths)
     let value: unknown;
-    if (field.mapTo.path) {
+    if (!Array.isArray(field.mapTo) && field.mapTo.path) {
       value = getNestedValue(data, field.mapTo.path);
     } else {
       value = data[field.id];
@@ -208,19 +218,21 @@ const renderNip78Fields = (fields: PostField[], data: Record<string, unknown>) =
  */
 const renderSingleLinkedEvent = (linkedEvent: DisplayableEvent, m: NostrPostManifest) => {
   const results: unknown[] = [];
-  const fieldsForKind = m.fields.filter((f) => f.mapTo.kind === linkedEvent.kind);
+  const fieldsForKind: ResolvedPostField[] = getFieldsByKind(m, linkedEvent.kind, [
+    linkedEvent.kind,
+  ]);
   if (fieldsForKind.length === 0) return results;
 
-  // For NIP-78 events, parse JSON content
-  if ((linkedEvent.kind === NIP78_KIND || linkedEvent.kind === 30079) && linkedEvent.content) {
-    const contentFields = fieldsForKind.filter((f) => f.mapTo.target === 'content');
-    if (contentFields.length > 0) {
-      try {
-        const data = JSON.parse(linkedEvent.content);
-        results.push(...renderNip78Fields(contentFields, data));
-      } catch {
-        // Not valid JSON, skip
-      }
+  const contentFields = fieldsForKind.filter((f) => f.mapTo.target === 'content');
+  const hasStructuredContentFields =
+    contentFields.length > 0 && isStructuredContentKind(linkedEvent.kind);
+
+  if (hasStructuredContentFields && linkedEvent.content) {
+    try {
+      const data = JSON.parse(linkedEvent.content);
+      results.push(...renderStructuredContentFields(contentFields, data));
+    } catch {
+      // Not valid JSON, skip
     }
   }
 
@@ -253,4 +265,28 @@ export const renderLinkedEvents = (
   if (results.length === 0) return '';
 
   return html` <div class="linked-data">${results}</div> `;
+};
+
+export const renderManifestEventData = (
+  event: DisplayableEvent,
+  manifest: NostrPostManifest | undefined
+) => {
+  if (!manifest) return '';
+
+  const results = renderSingleLinkedEvent(event, manifest);
+  if (results.length === 0) return '';
+
+  return html`${results}`;
+};
+
+export const hasStructuredContentMappings = (
+  event: DisplayableEvent,
+  manifest: NostrPostManifest | undefined
+): boolean => {
+  if (!manifest) return false;
+  if (!isStructuredContentKind(event.kind)) return false;
+
+  return getFieldsByKind(manifest, event.kind, [event.kind]).some(
+    (field) => field.mapTo.target === 'content'
+  );
 };

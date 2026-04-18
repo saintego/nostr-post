@@ -20,6 +20,17 @@ export type NostrTarget = {
   path?: string;
 };
 
+export type FieldMapBehavior = 'first-active' | 'all-active';
+
+export interface PublishFormat {
+  id: string;
+  label: string;
+  description?: string;
+  kinds: number[];
+  default?: boolean;
+  userSelectable?: boolean;
+}
+
 /**
  * Supported field types for the manifest system.
  * Each type corresponds to a validation schema and UI plugin interface.
@@ -52,7 +63,9 @@ export interface PostField {
   id: string;
   type: FieldType;
   uiPlugin: string;
-  mapTo: NostrTarget;
+  mapTo: NostrTarget | NostrTarget[];
+  /** How to apply multiple mappings when more than one active kind matches. Defaults to 'first-active'. */
+  mapBehavior?: FieldMapBehavior;
   required?: boolean;
   options?: string[];
   metadata?: Record<string, unknown>;
@@ -86,14 +99,13 @@ export interface PostField {
  *
  * @property id - Unique manifest identifier (e.g., "restaurant-review-v1")
  * @property version - Semantic version for backward compatibility
- * @property requiredKinds - All Nostr event kinds this manifest will produce
  * @property fields - The field definitions that make up the post structure
  * @property metadata - Optional manifest-level metadata (author, description, etc.)
  */
 export interface NostrPostManifest {
   id: string;
   version: string;
-  requiredKinds: number[];
+  publishFormats?: PublishFormat[];
   fields: PostField[];
   /**
    * Whether to embed an `a` tag referencing this manifest in published events.
@@ -193,7 +205,15 @@ export interface NostrUIPlugin {
 export const DEFAULT_KIND1_MANIFEST: NostrPostManifest = {
   id: 'kind1-note',
   version: '1.0.0',
-  requiredKinds: [1],
+  publishFormats: [
+    {
+      id: 'kind1',
+      label: 'Kind 1',
+      kinds: [1],
+      default: true,
+      userSelectable: true,
+    },
+  ],
   fields: [
     {
       id: 'content',
@@ -213,7 +233,15 @@ export const DEFAULT_KIND1_MANIFEST: NostrPostManifest = {
 export const STANDARD_KIND1_POST_MANIFEST: NostrPostManifest = {
   id: 'kind1-standard-post',
   version: '1.0.0',
-  requiredKinds: [1],
+  publishFormats: [
+    {
+      id: 'kind1',
+      label: 'Kind 1',
+      kinds: [1],
+      default: true,
+      userSelectable: true,
+    },
+  ],
   fields: [
     {
       id: 'content',

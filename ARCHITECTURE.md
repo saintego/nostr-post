@@ -234,7 +234,7 @@ Composer also supports props:
 |-----|---------|-----|
 | **NIP-01** | Base protocol | All events build on this |
 | **NIP-07** | Browser extension signing | useNostrAuth() connects to window.nostr |
-| **NIP-23** | Kind 30023 (articles) | Manifest requiredKinds: [30023] |
+| **NIP-23** | Kind 30023 (articles) | Manifest publishFormats: [{ kinds: [30023] }] |
 | **NIP-52** | Geohash prefix tags | plugin-geo emits ["g", "u09"], ["g", "u09t"], etc. |
 | **NIP-73** | External identity (`i` tags) | plugin-venue emits ["i", "osm:node:123"] |
 | **NIP-78** | Kind 30078 (app data) | manifestRef links composer to manifest event |

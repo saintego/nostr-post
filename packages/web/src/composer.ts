@@ -8,10 +8,15 @@ import { coordinateEvents } from '@nostr-post/core/coordinator';
 import { prepareFormData } from '@nostr-post/core/enrichment';
 import { validateManifest } from '@nostr-post/core/manifest';
 import {
+  getDefaultPublishFormat,
+  getSelectablePublishFormats,
+} from '@nostr-post/core/manifestMappings';
+import {
   type EventBundle,
   type FormData as NostrFormData,
   type NostrPostManifest,
   type PostField,
+  type PublishFormat,
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
@@ -100,6 +105,10 @@ export class NostrPostComposer extends NostrPostElement {
   @property({ type: Boolean, attribute: 'editable-reply-target' })
   editableReplyTarget = false;
 
+  /** Hide the publish format picker even when the manifest offers user-selectable formats. */
+  @property({ type: Boolean, attribute: 'hide-publish-format-selector' })
+  hidePublishFormatSelector = false;
+
   /**
    * Extra Nostr tags to append to every published event.
    * Format: "tagname:value,tagname2:value2" (first colon is the separator, so
@@ -132,12 +141,33 @@ export class NostrPostComposer extends NostrPostElement {
   @state()
   private isResolvingManifestRef = false;
 
+  @state()
+  private selectedPublishFormatId = '';
+
   constructor() {
     super();
     this._formData = {};
     this.errors = {};
     this.isSubmitting = false;
     this.successMessage = '';
+  }
+
+  private getInitialSelectedPublishFormatId(manifest: NostrPostManifest): string {
+    const defaultFormat = getDefaultPublishFormat(manifest);
+    if (this.hidePublishFormatSelector) {
+      return defaultFormat?.id ?? '';
+    }
+
+    const selectableFormats = getSelectablePublishFormats(manifest);
+    if (selectableFormats.length === 0) {
+      return defaultFormat?.id ?? '';
+    }
+
+    if (defaultFormat && selectableFormats.some((format) => format.id === defaultFormat.id)) {
+      return defaultFormat.id;
+    }
+
+    return selectableFormats[0]?.id ?? '';
   }
 
   updated(changed: Map<string, unknown>) {
@@ -149,6 +179,9 @@ export class NostrPostComposer extends NostrPostElement {
     if (manifestChanged || prefillChanged) {
       this.initDefaults({ resetUnknownFields: manifestChanged });
       if (manifestChanged) {
+        this.selectedPublishFormatId = this.getInitialSelectedPublishFormatId(
+          this.manifest || STANDARD_KIND1_POST_MANIFEST
+        );
         this.errors = {};
         this.successMessage = '';
         this._expandedFields = new Set();
@@ -178,6 +211,7 @@ export class NostrPostComposer extends NostrPostElement {
       if (stored) {
         this.manifest = stored.manifest;
         this.initDefaults({ resetUnknownFields: true });
+        this.selectedPublishFormatId = this.getInitialSelectedPublishFormatId(stored.manifest);
         this.errors = {};
         this.successMessage = '';
         this._expandedFields = new Set();
@@ -285,6 +319,7 @@ export class NostrPostComposer extends NostrPostElement {
       const result = coordinateEvents(manifest, enrichedData as NostrFormData, {
         pubkey,
         createdAt: Math.floor(Date.now() / 1000),
+        selectedFormatId: this.selectedPublishFormatId || undefined,
         manifestRef: this.manifestRef,
         tagSerializer: (value, field) => {
           const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
@@ -382,6 +417,7 @@ export class NostrPostComposer extends NostrPostElement {
     // Use standard Kind 1 manifest if none provided
     const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
     const { metadata } = manifest;
+    const selectableFormats = getSelectablePublishFormats(manifest);
     const hiddenErrors = hiddenFieldErrorEntries({
       manifest,
       errors: this.errors,
@@ -426,6 +462,47 @@ export class NostrPostComposer extends NostrPostElement {
         }
 
         <form @submit=${this.handleSubmit}>
+          ${
+            !this.hidePublishFormatSelector && selectableFormats.length > 1
+              ? html`
+                  <div class="publish-format-panel">
+                    <label class="publish-format-label" for="publish-format-select">
+                      Publish as
+                    </label>
+                    <select
+                      id="publish-format-select"
+                      class="publish-format-select"
+                      .value=${this.selectedPublishFormatId}
+                      @change=${(e: Event) => {
+                        this.selectedPublishFormatId = (e.target as HTMLSelectElement).value;
+                      }}
+                    >
+                      ${selectableFormats.map(
+                        (format: PublishFormat) => html`
+                          <option value=${format.id}>${format.label}</option>
+                        `
+                      )}
+                    </select>
+                    ${
+                      selectableFormats.find(
+                        (format: PublishFormat) => format.id === this.selectedPublishFormatId
+                      )?.description
+                        ? html`
+                            <p class="publish-format-description">
+                              ${
+                                selectableFormats.find(
+                                  (format: PublishFormat) =>
+                                    format.id === this.selectedPublishFormatId
+                                )?.description
+                              }
+                            </p>
+                          `
+                        : ''
+                    }
+                  </div>
+                `
+              : ''
+          }
           ${
             !this.showReplyTarget &&
             !this.editableReplyTarget &&

@@ -11,6 +11,12 @@ import {
   validateNostrTarget,
   validatePostField,
 } from './manifest';
+import {
+  getActiveKinds,
+  getDefaultPublishFormat,
+  getManifestAvailableKinds,
+  getFieldsByKind as getResolvedFieldsByKind,
+} from './manifestMappings';
 import type { NostrPostManifest, NostrTarget, PostField } from './types';
 
 describe('validateNostrTarget', () => {
@@ -64,6 +70,30 @@ describe('validateNostrTarget', () => {
     };
     const result = validateNostrTarget(target);
     expect(result.success).toBe(false);
+  });
+
+  it('should reject NaN kind numbers', () => {
+    const target: NostrTarget = {
+      kind: Number.NaN,
+      target: 'content',
+    };
+    const result = validateNostrTarget(target);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.code).toBe('INVALID_KIND');
+    }
+  });
+
+  it('should reject non-integer kind numbers', () => {
+    const target: NostrTarget = {
+      kind: 1.5,
+      target: 'content',
+    };
+    const result = validateNostrTarget(target);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.code).toBe('INVALID_KIND');
+    }
   });
 });
 
@@ -140,7 +170,7 @@ describe('validateManifest', () => {
     const manifest: NostrPostManifest = {
       id: 'test-manifest',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -159,7 +189,7 @@ describe('validateManifest', () => {
     const manifest = {
       id: '',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [],
     } as NostrPostManifest;
     const result = validateManifest(manifest);
@@ -173,7 +203,7 @@ describe('validateManifest', () => {
     const manifest = {
       id: 'test',
       version: '',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [],
     } as NostrPostManifest;
     const result = validateManifest(manifest);
@@ -183,11 +213,61 @@ describe('validateManifest', () => {
     }
   });
 
-  it('should reject manifest without requiredKinds', () => {
+  it('should allow manifest without publishFormats and derive kinds from mappings', () => {
     const manifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [],
+      fields: [
+        {
+          id: 'content',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+        },
+      ],
+    } as NostrPostManifest;
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(true);
+  });
+
+  it('should allow manifest with empty publishFormats and derive kinds from mappings', () => {
+    const manifest: NostrPostManifest = {
+      id: 'test',
+      version: '1.0.0',
+      publishFormats: [],
+      fields: [
+        {
+          id: 'content',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+        },
+      ],
+    };
+
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(true);
+  });
+
+  it('should reject manifest without fields', () => {
+    const manifest = {
+      id: 'test',
+      version: '1.0.0',
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
+      fields: [],
+    } as NostrPostManifest;
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.some((e) => e.code === 'MISSING_FIELDS')).toBe(true);
+    }
+  });
+
+  it('should reject publish formats with NaN kinds', () => {
+    const manifest = {
+      id: 'test',
+      version: '1.0.0',
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [Number.NaN], default: true }],
       fields: [
         {
           id: 'content',
@@ -200,21 +280,30 @@ describe('validateManifest', () => {
     const result = validateManifest(manifest);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.some((e) => e.code === 'MISSING_REQUIRED_KINDS')).toBe(true);
+      expect(result.error.some((e) => e.field === 'publishFormats.0.kinds')).toBe(true);
+      expect(result.error.some((e) => e.code === 'INVALID_KIND')).toBe(true);
     }
   });
 
-  it('should reject manifest without fields', () => {
+  it('should reject publish formats with non-integer kinds', () => {
     const manifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1],
-      fields: [],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1.25], default: true }],
+      fields: [
+        {
+          id: 'content',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+        },
+      ],
     } as NostrPostManifest;
     const result = validateManifest(manifest);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.some((e) => e.code === 'MISSING_FIELDS')).toBe(true);
+      expect(result.error.some((e) => e.field === 'publishFormats.0.kinds')).toBe(true);
+      expect(result.error.some((e) => e.code === 'INVALID_KIND')).toBe(true);
     }
   });
 
@@ -222,7 +311,7 @@ describe('validateManifest', () => {
     const manifest: NostrPostManifest = {
       id: 'test-manifest',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'title',
@@ -252,7 +341,7 @@ describe('validateManifest', () => {
     const manifest: NostrPostManifest = {
       id: 'test-manifest',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'body',
@@ -282,7 +371,7 @@ describe('validateManifest', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -305,11 +394,11 @@ describe('validateManifest', () => {
     }
   });
 
-  it('should detect unused required kinds', () => {
+  it('should detect publish format kinds without field mappings', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1, 30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30078], default: true }],
       fields: [
         {
           id: 'content',
@@ -322,7 +411,7 @@ describe('validateManifest', () => {
     const result = validateManifest(manifest);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.some((e) => e.code === 'UNUSED_REQUIRED_KIND')).toBe(true);
+      expect(result.error.some((e) => e.code === 'UNUSED_PUBLISH_FORMAT_KIND')).toBe(true);
     }
   });
 
@@ -330,7 +419,7 @@ describe('validateManifest', () => {
     const manifest: NostrPostManifest = {
       id: 'restaurant-review',
       version: '1.0.0',
-      requiredKinds: [1, 30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30078], default: true }],
       fields: [
         {
           id: 'review',
@@ -361,13 +450,38 @@ describe('validateManifest', () => {
     const result = validateManifest(manifest);
     expect(result.success).toBe(true);
   });
+
+  it('should validate manifest using publishFormats only', () => {
+    const manifest: NostrPostManifest = {
+      id: 'format-test',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Public note', kinds: [1], default: true },
+        { id: 'nip78', label: 'Structured only', kinds: [30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(true);
+  });
 });
 
 describe('getFieldsByKind', () => {
   const manifest: NostrPostManifest = {
     id: 'test',
     version: '1.0.0',
-    requiredKinds: [1, 30078],
+    publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30078], default: true }],
     fields: [
       {
         id: 'content',
@@ -406,6 +520,63 @@ describe('getFieldsByKind', () => {
     const fields = getFieldsByKind(manifest, 999);
     expect(fields).toHaveLength(0);
   });
+
+  it('should resolve first-active fields to the selected kind only', () => {
+    const formatManifest: NostrPostManifest = {
+      id: 'formats',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Kind 1', kinds: [1], default: true },
+        { id: 'nip78', label: 'NIP-78', kinds: [30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    const fields = getResolvedFieldsByKind(
+      formatManifest,
+      30078,
+      getActiveKinds(formatManifest, { selectedFormatId: 'nip78' })
+    );
+    expect(fields).toHaveLength(1);
+    expect(Array.isArray(fields[0].mapTo)).toBe(false);
+    if (!Array.isArray(fields[0].mapTo)) {
+      expect(fields[0].mapTo.kind).toBe(30078);
+    }
+  });
+
+  it('should fall back to the default publish format when selectedFormatId is unknown', () => {
+    const formatManifest: NostrPostManifest = {
+      id: 'formats',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Kind 1', kinds: [1], default: true },
+        { id: 'nip78', label: 'NIP-78', kinds: [30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    expect(getActiveKinds(formatManifest, { selectedFormatId: 'missing-format' })).toEqual([1]);
+  });
 });
 
 describe('getUsedKinds', () => {
@@ -413,7 +584,6 @@ describe('getUsedKinds', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [1, 30078],
       fields: [
         {
           id: 'field1',
@@ -443,7 +613,6 @@ describe('getUsedKinds', () => {
     const manifest: NostrPostManifest = {
       id: 'test',
       version: '1.0.0',
-      requiredKinds: [30078, 1, 30023],
       fields: [
         {
           id: 'field1',
@@ -468,13 +637,38 @@ describe('getUsedKinds', () => {
     const kinds = getUsedKinds(manifest);
     expect(kinds).toEqual([1, 30023, 30078]);
   });
+
+  it('should expose default and available kinds from publish formats', () => {
+    const manifest: NostrPostManifest = {
+      id: 'formats',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'kind1', label: 'Kind 1', kinds: [1], default: true },
+        { id: 'hybrid', label: 'Hybrid', kinds: [1, 30078] },
+      ],
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'review' },
+          ],
+        },
+      ],
+    };
+
+    expect(getDefaultPublishFormat(manifest)?.id).toBe('kind1');
+    expect(getManifestAvailableKinds(manifest)).toEqual([1, 30078]);
+  });
 });
 
 describe('findFieldById', () => {
   const manifest: NostrPostManifest = {
     id: 'test',
     version: '1.0.0',
-    requiredKinds: [1],
+    publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
     fields: [
       {
         id: 'content',
@@ -507,7 +701,7 @@ describe('getRequiredFields', () => {
   const manifest: NostrPostManifest = {
     id: 'test',
     version: '1.0.0',
-    requiredKinds: [1],
+    publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
     fields: [
       {
         id: 'content',

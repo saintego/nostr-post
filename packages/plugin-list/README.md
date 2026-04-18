@@ -23,15 +23,15 @@ pnpm add @nostr-post/plugin-list
 
 ```html
 <script type="module">
-  import '@nostr-post/plugin-list/web';
+  import "@nostr-post/plugin-list/web";
 </script>
 
 <np-list-input id="list-select"></np-list-input>
 
 <script>
-  const input = document.getElementById('list-select');
-  input.addEventListener('np-value-changed', (e) => {
-    console.log('Selected list:', e.detail.value);
+  const input = document.getElementById("list-select");
+  input.addEventListener("np-value-changed", (e) => {
+    console.log("Selected list:", e.detail.value);
     // { listIds: ["30000:pubkey:list-name"], pubkeys?: [...] }
   });
 </script>
@@ -40,29 +40,31 @@ pnpm add @nostr-post/plugin-list
 ### Manifest Integration
 
 ```typescript
-import type { NostrPostManifest } from '@nostr-post/core/types';
+import type { NostrPostManifest } from "@nostr-post/core/types";
 
 const venueReviewManifest: NostrPostManifest = {
-  id: 'venue-review-v1',
-  version: '1.0.0',
-  requiredKinds: [30023],
+  id: "venue-review-v1",
+  version: "1.0.0",
+  publishFormats: [
+    { id: "article", label: "Article", kinds: [30023], default: true },
+  ],
   fields: [
     {
-      id: 'review',
-      type: 'string',
-      uiPlugin: 'textarea',
-      mapTo: { kind: 30023, target: 'content' },
+      id: "review",
+      type: "string",
+      uiPlugin: "textarea",
+      mapTo: { kind: 30023, target: "content" },
       required: true,
     },
     {
-      id: 'audience',
-      type: 'string',
-      uiPlugin: 'list',
-      mapTo: { kind: 30023, target: 'tag', tagName: 'L' },
+      id: "audience",
+      type: "string",
+      uiPlugin: "list",
+      mapTo: { kind: 30023, target: "tag", tagName: "L" },
       metadata: {
         allowCreate: true,
         allowDelete: true,
-        defaultList: 'trusted-reviewers',
+        defaultList: "trusted-reviewers",
         multiple: true,
       },
     },
@@ -73,8 +75,8 @@ const venueReviewManifest: NostrPostManifest = {
 ### React Component
 
 ```tsx
-import { NostrPostComposer } from '@nostr-post/react';
-import '@nostr-post/plugin-list/web';
+import { NostrPostComposer } from "@nostr-post/react";
+import "@nostr-post/plugin-list/web";
 
 export function ReviewForm() {
   return (
@@ -82,7 +84,7 @@ export function ReviewForm() {
       manifest={venueReviewManifest}
       prefill={{
         audience: {
-          listIds: ['my-trusted-reviewers', 'venue-mods'],
+          listIds: ["my-trusted-reviewers", "venue-mods"],
         },
       }}
     />
@@ -137,7 +139,7 @@ interface ListPluginConfig {
 Fetches all NIP-51 lists for a user from specified relays.
 
 ```typescript
-import { fetchUserLists } from '@nostr-post/plugin-list';
+import { fetchUserLists } from "@nostr-post/plugin-list";
 
 const lists = await fetchUserLists(userPubkey, relays);
 console.log(lists);
@@ -152,18 +154,18 @@ console.log(lists);
 Creates an unsigned NIP-51 list event. Must be signed and published by caller.
 
 ```typescript
-import { createListEvent } from '@nostr-post/plugin-list';
+import { createListEvent } from "@nostr-post/plugin-list";
 
 const event = createListEvent(
   userPubkey,
-  'Trusted Reviewers',
-  ['npub1...', 'npub2...'],
+  "Trusted Reviewers",
+  ["npub1...", "npub2..."],
   30000,
-  'People I trust for venue reviews'
+  "People I trust for venue reviews",
 );
 
 // Sign and publish
-const signed = await signer.call('sign_event', event);
+const signed = await signer.call("sign_event", event);
 await relay.publish(signed);
 ```
 
@@ -172,7 +174,7 @@ await relay.publish(signed);
 Parses a NIP-51 event into UserList format.
 
 ```typescript
-import { parseListEvent } from '@nostr-post/plugin-list';
+import { parseListEvent } from "@nostr-post/plugin-list";
 
 const list = parseListEvent(nostrEvent);
 ```
@@ -185,11 +187,11 @@ const list = parseListEvent(nostrEvent);
 const manifest = {
   fields: [
     {
-      id: 'audience',
-      type: 'string',
-      uiPlugin: 'list',
+      id: "audience",
+      type: "string",
+      uiPlugin: "list",
       metadata: {
-        defaultList: 'verified-reviewers',
+        defaultList: "verified-reviewers",
         allowCreate: false,
         allowDelete: false,
       },
@@ -204,10 +206,10 @@ const manifest = {
 const manifest = {
   fields: [
     {
-      id: 'moderators',
-      type: 'string',
-      uiPlugin: 'list',
-      mapTo: { kind: 30023, target: 'tag', tagName: 'moderator' },
+      id: "moderators",
+      type: "string",
+      uiPlugin: "list",
+      mapTo: { kind: 30023, target: "tag", tagName: "moderator" },
       metadata: {
         allowCreate: true,
         allowDelete: true,

@@ -17,7 +17,15 @@ describe('manifest helper', () => {
   const manifest: NostrPostManifest = {
     id: 'test-manifest',
     version: '1.0.0',
-    requiredKinds: [1, 30078],
+    publishFormats: [
+      {
+        id: 'hybrid',
+        label: 'Hybrid',
+        kinds: [1, 30078],
+        default: true,
+        userSelectable: true,
+      },
+    ],
     fields: [
       {
         id: 'content',

@@ -119,7 +119,7 @@ describe('Nostr Publishing E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'test-manifest-v1',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'content',
@@ -166,7 +166,7 @@ describe('Nostr Publishing E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'test',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [],
       };
 
@@ -212,7 +212,7 @@ describe('Nostr Publishing E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'parsed-manifest',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'test',
@@ -243,7 +243,7 @@ describe('Nostr Publishing E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'review-v1',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'review',
@@ -282,7 +282,7 @@ describe('Nostr Publishing E2E', () => {
       const manifest: NostrPostManifest = {
         id: 'article-with-announcement',
         version: '1.0.0',
-        requiredKinds: [30023, 1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [30023, 1], default: true }],
         fields: [
           {
             id: 'title',
@@ -365,7 +365,7 @@ describe('Nostr Publishing E2E', () => {
       const v1: NostrPostManifest = {
         id: 'my-manifest',
         version: '1.0.0',
-        requiredKinds: [1],
+        publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
         fields: [
           {
             id: 'content',
@@ -403,7 +403,7 @@ describe('Nostr Publishing E2E', () => {
         const manifest: NostrPostManifest = {
           id: manifestId,
           version,
-          requiredKinds: [1],
+          publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
           fields: [],
         };
 

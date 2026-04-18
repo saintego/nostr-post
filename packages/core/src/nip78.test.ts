@@ -104,7 +104,7 @@ describe('manifestToEvent', () => {
   const manifest: NostrPostManifest = {
     id: 'restaurant-review-v1',
     version: '1.0.0',
-    requiredKinds: [1, 30078],
+    publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30078], default: true }],
     fields: [
       {
         id: 'review',
@@ -154,7 +154,7 @@ describe('manifestToEvent', () => {
     const minimalManifest: NostrPostManifest = {
       id: 'minimal',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -185,7 +185,7 @@ describe('eventToManifest', () => {
   const manifest: NostrPostManifest = {
     id: 'test-manifest',
     version: '1.0.0',
-    requiredKinds: [1],
+    publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
     fields: [
       {
         id: 'content',
@@ -327,7 +327,7 @@ describe('Round-trip event/manifest conversion', () => {
     const originalManifest: NostrPostManifest = {
       id: 'roundtrip-test',
       version: '2.0.0',
-      requiredKinds: [1, 30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30078], default: true }],
       fields: [
         {
           id: 'title',

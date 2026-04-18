@@ -8,7 +8,14 @@
  * Architecture: Pure functional approach using data transformation pipelines.
  */
 
-import { getFieldsByKind, validateManifest } from './manifest';
+import { validateManifest } from './manifest';
+import {
+  type ResolvedPostField,
+  getActiveKinds,
+  getFieldTargets,
+  getFieldsByKind,
+  isStructuredContentKind,
+} from './manifestMappings';
 import type {
   EventBundle,
   FormData,
@@ -26,6 +33,8 @@ import type {
 export interface CoordinatorConfig {
   pubkey?: string; // Public key for the events (can be added later)
   createdAt?: number; // Unix timestamp (defaults to now)
+  selectedFormatId?: string;
+  activeKinds?: number[];
   /** Optional per-field tag serializer. Called with (value, field) before the default serializer. */
   tagSerializer?: (value: unknown, field: PostField) => string | undefined;
   /**
@@ -53,13 +62,19 @@ export interface CoordinatorConfig {
  */
 export const validateFormData = (
   manifest: NostrPostManifest,
-  formData: FormData
+  formData: FormData,
+  config: Pick<CoordinatorConfig, 'selectedFormatId' | 'activeKinds'> = {}
 ): Result<void, ValidationError[]> => {
   const errors: ValidationError[] = [];
+  const activeKinds = getActiveKinds(manifest, config);
 
   // Check all required fields are present
   for (const field of manifest.fields) {
-    if (field.required && !(field.id in formData)) {
+    const hasActiveMapping = getFieldTargets(field).some((target) =>
+      activeKinds.includes(target.kind)
+    );
+
+    if (field.required && hasActiveMapping && !(field.id in formData)) {
       errors.push({
         field: field.id,
         message: `Required field "${field.id}" is missing`,
@@ -221,7 +236,7 @@ const isValidGeohash = (value: unknown): value is string => {
 
 const addAddressableDTagIfNeeded = (
   kind: number,
-  tagFields: PostField[],
+  tagFields: ResolvedPostField[],
   tags: NostrTag[],
   dTag?: string
 ) => {
@@ -240,12 +255,14 @@ const addAddressableDTagIfNeeded = (
 
 const buildContentForKind = (
   kind: number,
-  contentFields: PostField[],
+  contentFields: ResolvedPostField[],
   formData: FormData
 ): string => {
-  if (contentFields.length === 0) return '';
+  if (contentFields.length === 0) {
+    return isStructuredContentKind(kind) ? '{}' : '';
+  }
 
-  if (kind !== 30078 && kind !== 30079) {
+  if (!isStructuredContentKind(kind)) {
     return contentFields
       .map((field) => formData[field.id])
       .filter((value) => value !== undefined)
@@ -315,7 +332,7 @@ const appendGeohashTags = (
 };
 
 const appendTagMappings = (
-  tagFields: PostField[],
+  tagFields: ResolvedPostField[],
   formData: FormData,
   config: CoordinatorConfig,
   tags: NostrTag[]
@@ -341,7 +358,7 @@ const appendTagMappings = (
 };
 
 const appendExtraTags = (
-  tagFields: PostField[],
+  tagFields: ResolvedPostField[],
   formData: FormData,
   extraTagsFn: CoordinatorConfig['extraTagsFn'],
   tags: NostrTag[]
@@ -380,7 +397,7 @@ const dedupeTags = (tags: NostrTag[]): NostrTag[] => {
  */
 const createEventForKind = (
   kind: number,
-  fields: PostField[],
+  fields: ResolvedPostField[],
   formData: FormData,
   config: CoordinatorConfig
 ): UnsignedNostrEvent => {
@@ -467,10 +484,12 @@ export const coordinateEvents = (
   }
 
   // Validate form data
-  const formValidation = validateFormData(manifest, formData);
+  const formValidation = validateFormData(manifest, formData, config);
   if (!formValidation.success) {
     return formValidation as Result<EventBundle, ValidationError[]>;
   }
+
+  const activeKinds = getActiveKinds(manifest, config);
 
   // If the manifest opts out of linking, strip the manifestRef from config
   const effectiveConfig =
@@ -479,12 +498,13 @@ export const coordinateEvents = (
   // Create events for each required kind
   const events: UnsignedNostrEvent[] = [];
 
-  for (const kind of manifest.requiredKinds) {
-    const fieldsForKind = getFieldsByKind(manifest, kind);
-    if (fieldsForKind.length > 0) {
-      const event = createEventForKind(kind, fieldsForKind, formData, effectiveConfig);
-      events.push(event);
+  for (const kind of activeKinds) {
+    const fieldsForKind = getFieldsByKind(manifest, kind, activeKinds);
+    if (fieldsForKind.length === 0) {
+      continue;
     }
+    const event = createEventForKind(kind, fieldsForKind, formData, effectiveConfig);
+    events.push(event);
   }
 
   // Add cross-linking tags

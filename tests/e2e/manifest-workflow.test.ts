@@ -20,7 +20,7 @@ describe('E2E: Manifest Publishing and Retrieval', () => {
     const manifest: NostrPostManifest = {
       id: 'restaurant-review-v1',
       version: '1.0.0',
-      requiredKinds: [1, 30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30078], default: true }],
       fields: [
         {
           id: 'review',
@@ -65,7 +65,7 @@ describe('E2E: Manifest Publishing and Retrieval', () => {
     const manifest: NostrPostManifest = {
       id: 'simple-review',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -122,7 +122,7 @@ describe('E2E: Manifest Publishing and Retrieval', () => {
     const manifest: NostrPostManifest = {
       id: 'full-review',
       version: '1.0.0',
-      requiredKinds: [1, 30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1, 30078], default: true }],
       fields: [
         {
           id: 'review',
@@ -182,7 +182,7 @@ describe('E2E: Manifest Publishing and Retrieval', () => {
     const manifest: NostrPostManifest = {
       id: 'geo-test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -230,7 +230,7 @@ describe('E2E: Manifest Publishing and Retrieval', () => {
     const manifest: NostrPostManifest = {
       id: 'hashtag-test',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       fields: [
         {
           id: 'content',
@@ -274,7 +274,7 @@ describe('E2E: Manifest Publishing and Retrieval', () => {
     const manifest: NostrPostManifest = {
       id: 'profile-data',
       version: '1.0.0',
-      requiredKinds: [30078],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [30078], default: true }],
       fields: [
         {
           id: 'bio',
@@ -317,7 +317,7 @@ describe('E2E: Manifest Publishing and Retrieval', () => {
     const manifest: NostrPostManifest = {
       id: 'no-link-manifest',
       version: '1.0.0',
-      requiredKinds: [1],
+      publishFormats: [{ id: 'default', label: 'Default', kinds: [1], default: true }],
       linkManifest: false,
       fields: [
         {

@@ -11,6 +11,7 @@
       "@nostr-post/core/manifest": ["../core/dist/manifest.d.ts"],
       "@nostr-post/core/coordinator": ["../core/dist/coordinator.d.ts"],
       "@nostr-post/core/enrichment": ["../core/dist/enrichment.d.ts"],
+      "@nostr-post/core/manifestMappings": ["../core/dist/manifestMappings.d.ts"],
       "@nostr-post/plugin-geo/web": ["../plugin-geo/dist/web.d.ts"],
       "@nostr-post/plugin-hashtag/web": ["../plugin-hashtag/dist/web.d.ts"],
       "@nostr-post/plugin-identifier/web": ["../plugin-identifier/dist/web.d.ts"],

@@ -370,7 +370,9 @@ pnpm typecheck
 const restaurantReviewManifest: NostrPostManifest = {
   id: "restaurant-review-v1",
   version: "1.0.0",
-  requiredKinds: [1, 30078],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [1, 30078], default: true },
+  ],
   fields: [
     {
       id: "reviewText",
@@ -409,7 +411,9 @@ const restaurantReviewManifest: NostrPostManifest = {
 const articleManifest: NostrPostManifest = {
   id: "article-v1",
   version: "1.0.0",
-  requiredKinds: [30023, 1],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [30023, 1], default: true },
+  ],
   fields: [
     {
       id: "title",
