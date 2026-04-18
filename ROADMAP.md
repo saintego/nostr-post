@@ -4,10 +4,10 @@
 
 - [x] Type definitions
 - [x] allow user to choose between kind1 and nip-78 event if manifest allows that
+- [ ] allow updating nip-78 events when content changes (currently they have empty d tag and override each other)
 - [ ] manifest can inherit from other manifest
 - [ ] add kind:30818 for object that are used for review(beer, product, map venue detail)
 - [ ] add multi-language support (i18n) for built-in plugins UI components and manifest
-- [ ] allow updating nip-78 events when content changes (currently they are immutable after creation)
 - [ ] manifest creator should show latest version of user manifest when updated
 - [ ] add style customization options for web components (CSS custom properties, theming)
 - [ ] fix pwa example share image
@@ -21,6 +21,7 @@
 - [ ] photo view(see photos of venue)
 - [ ] search web component
 - [ ] allow to share NIP-78 data to Kind 1 events (for better compatibility with existing clients)
+- [ ] allow kind 1 comments to update content of main event(so user can update review in case they are using out vie, in other clietns it'd look like comment)
 
 ### Phase 2: Domain Scenarios (Planned)
 
