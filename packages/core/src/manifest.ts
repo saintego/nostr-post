@@ -149,14 +149,6 @@ const validateManifestBasics = (manifest: NostrPostManifest, errors: ValidationE
     });
   }
 
-  if (!manifest.publishFormats || manifest.publishFormats.length === 0) {
-    errors.push({
-      field: 'publishFormats',
-      message: 'Manifest must specify publishFormats',
-      code: 'MISSING_PUBLISH_FORMATS',
-    });
-  }
-
   if (!manifest.fields || manifest.fields.length === 0) {
     errors.push({
       field: 'fields',

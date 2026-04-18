@@ -189,7 +189,7 @@ describe('validateManifest', () => {
     }
   });
 
-  it('should reject manifest without publishFormats', () => {
+  it('should allow manifest without publishFormats and derive kinds from mappings', () => {
     const manifest = {
       id: 'test',
       version: '1.0.0',
@@ -203,10 +203,26 @@ describe('validateManifest', () => {
       ],
     } as NostrPostManifest;
     const result = validateManifest(manifest);
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.some((e) => e.code === 'MISSING_PUBLISH_FORMATS')).toBe(true);
-    }
+    expect(result.success).toBe(true);
+  });
+
+  it('should allow manifest with empty publishFormats and derive kinds from mappings', () => {
+    const manifest: NostrPostManifest = {
+      id: 'test',
+      version: '1.0.0',
+      publishFormats: [],
+      fields: [
+        {
+          id: 'content',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+        },
+      ],
+    };
+
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(true);
   });
 
   it('should reject manifest without fields', () => {

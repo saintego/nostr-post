@@ -639,6 +639,41 @@ describe('coordinateEvents', () => {
     }
   });
 
+  it('should derive active kinds from field mappings when publishFormats is omitted', () => {
+    const manifest: NostrPostManifest = {
+      id: 'derived-kinds',
+      version: '1.0.0',
+      fields: [
+        {
+          id: 'review',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+          required: true,
+        },
+        {
+          id: 'structuredRating',
+          type: 'number',
+          uiPlugin: 'stars',
+          mapTo: { kind: 30078, target: 'content', path: 'ratings.overall' },
+        },
+      ],
+    };
+
+    const result = coordinateEvents(manifest, {
+      review: 'Derived from mappings',
+      structuredRating: 5,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.events).toHaveLength(2);
+      expect(result.data.events.map((event) => event.kind)).toEqual([1, 30078]);
+      expect(result.data.events[0].content).toBe('Derived from mappings');
+      expect(JSON.parse(result.data.events[1].content)).toEqual({ ratings: { overall: 5 } });
+    }
+  });
+
   it('should publish to all active mappings when mapBehavior is all-active', () => {
     const manifest: NostrPostManifest = {
       id: 'all-active',

@@ -71,7 +71,8 @@ The bundle re-exports utilities for advanced usage:
 ```html
 <script src="https://saintego.github.io/nostr-post/nostr-post.iife.js"></script>
 <script>
-  const { pluginRegistry, signAndPublish, getUserRelays, decodeGeohash } = NostrPost;
+  const { pluginRegistry, signAndPublish, getUserRelays, decodeGeohash } =
+    NostrPost;
 
   console.log(decodeGeohash("dr5reg"));
 </script>
