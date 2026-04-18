@@ -308,7 +308,9 @@ Create and publish Nostr posts.
   composer.manifest = {
     id: "custom-v1",
     version: "1.0.0",
-    requiredKinds: [1],
+    publishFormats: [
+      { id: "default", label: "Default", kinds: [1], default: true },
+    ],
     fields: [...]
   };
 </script>
@@ -348,7 +350,9 @@ The view component respects `visibility.view` settings from the manifest:
   viewer.manifest = {
     id: "review-v1",
     version: "1.0.0",
-    requiredKinds: [1],
+    publishFormats: [
+      { id: "default", label: "Default", kinds: [1], default: true },
+    ],
     fields: [
       {
         id: "review",
@@ -555,7 +559,9 @@ Define default field values in the manifest itself:
 const manifest: NostrPostManifest = {
   id: "post-v1",
   version: "1.0.0",
-  requiredKinds: [1],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [1], default: true },
+  ],
   fields: [
     {
       id: "title",
@@ -583,7 +589,9 @@ Control field visibility in edit and view modes:
 const manifest: NostrPostManifest = {
   id: "article-v1",
   version: "1.0.0",
-  requiredKinds: [30023],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [30023], default: true },
+  ],
   fields: [
     {
       id: "title",
@@ -1016,7 +1024,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const manifest: NostrPostManifest = {
   id: "blog-v1",
   version: "1.0.0",
-  requiredKinds: [1],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [1], default: true },
+  ],
   fields: [
     {
       id: "content",
@@ -1512,7 +1522,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const articleManifest: NostrPostManifest = {
   id: "article-v1",
   version: "1.0.0",
-  requiredKinds: [30023, 30078], // Article + Manifest
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [30023, 30078], default: true },
+  ], // Article + Manifest
   fields: [
     {
       id: "title",
@@ -1563,7 +1575,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const manifest: NostrPostManifest = {
   id: "review-v1",
   version: "1.0.0",
-  requiredKinds: [1],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [1], default: true },
+  ],
   fields: [
     {
       id: "subject",
@@ -1622,7 +1636,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const eventManifest: NostrPostManifest = {
   id: "event-v1",
   version: "1.0.0",
-  requiredKinds: [1],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [1], default: true },
+  ],
   fields: [
     {
       id: "event-name",
@@ -1852,7 +1868,7 @@ if (!validation.success) {
   console.error("Full manifest:", manifest);
 
   // Common issues:
-  // 1. Missing required fields (id, version, requiredKinds, fields)
+  // 1. Missing required fields (id, version, fields)
   // 2. Field without mapTo
   // 3. Invalid plugin name
   // 4. Array type with non-array plugin

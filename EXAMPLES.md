@@ -27,7 +27,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const simplePostManifest: NostrPostManifest = {
   id: "simple-post-v1",
   version: "1.0.0",
-  requiredKinds: [1],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [1], default: true },
+  ],
   fields: [
     {
       id: "content",
@@ -73,7 +75,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const restaurantReviewManifest: NostrPostManifest = {
   id: "restaurant-review-v1",
   version: "1.0.0",
-  requiredKinds: [1, 30078],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [1, 30078], default: true },
+  ],
   fields: [
     {
       id: "reviewText",
@@ -158,7 +162,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const articleManifest: NostrPostManifest = {
   id: "article-v1",
   version: "1.0.0",
-  requiredKinds: [30023],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [30023], default: true },
+  ],
   fields: [
     {
       id: "title",
@@ -299,7 +305,9 @@ When a `manifestRef` is provided the components will fetch the manifest (once, c
   const manifest = {
     id: "custom-post-v1",
     version: "1.0.0",
-    requiredKinds: [1],
+    publishFormats: [
+      { id: "default", label: "Default", kinds: [1], default: true },
+    ],
     fields: [
       {
         id: "content",
@@ -467,7 +475,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const customManifest: NostrPostManifest = {
   id: "blog-post-v1",
   version: "1.0.0",
-  requiredKinds: [1],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [1], default: true },
+  ],
   fields: [
     {
       id: "title",
@@ -557,7 +567,9 @@ function CustomPostForm() {
       const manifest = {
         id: "simple-post-v1",
         version: "1.0.0",
-        requiredKinds: [1],
+        publishFormats: [
+          { id: "default", label: "Default", kinds: [1], default: true },
+        ],
         fields: [
           {
             id: "content",
@@ -631,7 +643,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 const reviewManifest: NostrPostManifest = {
   id: "product-review-v1",
   version: "1.0.0",
-  requiredKinds: [1, 30078],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [1, 30078], default: true },
+  ],
   fields: [
     {
       id: "reviewText",
@@ -717,7 +731,9 @@ const manifests: Record<string, NostrPostManifest> = {
   simplePost: {
     id: "simple-post-v1",
     version: "1.0.0",
-    requiredKinds: [1],
+    publishFormats: [
+      { id: "default", label: "Default", kinds: [1], default: true },
+    ],
     fields: [
       {
         id: "content",
@@ -731,7 +747,9 @@ const manifests: Record<string, NostrPostManifest> = {
   article: {
     id: "article-v1",
     version: "1.0.0",
-    requiredKinds: [30023],
+    publishFormats: [
+      { id: "default", label: "Default", kinds: [30023], default: true },
+    ],
     fields: [
       {
         id: "title",
@@ -835,7 +853,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 export const articleManifest: NostrPostManifest = {
   id: "article-v1",
   version: "1.0.0",
-  requiredKinds: [30023],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [30023], default: true },
+  ],
   fields: [
     {
       id: "title",
@@ -903,7 +923,9 @@ import type { NostrPostManifest } from "@nostr-post/core/types";
 export const venueManifest: NostrPostManifest = {
   id: "venue-v1",
   version: "1.0.0",
-  requiredKinds: [30078],
+  publishFormats: [
+    { id: "default", label: "Default", kinds: [30078], default: true },
+  ],
   fields: [
     {
       id: "name",
