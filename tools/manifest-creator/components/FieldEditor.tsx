@@ -2,6 +2,7 @@
 
 import { getFieldTargets, isStructuredContentKind } from '@nostr-post/core/manifestMappings';
 import type { NostrTarget, PostField } from '@nostr-post/core/types';
+import { formatKindLabel } from './kindLabels';
 
 interface FieldEditorProps {
   field: PostField;
@@ -278,13 +279,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
           >
             {kinds.map((kind) => (
               <option key={kind} value={kind}>
-                {kind === 1
-                  ? '1 (Note)'
-                  : kind === 30023
-                    ? '30023 (Article)'
-                    : kind === 30078
-                      ? '30078 (NIP-78)'
-                      : kind}
+                {formatKindLabel(kind)}
               </option>
             ))}
           </select>
@@ -518,13 +513,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
                           >
                             {kinds.map((kind) => (
                               <option key={kind} value={kind}>
-                                {kind === 1
-                                  ? '1 (Note)'
-                                  : kind === 30023
-                                    ? '30023 (Article)'
-                                    : kind === 30078
-                                      ? '30078 (NIP-78)'
-                                      : kind}
+                                {formatKindLabel(kind)}
                               </option>
                             ))}
                           </select>

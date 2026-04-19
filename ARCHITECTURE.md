@@ -22,7 +22,7 @@ const signed = await ndk.signEvent(result.data.events[0]);
 // OR
 const signed = await nostrTools.finalizeEvent(
   result.data.events[0],
-  privateKey
+  privateKey,
 );
 ```
 
@@ -95,9 +95,11 @@ This works in:
 ## Plugin Composition Pattern
 
 ### The Problem
+
 Venue selection and location picking are similar - both need maps. But they have different search UIs (venue = Nominatim OSM search, geo = geohash input).
 
 ### The Solution
+
 **plugin-venue wraps plugin-geo** instead of duplicating logic:
 
 ```typescript
@@ -105,14 +107,14 @@ Venue selection and location picking are similar - both need maps. But they have
 export const venue = {
   inputTagName: "np-venue-input",  // Custom input
   viewTagName: "np-venue-view",    // Custom view
-  
+
   // Emit: geohash + OSM identity tag + address
   extraTagsFn: (fieldId, value, manifest, { pubkey }) => [
     ["g", value.geohash],
     ["i", `osm:node:${value.osmId}`, ""],  // NIP-73
     ["location", value.address]
   ],
-  
+
   // Reconstruct from tags
   resolveFromTagsFn: (fieldId, tags) => ({
     geohash: tags.find(t => t[0] === "g")?.[1],
@@ -130,6 +132,7 @@ export const venue = {
 ```
 
 **Benefits:**
+
 - Single source of truth for map UI
 - Venue adds search overlay, nothing else
 - Both plugins emit/read from tags independently
@@ -153,12 +156,12 @@ extraTagsFn?: (
 
 ```typescript
 extraTagsFn: (fieldId, value, manifest, opts) => [
-  ["g", "u09tvw"],      // Full precision
-  ["g", "u09tv"],       // 5 chars (for relay filtering)
-  ["g", "u09t"],        // 4 chars
-  ["g", "u09"],         // 3 chars
-  ["g", "u0"],          // 2 chars
-]
+  ["g", "u09tvw"], // Full precision
+  ["g", "u09tv"], // 5 chars (for relay filtering)
+  ["g", "u09t"], // 4 chars
+  ["g", "u09"], // 3 chars
+  ["g", "u0"], // 2 chars
+];
 ```
 
 Coordinator automatically merges all extra tags into the event.
@@ -179,16 +182,16 @@ resolveFromTagsFn?: (
 
 ```typescript
 resolveFromTagsFn: (fieldId, tags) => {
-  const geohash = tags.find(t => t[0] === "g")?.[1];
-  const iTag = tags.find(t => t[0] === "i")?.[1];
-  
+  const geohash = tags.find((t) => t[0] === "g")?.[1];
+  const iTag = tags.find((t) => t[0] === "i")?.[1];
+
   return {
     geohash,
     osmId: iTag?.replace("osm:node:", ""),
     lat: decodeGeohash(geohash).latitude,
     lon: decodeGeohash(geohash).longitude,
   };
-}
+};
 ```
 
 View component uses this to reconstruct objects from tags.
@@ -199,19 +202,21 @@ View component uses this to reconstruct objects from tags.
 
 ```typescript
 interface FieldVisibility {
-  edit: "visible" | "hidden" | "readonly";   // In composer
-  view: "visible" | "hidden";                // In viewer
+  edit: "visible" | "hidden" | "readonly"; // In composer
+  view: "visible" | "hidden"; // In viewer
 }
 ```
 
 **Use Cases:**
 
 1. **Author-only notes** (hidden from viewers)
+
    ```typescript
    visibility: { edit: "visible", view: "hidden" }
    ```
 
 2. **Read-only metadata** (set by system, not user)
+
    ```typescript
    visibility: { edit: "readonly", view: "visible" }
    ```
@@ -224,18 +229,19 @@ interface FieldVisibility {
 ### Component-Level Control
 
 Composer also supports props:
+
 - `excludeFields: string[]` - Hide specific fields from form
 - `readonlyFields: string[]` - Make fields read-only
 - `prefill: Record<string, unknown>` - Pre-populate values
 
 ## Supported NIPs
 
-| NIP | Purpose | How |
-|-----|---------|-----|
-| **NIP-01** | Base protocol | All events build on this |
-| **NIP-07** | Browser extension signing | useNostrAuth() connects to window.nostr |
-| **NIP-23** | Kind 30023 (articles) | Manifest publishFormats: [{ kinds: [30023] }] |
-| **NIP-52** | Geohash prefix tags | plugin-geo emits ["g", "u09"], ["g", "u09t"], etc. |
-| **NIP-73** | External identity (`i` tags) | plugin-venue emits ["i", "osm:node:123"] |
-| **NIP-78** | Kind 30078 (app data) | manifestRef links composer to manifest event |
-| **NIP-98** | HTTP auth (kind 27235) | plugin-media signs upload to nostr.build |
+| NIP        | Purpose                      | How                                                |
+| ---------- | ---------------------------- | -------------------------------------------------- |
+| **NIP-01** | Base protocol                | All events build on this                           |
+| **NIP-07** | Browser extension signing    | useNostrAuth() connects to window.nostr            |
+| **NIP-23** | Kind 30023 (articles)        | Manifest publishFormats: [{ kinds: [30023] }]      |
+| **NIP-52** | Geohash prefix tags          | plugin-geo emits ["g", "u09"], ["g", "u09t"], etc. |
+| **NIP-73** | External identity (`i` tags) | plugin-venue emits ["i", "osm:node:123"]           |
+| **NIP-78** | Kind 30078 (app data)        | manifestRef links composer to manifest event       |
+| **NIP-98** | HTTP auth (kind 27235)       | plugin-media signs upload to nostr.build           |
