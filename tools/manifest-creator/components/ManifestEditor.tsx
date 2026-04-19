@@ -5,7 +5,7 @@ import type { NostrPostManifest, PostField, PublishFormat } from '@nostr-post/co
 import { useRef } from 'react';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
 import { FieldEditor } from './FieldEditor';
-import { formatKindLabel } from './kindLabels';
+import { SUPPORTED_KINDS, formatKindLabel } from './kindLabels';
 
 interface ManifestEditorProps {
   manifest: NostrPostManifest;
@@ -105,18 +105,21 @@ const styles = {
   },
 } as const;
 
-const SUPPORTED_EDITOR_KINDS = [1, 30023, 30078, 30079] as const;
-
-const getEditorAvailableKinds = (manifest: NostrPostManifest): number[] => {
+const getConfiguredManifestKinds = (manifest: NostrPostManifest): number[] => {
   const availableKinds = getManifestAvailableKinds(manifest);
   const mappingKinds = getUsedKinds(manifest);
 
-  return Array.from(new Set([...SUPPORTED_EDITOR_KINDS, ...availableKinds, ...mappingKinds])).sort(
-    (a, b) => a - b
-  );
+  return Array.from(new Set([...availableKinds, ...mappingKinds])).sort((a, b) => a - b);
+};
+
+const getEditorAvailableKinds = (manifest: NostrPostManifest): number[] => {
+  const configuredKinds = getConfiguredManifestKinds(manifest);
+
+  return Array.from(new Set([...SUPPORTED_KINDS, ...configuredKinds])).sort((a, b) => a - b);
 };
 
 export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
+  const configuredManifestKinds = getConfiguredManifestKinds(manifest);
   const manifestKinds = getEditorAvailableKinds(manifest);
 
   const fieldEditorKeysRef = useRef<string[]>(manifest.fields.map(() => crypto.randomUUID()));
@@ -354,35 +357,36 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       <fieldset style={{ ...styles.section, border: 'none', margin: 0, padding: 0 }}>
         <legend style={styles.label}>Available Kinds:</legend>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-          {manifestKinds.length > 0 ? (
-            manifestKinds.map((kind) => (
-              <span
-                key={kind}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.25rem',
-                  padding: '0.25rem 0.5rem',
-                  background: '#ede9fe',
-                  borderRadius: '0.375rem',
-                  fontSize: '0.875rem',
-                  color: '#6d28d9',
-                  fontWeight: 500,
-                }}
-              >
-                {formatKindLabel(kind)}
-              </span>
-            ))
-          ) : (
-            <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              Add a publish format or field mapping to define event kinds.
+          {manifestKinds.map((kind) => (
+            <span
+              key={kind}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                padding: '0.25rem 0.5rem',
+                background: '#ede9fe',
+                borderRadius: '0.375rem',
+                fontSize: '0.875rem',
+                color: '#6d28d9',
+                fontWeight: 500,
+              }}
+            >
+              {formatKindLabel(kind)}
             </span>
-          )}
+          ))}
         </div>
-        <p style={styles.helperText}>
-          Supported kinds are always available in the editor. Imported manifests can still show
-          additional kinds already present in their mappings or publish formats.
-        </p>
+        {configuredManifestKinds.length === 0 ? (
+          <p style={styles.helperText}>
+            No publish formats or field mappings define kinds yet. The editor starts with its
+            built-in supported kinds.
+          </p>
+        ) : (
+          <p style={styles.helperText}>
+            Supported kinds are always available in the editor. Imported manifests can still show
+            additional kinds already present in their mappings or publish formats.
+          </p>
+        )}
       </fieldset>
 
       <div style={styles.section}>
@@ -436,6 +440,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
                     const formatLabelInputId = `publish-format-label-${index}`;
                     const formatDescriptionInputId = `publish-format-description-${index}`;
                     const formatKindsGroupId = `publish-format-kinds-${index}`;
+                    const formatKindsHelperId = `publish-format-kinds-helper-${index}`;
 
                     return (
                       <>
@@ -494,6 +499,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
                             id={`publish-format-kinds-select-${index}`}
                             multiple
                             aria-labelledby={formatKindsGroupId}
+                            aria-describedby={formatKindsHelperId}
                             style={{ ...styles.multiSelect, marginTop: '0.25rem' }}
                             size={Math.min(Math.max(manifestKinds.length, 2), 6)}
                             value={format.kinds.map(String)}
@@ -516,7 +522,10 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
                               );
                             })}
                           </select>
-                          <p style={{ ...styles.helperText, marginTop: '0.35rem' }}>
+                          <p
+                            id={formatKindsHelperId}
+                            style={{ ...styles.helperText, marginTop: '0.35rem' }}
+                          >
                             Use Cmd/Ctrl-click to select multiple kinds. Each format must include at
                             least one kind.
                           </p>

@@ -1,14 +1,14 @@
+const KIND_LABEL_ENTRIES = [
+  [1, '1 (Note)'],
+  [30023, '30023 (Article)'],
+  [30078, '30078 (NIP-78)'],
+  [30079, '30079 (Structured JSON)'],
+] as const;
+
+const KIND_LABELS = new Map<number, string>(KIND_LABEL_ENTRIES);
+
+export const SUPPORTED_KINDS = KIND_LABEL_ENTRIES.map(([kind]) => kind);
+
 export const formatKindLabel = (kind: number): string => {
-  switch (kind) {
-    case 1:
-      return '1 (Note)';
-    case 30023:
-      return '30023 (Article)';
-    case 30078:
-      return '30078 (NIP-78)';
-    case 30079:
-      return '30079 (Structured JSON)';
-    default:
-      return String(kind);
-  }
+  return KIND_LABELS.get(kind) ?? String(kind);
 };
