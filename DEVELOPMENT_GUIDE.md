@@ -54,12 +54,14 @@
 **Purpose:** Pure TypeScript event coordination with zero dependencies
 
 **Key Files:**
+
 - `types.ts` - Type system (PostField, NostrTarget, FieldVisibility, etc.)
 - `manifest.ts` - Manifest validation
 - `coordinator.ts` - Event coordination and field defaults
 - `nip78.ts` - NIP-78 manifest serialization
 
 **Features:**
+
 - ✅ Multi-event coordination (split across kinds)
 - ✅ Manifest validation
 - ✅ Form data validation with type checking
@@ -78,6 +80,7 @@
 **Purpose:** NIP-07 browser extension signing and relay communication
 
 **Features:**
+
 - ✅ NIP-07 extension detection and fallback retry (up to 10x)
 - ✅ Event signing
 - ✅ Event publishing to relays
@@ -91,6 +94,7 @@
 **Purpose:** Plugin interface and discovery registry
 
 **Features:**
+
 - ✅ Plugin interface with hooks (extraTags, resolveFromTags)
 - ✅ Plugin registry singleton
 - ✅ Plugin discovery by ID
@@ -104,11 +108,13 @@
 **Purpose:** Lit-based Web Components that work in any HTML/JS context
 
 **Components:**
+
 - `<nostr-post-composer>` - Form builder with field defaults, excludeFields, readonlyFields, prefill
 - `<nostr-post-view>` - Event viewer with NIP-78 auto-fetch
 - `<nostr-post-feed>` - Event stream with refresh() method
 
 **Features:**
+
 - ✅ Automatic plugin loading on tag names
 - ✅ Manifest-driven form generation
 - ✅ Field visibility enforcement
@@ -125,16 +131,19 @@
 **Purpose:** React hooks and wrapper components
 
 **Hooks:**
+
 - `useNostrAuth()` - Login/logout with NIP-07
 - `useNostrPublish()` - Sign and publish with manifest coordination
 - `useNostrEvents()` - Fetch events with filtering
 
 **Components:**
+
 - `<NostrPostComposer>` - Wrapper around web component
 - `<NostrPostView>` - Display single event
 - `<NostrPostFeed>` - Display event stream
 
 **Features:**
+
 - ✅ Props pass-through (excludeFields, readonlyFields, prefill, manifestRef)
 - ✅ Events with proper event listener handling
 - ✅ Feed refresh via useImperativeHandle()
