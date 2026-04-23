@@ -516,6 +516,7 @@ export const coordinateEvents = (
     metadata: {
       createdAt: config.createdAt || Math.floor(Date.now() / 1000),
       sourceForm: formData,
+      addressableDTag: config.dTag,
     },
   };
 

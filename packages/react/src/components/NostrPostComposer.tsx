@@ -13,6 +13,7 @@ import { useEffect, useRef } from 'react';
 interface NostrPostComposerElement extends HTMLElement {
   manifest?: NostrPostManifest;
   manifestRef?: string;
+  dTag?: string;
   autoPublish?: boolean;
   relays?: string[];
   excludeFields?: string[];
@@ -43,6 +44,8 @@ export interface NostrPostComposerProps {
   manifest?: NostrPostManifest;
   /** Reference to the manifest on Nostr (a-tag value, e.g. '30078:<pubkey>:<d-tag>') */
   manifestRef?: string;
+  /** Explicit d-tag for addressable events. Reuse it to update an existing editable post. */
+  dTag?: string;
   /** Relay URLs to publish to */
   relays?: string[];
   /** Auto-publish events (uses NIP-07 window.nostr) */
@@ -62,9 +65,9 @@ export interface NostrPostComposerProps {
   /** Optional root author pubkey when replying inside an existing thread */
   rootPubkey?: string;
   /** Called after successful publish */
-  onPublished?: (events: SignedEvent[]) => void;
+  onPublished?: (events: SignedEvent[], dTag?: string) => void;
   /** Called on submit (before signing) */
-  onSubmit?: (bundle: unknown) => void;
+  onSubmit?: (bundle: unknown, dTag?: string) => void;
   /** Called on error */
   onError?: (error: Error) => void;
   /** Custom class name */
@@ -81,6 +84,7 @@ export interface NostrPostComposerProps {
 export function NostrPostComposer({
   manifest,
   manifestRef,
+  dTag,
   relays,
   autoPublish = true,
   excludeFields,
@@ -110,6 +114,7 @@ export function NostrPostComposer({
       element.manifest = manifest;
     }
     element.manifestRef = manifestRef;
+    element.dTag = dTag;
     if (relays) {
       element.relays = relays;
     }
@@ -124,6 +129,7 @@ export function NostrPostComposer({
   }, [
     manifest,
     manifestRef,
+    dTag,
     relays,
     autoPublish,
     excludeFields,
@@ -141,13 +147,20 @@ export function NostrPostComposer({
     if (!element) return;
 
     const handlePublished = (e: Event) => {
-      const customEvent = e as CustomEvent<SignedEvent[]>;
-      onPublished?.(customEvent.detail);
+      const customEvent = e as CustomEvent<
+        SignedEvent[] | { events: SignedEvent[]; dTag?: string }
+      >;
+      const detail = customEvent.detail;
+      if (Array.isArray(detail)) {
+        onPublished?.(detail);
+        return;
+      }
+      onPublished?.(detail.events, detail.dTag);
     };
 
     const handleSubmit = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      onSubmit?.(customEvent.detail);
+      const customEvent = e as CustomEvent<{ bundle: unknown; dTag?: string }>;
+      onSubmit?.(customEvent.detail.bundle, customEvent.detail.dTag);
     };
 
     const handleError = (e: Event) => {

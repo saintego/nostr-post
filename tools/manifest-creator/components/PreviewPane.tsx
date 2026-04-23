@@ -283,6 +283,7 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
               reactionsEnabled
               showKind
               showTags
+              editable
             />
           )}
         </div>

@@ -153,6 +153,12 @@ export interface UnsignedNostrEvent {
 }
 
 /**
+ * A Nostr event that may or may not have been signed.
+ * Signed events additionally carry `id` and `sig`.
+ */
+export type DisplayableEvent = UnsignedNostrEvent & { id?: string; sig?: string };
+
+/**
  * A bundle of related Nostr events produced from a single manifest + form data.
  * Events may reference each other via tags (e.g., 'e' tags for replies).
  *
@@ -166,6 +172,7 @@ export interface EventBundle {
   metadata?: {
     createdAt: number;
     sourceForm: FormData;
+    addressableDTag?: string;
   };
 }
 

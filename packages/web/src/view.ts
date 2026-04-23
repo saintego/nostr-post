@@ -9,10 +9,10 @@
 import { getFieldsByKind, getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import { parseManifestATag } from '@nostr-post/core/nip78';
 import {
+  type DisplayableEvent,
   type NostrPostManifest,
   type PostField,
   STANDARD_KIND1_POST_MANIFEST,
-  type UnsignedNostrEvent,
 } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html, nothing } from 'lit';
@@ -21,23 +21,24 @@ import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { NostrPostElement, baseStyles } from './base-component';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
-import type { SignedEvent } from './signer';
-import { fetchEvents, fetchManifestByATag } from './signer';
+import { fetchEvents, fetchManifestByATag, getPublicKey } from './signer';
 import {
   type NostrProfile,
   authorDisplayName,
   fetchAuthorProfile,
   truncatePubkey,
 } from './userProfile';
+import { type EditState, renderEditButton, renderInlineComposer } from './viewEdit';
 import {
   hasStructuredContentMappings,
   renderLinkedEvents,
   renderManifestEventData,
 } from './viewLinked';
 import { viewStyle } from './viewStyle';
+import { applyUpdateCommentsToEvent, renderUpdateComments } from './viewUpdates';
 
-/** Event type that can be either unsigned or signed */
-export type DisplayableEvent = UnsignedNostrEvent | SignedEvent;
+/** Event type that can be either unsigned or signed — re-exported from core for convenience */
+export type { DisplayableEvent } from '@nostr-post/core/types';
 type RegisteredPlugin = Exclude<ReturnType<typeof pluginRegistry.get>, undefined>;
 
 /**
@@ -65,6 +66,31 @@ export class NostrPostView extends NostrPostElement {
   /** Linked events that are part of this multi-event post (e.g. NIP-78 data) */
   @property({ type: Array })
   linkedEvents?: DisplayableEvent[];
+
+  /** Interaction events related to the primary event (e.g. kind 1 update comments). */
+  @property({ type: Array, attribute: false })
+  interactionEvents?: DisplayableEvent[];
+
+  /**
+   * When true, shows an "Edit" button on posts.
+   * For addressable events (kinds 30000–39999) it opens an inline composer that
+   * publishes a replacement event (NIP-33 overwrite).
+   * For kind-1 events it opens an inline composer that, on submit, publishes a
+   * kind-1 update-comment reply (`update:{fieldId}:{value}` per changed field)
+   * so the change is applied locally while remaining visible as a plain comment
+   * in other clients.
+   * Clicking always dispatches `nostr-post-edit-request` (cancelable) with
+   * `{ event, dTag }`. Call `preventDefault()` to suppress the inline composer
+   * and handle editing yourself.
+   */
+  @property({ type: Boolean })
+  editable?: boolean;
+
+  @state()
+  private _showInlineComposer = false;
+
+  @state()
+  private _editPubkey?: string;
 
   @property({ type: Boolean })
   showTags?: boolean;
@@ -170,7 +196,7 @@ export class NostrPostView extends NostrPostElement {
     if (!this.event) return;
 
     // Look for an `a` tag referencing a NIP-78 manifest
-    const aTag = this.event.tags.find((t) => {
+    const aTag = this.event.tags.find((t: string[]) => {
       if (t[0] !== 'a') return false;
       const ref = parseManifestATag(t[1]);
       return !!ref;
@@ -201,7 +227,7 @@ export class NostrPostView extends NostrPostElement {
   private async _tryFetchLinkedEvents() {
     if (!this.event) return;
 
-    const eventId = 'id' in this.event ? (this.event as SignedEvent).id : undefined;
+    const eventId = this.event.id;
     if (!eventId) return;
 
     // Only fetch if the manifest has kinds beyond the primary event's kind
@@ -260,6 +286,36 @@ export class NostrPostView extends NostrPostElement {
     return authorDisplayName(this._authorProfile, pubkey);
   }
 
+  private handleEditRequest(event: DisplayableEvent) {
+    const dTag = event.tags.find((t: string[]) => t[0] === 'd')?.[1];
+    const dispatched = this.dispatchCustomEvent(
+      'nostr-post-edit-request',
+      { event, dTag },
+      { cancelable: true }
+    );
+    if (!dispatched.defaultPrevented) {
+      const opening = !this._showInlineComposer;
+      this._showInlineComposer = opening;
+      if (opening && !(event.kind >= 30000 && event.kind < 40000)) {
+        void getPublicKey().then((pk) => {
+          this._editPubkey = pk;
+        });
+      }
+    }
+  }
+
+  private get editState(): EditState {
+    return {
+      showInlineComposer: this._showInlineComposer,
+      editPubkey: this._editPubkey,
+      effectiveManifest: this.effectiveManifest,
+      onComposerClose: () => {
+        this._showInlineComposer = false;
+      },
+      onError: (message) => this.showError(message),
+    };
+  }
+
   render() {
     if (!this.event) {
       return html`<div class="error">
@@ -267,13 +323,17 @@ export class NostrPostView extends NostrPostElement {
       </div>`;
     }
 
-    const event = this.event;
+    const event = applyUpdateCommentsToEvent(
+      this.event,
+      this.effectiveManifest,
+      this.interactionEvents
+    );
     const kind = event.kind;
     const created_at = event.created_at;
     const tags = event.tags;
     const content = event.content;
     const pubkey = event.pubkey;
-    const eventId = 'id' in event ? (event as SignedEvent).id : undefined;
+    const eventId = event.id;
     const showTechnicalMeta = Boolean(this.showKind || this.showTags);
     const manifestRenderedData = renderManifestEventData(event, this.effectiveManifest);
     const shouldUseManifestRendering =
@@ -318,6 +378,7 @@ export class NostrPostView extends NostrPostElement {
         </div>
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
+        ${renderUpdateComments(this.interactionEvents, this.event.pubkey)}
         ${
           this.showTags && tags.length > 0
             ? html`
@@ -335,6 +396,8 @@ export class NostrPostView extends NostrPostElement {
             : ''
         }
         ${showTechnicalMeta && eventId ? html`<div class="view-id">ID: ${eventId}</div>` : ''}
+        ${renderEditButton(event, this.editable, this._showInlineComposer, (ev) => this.handleEditRequest(ev))}
+        ${renderInlineComposer(event, this.editState)}
       </div>
     `;
   }

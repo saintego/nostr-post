@@ -5,6 +5,7 @@ import { mergeUniqueEvents } from './feedStandard';
 import type { SignedEvent } from './signer';
 import type { NostrProfile } from './userProfile';
 import { loadProfilesForEvents } from './userProfile';
+import { isUpdateComment } from './viewUpdates';
 
 export const extractPublishedEvents = (eventDetail: unknown): SignedEvent[] => {
   if (Array.isArray(eventDetail)) return eventDetail as SignedEvent[];
@@ -37,12 +38,13 @@ export const renderReplies = (
   excludeFields: string[] | undefined,
   renderEventActions: (event: SignedEvent, rootEvent?: SignedEvent) => TemplateResult
 ): TemplateResult | '' => {
-  if (replies.length === 0) return '';
+  const visibleReplies = replies.filter((r) => !isUpdateComment(r.content));
+  if (visibleReplies.length === 0) return '';
 
   return html`
     <div class="reply-list">
       <div class="reply-header">Comments</div>
-      ${replies.map(
+      ${visibleReplies.map(
         (reply) => html`
           <div>
             <nostr-post-view

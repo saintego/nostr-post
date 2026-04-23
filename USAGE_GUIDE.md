@@ -325,11 +325,13 @@ Display a single Nostr event with automatic field rendering based on manifest.
 - `show-tags` - Show event tags (boolean)
 - `show-kind` - Show event kind (boolean)
 - `show-timestamp` - Show creation timestamp (boolean)
+- `editable` - Show an "Edit" button on the event (boolean, see [Inline Editing](#inline-editing))
 
 **Properties:**
 
-- `event: NostrEvent` - Event to display
+- `event: DisplayableEvent` - Event to display
 - `manifest: NostrPostManifest` - Manifest to guide field rendering (optional, auto-fetched from event via NIP-78 if not provided)
+- `interactionEvents: DisplayableEvent[]` - Kind-1 update-comment replies that should be merged into the displayed event (see [Inline Editing](#inline-editing))
 
 **Field Visibility**
 
@@ -338,15 +340,47 @@ The view component respects `visibility.view` settings from the manifest:
 - `visibility.view = "visible"` (default) — Field is shown to viewers
 - `visibility.view = "hidden"` — Field is hidden from viewers (e.g., author draft notes)
 
+**Inline Editing**
+
+Set `editable` to show an "Edit" button. The button's behaviour depends on the event kind:
+
+| Event kind                    | Edit mechanism                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Addressable** (30000–39999) | Opens an inline composer pre-filled with current values. On submit the component publishes a replacement event (NIP-33 overwrite).                                                                                                                                                                                                                 |
+| **Kind 1**                    | Opens an inline composer pre-filled with current values. On submit the component publishes a kind-1 _update-comment_ reply in the format `update:{fieldId}:{value}` (one changed field per line). The view applies these comments client-side so the post appears updated, while the comment remains visible as plain text in other Nostr clients. |
+
+When the user clicks "Edit", a cancelable `nostr-post-edit-request` CustomEvent is dispatched:
+
+```typescript
+element.addEventListener("nostr-post-edit-request", (e) => {
+  // e.detail = { event: DisplayableEvent, dTag?: string }
+  // Call e.preventDefault() to suppress the inline composer and handle editing yourself
+});
+```
+
+**Feeding update-comments into the view:**
+
+To render existing update-comment replies into the merged view, pass them via the `interactionEvents` property. Only events from the same author as the original event are trusted:
+
+```js
+viewer.event = originalEvent;
+viewer.interactionEvents = updateCommentReplies; // kind-1 events from same pubkey
+```
+
 **Example:**
 
 ```html
-<nostr-post-view id="viewer" show-tags="true"></nostr-post-view>
+<nostr-post-view id="viewer" editable show-tags="true"></nostr-post-view>
 
 <script>
   const viewer = document.getElementById("viewer");
 
-  // Set the manifest to control which fields are displayed
+  // Optional: intercept the edit request instead of using the built-in composer
+  viewer.addEventListener("nostr-post-edit-request", (e) => {
+    e.preventDefault(); // suppress inline composer
+    console.log("Edit requested for", e.detail.event);
+  });
+
   viewer.manifest = {
     id: "review-v1",
     version: "1.0.0",
@@ -359,18 +393,11 @@ The view component respects `visibility.view` settings from the manifest:
         type: "string",
         uiPlugin: "textarea",
         mapTo: { kind: 1, target: "content" },
-        visibility: { view: "visible" }, // Shown to viewers
-      },
-      {
-        id: "internal_notes",
-        type: "string",
-        uiPlugin: "textarea",
-        visibility: { view: "hidden" }, // Author only; hidden from viewers
+        visibility: { view: "visible" },
       },
     ],
   };
 
-  // Display the event
   viewer.event = {
     id: "...",
     kind: 1,
@@ -986,9 +1013,41 @@ Display a feed of events.
   tags?: Record<string, string[]>;
   limit?: number;
   manifest?: NostrPostManifest;
+  /** Show an "Edit" button on each post in the feed */
+  editable?: boolean;
+  /**
+   * Called when the user clicks Edit on a post.
+   * When provided, the built-in inline composer is suppressed so you can
+   * handle editing in your own UI.
+   */
+  onEditRequest?: (event: SignedEvent, dTag: string | undefined) => void;
   onEventsLoaded?: (events: NostrEvent[]) => void;
   style?: React.CSSProperties;
   className?: string;
+}
+```
+
+**Inline Editing in React:**
+
+```tsx
+import { NostrPostFeed } from "@nostr-post/react";
+
+function EditableFeed({ pubkey }: { pubkey: string }) {
+  const handleEdit = (event, dTag) => {
+    console.log("Edit requested:", event.id, dTag);
+    // Open your own editor here; the inline composer is suppressed when
+    // onEditRequest is provided.
+  };
+
+  return (
+    <NostrPostFeed
+      authors={[pubkey]}
+      kinds={[30023]}
+      limit={20}
+      editable
+      onEditRequest={handleEdit}
+    />
+  );
 }
 ```
 

@@ -1,4 +1,5 @@
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
+import { html } from 'lit';
 
 export const isFieldExcluded = (field: PostField, excludeFields?: string[]): boolean => {
   if (excludeFields?.includes(field.id)) return true;
@@ -98,4 +99,25 @@ export const parseExtraTags = (input?: string): [string, ...string[]][] => {
       if (!tagName || !value) return [];
       return [[tagName, value] as [string, string]];
     });
+};
+
+export const renderHiddenFieldErrors = (
+  manifest: NostrPostManifest,
+  errors: Record<string, string>,
+  excludeFields: string[] | undefined,
+  prefill: Record<string, unknown> | undefined
+) => {
+  const hiddenErrors = hiddenFieldErrorEntries({ manifest, errors, excludeFields, prefill });
+  if (hiddenErrors.length === 0) return '';
+
+  return html`
+    <div class="hidden-field-errors" role="alert" aria-live="polite">
+      <div class="hidden-field-errors-title">Some hidden fields failed validation:</div>
+      <ul>
+        ${hiddenErrors.map(
+          ([fieldId, message]) => html`<li><strong>${fieldId}</strong>: ${message}</li>`
+        )}
+      </ul>
+    </div>
+  `;
 };

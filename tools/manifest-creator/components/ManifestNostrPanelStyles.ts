@@ -1,0 +1,83 @@
+/**
+ * Styles for ManifestNostrPanel - extracted to keep the component under 500 lines.
+ */
+export const styles = {
+  panel: {
+    background: 'white',
+    borderRadius: '0.5rem',
+    border: '1px solid #e5e7eb',
+    padding: '1.5rem',
+    marginTop: '1rem',
+  },
+  panelTitle: {
+    fontSize: '1.25rem',
+    fontWeight: 600,
+    margin: '0 0 1rem 0',
+  },
+  buttonGroup: {
+    display: 'flex',
+    gap: '0.5rem',
+    flexWrap: 'wrap' as const,
+  },
+  publishButton: {
+    padding: '0.5rem 1rem',
+    background: '#8b5cf6',
+    color: 'white',
+    border: 'none',
+    borderRadius: '0.375rem',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    cursor: 'pointer',
+  },
+  deleteButton: {
+    padding: '0.5rem 1rem',
+    background: '#ef4444',
+    color: 'white',
+    border: 'none',
+    borderRadius: '0.375rem',
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    cursor: 'pointer',
+  },
+  statusSuccess: {
+    padding: '0.5rem 0.75rem',
+    background: '#d1fae5',
+    color: '#065f46',
+    borderRadius: '0.375rem',
+    fontSize: '0.875rem',
+    marginTop: '0.5rem',
+  },
+  statusError: {
+    padding: '0.5rem 0.75rem',
+    background: '#fee2e2',
+    color: '#991b1b',
+    borderRadius: '0.375rem',
+    fontSize: '0.875rem',
+    marginTop: '0.5rem',
+  },
+  tabs: {
+    display: 'flex',
+    gap: '0.5rem',
+    marginBottom: '1rem',
+  },
+  tab: {
+    padding: '0.375rem 0.75rem',
+    background: '#f3f4f6',
+    border: '1px solid #e5e7eb',
+    borderRadius: '0.375rem',
+    cursor: 'pointer',
+    fontSize: '0.8125rem',
+    fontWeight: 500,
+    color: '#6b7280',
+  },
+  activeTab: {
+    padding: '0.375rem 0.75rem',
+    background: '#8b5cf6',
+    border: '1px solid #8b5cf6',
+    borderRadius: '0.375rem',
+    cursor: 'pointer',
+    fontSize: '0.8125rem',
+    fontWeight: 500,
+    color: 'white',
+  },
+} as const;

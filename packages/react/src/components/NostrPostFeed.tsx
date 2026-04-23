@@ -6,7 +6,8 @@
 
 import '@nostr-post/web'; // Register web components
 import type { FetchFilter } from '@nostr-post/signer';
-import { forwardRef } from 'react';
+import type { SignedEvent } from '@nostr-post/web';
+import { forwardRef, useEffect, useRef } from 'react';
 
 // Extend HTMLElement for the web component
 interface NostrPostFeedElement extends HTMLElement {
@@ -29,6 +30,7 @@ interface NostrPostFeedElement extends HTMLElement {
   commentsEnabled?: boolean;
   reactionsEnabled?: boolean;
   reactionOptions?: string[];
+  editable?: boolean;
   refresh?: () => Promise<void>;
 }
 
@@ -94,6 +96,10 @@ export interface NostrPostFeedProps {
   reactionsEnabled?: boolean;
   /** Reaction button options shown in the feed */
   reactionOptions?: string[];
+  /** Show Edit button on addressable events (30000-39999) */
+  editable?: boolean;
+  /** Called when the user clicks Edit on an addressable event */
+  onEditRequest?: (event: import('@nostr-post/web').SignedEvent, dTag: string | undefined) => void;
   /** Custom class name */
   className?: string;
   /** Dark mode */
@@ -135,6 +141,8 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       commentsEnabled = true,
       reactionsEnabled = true,
       reactionOptions,
+      editable = false,
+      onEditRequest,
       className = '',
       dark,
     } = props;
@@ -171,12 +179,41 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       element.commentsEnabled = commentsEnabled;
       element.reactionsEnabled = reactionsEnabled;
       element.reactionOptions = reactionOptions;
+      element.editable = editable;
     };
 
+    // Attach edit-request listener via ref
+    const feedElementRef = (element: NostrPostFeedElement | null) => {
+      setElementRef(element);
+    };
+
+    // Stable wrapper ref used by useEffect below
+    const wrapperElementRef = useRef<HTMLDivElement | null>(null);
+    const wrapperRef = (wrapper: HTMLDivElement | null) => {
+      wrapperElementRef.current = wrapper;
+    };
+
+    // Attach / re-attach the edit-request listener whenever onEditRequest changes.
+    // The cleanup function removes the previous listener to prevent duplicates.
+    useEffect(() => {
+      const wrapper = wrapperElementRef.current;
+      if (!wrapper || !onEditRequest) return;
+      const handler = (e: Event) => {
+        // Prevent the view's default inline-composer from opening
+        e.preventDefault();
+        const detail = (e as CustomEvent<{ event: SignedEvent; dTag?: string }>).detail;
+        onEditRequest(detail.event, detail.dTag);
+      };
+      wrapper.addEventListener('nostr-post-edit-request', handler);
+      return () => {
+        wrapper.removeEventListener('nostr-post-edit-request', handler);
+      };
+    }, [onEditRequest]);
+
     return (
-      <div className={wrapperClassName}>
+      <div className={wrapperClassName} ref={onEditRequest ? wrapperRef : undefined}>
         <nostr-post-feed
-          ref={setElementRef}
+          ref={feedElementRef}
           className={className}
           filter-tags={filterTags}
           show-kind={showKind}

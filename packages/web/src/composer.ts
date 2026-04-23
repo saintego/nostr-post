@@ -4,49 +4,35 @@
  * Supports automatic signing and publishing via NIP-07
  */
 
-import { coordinateEvents } from '@nostr-post/core/coordinator';
-import { prepareFormData } from '@nostr-post/core/enrichment';
-import { validateManifest } from '@nostr-post/core/manifest';
 import {
   getDefaultPublishFormat,
   getSelectablePublishFormats,
 } from '@nostr-post/core/manifestMappings';
 import {
   type EventBundle,
-  type FormData as NostrFormData,
   type NostrPostManifest,
-  type PostField,
-  type PublishFormat,
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
-import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { NostrPostElement, baseStyles } from './base-component';
-import { type FieldRenderContext, renderExpandableField, renderField } from './composerField';
-import {
-  buildInitialFormData,
-  hiddenFieldErrorEntries,
-  isExcludedButPrefilled,
-  isFieldExcluded,
-  isFieldReadonly,
-  parseExtraTags,
-} from './composerForm';
-import {
-  applyReplyTargetToBundle,
-  hasReplyTarget,
-  renderReplyTargetPanel,
-  updateReplyTargetValue,
-} from './composerReply';
+import type { FieldRenderContext } from './composerField';
+import { renderFieldList } from './composerFieldList';
+import { buildInitialFormData, isFieldReadonly } from './composerForm';
+import { renderHiddenFieldErrors } from './composerForm';
+import { renderPublishFormatPicker } from './composerFormatPicker';
+import { renderComposerHeader } from './composerHeader';
+import { hasReplyTarget, renderReplyTargetPanel, updateReplyTargetValue } from './composerReply';
 import { composerStyle } from './composerStyle';
-import { ensurePluginsForManifest } from './pluginAutoLoad';
+import { renderSubmitButton } from './composerSubmit';
 import {
-  type SignedEvent,
-  fetchManifestByATag,
-  getPublicKey,
-  getUserRelays,
-  signAndPublish,
-} from './signer';
+  type ValidationResult,
+  signAndPublishBundle,
+  validateAndCoordinate,
+} from './composerSubmit';
+import { ensurePluginsForManifest } from './pluginAutoLoad';
+import { type SignedEvent, fetchManifestByATag, getPublicKey } from './signer';
+
 @customElement('nostr-post-composer')
 export class NostrPostComposer extends NostrPostElement {
   static styles = [baseStyles, composerStyle];
@@ -60,6 +46,10 @@ export class NostrPostComposer extends NostrPostElement {
   /** Reference to the manifest event on Nostr (a-tag value, e.g. '30078:<pubkey>:<d-tag>') */
   @property({ type: String, attribute: 'manifest-ref' })
   manifestRef?: string;
+
+  /** Explicit d-tag for addressable events (kinds 30000-39999). Reuse this to update an existing post. */
+  @property({ type: String, attribute: 'd-tag' })
+  dTag?: string;
 
   /** Auto-sign and publish events (uses NIP-07 window.nostr) */
   @property({ type: Boolean, attribute: 'auto-publish' })
@@ -109,6 +99,10 @@ export class NostrPostComposer extends NostrPostElement {
   @property({ type: Boolean, attribute: 'hide-publish-format-selector' })
   hidePublishFormatSelector = false;
 
+  /** Pre-select a specific publish format by ID when the composer first renders. */
+  @property({ type: String, attribute: 'default-format-id' })
+  defaultFormatId?: string;
+
   /**
    * Extra Nostr tags to append to every published event.
    * Format: "tagname:value,tagname2:value2" (first colon is the separator, so
@@ -153,6 +147,12 @@ export class NostrPostComposer extends NostrPostElement {
   }
 
   private getInitialSelectedPublishFormatId(manifest: NostrPostManifest): string {
+    const allFormats = manifest.publishFormats ?? [];
+    // If a defaultFormatId is supplied and exists in the manifest, use it
+    if (this.defaultFormatId && allFormats.some((f) => f.id === this.defaultFormatId)) {
+      return this.defaultFormatId;
+    }
+
     const defaultFormat = getDefaultPublishFormat(manifest);
     if (this.hidePublishFormatSelector) {
       return defaultFormat?.id ?? '';
@@ -268,12 +268,20 @@ export class NostrPostComposer extends NostrPostElement {
     this.dispatchFormChange();
   }
 
+  private applyValidationError(error: ValidationResult) {
+    if (!error) return;
+    if (error.type === 'manifest') {
+      this.showError(error.message);
+    } else {
+      this.errors = error.errors;
+    }
+  }
+
   private async handleSubmit(e: Event): Promise<void> {
     e.preventDefault();
     this.successMessage = '';
     this.errors = {};
 
-    // If manifestRef is provided, resolve it before using fallback manifest.
     if (!this.manifest && this.manifestRef) {
       const resolved = await this._resolveManifestRef();
       if (!resolved || !this.manifest) {
@@ -282,87 +290,47 @@ export class NostrPostComposer extends NostrPostElement {
       }
     }
 
-    // Use default Kind 1 manifest if none provided
     const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
-
-    // Validate manifest
-    const manifestValidation = validateManifest(manifest);
-    if (!manifestValidation.success) {
-      const errorMessages = manifestValidation.error
-        .map((err) => `${err.field}: ${err.message}`)
-        .join(', ');
-      this.showError(`Invalid manifest: ${errorMessages}`);
+    const pubkey = this.pubkey ?? (this.autoPublish ? await getPublicKey() : undefined);
+    if (!pubkey) {
+      this.showError('No pubkey provided. Please login first.');
       return;
     }
 
     this.isSubmitting = true;
 
     try {
-      // Get pubkey from prop or NIP-07
-      let pubkey = this.pubkey;
-      if (!pubkey && this.autoPublish) {
-        pubkey = await getPublicKey();
-      }
-
-      if (!pubkey) {
-        this.showError('No pubkey provided. Please login first.');
-        return;
-      }
-
-      // Let plugins enrich form data before coordination (e.g. hashtag/media auto-extraction).
-      // Uses the cross-platform prepareFormData pipeline from core/enrichment.
-      const enrichedData = prepareFormData(manifest, this._formData as NostrFormData, (pluginId) =>
-        pluginRegistry.get(pluginId)
+      const outcome = validateAndCoordinate(
+        manifest,
+        this._formData as Parameters<typeof validateAndCoordinate>[1],
+        {
+          pubkey,
+          selectedFormatId: this.selectedPublishFormatId,
+          manifestRef: this.manifestRef,
+          dTag: this.dTag,
+          extraTags: this.extraTags,
+          replyToEventId: this.replyToEventId,
+          replyToPubkey: this.replyToPubkey,
+          rootEventId: this.rootEventId,
+          rootPubkey: this.rootPubkey,
+        }
       );
 
-      // Coordinate events
-      const result = coordinateEvents(manifest, enrichedData as NostrFormData, {
-        pubkey,
-        createdAt: Math.floor(Date.now() / 1000),
-        selectedFormatId: this.selectedPublishFormatId || undefined,
-        manifestRef: this.manifestRef,
-        tagSerializer: (value, field) => {
-          const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
-          return plugin?.serializeValue?.(value, field);
-        },
-        extraTagsFn: (value, field) => {
-          const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
-          return plugin?.extraTags?.(value, field);
-        },
-      });
-
-      if (!result.success) {
-        // Show field-level errors
-        const newErrors: Record<string, string> = {};
-        for (const error of result.error) {
-          newErrors[error.field] = error.message;
-        }
-        this.errors = newErrors;
+      if ('validationError' in outcome) {
+        this.applyValidationError(outcome.validationError);
         return;
       }
 
-      const bundle = applyReplyTargetToBundle(result.data, {
-        replyToEventId: this.replyToEventId,
-        replyToPubkey: this.replyToPubkey,
-        rootEventId: this.rootEventId,
-        rootPubkey: this.rootPubkey,
-      });
-
-      const parsedExtraTags = parseExtraTags(this.extraTags);
-      if (parsedExtraTags.length > 0) {
-        for (const event of bundle.events) {
-          event.tags.push(...parsedExtraTags);
-        }
-      }
+      const { bundle, addressableDTag } = outcome;
 
       if (this.autoPublish) {
-        const signedEvents = await this.signAndPublishBundle(bundle);
+        const signedEvents = await signAndPublishBundle(bundle, this.relays);
         this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
         this.successMessage = `Published to ${signedEvents.length} event(s)!`;
       } else {
-        // Manual mode - just dispatch submit event
-        this.dispatchCustomEvent<{ bundle: EventBundle }>('nostr-post-submit', {
+        this.dispatchCustomEvent<{ bundle: EventBundle; dTag?: string }>('nostr-post-submit', {
           bundle,
+          dTag: addressableDTag,
         });
         this.successMessage = 'Post created successfully!';
       }
@@ -375,37 +343,6 @@ export class NostrPostComposer extends NostrPostElement {
     }
   }
 
-  private async signAndPublishBundle(bundle: EventBundle): Promise<SignedEvent[]> {
-    const relays = this.relays || (await getUserRelays());
-    const signedEvents: SignedEvent[] = [];
-    let primaryEventId: string | undefined;
-
-    for (let i = 0; i < bundle.events.length; i++) {
-      const unsignedEvent = bundle.events[i];
-
-      // For non-primary events, add `e` tag linking back to the primary event
-      if (i > 0 && primaryEventId) {
-        unsignedEvent.tags = [...unsignedEvent.tags, ['e', primaryEventId, '', 'root']];
-      }
-
-      const { signedEvent, publishResults } = await signAndPublish(unsignedEvent, relays);
-      signedEvents.push(signedEvent);
-
-      // First signed event becomes the primary (its ID is now known)
-      if (i === 0) {
-        primaryEventId = signedEvent.id;
-      }
-
-      if (publishResults.success === 0) {
-        throw new Error(
-          `Failed to publish to any relay: ${publishResults.results.map((r) => r.error).join(', ')}`
-        );
-      }
-    }
-
-    return signedEvents;
-  }
-
   private updateReplyTarget(
     field: 'replyToEventId' | 'replyToPubkey' | 'rootEventId' | 'rootPubkey',
     value: string
@@ -414,180 +351,59 @@ export class NostrPostComposer extends NostrPostElement {
   }
 
   render() {
-    // Use standard Kind 1 manifest if none provided
     const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
-    const { metadata } = manifest;
     const selectableFormats = getSelectablePublishFormats(manifest);
-    const hiddenErrors = hiddenFieldErrorEntries({
-      manifest,
+
+    const ctx: Omit<FieldRenderContext, 'attachedByTarget'> = {
+      formData: this._formData,
       errors: this.errors,
-      excludeFields: this.excludeFields,
-      prefill: this.prefill,
-    });
+      expandedFields: this._expandedFields,
+      manifest,
+      isReadonly: (f) => isFieldReadonly(f, this.readonlyFields),
+      onFieldChange: (id, val) => this.handleFieldChange(id, val),
+      onToggleExpanded: (fieldId) => {
+        const next = new Set(this._expandedFields);
+        if (this._expandedFields.has(fieldId)) next.delete(fieldId);
+        else next.add(fieldId);
+        this._expandedFields = next;
+      },
+    };
+
+    const replyTarget = {
+      replyToEventId: this.replyToEventId,
+      replyToPubkey: this.replyToPubkey,
+      rootEventId: this.rootEventId,
+      rootPubkey: this.rootPubkey,
+    };
+
+    const showReplyPanel =
+      this.showReplyTarget || this.editableReplyTarget || hasReplyTarget(replyTarget);
 
     return html`
       <div class="composer">
-        ${
-          metadata?.name || metadata?.description
-            ? html`
-              <div class="composer-header">
-                ${metadata.name ? html`<h2 class="composer-title">${metadata.name}</h2>` : ''}
-                ${
-                  metadata.description
-                    ? html`<p class="composer-description">
-                      ${metadata.description}
-                    </p>`
-                    : ''
-                }
-              </div>
-            `
-            : ''
-        }
-        ${
-          this.successMessage ? html`<div class="success-message">${this.successMessage}</div>` : ''
-        }
-        ${
-          hiddenErrors.length > 0
-            ? html`
-              <div class="hidden-field-errors" role="alert" aria-live="polite">
-                <div class="hidden-field-errors-title">Some hidden fields failed validation:</div>
-                <ul>
-                  ${hiddenErrors.map(
-                    ([fieldId, message]) => html`<li><strong>${fieldId}</strong>: ${message}</li>`
-                  )}
-                </ul>
-              </div>
-            `
-            : ''
-        }
-
+        ${renderComposerHeader(manifest.metadata)}
+        ${this.successMessage ? html`<div class="success-message">${this.successMessage}</div>` : ''}
+        ${renderHiddenFieldErrors(manifest, this.errors, this.excludeFields, this.prefill)}
         <form @submit=${this.handleSubmit}>
+          ${renderPublishFormatPicker(
+            selectableFormats,
+            this.selectedPublishFormatId,
+            this.hidePublishFormatSelector,
+            (id) => {
+              this.selectedPublishFormatId = id;
+            }
+          )}
           ${
-            !this.hidePublishFormatSelector && selectableFormats.length > 1
-              ? html`
-                  <div class="publish-format-panel">
-                    <label class="publish-format-label" for="publish-format-select">
-                      Publish as
-                    </label>
-                    <select
-                      id="publish-format-select"
-                      class="publish-format-select"
-                      .value=${this.selectedPublishFormatId}
-                      @change=${(e: Event) => {
-                        this.selectedPublishFormatId = (e.target as HTMLSelectElement).value;
-                      }}
-                    >
-                      ${selectableFormats.map(
-                        (format: PublishFormat) => html`
-                          <option value=${format.id}>${format.label}</option>
-                        `
-                      )}
-                    </select>
-                    ${
-                      selectableFormats.find(
-                        (format: PublishFormat) => format.id === this.selectedPublishFormatId
-                      )?.description
-                        ? html`
-                            <p class="publish-format-description">
-                              ${
-                                selectableFormats.find(
-                                  (format: PublishFormat) =>
-                                    format.id === this.selectedPublishFormatId
-                                )?.description
-                              }
-                            </p>
-                          `
-                        : ''
-                    }
-                  </div>
-                `
-              : ''
-          }
-          ${
-            !this.showReplyTarget &&
-            !this.editableReplyTarget &&
-            !hasReplyTarget({
-              replyToEventId: this.replyToEventId,
-              replyToPubkey: this.replyToPubkey,
-              rootEventId: this.rootEventId,
-              rootPubkey: this.rootPubkey,
-            })
-              ? ''
-              : renderReplyTargetPanel({
-                  target: {
-                    replyToEventId: this.replyToEventId,
-                    replyToPubkey: this.replyToPubkey,
-                    rootEventId: this.rootEventId,
-                    rootPubkey: this.rootPubkey,
-                  },
+            showReplyPanel
+              ? renderReplyTargetPanel({
+                  target: replyTarget,
                   readonly: !this.editableReplyTarget,
                   onUpdate: (field, value) => this.updateReplyTarget(field, value),
                 })
+              : ''
           }
-          ${(() => {
-            // Build map of fieldId → fields that attach to it (attachTo === fieldId)
-            const attachedByTarget = new Map<string, PostField[]>();
-            for (const field of manifest.fields) {
-              if (!field.attachTo) continue;
-              const attached = attachedByTarget.get(field.attachTo) ?? [];
-              attached.push(field);
-              attachedByTarget.set(field.attachTo, attached);
-            }
-
-            return manifest.fields.map((field) => {
-              // Attached fields render on target toolbars unless explicitly hidden in composer
-              if (field.attachTo && field.visibility?.edit !== 'hidden') {
-                return '';
-              }
-              if (
-                isFieldExcluded(field, this.excludeFields) &&
-                !isExcludedButPrefilled(field, this.excludeFields, this.prefill)
-              ) {
-                return '';
-              }
-
-              const isHidden =
-                isExcludedButPrefilled(field, this.excludeFields, this.prefill) ||
-                field.visibility?.edit === 'hidden';
-
-              const ctx: FieldRenderContext = {
-                formData: this._formData,
-                errors: this.errors,
-                expandedFields: this._expandedFields,
-                attachedByTarget,
-                manifest,
-                isReadonly: (f) => isFieldReadonly(f, this.readonlyFields),
-                onFieldChange: (id, val) => this.handleFieldChange(id, val),
-                onToggleExpanded: (fieldId) => {
-                  const next = new Set(this._expandedFields);
-                  if (this._expandedFields.has(fieldId)) next.delete(fieldId);
-                  else next.add(fieldId);
-                  this._expandedFields = next;
-                },
-              };
-
-              if (!isHidden && (field.metadata as Record<string, unknown>)?.expandable) {
-                return renderExpandableField(field, ctx);
-              }
-              return renderField(field, isHidden, ctx);
-            });
-          })()}
-
-          <div class="composer-actions">
-            <button
-              type="submit"
-              class="primary"
-              ?disabled=${this.isSubmitting || this.isResolvingManifestRef}
-            >
-              ${
-                this.isSubmitting
-                  ? 'Creating...'
-                  : this.isResolvingManifestRef
-                    ? 'Loading Manifest...'
-                    : 'Create Post'
-              }
-            </button>
-          </div>
+          ${renderFieldList(manifest, ctx, this.excludeFields, this.prefill)}
+          ${renderSubmitButton(this.isSubmitting, this.isResolvingManifestRef)}
         </form>
       </div>
     `;

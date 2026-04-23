@@ -1,18 +1,17 @@
 'use client';
 
-import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
-import type { NostrPostManifest } from '@nostr-post/core/types';
-import type { ReactNode } from 'react';
-import { useCallback, useEffect, useState } from 'react';
-
 import {
   NIP78_KIND,
-  type StoredManifest,
   buildManifestATag,
   eventToManifest,
   manifestDeleteEvent,
   manifestToEvent,
 } from '@nostr-post/core/nip78';
+import type { NostrPostManifest } from '@nostr-post/core/types';
+import { NostrPostFeed } from '@nostr-post/react';
+import type { SignedEvent } from '@nostr-post/web';
+import { useCallback, useEffect, useState } from 'react';
+import { styles } from './ManifestNostrPanelStyles';
 
 interface ManifestNostrPanelProps {
   manifest: NostrPostManifest;
@@ -21,166 +20,11 @@ interface ManifestNostrPanelProps {
   onManifestRef?: (ref: string | undefined) => void;
 }
 
-const styles = {
-  panel: {
-    background: 'white',
-    borderRadius: '0.5rem',
-    border: '1px solid #e5e7eb',
-    padding: '1.5rem',
-    marginTop: '1rem',
-  },
-  panelTitle: {
-    fontSize: '1.25rem',
-    fontWeight: 600,
-    margin: '0 0 1rem 0',
-  },
-  section: {
-    marginBottom: '1.5rem',
-  },
-  sectionTitle: {
-    fontSize: '1rem',
-    fontWeight: 600,
-    margin: '0 0 0.75rem 0',
-    color: '#374151',
-  },
-  buttonGroup: {
-    display: 'flex',
-    gap: '0.5rem',
-    flexWrap: 'wrap' as const,
-  },
-  publishButton: {
-    padding: '0.5rem 1rem',
-    background: '#8b5cf6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    cursor: 'pointer',
-  },
-  deleteButton: {
-    padding: '0.5rem 1rem',
-    background: '#ef4444',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    cursor: 'pointer',
-  },
-  secondaryButton: {
-    padding: '0.5rem 1rem',
-    background: '#6b7280',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    cursor: 'pointer',
-  },
-  loadButton: {
-    padding: '0.375rem 0.75rem',
-    background: '#f3f4f6',
-    color: '#374151',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    fontSize: '0.8125rem',
-    cursor: 'pointer',
-  },
-  statusSuccess: {
-    padding: '0.5rem 0.75rem',
-    background: '#d1fae5',
-    color: '#065f46',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-    marginTop: '0.5rem',
-  },
-  statusError: {
-    padding: '0.5rem 0.75rem',
-    background: '#fee2e2',
-    color: '#991b1b',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-    marginTop: '0.5rem',
-  },
-  manifestCard: {
-    border: '1px solid #e5e7eb',
-    borderRadius: '0.375rem',
-    padding: '0.75rem',
-    marginBottom: '0.5rem',
-    background: '#f9fafb',
-  },
-  manifestCardTitle: {
-    fontWeight: 600,
-    fontSize: '0.9375rem',
-    margin: '0 0 0.25rem 0',
-    color: '#1f2937',
-  },
-  manifestCardMeta: {
-    fontSize: '0.8125rem',
-    color: '#6b7280',
-    margin: '0 0 0.25rem 0',
-  },
-  manifestCardActions: {
-    display: 'flex',
-    gap: '0.375rem',
-    marginTop: '0.5rem',
-  },
-  emptyState: {
-    textAlign: 'center' as const,
-    padding: '1.5rem',
-    color: '#6b7280',
-    fontSize: '0.875rem',
-  },
-  tabs: {
-    display: 'flex',
-    gap: '0.5rem',
-    marginBottom: '1rem',
-  },
-  tab: {
-    padding: '0.375rem 0.75rem',
-    background: '#f3f4f6',
-    border: '1px solid #e5e7eb',
-    borderRadius: '0.375rem',
-    cursor: 'pointer',
-    fontSize: '0.8125rem',
-    fontWeight: 500,
-    color: '#6b7280',
-  },
-  activeTab: {
-    padding: '0.375rem 0.75rem',
-    background: '#8b5cf6',
-    border: '1px solid #8b5cf6',
-    borderRadius: '0.375rem',
-    cursor: 'pointer',
-    fontSize: '0.8125rem',
-    fontWeight: 500,
-    color: 'white',
-  },
-  searchInput: {
-    width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-    marginBottom: '0.75rem',
-  },
-  pubkeyLabel: {
-    fontFamily: 'monospace',
-    fontSize: '0.75rem',
-    color: '#9ca3af',
-  },
-};
-
 type StatusMessage = { type: 'success' | 'error'; text: string } | null;
 type PanelTab = 'publish' | 'my' | 'browse';
 
-const truncatePubkey = (pubkey: string) =>
-  pubkey.length > 16 ? `${pubkey.slice(0, 8)}...${pubkey.slice(-8)}` : pubkey;
-
 const StatusBanner = ({ status }: { status: StatusMessage }) => {
   if (!status) return null;
-
   return (
     <div style={status.type === 'success' ? styles.statusSuccess : styles.statusError}>
       {status.text}
@@ -210,7 +54,6 @@ const PublishTab = ({
       Publish the current manifest to Nostr relays as a kind {NIP78_KIND} event. Anyone can discover
       and use it.
     </p>
-
     <div style={styles.buttonGroup}>
       <button
         type="button"
@@ -224,9 +67,7 @@ const PublishTab = ({
         🗑️ Delete from Relays
       </button>
     </div>
-
     <StatusBanner status={status} />
-
     <details style={{ marginTop: '1rem' }}>
       <summary style={{ cursor: 'pointer', fontSize: '0.875rem', color: '#6b7280' }}>
         Preview NIP-78 Event
@@ -251,157 +92,90 @@ const PublishTab = ({
   </div>
 );
 
-interface ManifestListTabProps {
+interface ManifestFeedTabProps {
   description: string;
-  emptyMessage: string;
-  isLoading: boolean;
-  loadingMessage: string;
-  manifests: StoredManifest[];
-  refresh: () => void;
-  renderCard: (stored: StoredManifest) => ReactNode;
+  authors?: string[];
+  editable?: boolean;
+  onEditRequest: (event: SignedEvent) => void;
 }
 
-const ManifestListTab = ({
+/**
+ * Uses <NostrPostFeed> to show published manifests. The feed deduplicates
+ * stale addressable events (same pubkey + d-tag) automatically via core's
+ * filterLatestAddressableEvents used inside buildThreads.
+ */
+const ManifestFeedTab = ({
   description,
-  emptyMessage,
-  isLoading,
-  loadingMessage,
-  manifests,
-  refresh,
-  renderCard,
-}: ManifestListTabProps) => (
+  authors,
+  editable,
+  onEditRequest,
+}: ManifestFeedTabProps) => (
   <div>
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '0.75rem',
-      }}
-    >
-      <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: 0 }}>{description}</p>
-      <button type="button" style={styles.secondaryButton} onClick={refresh} disabled={isLoading}>
-        {isLoading ? 'Loading...' : '🔄 Refresh'}
-      </button>
-    </div>
-
-    {isLoading && manifests.length === 0 ? (
-      <div style={styles.emptyState}>{loadingMessage}</div>
-    ) : manifests.length === 0 ? (
-      <div style={styles.emptyState}>{emptyMessage}</div>
-    ) : (
-      manifests.map((manifest) => renderCard(manifest))
-    )}
+    <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0 0 0.75rem 0' }}>{description}</p>
+    <NostrPostFeed
+      authors={authors}
+      kinds={[NIP78_KIND]}
+      filterTags="#t:nostr-post"
+      limit={50}
+      commentsEnabled={false}
+      reactionsEnabled={false}
+      editable={editable}
+      onEditRequest={(event) => onEditRequest(event)}
+    />
   </div>
 );
-
-const useInitialPubkey = (setCurrentPubkey: (pubkey: string | undefined) => void) => {
-  useEffect(() => {
-    const getPubkey = async () => {
-      try {
-        const { getPublicKey } = await import('@nostr-post/signer');
-        const pubkey = await getPublicKey();
-        setCurrentPubkey(pubkey);
-      } catch {
-        setCurrentPubkey(undefined);
-      }
-    };
-
-    getPubkey();
-  }, [setCurrentPubkey]);
-};
-
-const useAutoLoadManifestTab = (
-  activeTab: PanelTab,
-  myManifestCount: number,
-  browseManifestCount: number,
-  loadMyManifests: () => void,
-  browseAllManifests: () => void
-) => {
-  useEffect(() => {
-    if (activeTab === 'my' && myManifestCount === 0) {
-      loadMyManifests();
-      return;
-    }
-
-    if (activeTab === 'browse' && browseManifestCount === 0) {
-      browseAllManifests();
-    }
-  }, [activeTab, browseManifestCount, browseAllManifests, loadMyManifests, myManifestCount]);
-};
 
 export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: ManifestNostrPanelProps) {
   const [activeTab, setActiveTab] = useState<PanelTab>('publish');
   const [status, setStatus] = useState<StatusMessage>(null);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [myManifests, setMyManifests] = useState<StoredManifest[]>([]);
-  const [browseManifests, setBrowseManifests] = useState<StoredManifest[]>([]);
   const [currentPubkey, setCurrentPubkey] = useState<string | undefined>();
 
-  useInitialPubkey(setCurrentPubkey);
+  useEffect(() => {
+    const getPubkey = async () => {
+      try {
+        const { getPublicKey } = await import('@nostr-post/signer');
+        setCurrentPubkey(await getPublicKey());
+      } catch {
+        setCurrentPubkey(undefined);
+      }
+    };
+    getPubkey();
+  }, []);
 
   const showStatus = useCallback((type: 'success' | 'error', text: string) => {
     setStatus({ type, text });
     setTimeout(() => setStatus(null), 5000);
   }, []);
 
-  /** Load the current user's published manifests */
-  const loadMyManifests = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const { fetchEvents, getPublicKey } = await import('@nostr-post/signer');
-      const pubkey = await getPublicKey();
-      setCurrentPubkey(pubkey);
+  const handleEditRequest = useCallback(
+    (event: SignedEvent) => {
+      const stored = eventToManifest(event);
+      if (!stored) return;
+      onChange(stored.manifest);
+      onManifestRef?.(`${NIP78_KIND}:${stored.pubkey}:${stored.dTag}`);
+      setActiveTab('publish');
+      showStatus('success', `Loaded "${stored.manifest.metadata?.name || stored.manifest.id}"`);
+    },
+    [onChange, onManifestRef, showStatus]
+  );
 
-      const events = await fetchEvents(
-        {
-          kinds: [NIP78_KIND],
-          authors: [pubkey],
-          '#t': ['nostr-post'],
-          limit: 50,
-        },
-        undefined,
-        { waitForAll: true }
-      );
-
-      const manifests: StoredManifest[] = [];
-      for (const ev of events) {
-        const stored = eventToManifest(ev);
-        if (stored) manifests.push(stored);
-      }
-
-      setMyManifests(manifests);
-    } catch (err) {
-      showStatus('error', `Failed to load: ${(err as Error).message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [showStatus]);
-
-  /** Publish or update the current manifest on Nostr relays */
   const publishManifest = useCallback(async () => {
     setIsPublishing(true);
     setStatus(null);
-
     try {
       const { signAndPublish, getPublicKey } = await import('@nostr-post/signer');
       const pubkey = await getPublicKey();
       setCurrentPubkey(pubkey);
-
       const event = manifestToEvent(manifest, pubkey);
       const { publishResults } = await signAndPublish(event);
-
       if (publishResults.success > 0) {
-        const aTag = buildManifestATag(pubkey, manifest.id);
-        onManifestRef?.(aTag);
+        onManifestRef?.(buildManifestATag(pubkey, manifest.id));
         showStatus('success', `Published to ${publishResults.success} relay(s)!`);
-        // Refresh my manifests
-        loadMyManifests();
       } else {
         showStatus(
           'error',
-          `Failed to publish: ${publishResults.results
+          `Failed: ${publishResults.results
             .map((r) => r.error)
             .filter(Boolean)
             .join(', ')}`
@@ -412,119 +186,30 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
     } finally {
       setIsPublishing(false);
     }
-  }, [manifest, onManifestRef, showStatus, loadMyManifests]);
+  }, [manifest, onManifestRef, showStatus]);
 
-  /** Delete a manifest from relays */
-  const deleteManifest = useCallback(
-    async (manifestId: string) => {
-      if (
-        !confirm(
-          `Delete manifest "${manifestId}" from relays? This publishes an empty replacement.`
-        )
-      )
-        return;
-
-      setIsPublishing(true);
-      try {
-        const { signAndPublish, getPublicKey } = await import('@nostr-post/signer');
-        const pubkey = await getPublicKey();
-        const event = manifestDeleteEvent(manifestId, pubkey);
-        const { publishResults } = await signAndPublish(event);
-
-        if (publishResults.success > 0) {
-          showStatus('success', `Deleted from ${publishResults.success} relay(s)`);
-          onManifestRef?.(undefined);
-          loadMyManifests();
-        } else {
-          showStatus('error', 'Failed to delete');
-        }
-      } catch (err) {
-        showStatus('error', `Error: ${(err as Error).message}`);
-      } finally {
-        setIsPublishing(false);
-      }
-    },
-    [onManifestRef, showStatus, loadMyManifests]
-  );
-
-  /** Browse manifests from all users */
-  const browseAllManifests = useCallback(async () => {
-    setIsLoading(true);
+  const deleteManifest = useCallback(async () => {
+    if (
+      !confirm(`Delete manifest "${manifest.id}" from relays? This publishes an empty replacement.`)
+    )
+      return;
+    setIsPublishing(true);
     try {
-      const { fetchEvents } = await import('@nostr-post/signer');
-
-      const events = await fetchEvents(
-        {
-          kinds: [NIP78_KIND],
-          '#t': ['nostr-post'],
-          limit: 100,
-        },
-        undefined,
-        { waitForAll: true }
-      );
-
-      const manifests: StoredManifest[] = [];
-      for (const ev of events) {
-        const stored = eventToManifest(ev);
-        if (stored) manifests.push(stored);
+      const { signAndPublish, getPublicKey } = await import('@nostr-post/signer');
+      const pubkey = await getPublicKey();
+      const { publishResults } = await signAndPublish(manifestDeleteEvent(manifest.id, pubkey));
+      if (publishResults.success > 0) {
+        onManifestRef?.(undefined);
+        showStatus('success', `Deleted from ${publishResults.success} relay(s)`);
+      } else {
+        showStatus('error', 'Failed to delete');
       }
-
-      setBrowseManifests(manifests);
     } catch (err) {
-      showStatus('error', `Failed to browse: ${(err as Error).message}`);
+      showStatus('error', `Error: ${(err as Error).message}`);
     } finally {
-      setIsLoading(false);
+      setIsPublishing(false);
     }
-  }, [showStatus]);
-
-  useAutoLoadManifestTab(
-    activeTab,
-    myManifests.length,
-    browseManifests.length,
-    loadMyManifests,
-    browseAllManifests
-  );
-
-  const loadIntoEditor = (stored: StoredManifest) => {
-    onChange(stored.manifest);
-    onManifestRef?.(`${NIP78_KIND}:${stored.pubkey}:${stored.dTag}`);
-    setActiveTab('publish');
-    showStatus('success', `Loaded "${stored.manifest.metadata?.name || stored.manifest.id}"`);
-  };
-
-  const renderManifestCard = (stored: StoredManifest, showAuthor = false) => (
-    <div key={`${stored.pubkey}-${stored.dTag}`} style={styles.manifestCard}>
-      <p style={styles.manifestCardTitle}>{stored.manifest.metadata?.name || stored.manifest.id}</p>
-      <p style={styles.manifestCardMeta}>
-        {stored.manifest.metadata?.description || 'No description'}
-      </p>
-      <p style={styles.manifestCardMeta}>
-        v{stored.manifest.version} &bull; {stored.manifest.fields.length} fields &bull; kinds:{' '}
-        {getManifestAvailableKinds(stored.manifest).join(', ')}
-        {showAuthor && (
-          <>
-            {' '}
-            &bull; <span style={styles.pubkeyLabel}>{truncatePubkey(stored.pubkey)}</span>
-          </>
-        )}
-      </p>
-      <p style={styles.manifestCardMeta}>{new Date(stored.createdAt * 1000).toLocaleString()}</p>
-      <div style={styles.manifestCardActions}>
-        <button type="button" style={styles.loadButton} onClick={() => loadIntoEditor(stored)}>
-          Load into Editor
-        </button>
-        {stored.pubkey === currentPubkey && (
-          <button
-            type="button"
-            style={{ ...styles.loadButton, color: '#ef4444', borderColor: '#fca5a5' }}
-            onClick={() => deleteManifest(stored.manifest.id)}
-          >
-            Delete
-          </button>
-        )}
-      </div>
-    </div>
-  );
+  }, [manifest, onManifestRef, showStatus]);
 
   const activeTabContent =
     activeTab === 'publish' ? (
@@ -532,60 +217,39 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
         currentPubkey={currentPubkey}
         isPublishing={isPublishing}
         manifest={manifest}
-        onDelete={() => deleteManifest(manifest.id)}
+        onDelete={deleteManifest}
         onPublish={publishManifest}
         status={status}
       />
     ) : activeTab === 'my' ? (
-      <ManifestListTab
-        description="Your published manifests on Nostr relays."
-        emptyMessage="No manifests published yet. Go to the Publish tab to publish one."
-        isLoading={isLoading}
-        loadingMessage="Loading your manifests..."
-        manifests={myManifests}
-        refresh={loadMyManifests}
-        renderCard={(stored) => renderManifestCard(stored)}
+      <ManifestFeedTab
+        description="Your published manifests. Click Edit on any card to load it into the editor."
+        authors={currentPubkey ? [currentPubkey] : undefined}
+        editable
+        onEditRequest={handleEditRequest}
       />
     ) : (
-      <ManifestListTab
-        description="Discover manifests published by other users."
-        emptyMessage="No manifests found on relays. Be the first to publish one!"
-        isLoading={isLoading}
-        loadingMessage="Searching relays for manifests..."
-        manifests={browseManifests}
-        refresh={browseAllManifests}
-        renderCard={(stored) => renderManifestCard(stored, true)}
+      <ManifestFeedTab
+        description="Manifests published by all users. Click Edit to load one into the editor."
+        onEditRequest={handleEditRequest}
       />
     );
 
   return (
     <div style={styles.panel}>
       <h2 style={styles.panelTitle}>🌐 Nostr Manifests (NIP-78)</h2>
-
       <div style={styles.tabs}>
-        <button
-          type="button"
-          style={activeTab === 'publish' ? styles.activeTab : styles.tab}
-          onClick={() => setActiveTab('publish')}
-        >
-          Publish
-        </button>
-        <button
-          type="button"
-          style={activeTab === 'my' ? styles.activeTab : styles.tab}
-          onClick={() => setActiveTab('my')}
-        >
-          My Manifests
-        </button>
-        <button
-          type="button"
-          style={activeTab === 'browse' ? styles.activeTab : styles.tab}
-          onClick={() => setActiveTab('browse')}
-        >
-          Browse All
-        </button>
+        {(['publish', 'my', 'browse'] as PanelTab[]).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            style={activeTab === tab ? styles.activeTab : styles.tab}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab === 'publish' ? 'Publish' : tab === 'my' ? 'My Manifests' : 'Browse All'}
+          </button>
+        ))}
       </div>
-
       {activeTabContent}
     </div>
   );

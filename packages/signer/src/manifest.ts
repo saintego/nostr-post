@@ -42,6 +42,10 @@ function storeAndReturn(
   return stored;
 }
 
+const getLatestEvent = <T extends { created_at: number }>(events: T[]): T | undefined => {
+  return [...events].sort((left, right) => right.created_at - left.created_at)[0];
+};
+
 async function doFetchManifest(
   aTag: string,
   relays?: string[],
@@ -54,12 +58,14 @@ async function doFetchManifest(
         { kinds: [NIP78_KIND], authors: [ref.pubkey], '#d': [ref.dTag] },
         relays
       );
-      const stored = events.length > 0 ? storeAndReturn(aTag, events[0]) : undefined;
+      const latestEvent = getLatestEvent(events);
+      const stored = latestEvent ? storeAndReturn(aTag, latestEvent) : undefined;
       if (stored) return stored;
     }
     if (fallbackToD && ref?.dTag) {
       const events = await fetchEvents({ kinds: [NIP78_KIND], '#d': [ref.dTag], limit: 1 }, relays);
-      if (events.length > 0) return storeAndReturn(aTag, events[0]);
+      const latestEvent = getLatestEvent(events);
+      if (latestEvent) return storeAndReturn(aTag, latestEvent);
     }
   } catch {
     // swallow errors - caller handles undefined

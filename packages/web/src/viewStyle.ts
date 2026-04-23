@@ -168,4 +168,49 @@ export const viewStyle = css`
   :host-context(.dark) .linked-field-label {
     color: #9ca3af;
   }
+
+  .view-edit-button {
+    margin-top: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    background: transparent;
+    color: var(--nl-accent, #8b5cf6);
+    border: 1px solid var(--nl-accent, #8b5cf6);
+    border-radius: 0.375rem;
+    cursor: pointer;
+  }
+
+  .view-edit-button:hover {
+    background: var(--nl-accent, #8b5cf6);
+    color: white;
+  }
+
+  .view-updates {
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--nl-text-secondary, #6b7280);
+  }
+
+  .view-updates-summary {
+    cursor: pointer;
+    user-select: none;
+    color: var(--nl-text-secondary, #6b7280);
+  }
+
+  .view-updates-list {
+    margin: 0.25rem 0 0 1rem;
+    padding: 0;
+    list-style: disc;
+  }
+
+  .view-updates-list li {
+    margin-bottom: 0.125rem;
+  }
+
+  .view-inline-composer {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--nl-border, #e5e7eb);
+  }
 `;

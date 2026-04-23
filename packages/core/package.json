@@ -18,6 +18,10 @@
       "types": "./dist/coordinator.d.ts",
       "import": "./dist/coordinator.js"
     },
+    "./nip33": {
+      "types": "./dist/nip33.d.ts",
+      "import": "./dist/nip33.js"
+    },
     "./nip78": {
       "types": "./dist/nip78.d.ts",
       "import": "./dist/nip78.js"
@@ -29,6 +33,10 @@
     "./manifestMappings": {
       "types": "./dist/manifestMappings.d.ts",
       "import": "./dist/manifestMappings.js"
+    },
+    "./eventUpdates": {
+      "types": "./dist/eventUpdates.d.ts",
+      "import": "./dist/eventUpdates.js"
     }
   },
   "scripts": {
