@@ -1,3 +1,4 @@
+import { filterLatestAddressableEvents } from '@nostr-post/core/nip33';
 import {
   type NostrPostManifest,
   STANDARD_KIND1_POST_MANIFEST,
@@ -87,8 +88,9 @@ export const buildThreads = (
   primaryEvents: SignedEvent[],
   interactionEvents: SignedEvent[]
 ): FeedThread[] => {
-  const allEvents = [...primaryEvents, ...interactionEvents];
-  const primaryIds = new Set(primaryEvents.map((event) => event.id));
+  const dedupedPrimary = filterLatestAddressableEvents(primaryEvents);
+  const allEvents = [...dedupedPrimary, ...interactionEvents];
+  const primaryIds = new Set(dedupedPrimary.map((event) => event.id));
   const repliesByRoot = new Map<string, SignedEvent[]>();
   const reactionsByTarget = new Map<string, SignedEvent[]>();
 
@@ -114,7 +116,7 @@ export const buildThreads = (
     }
   }
 
-  const roots = primaryEvents
+  const roots = dedupedPrimary
     .filter((event) => !isReactionEvent(event))
     .filter((event) => {
       const rootId = getRootTagValue(event);

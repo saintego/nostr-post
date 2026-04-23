@@ -16,15 +16,14 @@ export class NostrPostElement extends LitElement {
   /**
    * Dispatch a custom event with detail
    */
-  protected dispatchCustomEvent<T>(eventName: string, detail: T): void {
-    // Dispatch the full event name
-    this.dispatchEvent(
-      new CustomEvent(eventName, {
-        detail,
-        bubbles: true,
-        composed: true,
-      })
-    );
+  protected dispatchCustomEvent<T>(eventName: string, detail: T): CustomEvent<T> {
+    const event = new CustomEvent<T>(eventName, {
+      detail,
+      bubbles: true,
+      composed: true,
+    });
+    this.dispatchEvent(event);
+    return event;
   }
 
   /**

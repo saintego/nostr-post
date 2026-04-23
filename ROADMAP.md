@@ -4,9 +4,9 @@
 
 - [x] Type definitions
 - [x] allow user to choose between kind1 and nip-78 event if manifest allows that
-- [ ] allow updating NIP-78 (or any editable-event) posts created by a manifest when content changes; right now they use an empty `d` tag and overwrite each other
-- [ ] allow kind 1 comments to update the content of the main event, so users can edit a review inside our view while it still appears as a normal comment in other clients. Use a human-readable content format such as `update: {field}: {new value}` and parse it in our view to apply the change while preserving compatibility with existing clients.
-- [ ] manifest creator or feed should show the latest version of a user's manifest after updates, even when some relays still return older versions. Filter out stale manifests, and consider using our feed components for the user-manifest list so the logic and UI stay consistent.
+- [x] allow updating NIP-78 (or any editable-event) posts created by a manifest when content changes; right now they use an empty `d` tag and overwrite each other
+- [x] allow kind 1 comments to update the content of the main event, so users can edit a review inside our view while it still appears as a normal comment in other clients. Use a human-readable content format such as `update: {field}: {new value}` and parse it in our view to apply the change while preserving compatibility with existing clients.
+- [x] manifest creator or feed should show the latest version of a user's manifest after updates, even when some relays still return older versions. Filter out stale manifests, and consider using our feed components for the user-manifest list so the logic and UI stay consistent.
 - [ ] manifest can inherit from other manifest
 - [ ] add kind:30818 for objects that are used for review (beer, product, map venue detail)
 - [ ] add multi-language support (i18n) for built-in plugins UI components and manifest
@@ -22,6 +22,7 @@
 - [ ] photo view(see photos of venue)
 - [ ] search web component
 - [ ] allow to share NIP-78 data to Kind 1 events (for better compatibility with existing clients)
+- [ ] manifest definition in manifest, manifest UI editing tool as plugins
 
 ### Phase 2: Domain Scenarios (Planned)
 

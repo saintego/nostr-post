@@ -117,6 +117,10 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Array, attribute: 'exclude-fields' })
   excludeFields?: string[];
 
+  /** When true, shows an Edit button on addressable events (30000-39999). */
+  @property({ type: Boolean })
+  editable?: boolean;
+
   @property({ type: Array })
   filters?: FetchFilter[];
 
@@ -438,7 +442,9 @@ export class NostrPostFeed extends NostrPostElement {
               <nostr-post-view
                 .event=${thread.root}
                 .manifest=${this.manifest}
+                .interactionEvents=${thread.replies}
                 .excludeFields=${this.excludeFields}
+                ?editable=${this.editable}
                 ?showKind=${this.showKind}
                 ?showTags=${this.showTags}
               ></nostr-post-view>

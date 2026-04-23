@@ -13,9 +13,11 @@ interface NostrPostViewElement extends HTMLElement {
   event?: SignedEvent;
   manifest?: import('@nostr-post/core/types').NostrPostManifest;
   linkedEvents?: SignedEvent[];
+  interactionEvents?: SignedEvent[];
   showKind?: boolean;
   showTags?: boolean;
   showId?: boolean;
+  editable?: boolean;
   excludeFields?: string[];
 }
 
@@ -42,12 +44,18 @@ export interface NostrPostViewProps {
   manifest?: import('@nostr-post/core/types').NostrPostManifest;
   /** Linked events (e.g. NIP-78 data) that are part of this multi-event post */
   linkedEvents?: SignedEvent[];
+  /** Interaction events (e.g. kind 1 update comments) related to the primary event */
+  interactionEvents?: SignedEvent[];
   /** Show event kind badge */
   showKind?: boolean;
   /** Show tags */
   showTags?: boolean;
   /** Show event ID */
   showId?: boolean;
+  /** Show Edit button for addressable events (kinds 30000-39999) */
+  editable?: boolean;
+  /** Called when the user clicks Edit on an addressable event */
+  onEditRequest?: (event: SignedEvent, dTag: string | undefined) => void;
   /** Field IDs to exclude from the rendered view */
   excludeFields?: string[];
   /** Custom class name */
@@ -65,9 +73,12 @@ export function NostrPostView({
   event,
   manifest,
   linkedEvents,
+  interactionEvents,
   showKind = false,
   showTags = false,
   showId = false,
+  editable = false,
+  onEditRequest,
   excludeFields,
   className = '',
   dark,
@@ -85,11 +96,34 @@ export function NostrPostView({
     element.event = event;
     element.manifest = manifest;
     element.linkedEvents = linkedEvents;
+    element.interactionEvents = interactionEvents;
     element.showKind = showKind;
     element.showTags = showTags;
     element.showId = showId;
+    element.editable = editable;
     element.excludeFields = excludeFields;
-  }, [event, manifest, linkedEvents, showKind, showTags, showId, excludeFields]);
+  }, [
+    event,
+    manifest,
+    linkedEvents,
+    interactionEvents,
+    showKind,
+    showTags,
+    showId,
+    editable,
+    excludeFields,
+  ]);
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element || !onEditRequest) return;
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ event: SignedEvent; dTag?: string }>).detail;
+      onEditRequest(detail.event, detail.dTag);
+    };
+    element.addEventListener('nostr-post-edit-request', handler);
+    return () => element.removeEventListener('nostr-post-edit-request', handler);
+  }, [onEditRequest]);
 
   return (
     <div className={wrapperClassName}>
