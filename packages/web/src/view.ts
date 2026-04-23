@@ -288,7 +288,11 @@ export class NostrPostView extends NostrPostElement {
 
   private handleEditRequest(event: DisplayableEvent) {
     const dTag = event.tags.find((t: string[]) => t[0] === 'd')?.[1];
-    const dispatched = this.dispatchCustomEvent('nostr-post-edit-request', { event, dTag }, { cancelable: true });
+    const dispatched = this.dispatchCustomEvent(
+      'nostr-post-edit-request',
+      { event, dTag },
+      { cancelable: true }
+    );
     if (!dispatched.defaultPrevented) {
       const opening = !this._showInlineComposer;
       this._showInlineComposer = opening;

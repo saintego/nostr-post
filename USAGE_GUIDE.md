@@ -344,15 +344,15 @@ The view component respects `visibility.view` settings from the manifest:
 
 Set `editable` to show an "Edit" button. The button's behaviour depends on the event kind:
 
-| Event kind | Edit mechanism |
-|---|---|
-| **Addressable** (30000–39999) | Opens an inline composer pre-filled with current values. On submit the component publishes a replacement event (NIP-33 overwrite). |
-| **Kind 1** | Opens an inline composer pre-filled with current values. On submit the component publishes a kind-1 _update-comment_ reply in the format `update:{fieldId}:{value}` (one changed field per line). The view applies these comments client-side so the post appears updated, while the comment remains visible as plain text in other Nostr clients. |
+| Event kind                    | Edit mechanism                                                                                                                                                                                                                                                                                                                                     |
+| ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Addressable** (30000–39999) | Opens an inline composer pre-filled with current values. On submit the component publishes a replacement event (NIP-33 overwrite).                                                                                                                                                                                                                 |
+| **Kind 1**                    | Opens an inline composer pre-filled with current values. On submit the component publishes a kind-1 _update-comment_ reply in the format `update:{fieldId}:{value}` (one changed field per line). The view applies these comments client-side so the post appears updated, while the comment remains visible as plain text in other Nostr clients. |
 
 When the user clicks "Edit", a cancelable `nostr-post-edit-request` CustomEvent is dispatched:
 
 ```typescript
-element.addEventListener('nostr-post-edit-request', (e) => {
+element.addEventListener("nostr-post-edit-request", (e) => {
   // e.detail = { event: DisplayableEvent, dTag?: string }
   // Call e.preventDefault() to suppress the inline composer and handle editing yourself
 });

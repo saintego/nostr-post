@@ -2,11 +2,7 @@
  * Unit tests for eventUpdates utilities
  */
 import { describe, expect, it } from 'vitest';
-import {
-  applyUpdateCommentsToEvent,
-  isUpdateComment,
-  parseUpdateComment,
-} from './eventUpdates';
+import { applyUpdateCommentsToEvent, isUpdateComment, parseUpdateComment } from './eventUpdates';
 import type { DisplayableEvent, NostrPostManifest } from './types';
 
 // ---------------------------------------------------------------------------
@@ -16,9 +12,7 @@ import type { DisplayableEvent, NostrPostManifest } from './types';
 const PUBKEY = 'aaaa';
 const OTHER_PUBKEY = 'bbbb';
 
-const makeEvent = (
-  overrides: Partial<DisplayableEvent> = {}
-): DisplayableEvent => ({
+const makeEvent = (overrides: Partial<DisplayableEvent> = {}): DisplayableEvent => ({
   kind: 1,
   pubkey: PUBKEY,
   created_at: 1000,
@@ -51,8 +45,7 @@ const MANIFEST: NostrPostManifest = {
 const interactionEvent = (
   content: string,
   overrides: Partial<DisplayableEvent> = {}
-): DisplayableEvent =>
-  makeEvent({ kind: 1, content, created_at: 2000, ...overrides });
+): DisplayableEvent => makeEvent({ kind: 1, content, created_at: 2000, ...overrides });
 
 // ---------------------------------------------------------------------------
 // parseUpdateComment
