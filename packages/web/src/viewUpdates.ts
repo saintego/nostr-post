@@ -17,7 +17,11 @@ export {
   UPDATE_COMMENT_PATTERN,
 } from '@nostr-post/core/eventUpdates';
 
-import { parseUpdateComment, tryParseJsonObject } from '@nostr-post/core/eventUpdates';
+import {
+  isUpdateComment,
+  parseUpdateComment,
+  tryParseJsonObject,
+} from '@nostr-post/core/eventUpdates';
 import { getFieldsByKind, isStructuredContentKind } from '@nostr-post/core/manifestMappings';
 import type { DisplayableEvent, NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
@@ -29,14 +33,17 @@ import type { TemplateResult } from 'lit';
  * Returns nothing when there are no kind-1 update comments to show.
  */
 export const renderUpdateComments = (
-  interactionEvents: DisplayableEvent[] | undefined
+  interactionEvents: DisplayableEvent[] | undefined,
+  eventPubkey: string
 ): TemplateResult | typeof nothing => {
   if (!interactionEvents || interactionEvents.length === 0) return nothing;
 
-  // Each interaction event may contain multiple update lines (one per field)
+  // Each interaction event may contain multiple update lines (one per field).
+  // Only trust update comments authored by the original event's author and
+  // whose content is a valid update comment — matching applyUpdateCommentsToEvent.
   const updates: { fieldId: string; rawValue: string }[] = [];
   for (const e of interactionEvents) {
-    if (e.kind !== 1) continue;
+    if (e.kind !== 1 || e.pubkey !== eventPubkey || !isUpdateComment(e.content)) continue;
     for (const line of e.content.split('\n')) {
       const parsed = parseUpdateComment(line);
       if (parsed) updates.push(parsed);

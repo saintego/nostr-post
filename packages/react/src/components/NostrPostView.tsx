@@ -118,6 +118,9 @@ export function NostrPostView({
     const element = elementRef.current;
     if (!element || !onEditRequest) return;
     const handler = (e: Event) => {
+      // Prevent the web component's built-in inline composer from opening,
+      // since the caller is handling editing themselves.
+      e.preventDefault();
       const detail = (e as CustomEvent<{ event: SignedEvent; dTag?: string }>).detail;
       onEditRequest(detail.event, detail.dTag);
     };

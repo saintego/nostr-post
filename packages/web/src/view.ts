@@ -378,7 +378,7 @@ export class NostrPostView extends NostrPostElement {
         </div>
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
-        ${renderUpdateComments(this.interactionEvents)}
+        ${renderUpdateComments(this.interactionEvents, this.event.pubkey)}
         ${
           this.showTags && tags.length > 0
             ? html`

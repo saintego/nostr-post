@@ -325,10 +325,7 @@ export class NostrPostComposer extends NostrPostElement {
 
       if (this.autoPublish) {
         const signedEvents = await signAndPublishBundle(bundle, this.relays);
-        this.dispatchCustomEvent<{ events: SignedEvent[]; dTag?: string }>('nostr-post-published', {
-          events: signedEvents,
-          dTag: addressableDTag,
-        });
+        this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
         this.successMessage = `Published to ${signedEvents.length} event(s)!`;
       } else {
         this.dispatchCustomEvent<{ bundle: EventBundle; dTag?: string }>('nostr-post-submit', {
