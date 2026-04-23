@@ -9,7 +9,8 @@
 - [x] manifest creator or feed should show the latest version of a user's manifest after updates, even when some relays still return older versions. Filter out stale manifests, and consider using our feed components for the user-manifest list so the logic and UI stay consistent.
 - [ ] manifest can inherit from other manifest
 - [ ] add kind:30818 for objects that are used for review (beer, product, map venue detail)
-- [ ] add multi-language support (i18n) for built-in plugins UI components and manifest
+- [ ] add multi-language support (i18n) for built-in plugins UI components(maybe Lingui.js style)
+- [ ] add multi-language support (i18n) for manifest via NIP-78 or kind:30818, d = "{manifestId}:i18n:{locale}", we would need to address version in translations
 - [ ] add style customization options for web components (CSS custom properties, theming)
 - [ ] fix pwa example share image
 - [ ] fix list plugin to use lists(nip-51?) instead of manifests
