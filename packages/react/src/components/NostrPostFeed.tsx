@@ -7,7 +7,7 @@
 import '@nostr-post/web'; // Register web components
 import type { FetchFilter } from '@nostr-post/signer';
 import type { SignedEvent } from '@nostr-post/web';
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useRef } from 'react';
 
 // Extend HTMLElement for the web component
 interface NostrPostFeedElement extends HTMLElement {
@@ -187,8 +187,16 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       setElementRef(element);
     };
 
-    // Listen for edit requests via a stable ref callback approach
+    // Stable wrapper ref used by useEffect below
+    const wrapperElementRef = useRef<HTMLDivElement | null>(null);
     const wrapperRef = (wrapper: HTMLDivElement | null) => {
+      wrapperElementRef.current = wrapper;
+    };
+
+    // Attach / re-attach the edit-request listener whenever onEditRequest changes.
+    // The cleanup function removes the previous listener to prevent duplicates.
+    useEffect(() => {
+      const wrapper = wrapperElementRef.current;
       if (!wrapper || !onEditRequest) return;
       const handler = (e: Event) => {
         // Prevent the view's default inline-composer from opening
@@ -197,7 +205,10 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
         onEditRequest(detail.event, detail.dTag);
       };
       wrapper.addEventListener('nostr-post-edit-request', handler);
-    };
+      return () => {
+        wrapper.removeEventListener('nostr-post-edit-request', handler);
+      };
+    }, [onEditRequest]);
 
     return (
       <div className={wrapperClassName} ref={onEditRequest ? wrapperRef : undefined}>

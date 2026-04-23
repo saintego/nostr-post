@@ -72,9 +72,16 @@ export class NostrPostView extends NostrPostElement {
   interactionEvents?: DisplayableEvent[];
 
   /**
-   * When true, shows an "Edit" button for addressable events (kinds 30000-39999).
-   * Clicking it dispatches `nostr-post-edit-request` with `{ event, dTag }`.
-   * If the event is not cancelled (preventDefault), an inline composer is shown.
+   * When true, shows an "Edit" button on posts.
+   * For addressable events (kinds 30000–39999) it opens an inline composer that
+   * publishes a replacement event (NIP-33 overwrite).
+   * For kind-1 events it opens an inline composer that, on submit, publishes a
+   * kind-1 update-comment reply (`update:{fieldId}:{value}` per changed field)
+   * so the change is applied locally while remaining visible as a plain comment
+   * in other clients.
+   * Clicking always dispatches `nostr-post-edit-request` (cancelable) with
+   * `{ event, dTag }`. Call `preventDefault()` to suppress the inline composer
+   * and handle editing yourself.
    */
   @property({ type: Boolean })
   editable?: boolean;
@@ -281,7 +288,7 @@ export class NostrPostView extends NostrPostElement {
 
   private handleEditRequest(event: DisplayableEvent) {
     const dTag = event.tags.find((t: string[]) => t[0] === 'd')?.[1];
-    const dispatched = this.dispatchCustomEvent('nostr-post-edit-request', { event, dTag });
+    const dispatched = this.dispatchCustomEvent('nostr-post-edit-request', { event, dTag }, { cancelable: true });
     if (!dispatched.defaultPrevented) {
       const opening = !this._showInlineComposer;
       this._showInlineComposer = opening;

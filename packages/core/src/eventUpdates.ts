@@ -196,7 +196,13 @@ export const applyUpdateCommentsToEvent = (
   );
   if (fieldsById.size === 0) return event;
 
-  const sorted = [...interactionEvents].sort((a, b) => a.created_at - b.created_at);
+  // Only trust update-comment events authored by the same pubkey as the original.
+  // This prevents third parties from injecting `update:...` lines that alter rendering.
+  const trustedUpdates = interactionEvents.filter(
+    (ie) => ie.pubkey === event.pubkey && isUpdateComment(ie.content)
+  );
+
+  const sorted = [...trustedUpdates].sort((a, b) => a.created_at - b.created_at);
 
   return sorted.reduce(
     (current, interaction) => applySingleUpdateComment(current, fieldsById, interaction),

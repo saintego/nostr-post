@@ -126,9 +126,9 @@ export function extractPrefillFromEvent(
     }
   }
 
-  for (const field of manifest.fields) {
+  for (const field of getFieldsByKind(manifest, event.kind, [event.kind])) {
     const targets = Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo];
-    const target = targets.find((t) => t.kind === event.kind) ?? targets[0];
+    const target = targets.find((t) => t.kind === event.kind);
     if (!target) continue;
 
     if (target.target === 'content') {
