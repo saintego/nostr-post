@@ -24,6 +24,7 @@
 - [ ] search web component
 - [ ] allow to share NIP-78 data to Kind 1 events (for better compatibility with existing clients)
 - [ ] manifest definition in manifest, manifest UI editing tool as plugins
+- [ ] fix width jumping of manifest editor while loading data/showing json
 
 ### Phase 2: Domain Scenarios (Planned)
 

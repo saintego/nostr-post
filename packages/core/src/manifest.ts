@@ -158,7 +158,16 @@ const validateManifestBasics = (manifest: NostrPostManifest, errors: ValidationE
       ? extendsValue.trim().length > 0
       : Array.isArray(extendsValue) && extendsValue.some((e) => e.trim().length > 0);
 
-  if ((!manifest.fields || manifest.fields.length === 0) && !hasValidExtends) {
+  const hasFieldsArray = Array.isArray(manifest.fields);
+  if (!hasFieldsArray) {
+    errors.push({
+      field: 'fields',
+      message: 'Manifest fields must be an array',
+      code: 'MISSING_FIELDS',
+    });
+    return;
+  }
+  if (manifest.fields.length === 0 && !hasValidExtends) {
     errors.push({
       field: 'fields',
       message: 'Manifest must have at least one field',
@@ -249,7 +258,7 @@ const validateFieldRelationships = (
   manifest: NostrPostManifest,
   errors: ValidationError[]
 ): void => {
-  // Check for duplicate field IDs
+  if (!Array.isArray(manifest.fields)) return;
   const fieldIds = new Set<string>();
   const formatIds = new Set<string>();
   let defaultFormatCount = 0;

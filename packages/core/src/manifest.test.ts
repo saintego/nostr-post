@@ -264,6 +264,20 @@ describe('validateManifest', () => {
     }
   });
 
+  it('should reject manifest when fields is not an array', () => {
+    const manifest = {
+      id: 'test',
+      version: '1.0.0',
+      fields: undefined,
+    } as unknown as NostrPostManifest;
+    const result = validateManifest(manifest);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.some((e) => e.code === 'MISSING_FIELDS')).toBe(true);
+      expect(result.error.some((e) => e.message === 'Manifest fields must be an array')).toBe(true);
+    }
+  });
+
   it('should reject publish formats with NaN kinds', () => {
     const manifest = {
       id: 'test',

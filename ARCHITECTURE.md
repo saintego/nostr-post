@@ -241,7 +241,7 @@ Manifests can inherit from one or more parents via the `extends` field, enabling
 ### Single parent
 
 ```typescript
-const restaurantReview: NostrPostManifest = {
+const restaurantReview = {
   id: "restaurant-review",
   version: "1.0.0",
   // Full NIP-78 a-tag: "30078:<pubkey>:nostr-post:<manifest-id>"
@@ -270,7 +270,7 @@ const restaurantReview: NostrPostManifest = {
 When two orthogonal concerns belong to the same form, use an array. Parents are merged **left-to-right** (rightmost sibling wins on conflict), then the child is applied on top:
 
 ```typescript
-const coffeeInCafe: NostrPostManifest = {
+const coffeeInCafe = {
   id: "coffee-in-cafe",
   version: "1.0.0",
   extends: [
