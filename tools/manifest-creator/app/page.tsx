@@ -77,6 +77,9 @@ export default function Home() {
 
   useEffect(() => {
     if (!manifest.extends) {
+      resolveAbortRef.current?.abort();
+      resolveAbortRef.current = null;
+      setIsResolvingParents(false);
       setResolvedManifest(manifest);
       return;
     }

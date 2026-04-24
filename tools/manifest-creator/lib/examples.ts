@@ -788,9 +788,9 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
       '30078:6a19c89b2694b307aae6dc40256264071a47bdad89d8ddae6d1ab7139a94015d:nostr-post:venue-review-v1',
     ],
     fields: [
-      // Override the shared content/review field from both parents
+      // Override the inherited 'content' field so resolveManifest replaces it instead of adding a duplicate
       {
-        id: 'review',
+        id: 'content',
         type: 'string',
         uiPlugin: 'textarea',
         mapTo: { kind: 1, target: 'content' },
