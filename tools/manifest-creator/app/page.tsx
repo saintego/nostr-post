@@ -1,7 +1,8 @@
 'use client';
 
+import { resolveManifest } from '@nostr-post/core/manifest';
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ManifestEditor } from '../components/ManifestEditor';
 import { ManifestNostrPanel } from '../components/ManifestNostrPanel';
 import { PreviewPane } from '../components/PreviewPane';
@@ -35,10 +36,92 @@ const styles = {
   },
 } as const;
 
+async function fetchParentManifests(
+  refs: string[],
+  signal: AbortSignal
+): Promise<NostrPostManifest[]> {
+  const { fetchManifestByATag } = await import('@nostr-post/signer');
+  if (signal.aborted) return [];
+  const results = await Promise.all(refs.map((ref) => fetchManifestByATag(ref)));
+  if (signal.aborted) return [];
+  return results.filter((p): p is NonNullable<typeof p> => p !== undefined).map((p) => p.manifest);
+}
+
+function mergeWithParents(
+  manifest: NostrPostManifest,
+  parents: NostrPostManifest[]
+): NostrPostManifest {
+  if (parents.length === 0) return manifest;
+  const base = parents.slice(1).reduce((acc, cur) => resolveManifest(cur, acc), parents[0]);
+  return resolveManifest(manifest, base);
+}
+
 export default function Home() {
   const [manifest, setManifest] = useState<NostrPostManifest>(EXAMPLE_MANIFESTS.simple);
+  const [fetchedParents, setFetchedParents] = useState<NostrPostManifest[]>([]);
+  const [resolvedManifest, setResolvedManifest] = useState<NostrPostManifest>(manifest);
+  const [isResolvingParents, setIsResolvingParents] = useState(false);
   /** The `a` tag reference to the currently active manifest on Nostr */
   const [manifestRef, setManifestRef] = useState<string | undefined>();
+  const resolveAbortRef = useRef<AbortController | null>(null);
+
+  // Stable string key for the extends refs — only changes when the actual parent
+  // references change, not on every unrelated manifest field edit.
+  const extendsKey = Array.isArray(manifest.extends)
+    ? manifest.extends.join('\n')
+    : (manifest.extends ?? '');
+
+  // Effect 1: fetch parents from relays only when the extends refs change.
+  useEffect(() => {
+    if (!extendsKey) {
+      resolveAbortRef.current?.abort();
+      resolveAbortRef.current = null;
+      setIsResolvingParents(false);
+      setFetchedParents([]);
+      return;
+    }
+
+    resolveAbortRef.current?.abort();
+    const controller = new AbortController();
+    resolveAbortRef.current = controller;
+    setIsResolvingParents(true);
+    setFetchedParents([]);
+
+    const refs = extendsKey
+      .split('\n')
+      .map((ref) => ref.trim())
+      .filter(Boolean);
+
+    if (refs.length === 0) {
+      resolveAbortRef.current = null;
+      setIsResolvingParents(false);
+      setFetchedParents([]);
+      return;
+    }
+
+    fetchParentManifests(refs, controller.signal)
+      .then((parents) => {
+        if (!controller.signal.aborted) {
+          setFetchedParents(parents);
+          setIsResolvingParents(false);
+        }
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.warn('[manifest-creator] Could not resolve parent manifests:', err);
+          setFetchedParents([]);
+          setIsResolvingParents(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [extendsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Effect 2: recompute the resolved manifest locally whenever manifest fields or
+  // the already-fetched parents change — no relay calls here.
+  useEffect(() => {
+    setResolvedManifest(mergeWithParents(manifest, fetchedParents));
+  }, [manifest, fetchedParents]);
 
   return (
     <>
@@ -57,7 +140,11 @@ export default function Home() {
               onManifestRef={setManifestRef}
             />
           </div>
-          <PreviewPane manifest={manifest} manifestRef={manifestRef} />
+          <PreviewPane
+            manifest={resolvedManifest}
+            manifestRef={manifestRef}
+            isResolvingParents={isResolvingParents}
+          />
         </div>
       </div>
     </>

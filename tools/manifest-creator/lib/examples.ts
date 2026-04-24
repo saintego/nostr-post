@@ -776,4 +776,60 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
       tags: ['beer', 'review', 'craft', 'tasting'],
     },
   },
+
+  // Demonstrates single-parent inheritance: extends venue-review-v1 (venue, location,
+  // rating, photos, kind1/nip78 publish formats) and overrides the review field with a
+  // coffee-specific label, then adds coffee-specific fields on top.
+  'coffee-in-cafe': {
+    id: 'coffee-in-cafe',
+    version: '1.0.0',
+    extends:
+      '30078:6a19c89b2694b307aae6dc40256264071a47bdad89d8ddae6d1ab7139a94015d:nostr-post:venue-review-v1',
+    fields: [
+      // Override the inherited 'review' field (venue-review-v1 uses id: 'review')
+      {
+        id: 'review',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapBehavior: 'all-active',
+        mapTo: [
+          { kind: 1, target: 'content' },
+          { kind: 30078, target: 'content', path: 'review' },
+        ],
+        required: true,
+        metadata: {
+          label: 'Review',
+          placeholder: 'How was the coffee and the cafe?',
+        },
+      },
+      // Coffee-specific fields not in the parent
+      {
+        id: 'origin',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'origin' },
+        metadata: { label: 'Coffee Origin', placeholder: 'e.g. Ethiopia Yirgacheffe' },
+      },
+      {
+        id: 'roast',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'roast' },
+        metadata: { label: 'Roast Level', placeholder: 'e.g. Light / Medium / Dark' },
+      },
+      {
+        id: 'brew',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'brew' },
+        metadata: { label: 'Brew Method', placeholder: 'e.g. V60, Aeropress, Espresso' },
+      },
+    ],
+    metadata: {
+      name: 'Coffee-in-Cafe Review',
+      description:
+        'Review both the coffee and the cafe in one form. Extends venue-review-v1 (venue, location, rating, photos, kind1+nip78 publishing) and adds coffee-specific fields.',
+      tags: ['coffee', 'cafe', 'review'],
+    },
+  },
 };
