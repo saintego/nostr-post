@@ -20,13 +20,15 @@ interface PreviewPaneProps {
   manifest: NostrPostManifest;
   /** Optional `a` tag value referencing a manifest on Nostr */
   manifestRef?: string;
+  /** True while parent manifests referenced by `extends` are being fetched and merged */
+  isResolvingParents?: boolean;
 }
 
 // ---------------------------------------------------------------------------
 // Main component
 // ---------------------------------------------------------------------------
 
-export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
+export const PreviewPane = ({ manifest, manifestRef, isResolvingParents }: PreviewPaneProps) => {
   const [activeTab, setActiveTab] = useState<'preview' | 'events'>('preview');
   const [publishedEvents, setPublishedEvents] = useState<SignedEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = useState(false);
@@ -189,6 +191,21 @@ export const PreviewPane = ({ manifest, manifestRef }: PreviewPaneProps) => {
         <h2 style={styles.panelTitle}>Preview</h2>
         <p style={styles.subtitle}>Test your manifest in real-time</p>
       </div>
+
+      {isResolvingParents && (
+        <div
+          style={{
+            padding: '0.5rem 0.75rem',
+            marginBottom: '1rem',
+            borderRadius: '0.375rem',
+            background: '#ede9fe',
+            color: '#5b21b6',
+            fontSize: '0.875rem',
+          }}
+        >
+          Fetching parent manifests…
+        </div>
+      )}
 
       <div style={styles.tabs}>
         <button

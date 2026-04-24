@@ -108,6 +108,17 @@ export interface NostrPostManifest {
   publishFormats?: PublishFormat[];
   fields: PostField[];
   /**
+   * Parent manifest(s) to inherit from.
+   *
+   * A single string inherits from one parent. An array inherits from multiple
+   * parents — they are merged left-to-right (rightmost wins on conflict), then
+   * the child is applied on top.
+   *
+   * Each entry is either a full NIP-78 a-tag (`"30078:<pubkey>:nostr-post:<id>"`)
+   * or a bare manifest ID (author-agnostic d-tag lookup).
+   */
+  extends?: string | string[];
+  /**
    * Whether to embed an `a` tag referencing this manifest in published events.
    * When true (default), viewers can auto-fetch the manifest to render posts correctly.
    * Set to false for manifests that only provide a predefined editing experience

@@ -329,6 +329,40 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       </div>
 
       <div style={styles.section}>
+        <label style={styles.label} htmlFor="manifest-extends">
+          Extends:
+        </label>
+        <textarea
+          id="manifest-extends"
+          style={styles.textarea}
+          value={
+            manifest.extends
+              ? Array.isArray(manifest.extends)
+                ? manifest.extends.join('\n')
+                : manifest.extends
+              : ''
+          }
+          onChange={(e) => {
+            const lines = e.target.value
+              .split('\n')
+              .map((l) => l.trim())
+              .filter(Boolean);
+            onChange({
+              ...manifest,
+              extends: lines.length === 0 ? undefined : lines.length === 1 ? lines[0] : lines,
+            });
+          }}
+          placeholder={
+            '30078:<pubkey>:nostr-post:<manifest-id>\n(one parent per line, or bare manifest ID)'
+          }
+        />
+        <p style={{ ...styles.helperText, marginTop: '0.25rem' }}>
+          Inherit fields from parent manifest(s). One entry per line — full NIP-78 a-tag or bare
+          manifest ID. Multiple parents are merged left-to-right (last wins on conflict).
+        </p>
+      </div>
+
+      <div style={styles.section}>
         <label
           style={{
             ...styles.label,

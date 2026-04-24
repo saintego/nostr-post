@@ -776,4 +776,58 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
       tags: ['beer', 'review', 'craft', 'tasting'],
     },
   },
+
+  // Demonstrates multiple inheritance: extends kind1-simple-post (basic content and default tags) and
+  // venue-review-v1 (venue, location, rating, photos) — both published to relays.
+  // The child overrides the content field and adds coffee-specific fields on top.
+  'coffee-in-cafe': {
+    id: 'coffee-in-cafe',
+    version: '1.0.0',
+    extends: [
+      '30078:6a19c89b2694b307aae6dc40256264071a47bdad89d8ddae6d1ab7139a94015d:nostr-post:kind1-simple-post',
+      '30078:6a19c89b2694b307aae6dc40256264071a47bdad89d8ddae6d1ab7139a94015d:nostr-post:venue-review-v1',
+    ],
+    fields: [
+      // Override the shared content/review field from both parents
+      {
+        id: 'review',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 1, target: 'content' },
+        required: true,
+        metadata: {
+          label: 'Review',
+          placeholder: 'How was the coffee and the cafe?',
+        },
+      },
+      // Coffee-specific fields not in either parent
+      {
+        id: 'origin',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'origin' },
+        metadata: { label: 'Coffee Origin', placeholder: 'e.g. Ethiopia Yirgacheffe' },
+      },
+      {
+        id: 'roast',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'roast' },
+        metadata: { label: 'Roast Level', placeholder: 'e.g. Light / Medium / Dark' },
+      },
+      {
+        id: 'brew',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: 'brew' },
+        metadata: { label: 'Brew Method', placeholder: 'e.g. V60, Aeropress, Espresso' },
+      },
+    ],
+    metadata: {
+      name: 'Coffee-in-Cafe Review',
+      description:
+        'Review both the coffee and the cafe in one form. Extends kind1-simple-post + venue-review-v1 (both published) and adds coffee-specific fields via multiple inheritance.',
+      tags: ['coffee', 'cafe', 'review'],
+    },
+  },
 };

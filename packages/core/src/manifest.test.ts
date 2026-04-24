@@ -7,6 +7,7 @@ import {
   getFieldsByKind,
   getRequiredFields,
   getUsedKinds,
+  resolveManifest,
   validateManifest,
   validateNostrTarget,
   validatePostField,
@@ -740,5 +741,217 @@ describe('getRequiredFields', () => {
     };
     const required = getRequiredFields(manifestNoRequired);
     expect(required).toHaveLength(0);
+  });
+});
+
+describe('resolveManifest', () => {
+  const parent: NostrPostManifest = {
+    id: 'base-review',
+    version: '1.0.0',
+    publishFormats: [{ id: 'kind1', label: 'Note', kinds: [1], default: true }],
+    fields: [
+      {
+        id: 'body',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 1, target: 'content' },
+        required: true,
+        metadata: { label: 'Review', placeholder: 'Write your review...' },
+      },
+      {
+        id: 'rating',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        required: true,
+      },
+    ],
+    metadata: { name: 'Base Review', description: 'Generic review', author: 'alice' },
+    linkManifest: true,
+  };
+
+  it('should preserve child id and version', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '2.0.0',
+      extends: 'base-review',
+      fields: [],
+    };
+    const resolved = resolveManifest(child, parent);
+    expect(resolved.id).toBe('restaurant-review');
+    expect(resolved.version).toBe('2.0.0');
+  });
+
+  it('should not forward extends to the resolved manifest', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '1.0.0',
+      extends: 'base-review',
+      fields: [],
+    };
+    const resolved = resolveManifest(child, parent);
+    expect(resolved.extends).toBeUndefined();
+  });
+
+  it('should preserve parent-only fields', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '1.0.0',
+      extends: 'base-review',
+      fields: [],
+    };
+    const resolved = resolveManifest(child, parent);
+    expect(resolved.fields.map((f) => f.id)).toContain('body');
+    expect(resolved.fields.map((f) => f.id)).toContain('rating');
+  });
+
+  it('should override parent field properties when child defines same id', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '1.0.0',
+      extends: 'base-review',
+      fields: [
+        {
+          id: 'rating',
+          type: 'number',
+          uiPlugin: 'stars',
+          mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+          required: false, // parent has required: true
+        },
+      ],
+    };
+    const resolved = resolveManifest(child, parent);
+    const ratingField = resolved.fields.find((f) => f.id === 'rating');
+    expect(ratingField?.required).toBe(false);
+  });
+
+  it('should append child-only fields after parent fields', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '1.0.0',
+      extends: 'base-review',
+      fields: [
+        {
+          id: 'cuisine',
+          type: 'string',
+          uiPlugin: 'hashtag',
+          mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        },
+      ],
+    };
+    const resolved = resolveManifest(child, parent);
+    const ids = resolved.fields.map((f) => f.id);
+    expect(ids).toEqual(['body', 'rating', 'cuisine']);
+  });
+
+  it('should shallow-merge field metadata so child patches individual keys', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '1.0.0',
+      extends: 'base-review',
+      fields: [
+        {
+          id: 'body',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: { kind: 1, target: 'content' },
+          required: true,
+          metadata: { label: 'Restaurant Review' }, // only override label
+        },
+      ],
+    };
+    const resolved = resolveManifest(child, parent);
+    const bodyField = resolved.fields.find((f) => f.id === 'body');
+    // Child label wins
+    expect(bodyField?.metadata?.label).toBe('Restaurant Review');
+    // Parent placeholder is preserved
+    expect(bodyField?.metadata?.placeholder).toBe('Write your review...');
+  });
+
+  it('should merge publishFormats: parent base + child overrides + child-only appended', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '1.0.0',
+      extends: 'base-review',
+      publishFormats: [
+        { id: 'kind1', label: 'Public Note', kinds: [1], default: true }, // override label
+        { id: 'nip78', label: 'Structured', kinds: [30078] }, // new format
+      ],
+      fields: [
+        {
+          id: 'body',
+          type: 'string',
+          uiPlugin: 'textarea',
+          mapTo: [
+            { kind: 1, target: 'content' },
+            { kind: 30078, target: 'content', path: 'body' },
+          ],
+          required: true,
+        },
+      ],
+    };
+    const resolved = resolveManifest(child, parent);
+    expect(resolved.publishFormats).toHaveLength(2);
+    const kind1 = resolved.publishFormats?.find((f) => f.id === 'kind1');
+    expect(kind1?.label).toBe('Public Note'); // child label wins
+    const nip78 = resolved.publishFormats?.find((f) => f.id === 'nip78');
+    expect(nip78).toBeDefined();
+  });
+
+  it('should shallow-merge manifest-level metadata, child wins on conflicts', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '1.0.0',
+      extends: 'base-review',
+      fields: [],
+      metadata: { name: 'Restaurant Review', description: 'For restaurants' },
+    };
+    const resolved = resolveManifest(child, parent);
+    expect(resolved.metadata?.name).toBe('Restaurant Review'); // child wins
+    expect(resolved.metadata?.description).toBe('For restaurants'); // child wins
+    expect(resolved.metadata?.author).toBe('alice'); // parent preserved
+  });
+
+  it('should fall back to parent linkManifest when child does not set it', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '1.0.0',
+      extends: 'base-review',
+      fields: [],
+      // linkManifest not set
+    };
+    const resolved = resolveManifest(child, parent);
+    expect(resolved.linkManifest).toBe(true); // inherited from parent
+  });
+
+  it('should prefer child linkManifest over parent', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '1.0.0',
+      extends: 'base-review',
+      fields: [],
+      linkManifest: false,
+    };
+    const resolved = resolveManifest(child, parent);
+    expect(resolved.linkManifest).toBe(false);
+  });
+
+  it('resolved manifest should pass validateManifest', () => {
+    const child: NostrPostManifest = {
+      id: 'restaurant-review',
+      version: '1.0.0',
+      extends: 'base-review',
+      fields: [
+        {
+          id: 'cuisine',
+          type: 'string',
+          uiPlugin: 'hashtag',
+          mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        },
+      ],
+    };
+    const resolved = resolveManifest(child, parent);
+    const result = validateManifest(resolved);
+    expect(result.success).toBe(true);
   });
 });

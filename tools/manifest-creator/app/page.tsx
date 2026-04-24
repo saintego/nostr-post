@@ -1,7 +1,8 @@
 'use client';
 
+import { resolveManifest } from '@nostr-post/core/manifest';
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ManifestEditor } from '../components/ManifestEditor';
 import { ManifestNostrPanel } from '../components/ManifestNostrPanel';
 import { PreviewPane } from '../components/PreviewPane';
@@ -35,10 +36,72 @@ const styles = {
   },
 } as const;
 
+async function fetchResolvedManifest(
+  manifest: NostrPostManifest,
+  signal: AbortSignal
+): Promise<NostrPostManifest> {
+  const refs = manifest.extends
+    ? Array.isArray(manifest.extends)
+      ? manifest.extends
+      : [manifest.extends]
+    : [];
+
+  if (refs.length === 0) return manifest;
+
+  const { fetchManifestByATag } = await import('@nostr-post/signer');
+  if (signal.aborted) return manifest;
+
+  const parentStoreds = await Promise.all(refs.map((ref) => fetchManifestByATag(ref)));
+  if (signal.aborted) return manifest;
+
+  const foundParents = parentStoreds
+    .filter((p): p is NonNullable<typeof p> => p !== undefined)
+    .map((p) => p.manifest);
+
+  if (foundParents.length === 0) return manifest;
+
+  const mergedParent = foundParents
+    .slice(1)
+    .reduce((base, current) => resolveManifest(current, base), foundParents[0]);
+
+  return resolveManifest(manifest, mergedParent);
+}
+
 export default function Home() {
   const [manifest, setManifest] = useState<NostrPostManifest>(EXAMPLE_MANIFESTS.simple);
+  const [resolvedManifest, setResolvedManifest] = useState<NostrPostManifest>(manifest);
+  const [isResolvingParents, setIsResolvingParents] = useState(false);
   /** The `a` tag reference to the currently active manifest on Nostr */
   const [manifestRef, setManifestRef] = useState<string | undefined>();
+  const resolveAbortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (!manifest.extends) {
+      setResolvedManifest(manifest);
+      return;
+    }
+
+    resolveAbortRef.current?.abort();
+    const controller = new AbortController();
+    resolveAbortRef.current = controller;
+    setIsResolvingParents(true);
+
+    fetchResolvedManifest(manifest, controller.signal)
+      .then((resolved) => {
+        if (!controller.signal.aborted) setResolvedManifest(resolved);
+      })
+      .catch((err) => {
+        if (!controller.signal.aborted) {
+          console.warn('[manifest-creator] Could not resolve parent manifests:', err);
+          setResolvedManifest(manifest);
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsResolvingParents(false);
+      });
+
+    return () => controller.abort();
+  }, [manifest]);
 
   return (
     <>
@@ -57,7 +120,11 @@ export default function Home() {
               onManifestRef={setManifestRef}
             />
           </div>
-          <PreviewPane manifest={manifest} manifestRef={manifestRef} />
+          <PreviewPane
+            manifest={resolvedManifest}
+            manifestRef={manifestRef}
+            isResolvingParents={isResolvingParents}
+          />
         </div>
       </div>
     </>

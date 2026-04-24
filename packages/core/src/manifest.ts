@@ -345,3 +345,78 @@ export const findFieldById = (
 export const getRequiredFields = (manifest: NostrPostManifest): PostField[] => {
   return manifest.fields.filter((field) => field.required === true);
 };
+
+/**
+ * Resolves manifest inheritance by merging a child manifest onto a parent.
+ *
+ * Merge rules:
+ * - Child `id` and `version` are always preserved.
+ * - `fields`: parent fields form the base; child fields with matching `id` override
+ *   (field-level `metadata` is shallow-merged so the child can patch individual keys
+ *   without repeating the rest). Child-only fields are appended after parent fields.
+ * - `publishFormats`: same override-then-append strategy as fields.
+ * - `metadata`: shallow-merged (`{ ...parent.metadata, ...child.metadata }`).
+ * - `linkManifest`: child's value takes priority; falls back to parent's.
+ * - `extends` is not forwarded to the resolved manifest.
+ *
+ * The caller is responsible for fetching the parent manifest referenced by
+ * `child.extends` before calling this function.
+ */
+export const resolveManifest = (
+  child: NostrPostManifest,
+  parent: NostrPostManifest
+): NostrPostManifest => {
+  // Fields: parent base + child overrides + child-only appended
+  const parentFieldMap = new Map(parent.fields.map((f) => [f.id, f]));
+  const mergedFields: PostField[] = [];
+
+  for (const parentField of parent.fields) {
+    const childField = child.fields.find((f) => f.id === parentField.id);
+    if (childField) {
+      mergedFields.push({
+        ...parentField,
+        ...childField,
+        metadata:
+          parentField.metadata || childField.metadata
+            ? { ...parentField.metadata, ...childField.metadata }
+            : undefined,
+      });
+    } else {
+      mergedFields.push(parentField);
+    }
+  }
+  for (const childField of child.fields) {
+    if (!parentFieldMap.has(childField.id)) {
+      mergedFields.push(childField);
+    }
+  }
+
+  // publishFormats: parent base + child overrides + child-only appended
+  const parentFormats = parent.publishFormats ?? [];
+  const childFormats = child.publishFormats ?? [];
+  const parentFormatIds = new Set(parentFormats.map((f) => f.id));
+  const mergedFormats: PublishFormat[] = [];
+  for (const parentFormat of parentFormats) {
+    const childFormat = childFormats.find((f) => f.id === parentFormat.id);
+    mergedFormats.push(childFormat ? { ...parentFormat, ...childFormat } : parentFormat);
+  }
+  for (const childFormat of childFormats) {
+    if (!parentFormatIds.has(childFormat.id)) {
+      mergedFormats.push(childFormat);
+    }
+  }
+
+  // Drop `extends` from child so it doesn't propagate to the resolved manifest
+  const { extends: _extendsRef, ...childRest } = child;
+  void _extendsRef;
+
+  return {
+    ...parent,
+    ...childRest,
+    fields: mergedFields,
+    publishFormats: mergedFormats.length > 0 ? mergedFormats : undefined,
+    linkManifest: child.linkManifest ?? parent.linkManifest,
+    metadata:
+      parent.metadata || child.metadata ? { ...parent.metadata, ...child.metadata } : undefined,
+  };
+};
