@@ -1,5 +1,10 @@
 import { resolveManifest } from '@nostr-post/core/manifest';
-import { NIP78_KIND, eventToManifest, parseManifestATag } from '@nostr-post/core/nip78';
+import {
+  MANIFEST_D_TAG_PREFIX,
+  NIP78_KIND,
+  eventToManifest,
+  parseManifestATag,
+} from '@nostr-post/core/nip78';
 import type { StoredManifest } from '@nostr-post/core/nip78';
 import { fetchEvents } from './fetch';
 
@@ -21,6 +26,10 @@ export function clearManifestCache(aTag?: string): void {
   if (!aTag) {
     manifestCache.clear();
     return;
+  }
+  const stored = manifestCache.get(aTag);
+  if (stored) {
+    manifestCache.delete(`${NIP78_KIND}:${stored.pubkey}:${stored.dTag}`);
   }
   manifestCache.delete(aTag);
 }
@@ -101,7 +110,7 @@ async function fetchRawManifest(
 }
 
 const toATag = (ref: string): string =>
-  ref.startsWith(`${NIP78_KIND}:`) ? ref : `${NIP78_KIND}::nostr-post:${ref}`;
+  ref.startsWith(`${NIP78_KIND}:`) ? ref : `${NIP78_KIND}::${MANIFEST_D_TAG_PREFIX}${ref}`;
 
 /**
  * Internal recursive helper that walks the `extends` chain.
@@ -132,7 +141,7 @@ async function resolveChain(
       `[nostr-post] Manifest inheritance stopped at "${canonicalATag}" ` +
         `(depth=${depth}, cycle=${visitedIds.has(canonicalATag)}).`
     );
-    return stored;
+    return { ...stored, manifest: { ...stored.manifest, extends: undefined } };
   }
 
   const nextVisited = new Set(visitedIds).add(canonicalATag);
@@ -150,7 +159,7 @@ async function resolveChain(
       `[nostr-post] Could not fetch any parent manifests for "${stored.manifest.id}". ` +
         'Using child manifest without inheritance.'
     );
-    return stored;
+    return { ...stored, manifest: { ...stored.manifest, extends: undefined } };
   }
 
   if (foundParents.length < parentRefs.length) {

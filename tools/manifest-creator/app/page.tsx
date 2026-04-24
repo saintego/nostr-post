@@ -36,51 +36,48 @@ const styles = {
   },
 } as const;
 
-async function fetchResolvedManifest(
-  manifest: NostrPostManifest,
+async function fetchParentManifests(
+  refs: string[],
   signal: AbortSignal
-): Promise<NostrPostManifest> {
-  const refs = manifest.extends
-    ? Array.isArray(manifest.extends)
-      ? manifest.extends
-      : [manifest.extends]
-    : [];
-
-  if (refs.length === 0) return manifest;
-
+): Promise<NostrPostManifest[]> {
   const { fetchManifestByATag } = await import('@nostr-post/signer');
-  if (signal.aborted) return manifest;
+  if (signal.aborted) return [];
+  const results = await Promise.all(refs.map((ref) => fetchManifestByATag(ref)));
+  if (signal.aborted) return [];
+  return results.filter((p): p is NonNullable<typeof p> => p !== undefined).map((p) => p.manifest);
+}
 
-  const parentStoreds = await Promise.all(refs.map((ref) => fetchManifestByATag(ref)));
-  if (signal.aborted) return manifest;
-
-  const foundParents = parentStoreds
-    .filter((p): p is NonNullable<typeof p> => p !== undefined)
-    .map((p) => p.manifest);
-
-  if (foundParents.length === 0) return manifest;
-
-  const mergedParent = foundParents
-    .slice(1)
-    .reduce((base, current) => resolveManifest(current, base), foundParents[0]);
-
-  return resolveManifest(manifest, mergedParent);
+function mergeWithParents(
+  manifest: NostrPostManifest,
+  parents: NostrPostManifest[]
+): NostrPostManifest {
+  if (parents.length === 0) return manifest;
+  const base = parents.slice(1).reduce((acc, cur) => resolveManifest(cur, acc), parents[0]);
+  return resolveManifest(manifest, base);
 }
 
 export default function Home() {
   const [manifest, setManifest] = useState<NostrPostManifest>(EXAMPLE_MANIFESTS.simple);
+  const [fetchedParents, setFetchedParents] = useState<NostrPostManifest[]>([]);
   const [resolvedManifest, setResolvedManifest] = useState<NostrPostManifest>(manifest);
   const [isResolvingParents, setIsResolvingParents] = useState(false);
   /** The `a` tag reference to the currently active manifest on Nostr */
   const [manifestRef, setManifestRef] = useState<string | undefined>();
   const resolveAbortRef = useRef<AbortController | null>(null);
 
+  // Stable string key for the extends refs — only changes when the actual parent
+  // references change, not on every unrelated manifest field edit.
+  const extendsKey = Array.isArray(manifest.extends)
+    ? manifest.extends.join('\n')
+    : (manifest.extends ?? '');
+
+  // Effect 1: fetch parents from relays only when the extends refs change.
   useEffect(() => {
-    if (!manifest.extends) {
+    if (!extendsKey) {
       resolveAbortRef.current?.abort();
       resolveAbortRef.current = null;
       setIsResolvingParents(false);
-      setResolvedManifest(manifest);
+      setFetchedParents([]);
       return;
     }
 
@@ -89,22 +86,30 @@ export default function Home() {
     resolveAbortRef.current = controller;
     setIsResolvingParents(true);
 
-    fetchResolvedManifest(manifest, controller.signal)
-      .then((resolved) => {
-        if (!controller.signal.aborted) setResolvedManifest(resolved);
+    const refs = extendsKey.split('\n');
+    fetchParentManifests(refs, controller.signal)
+      .then((parents) => {
+        if (!controller.signal.aborted) {
+          setFetchedParents(parents);
+          setIsResolvingParents(false);
+        }
       })
       .catch((err) => {
         if (!controller.signal.aborted) {
           console.warn('[manifest-creator] Could not resolve parent manifests:', err);
-          setResolvedManifest(manifest);
+          setFetchedParents([]);
+          setIsResolvingParents(false);
         }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsResolvingParents(false);
       });
 
     return () => controller.abort();
-  }, [manifest]);
+  }, [extendsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Effect 2: recompute the resolved manifest locally whenever manifest fields or
+  // the already-fetched parents change — no relay calls here.
+  useEffect(() => {
+    setResolvedManifest(mergeWithParents(manifest, fetchedParents));
+  }, [manifest, fetchedParents]);
 
   return (
     <>

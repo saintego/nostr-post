@@ -152,7 +152,7 @@ const validateManifestBasics = (manifest: NostrPostManifest, errors: ValidationE
     });
   }
 
-  if (!manifest.fields || manifest.fields.length === 0) {
+  if ((!manifest.fields || manifest.fields.length === 0) && !manifest.extends) {
     errors.push({
       field: 'fields',
       message: 'Manifest must have at least one field',
@@ -408,12 +408,14 @@ export const resolveManifest = (
     }
   }
 
-  // Drop `extends` from child so it doesn't propagate to the resolved manifest
+  // Drop `extends` from both parent and child so it doesn't propagate to the resolved manifest
+  const { extends: _parentExtendsRef, ...parentRest } = parent;
   const { extends: _extendsRef, ...childRest } = child;
+  void _parentExtendsRef;
   void _extendsRef;
 
   return {
-    ...parent,
+    ...parentRest,
     ...childRest,
     fields: mergedFields,
     publishFormats: mergedFormats.length > 0 ? mergedFormats : undefined,
