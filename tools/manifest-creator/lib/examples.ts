@@ -777,30 +777,32 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
     },
   },
 
-  // Demonstrates multiple inheritance: extends kind1-simple-post (basic content and default tags) and
-  // venue-review-v1 (venue, location, rating, photos) — both published to relays.
-  // The child overrides the content field and adds coffee-specific fields on top.
+  // Demonstrates single-parent inheritance: extends venue-review-v1 (venue, location,
+  // rating, photos, kind1/nip78 publish formats) and overrides the review field with a
+  // coffee-specific label, then adds coffee-specific fields on top.
   'coffee-in-cafe': {
     id: 'coffee-in-cafe',
     version: '1.0.0',
-    extends: [
-      '30078:6a19c89b2694b307aae6dc40256264071a47bdad89d8ddae6d1ab7139a94015d:nostr-post:kind1-simple-post',
+    extends:
       '30078:6a19c89b2694b307aae6dc40256264071a47bdad89d8ddae6d1ab7139a94015d:nostr-post:venue-review-v1',
-    ],
     fields: [
-      // Override the inherited 'content' field so resolveManifest replaces it instead of adding a duplicate
+      // Override the inherited 'review' field (venue-review-v1 uses id: 'review')
       {
-        id: 'content',
+        id: 'review',
         type: 'string',
         uiPlugin: 'textarea',
-        mapTo: { kind: 1, target: 'content' },
+        mapBehavior: 'all-active',
+        mapTo: [
+          { kind: 1, target: 'content' },
+          { kind: 30078, target: 'content', path: 'review' },
+        ],
         required: true,
         metadata: {
           label: 'Review',
           placeholder: 'How was the coffee and the cafe?',
         },
       },
-      // Coffee-specific fields not in either parent
+      // Coffee-specific fields not in the parent
       {
         id: 'origin',
         type: 'string',
@@ -826,7 +828,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
     metadata: {
       name: 'Coffee-in-Cafe Review',
       description:
-        'Review both the coffee and the cafe in one form. Extends kind1-simple-post + venue-review-v1 (both published) and adds coffee-specific fields via multiple inheritance.',
+        'Review both the coffee and the cafe in one form. Extends venue-review-v1 (venue, location, rating, photos, kind1+nip78 publishing) and adds coffee-specific fields.',
       tags: ['coffee', 'cafe', 'review'],
     },
   },
