@@ -242,17 +242,25 @@ Manifests can inherit from one or more parents via the `extends` field, enabling
 
 ```typescript
 const restaurantReview: NostrPostManifest = {
-  id: 'restaurant-review',
-  version: '1.0.0',
+  id: "restaurant-review",
+  version: "1.0.0",
   // Full NIP-78 a-tag: "30078:<pubkey>:nostr-post:<manifest-id>"
   // or bare ID for author-agnostic lookup: 'base-review'
-  extends: '30078:alice_pubkey:nostr-post:base-review',
+  extends: "30078:alice_pubkey:nostr-post:base-review",
   fields: [
     // Override just the label; other metadata keys are inherited from parent
-    { id: 'body', uiPlugin: 'textarea', mapTo: { kind: 1, target: 'content' },
-      metadata: { label: 'Restaurant Review' } },
+    {
+      id: "body",
+      uiPlugin: "textarea",
+      mapTo: { kind: 1, target: "content" },
+      metadata: { label: "Restaurant Review" },
+    },
     // Append a new field not in the parent
-    { id: 'cuisine', uiPlugin: 'hashtag', mapTo: { kind: 1, target: 'tag', tagName: 't' } },
+    {
+      id: "cuisine",
+      uiPlugin: "hashtag",
+      mapTo: { kind: 1, target: "tag", tagName: "t" },
+    },
   ],
 };
 ```
@@ -261,19 +269,25 @@ const restaurantReview: NostrPostManifest = {
 
 When two orthogonal concerns belong to the same form, use an array. Parents are merged **left-to-right** (rightmost sibling wins on conflict), then the child is applied on top:
 
-
 ```typescript
 const coffeeInCafe: NostrPostManifest = {
-  id: 'coffee-in-cafe',
-  version: '1.0.0',
+  id: "coffee-in-cafe",
+  version: "1.0.0",
   extends: [
-    '30078:alice_pubkey:nostr-post:coffee-review', // left — lower priority
-    '30078:alice_pubkey:nostr-post:cafe-visit',     // right — wins on conflict
+    "30078:alice_pubkey:nostr-post:coffee-review", // left — lower priority
+    "30078:alice_pubkey:nostr-post:cafe-visit", // right — wins on conflict
   ],
   fields: [
     // Override the shared 'notes' field label from both parents
-    { id: 'notes', uiPlugin: 'textarea', mapTo: { kind: 1, target: 'content' },
-      metadata: { label: 'Review', placeholder: 'How was the coffee and the cafe?' } },
+    {
+      id: "notes",
+      uiPlugin: "textarea",
+      mapTo: { kind: 1, target: "content" },
+      metadata: {
+        label: "Review",
+        placeholder: "How was the coffee and the cafe?",
+      },
+    },
   ],
 };
 ```
@@ -282,14 +296,14 @@ This avoids the awkward chain `coffee-review extends cafe-visit` (which would im
 
 ### Merge rules (applied by `resolveManifest`)
 
-| Property | Rule |
-|---|---|
-| `id`, `version` | Child's value always wins |
-| `fields` | Parent fields are the base; child overrides by `id`; field `metadata` is **shallow-merged** (child patches individual keys); child-only fields appended |
-| `publishFormats` | Same override-then-append as fields |
-| `metadata` | Shallow-merged; child wins on conflicts |
-| `linkManifest` | Child takes priority; falls back to parent |
-| `extends` | Consumed and **not** forwarded to the resolved manifest |
+| Property         | Rule                                                                                                                                                    |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`, `version`  | Child's value always wins                                                                                                                               |
+| `fields`         | Parent fields are the base; child overrides by `id`; field `metadata` is **shallow-merged** (child patches individual keys); child-only fields appended |
+| `publishFormats` | Same override-then-append as fields                                                                                                                     |
+| `metadata`       | Shallow-merged; child wins on conflicts                                                                                                                 |
+| `linkManifest`   | Child takes priority; falls back to parent                                                                                                              |
+| `extends`        | Consumed and **not** forwarded to the resolved manifest                                                                                                 |
 
 For array `extends`, sibling parents are merged in the same left-to-right fashion before the child is applied.
 
@@ -298,11 +312,11 @@ For array `extends`, sibling parents are merged in the same left-to-right fashio
 `fetchManifestByATag` (from `@nostr-post/signer`) always returns a fully resolved manifest — it walks the entire `extends` chain automatically, fetching parents in parallel where possible:
 
 ```typescript
-import { fetchManifestByATag } from '@nostr-post/signer';
+import { fetchManifestByATag } from "@nostr-post/signer";
 
 const stored = await fetchManifestByATag(
-  '30078:<pubkey>:nostr-post:coffee-in-cafe',
-  ['wss://relay.example']
+  "30078:<pubkey>:nostr-post:coffee-in-cafe",
+  ["wss://relay.example"],
 );
 // stored.manifest is the fully-merged definition, ready to use
 ```
