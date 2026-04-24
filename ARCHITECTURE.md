@@ -325,7 +325,7 @@ There is no separate "fetch raw" vs "fetch resolved" API — the resolved result
 
 ### Cycle and depth protection
 
-`fetchManifestByATag` tracks visited manifest IDs in a `Set` and enforces a hard depth limit of **10** levels. If a cycle or an overly deep chain is detected, inheritance stops at the offending node and a `console.warn` is emitted. The partial manifest is returned rather than throwing, so the UI still renders.
+`fetchManifestByATag` tracks visited canonical a-tags (for example, `30078:<pubkey>:<dTag>`) in a `Set` and enforces a hard depth limit of **10** levels. If a cycle or an overly deep chain is detected, inheritance stops at the offending node and a `console.warn` is emitted. The partial manifest is returned rather than throwing, so the UI still renders.
 
 ## Supported NIPs
 

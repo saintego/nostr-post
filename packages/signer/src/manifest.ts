@@ -30,6 +30,7 @@ export function clearManifestCache(aTag?: string): void {
   const stored = manifestCache.get(aTag);
   if (stored) {
     manifestCache.delete(`${NIP78_KIND}:${stored.pubkey}:${stored.dTag}`);
+    manifestCache.delete(`${NIP78_KIND}::${stored.dTag}`);
   }
   manifestCache.delete(aTag);
 }
@@ -63,7 +64,7 @@ async function doFetchManifest(
 ): Promise<StoredManifest | undefined> {
   const ref = parseManifestATag(aTag);
   try {
-    if (ref) {
+    if (ref?.pubkey) {
       const events = await fetchEvents(
         { kinds: [NIP78_KIND], authors: [ref.pubkey], '#d': [ref.dTag] },
         relays

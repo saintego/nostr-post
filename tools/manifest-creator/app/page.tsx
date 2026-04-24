@@ -85,6 +85,7 @@ export default function Home() {
     const controller = new AbortController();
     resolveAbortRef.current = controller;
     setIsResolvingParents(true);
+    setFetchedParents([]);
 
     const refs = extendsKey.split('\n');
     fetchParentManifests(refs, controller.signal)
