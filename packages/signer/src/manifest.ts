@@ -123,20 +123,24 @@ async function resolveChain(
   const { extends: parentRef } = stored.manifest;
   if (!parentRef) return stored;
 
-  if (depth >= MAX_INHERITANCE_DEPTH || visitedIds.has(stored.manifest.id)) {
+  // Use canonical a-tag for cycle detection so manifests with the same `id`
+  // from different pubkeys are not confused.
+  const canonicalATag = `${NIP78_KIND}:${stored.pubkey}:${stored.dTag}`;
+
+  if (depth >= MAX_INHERITANCE_DEPTH || visitedIds.has(canonicalATag)) {
     console.warn(
-      `[nostr-post] Manifest inheritance stopped at "${stored.manifest.id}" ` +
-        `(depth=${depth}, cycle=${visitedIds.has(stored.manifest.id)}).`
+      `[nostr-post] Manifest inheritance stopped at "${canonicalATag}" ` +
+        `(depth=${depth}, cycle=${visitedIds.has(canonicalATag)}).`
     );
     return stored;
   }
 
-  const nextVisited = new Set(visitedIds).add(stored.manifest.id);
+  const nextVisited = new Set(visitedIds).add(canonicalATag);
   const parentRefs = Array.isArray(parentRef) ? parentRef : [parentRef];
 
   // Fetch all parents in parallel
   const parentStoreds = await Promise.all(
-    parentRefs.map((ref) => resolveChain(toATag(ref), relays, true, nextVisited, depth + 1))
+    parentRefs.map((ref) => resolveChain(toATag(ref), relays, fallbackToD, nextVisited, depth + 1))
   );
 
   const foundParents = parentStoreds.filter((p): p is StoredManifest => p !== undefined);
@@ -164,7 +168,14 @@ async function resolveChain(
       foundParents[0]
     );
 
-  return { ...stored, manifest: resolveManifest(stored.manifest, mergedParent.manifest) };
+  const resolved: StoredManifest = {
+    ...stored,
+    manifest: resolveManifest(stored.manifest, mergedParent.manifest),
+  };
+  // Cache resolved result so repeated calls skip recomputation
+  manifestCache.set(aTag, resolved);
+  manifestCache.set(canonicalATag, resolved);
+  return resolved;
 }
 
 /**
@@ -183,7 +194,7 @@ export async function fetchManifestByATag(
   relays?: string[],
   fallbackToD = true
 ): Promise<StoredManifest | undefined> {
-  return resolveChain(aTag, relays, fallbackToD, new Set(), 0);
+  return resolveChain(toATag(aTag), relays, fallbackToD, new Set(), 0);
 }
 
 /** Batch fetch many aTags in parallel (shares cache/inflight). */

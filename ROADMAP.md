@@ -7,12 +7,12 @@
 - [x] allow updating NIP-78 (or any editable-event) posts created by a manifest when content changes; right now they use an empty `d` tag and overwrite each other
 - [x] allow kind 1 comments to update the content of the main event, so users can edit a review inside our view while it still appears as a normal comment in other clients. Use a human-readable content format such as `update: {field}: {new value}` and parse it in our view to apply the change while preserving compatibility with existing clients.
 - [x] manifest creator or feed should show the latest version of a user's manifest after updates, even when some relays still return older versions. Filter out stale manifests, and consider using our feed components for the user-manifest list so the logic and UI stay consistent.
-- [x] manifest can inherit from other manifest
+- [x] A manifest can inherit from another manifest
 - [ ] add kind:30818 for objects that are used for review (beer, product, map venue detail)
 - [ ] add multi-language support (i18n) for built-in plugins UI components(maybe Lingui.js style)
 - [ ] add multi-language support (i18n) for manifest via NIP-78 or kind:30818, d = "{manifestId}:i18n:{locale}", we would need to address version in translations
 - [ ] add style customization options for web components (CSS custom properties, theming)
-- [ ] fix pwa example share image
+- [ ] fix pwa example shared image/text, it's not getting to post input now
 - [ ] fix list plugin to use lists(nip-51?) instead of manifests
 - [ ] User mention support: mention autocomplete, user tagging, and profile
 - [ ] add link to library in web component footers for better discoverability

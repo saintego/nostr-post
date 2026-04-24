@@ -368,10 +368,11 @@ export const resolveManifest = (
 ): NostrPostManifest => {
   // Fields: parent base + child overrides + child-only appended
   const parentFieldMap = new Map(parent.fields.map((f) => [f.id, f]));
+  const childFieldMap = new Map(child.fields.map((f) => [f.id, f]));
   const mergedFields: PostField[] = [];
 
   for (const parentField of parent.fields) {
-    const childField = child.fields.find((f) => f.id === parentField.id);
+    const childField = childFieldMap.get(parentField.id);
     if (childField) {
       mergedFields.push({
         ...parentField,
@@ -395,9 +396,10 @@ export const resolveManifest = (
   const parentFormats = parent.publishFormats ?? [];
   const childFormats = child.publishFormats ?? [];
   const parentFormatIds = new Set(parentFormats.map((f) => f.id));
+  const childFormatMap = new Map(childFormats.map((f) => [f.id, f]));
   const mergedFormats: PublishFormat[] = [];
   for (const parentFormat of parentFormats) {
-    const childFormat = childFormats.find((f) => f.id === parentFormat.id);
+    const childFormat = childFormatMap.get(parentFormat.id);
     mergedFormats.push(childFormat ? { ...parentFormat, ...childFormat } : parentFormat);
   }
   for (const childFormat of childFormats) {
