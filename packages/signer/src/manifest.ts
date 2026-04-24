@@ -16,6 +16,10 @@ import { fetchEvents } from './fetch';
 const manifestCache = new Map<string, StoredManifest>();
 const inflight = new Map<string, Promise<StoredManifest | undefined>>();
 
+/** Normalize a manifest reference to a full a-tag. Bare IDs become `30078::<dTag>`. */
+const toATag = (ref: string): string =>
+  ref.startsWith(`${NIP78_KIND}:`) ? ref : `${NIP78_KIND}::${MANIFEST_D_TAG_PREFIX}${ref}`;
+
 /** Get a manifest from the cache (if present) by an `a` tag or key. */
 export function getCachedManifest(aTag: string): StoredManifest | undefined {
   return manifestCache.get(aTag);
@@ -27,12 +31,13 @@ export function clearManifestCache(aTag?: string): void {
     manifestCache.clear();
     return;
   }
-  const stored = manifestCache.get(aTag);
+  const normalizedATag = toATag(aTag);
+  const stored = manifestCache.get(normalizedATag);
   if (stored) {
     manifestCache.delete(`${NIP78_KIND}:${stored.pubkey}:${stored.dTag}`);
     manifestCache.delete(`${NIP78_KIND}::${stored.dTag}`);
   }
-  manifestCache.delete(aTag);
+  manifestCache.delete(normalizedATag);
 }
 
 function storeAndReturn(
@@ -109,9 +114,6 @@ async function fetchRawManifest(
     inflight.delete(aTag);
   }
 }
-
-const toATag = (ref: string): string =>
-  ref.startsWith(`${NIP78_KIND}:`) ? ref : `${NIP78_KIND}::${MANIFEST_D_TAG_PREFIX}${ref}`;
 
 /**
  * Internal recursive helper that walks the `extends` chain.

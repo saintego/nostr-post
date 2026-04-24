@@ -152,7 +152,13 @@ const validateManifestBasics = (manifest: NostrPostManifest, errors: ValidationE
     });
   }
 
-  if ((!manifest.fields || manifest.fields.length === 0) && !manifest.extends) {
+  const extendsValue = manifest.extends;
+  const hasValidExtends =
+    typeof extendsValue === 'string'
+      ? extendsValue.trim().length > 0
+      : Array.isArray(extendsValue) && extendsValue.some((e) => e.trim().length > 0);
+
+  if ((!manifest.fields || manifest.fields.length === 0) && !hasValidExtends) {
     errors.push({
       field: 'fields',
       message: 'Manifest must have at least one field',

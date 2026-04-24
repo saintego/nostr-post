@@ -87,7 +87,18 @@ export default function Home() {
     setIsResolvingParents(true);
     setFetchedParents([]);
 
-    const refs = extendsKey.split('\n');
+    const refs = extendsKey
+      .split('\n')
+      .map((ref) => ref.trim())
+      .filter(Boolean);
+
+    if (refs.length === 0) {
+      resolveAbortRef.current = null;
+      setIsResolvingParents(false);
+      setFetchedParents([]);
+      return;
+    }
+
     fetchParentManifests(refs, controller.signal)
       .then((parents) => {
         if (!controller.signal.aborted) {
