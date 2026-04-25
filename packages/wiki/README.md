@@ -22,15 +22,15 @@ NIP-54 collaborative wiki entities (`kind:30818`) for the `nostr-post` ecosystem
 
 ## What are wiki entities?
 
-| Feature | NIP-78 (kind:30078) | NIP-54 (kind:30818) |
-|---|---|---|
-| Purpose | App-private structured data | **Collaborative wiki pages** |
-| Authorship | Single pubkey | **Any pubkey** can contribute |
-| Resolution | Latest event wins | Custom resolver (newest, WoT, …) |
-| Content format | JSON in content | **Djot** prose + structured table |
-| Discovery | `#d` filter | `#d`, `#t`, `#i` (external IDs) |
+| Feature        | NIP-78 (kind:30078)         | NIP-54 (kind:30818)               |
+| -------------- | --------------------------- | --------------------------------- |
+| Purpose        | App-private structured data | **Collaborative wiki pages**      |
+| Authorship     | Single pubkey               | **Any pubkey** can contribute     |
+| Resolution     | Latest event wins           | Custom resolver (newest, WoT, …)  |
+| Content format | JSON in content             | **Djot** prose + structured table |
+| Discovery      | `#d` filter                 | `#d`, `#t`, `#i` (external IDs)   |
 
-A wiki entity is a collaborative document where **many pubkeys each publish their own version** of a `kind:30818` event with the same `d-tag` slug. Clients run a *resolver* to pick the canonical version. A review or rating then cites the entity via `["a", "30818:<pubkey>:<dTag>"]` tags.
+A wiki entity is a collaborative document where **many pubkeys each publish their own version** of a `kind:30818` event with the same `d-tag` slug. Clients run a _resolver_ to pick the canonical version. A review or rating then cites the entity via `["a", "30818:<pubkey>:<dTag>"]` tags.
 
 ---
 
@@ -38,35 +38,53 @@ A wiki entity is a collaborative document where **many pubkeys each publish thei
 
 ```html
 <!-- 1. Load the bundle (registers all custom elements) -->
-<script type="module"
-  src="https://saintego.github.io/nostr-post/nostr-post.js">
-</script>
+<script
+  type="module"
+  src="https://saintego.github.io/nostr-post/nostr-post.js"
+></script>
 
 <!-- 2. Define your manifest -->
 <script>
-const BEER_MANIFEST = {
-  id: "beer-entity-v1",
-  version: "1.0.0",
-  fields: [
-    { id: "title",       type: "string", uiPlugin: "text",     required: true,
-      mapTo: { kind: 30818, target: "tag",     tagName: "title" } },
-    { id: "style",       type: "string", uiPlugin: "text",
-      mapTo: { kind: 30818, target: "tag",     tagName: "t"     } },
-    { id: "abv",         type: "number", uiPlugin: "number",
-      mapTo: { kind: 30818, target: "tag",     tagName: "abv"   } },
-    { id: "description", type: "string", uiPlugin: "textarea",
-      mapTo: { kind: 30818, target: "content" } }
-  ]
-};
+  const BEER_MANIFEST = {
+    id: "beer-entity-v1",
+    version: "1.0.0",
+    fields: [
+      {
+        id: "title",
+        type: "string",
+        uiPlugin: "text",
+        required: true,
+        mapTo: { kind: 30818, target: "tag", tagName: "title" },
+      },
+      {
+        id: "style",
+        type: "string",
+        uiPlugin: "text",
+        mapTo: { kind: 30818, target: "tag", tagName: "t" },
+      },
+      {
+        id: "abv",
+        type: "number",
+        uiPlugin: "number",
+        mapTo: { kind: 30818, target: "tag", tagName: "abv" },
+      },
+      {
+        id: "description",
+        type: "string",
+        uiPlugin: "textarea",
+        mapTo: { kind: 30818, target: "content" },
+      },
+    ],
+  };
 </script>
 
 <!-- 3. Drop in the elements -->
-<nostr-wiki-view   id="view"     entity-id="pliny-the-elder"></nostr-wiki-view>
+<nostr-wiki-view id="view" entity-id="pliny-the-elder"></nostr-wiki-view>
 <nostr-wiki-composer id="composer" auto-publish></nostr-wiki-composer>
 
 <script type="module">
-  document.getElementById('view').manifest     = BEER_MANIFEST;
-  document.getElementById('composer').manifest = BEER_MANIFEST;
+  document.getElementById("view").manifest = BEER_MANIFEST;
+  document.getElementById("composer").manifest = BEER_MANIFEST;
 </script>
 ```
 
@@ -84,11 +102,11 @@ npm install @nostr-post/wiki
 
 ### Subpath exports
 
-| Import | Contents |
-|---|---|
-| `@nostr-post/wiki` | Coordinator functions, types |
-| `@nostr-post/wiki/web` | `<nostr-wiki-view>` and `<nostr-wiki-composer>` Lit elements |
-| `@nostr-post/wiki/react` | `<WikiView>` and `<WikiComposer>` React wrappers |
+| Import                   | Contents                                                     |
+| ------------------------ | ------------------------------------------------------------ |
+| `@nostr-post/wiki`       | Coordinator functions, types                                 |
+| `@nostr-post/wiki/web`   | `<nostr-wiki-view>` and `<nostr-wiki-composer>` Lit elements |
+| `@nostr-post/wiki/react` | `<WikiView>` and `<WikiComposer>` React wrappers             |
 
 ---
 
@@ -97,55 +115,55 @@ npm install @nostr-post/wiki
 Define the shape of your entity. All `mapTo` targets with `kind: 30818` are stored as tags (relay-indexed) **and** duplicated into a Djot table in the `content` field for readability in other wiki clients.
 
 ```typescript
-import type { NostrPostManifest } from '@nostr-post/core/types';
+import type { NostrPostManifest } from "@nostr-post/core/types";
 
 export const BEER_MANIFEST: NostrPostManifest = {
-  id: 'beer-entity-v1',
-  version: '1.0.0',
+  id: "beer-entity-v1",
+  version: "1.0.0",
   fields: [
     {
-      id: 'title',
-      type: 'string',
-      uiPlugin: 'text',
+      id: "title",
+      type: "string",
+      uiPlugin: "text",
       required: true,
-      mapTo: { kind: 30818, target: 'tag', tagName: 'title' },
-      metadata: { label: 'Beer Name' },
+      mapTo: { kind: 30818, target: "tag", tagName: "title" },
+      metadata: { label: "Beer Name" },
     },
     {
-      id: 'style',
-      type: 'enum',
-      uiPlugin: 'select',
-      options: ['IPA', 'Double IPA', 'Stout', 'Lager'],
-      mapTo: { kind: 30818, target: 'tag', tagName: 't' },
-      metadata: { label: 'Style' },
+      id: "style",
+      type: "enum",
+      uiPlugin: "select",
+      options: ["IPA", "Double IPA", "Stout", "Lager"],
+      mapTo: { kind: 30818, target: "tag", tagName: "t" },
+      metadata: { label: "Style" },
     },
     {
-      id: 'abv',
-      type: 'number',
-      uiPlugin: 'number',
-      mapTo: { kind: 30818, target: 'tag', tagName: 'abv' },
-      metadata: { label: 'ABV (%)' },
+      id: "abv",
+      type: "number",
+      uiPlugin: "number",
+      mapTo: { kind: 30818, target: "tag", tagName: "abv" },
+      metadata: { label: "ABV (%)" },
     },
     {
-      id: 'ibu',
-      type: 'number',
-      uiPlugin: 'number',
-      mapTo: { kind: 30818, target: 'tag', tagName: 'ibu' },
-      metadata: { label: 'IBU' },
+      id: "ibu",
+      type: "number",
+      uiPlugin: "number",
+      mapTo: { kind: 30818, target: "tag", tagName: "ibu" },
+      metadata: { label: "IBU" },
     },
     {
-      id: 'external_ids',
-      type: 'string',
-      uiPlugin: 'text',
-      mapTo: { kind: 30818, target: 'tag', tagName: 'i' },
-      metadata: { label: 'External IDs', placeholder: 'untappd:beer:4892' },
+      id: "external_ids",
+      type: "string",
+      uiPlugin: "text",
+      mapTo: { kind: 30818, target: "tag", tagName: "i" },
+      metadata: { label: "External IDs", placeholder: "untappd:beer:4892" },
     },
     {
-      id: 'description',
-      type: 'string',
-      uiPlugin: 'textarea',
-      mapTo: { kind: 30818, target: 'content' },
-      metadata: { label: 'Description (Djot)' },
+      id: "description",
+      type: "string",
+      uiPlugin: "textarea",
+      mapTo: { kind: 30818, target: "content" },
+      metadata: { label: "Description (Djot)" },
     },
   ],
 };
@@ -175,34 +193,34 @@ export const BEER_MANIFEST: NostrPostManifest = {
 Reviews cite the wiki entity using the `wiki-entity-picker` plugin. The picker emits an `["a", "30818:<pubkey>:<dTag>"]` tag and copies all `i` (external ID) tags from the entity for cross-platform discovery.
 
 ```typescript
-import type { NostrPostManifest } from '@nostr-post/core/types';
+import type { NostrPostManifest } from "@nostr-post/core/types";
 
 export const BEER_REVIEW_MANIFEST: NostrPostManifest = {
-  id: 'beer-review-v1',
-  version: '1.0.0',
+  id: "beer-review-v1",
+  version: "1.0.0",
   fields: [
     {
-      id: 'beer',
-      type: 'ref',
-      uiPlugin: 'wiki-entity-picker',       // registered by @nostr-post/plugin-wiki-entity
+      id: "beer",
+      type: "ref",
+      uiPlugin: "wiki-entity-picker", // registered by @nostr-post/plugin-wiki-entity
       required: true,
-      mapTo: { kind: 1, target: 'tag', tagName: 'a' },
-      metadata: { label: 'Beer' },
+      mapTo: { kind: 1, target: "tag", tagName: "a" },
+      metadata: { label: "Beer" },
     },
     {
-      id: 'rating',
-      type: 'number',
-      uiPlugin: 'stars',
-      mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
-      metadata: { label: 'Rating', max: 5 },
+      id: "rating",
+      type: "number",
+      uiPlugin: "stars",
+      mapTo: { kind: 1, target: "tag", tagName: "rating" },
+      metadata: { label: "Rating", max: 5 },
     },
     {
-      id: 'review_text',
-      type: 'string',
-      uiPlugin: 'textarea',
-      mapTo: { kind: 1, target: 'content' },
+      id: "review_text",
+      type: "string",
+      uiPlugin: "textarea",
+      mapTo: { kind: 1, target: "content" },
       required: true,
-      metadata: { label: 'Review' },
+      metadata: { label: "Review" },
     },
   ],
 };
@@ -215,13 +233,13 @@ export const BEER_REVIEW_MANIFEST: NostrPostManifest = {
 Because **many pubkeys** can each publish a `kind:30818` for the same slug, a review might cite any of their `a` tags. Use `collectEntityATags` to aggregate all canonical `a` values before querying:
 
 ```typescript
-import { fetchEvents } from '@nostr-post/signer';
-import { collectEntityATags } from '@nostr-post/wiki';
+import { fetchEvents } from "@nostr-post/signer";
+import { collectEntityATags } from "@nostr-post/wiki";
 
 // Step 1 — find all pubkeys that published this entity
 const entities = await fetchEvents({
   kinds: [30818],
-  '#d': ['pliny-the-elder'],
+  "#d": ["pliny-the-elder"],
 });
 
 // Step 2 — collect every "30818:<pubkey>:<dTag>" string
@@ -229,7 +247,7 @@ const aTags = collectEntityATags(entities);
 // => ["30818:ab12…:pliny-the-elder", "30818:ef34…:pliny-the-elder", …]
 
 // Step 3 — fetch all reviews that cited any version
-const reviews = await fetchEvents({ '#a': aTags });
+const reviews = await fetchEvents({ "#a": aTags });
 ```
 
 ---
@@ -240,61 +258,58 @@ const reviews = await fetchEvents({ '#a': aTags });
 
 Displays a resolved wiki entity as a read-only infobox.
 
-| Attribute / Property | Type | Description |
-|---|---|---|
-| `entity-id` / `entityId` | `string` | Entity d-tag (slug) to load |
-| `entity-i-id` / `entityIId` | `string` | External ID to look up (`i` tag) — triggers two-hop query |
-| `manifest` | `NostrPostManifest` | Field definitions (property only) |
-| `relays` | `string[]` | Override relay list (property only) |
-| `resolver` | `WikiResolverFunction` | Custom resolver (property only) |
+| Attribute / Property        | Type                   | Description                                               |
+| --------------------------- | ---------------------- | --------------------------------------------------------- |
+| `entity-id` / `entityId`    | `string`               | Entity d-tag (slug) to load                               |
+| `entity-i-id` / `entityIId` | `string`               | External ID to look up (`i` tag) — triggers two-hop query |
+| `manifest`                  | `NostrPostManifest`    | Field definitions (property only)                         |
+| `relays`                    | `string[]`             | Override relay list (property only)                       |
+| `resolver`                  | `WikiResolverFunction` | Custom resolver (property only)                           |
 
 **Slots:**
 
-| Slot | Shown when |
-|---|---|
+| Slot      | Shown when      |
+| --------- | --------------- |
 | `loading` | Fetching events |
-| `empty` | No events found |
-| `error` | Fetch failed |
+| `empty`   | No events found |
+| `error`   | Fetch failed    |
 
 ### `<nostr-wiki-composer>`
 
 A form for creating or editing a wiki entity. Pre-fills from the resolved event when `entityId` is set.
 
-| Attribute / Property | Type | Description |
-|---|---|---|
-| `entity-id` / `entityId` | `string` | Existing entity to pre-fill and fork |
-| `manifest` | `NostrPostManifest` | Field definitions (property only) |
-| `relays` | `string[]` | Override relay list (property only) |
-| `auto-publish` / `autoPublish` | `boolean` | Publish automatically using NIP-07 signer |
+| Attribute / Property           | Type                | Description                               |
+| ------------------------------ | ------------------- | ----------------------------------------- |
+| `entity-id` / `entityId`       | `string`            | Existing entity to pre-fill and fork      |
+| `manifest`                     | `NostrPostManifest` | Field definitions (property only)         |
+| `relays`                       | `string[]`          | Override relay list (property only)       |
+| `auto-publish` / `autoPublish` | `boolean`           | Publish automatically using NIP-07 signer |
 
 **Events emitted:**
 
-| Event | `detail` | Description |
-|---|---|---|
-| `nostr-wiki-submit` | `{ event }` | Unsigned event ready (when `autoPublish` is false) |
-| `nostr-wiki-published` | `{ event }` | Event signed and published |
-| `nostr-wiki-error` | `{ error }` | Error during sign/publish |
-| `nostr-wiki-field-change` | `{ fieldId, value }` | A field value changed |
+| Event                     | `detail`             | Description                                        |
+| ------------------------- | -------------------- | -------------------------------------------------- |
+| `nostr-wiki-submit`       | `{ event }`          | Unsigned event ready (when `autoPublish` is false) |
+| `nostr-wiki-published`    | `{ event }`          | Event signed and published                         |
+| `nostr-wiki-error`        | `{ error }`          | Error during sign/publish                          |
+| `nostr-wiki-field-change` | `{ fieldId, value }` | A field value changed                              |
 
 ---
 
 ## React wrappers
 
 ```tsx
-import { WikiView, WikiComposer } from '@nostr-post/wiki/react';
+import { WikiView, WikiComposer } from "@nostr-post/wiki/react";
 
 function App() {
   return (
     <>
-      <WikiView
-        entityId="pliny-the-elder"
-        manifest={BEER_MANIFEST}
-      />
+      <WikiView entityId="pliny-the-elder" manifest={BEER_MANIFEST} />
       <WikiComposer
         entityId="pliny-the-elder"
         manifest={BEER_MANIFEST}
         autoPublish
-        onPublished={(event) => console.log('Published!', event)}
+        onPublished={(event) => console.log("Published!", event)}
       />
     </>
   );
@@ -317,7 +332,7 @@ function manifestToWikiEvent(
 ): UnsignedNostrEvent;
 
 interface WikiEventConfig {
-  dTag?: string;        // override the d-tag slug (default: normalise from title field)
+  dTag?: string; // override the d-tag slug (default: normalise from title field)
   relays?: string[];
 }
 ```
@@ -412,18 +427,21 @@ Events with a `["a", "...", "", "defer"]` or `["e", "...", "", "defer"]` marker 
 ## Resolver customisation
 
 ```typescript
-import type { WikiResolverFunction } from '@nostr-post/wiki';
+import type { WikiResolverFunction } from "@nostr-post/wiki";
 
 // Web-of-Trust example: prefer events from followed pubkeys
 function makeWotResolver(followedPubkeys: Set<string>): WikiResolverFunction {
   return (events) => {
     const trusted = events.filter((e) => followedPubkeys.has(e.pubkey));
     const pool = trusted.length > 0 ? trusted : events;
-    return pool.reduce((newest, e) => (e.created_at > newest.created_at ? e : newest), pool[0]);
+    return pool.reduce(
+      (newest, e) => (e.created_at > newest.created_at ? e : newest),
+      pool[0],
+    );
   };
 }
 
 // Wire it to the web component
-const view = document.getElementById('wiki-view');
+const view = document.getElementById("wiki-view");
 view.resolver = makeWotResolver(new Set(myFollows));
 ```
