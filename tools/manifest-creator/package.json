@@ -26,6 +26,8 @@
     "@nostr-post/react": "workspace:*",
     "@nostr-post/signer": "workspace:*",
     "@nostr-post/web": "workspace:*",
+    "@nostr-post/wiki": "workspace:*",
+    "@nostr-post/plugin-wiki-entity": "workspace:*",
     "next": "latest",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",

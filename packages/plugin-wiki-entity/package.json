@@ -1,0 +1,35 @@
+{
+  "name": "@nostr-post/plugin-wiki-entity",
+  "version": "0.1.0",
+  "description": "Wiki entity picker plugin for nostr-post — links reviews to NIP-54 entities",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["nostr", "plugin", "wiki", "nip54", "entity"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nostr-post/core": "workspace:*",
+    "@nostr-post/plugins": "workspace:*",
+    "@nostr-post/signer": "workspace:*",
+    "@nostr-post/wiki": "workspace:*",
+    "lit": "^3.2.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}

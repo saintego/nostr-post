@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ManifestEditor } from '../components/ManifestEditor';
 import { ManifestNostrPanel } from '../components/ManifestNostrPanel';
 import { PreviewPane } from '../components/PreviewPane';
+import { WikiPreviewPanel } from '../components/WikiPreviewPanel';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
 
 const styles = {
@@ -35,6 +36,13 @@ const styles = {
     gap: '2rem',
   },
 } as const;
+
+function isWikiManifest(m: NostrPostManifest): boolean {
+  return m.fields.some((f) => {
+    const targets = Array.isArray(f.mapTo) ? f.mapTo : f.mapTo ? [f.mapTo] : [];
+    return targets.some((t) => t.kind === 30818);
+  });
+}
 
 async function fetchParentManifests(
   refs: string[],
@@ -140,11 +148,15 @@ export default function Home() {
               onManifestRef={setManifestRef}
             />
           </div>
-          <PreviewPane
-            manifest={resolvedManifest}
-            manifestRef={manifestRef}
-            isResolvingParents={isResolvingParents}
-          />
+          {isWikiManifest(resolvedManifest) ? (
+            <WikiPreviewPanel manifest={resolvedManifest} />
+          ) : (
+            <PreviewPane
+              manifest={resolvedManifest}
+              manifestRef={manifestRef}
+              isResolvingParents={isResolvingParents}
+            />
+          )}
         </div>
       </div>
     </>

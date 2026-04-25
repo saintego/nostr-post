@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nostr-post Wiki Demo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    h1 { font-size: 1.75rem; font-weight: 700; color: #6d28d9; margin-bottom: 0.25rem; }
+    .subtitle { color: #6b7280; margin-bottom: 2rem; font-size: 0.95rem; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: white;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      padding: 1.5rem;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #374151;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    label { display: block; font-size: 0.85rem; font-weight: 500; color: #6b7280; margin-bottom: 0.4rem; }
+    input[type="text"] {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      font-size: 0.9rem;
+      margin-bottom: 0.75rem;
+    }
+    input[type="text"]:focus { outline: 2px solid #7c3aed; border-color: transparent; }
+
+    button {
+      padding: 0.5rem 1rem;
+      background: #7c3aed;
+      color: white;
+      border: none;
+      border-radius: 0.375rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    button:hover { background: #6d28d9; }
+
+    nostr-wiki-view, nostr-wiki-composer {
+      display: block;
+      margin-top: 1rem;
+    }
+
+    .tag-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .tag {
+      padding: 0.2rem 0.6rem;
+      background: #ede9fe;
+      color: #6d28d9;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    pre {
+      background: #1f2937;
+      color: #d1fae5;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.75rem;
+      overflow-x: auto;
+      white-space: pre-wrap;
+    }
+
+    #event-output {
+      margin-top: 1rem;
+      display: none;
+    }
+    #event-output.visible { display: block; }
+
+    .full-width { grid-column: 1 / -1; }
+
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+    }
+    .steps li {
+      counter-increment: step;
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      font-size: 0.875rem;
+      color: #374151;
+    }
+    .steps li::before {
+      content: counter(step);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: #7c3aed;
+      color: white;
+      border-radius: 50%;
+      font-size: 0.75rem;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+  </style>
+
+  <!-- NIP-07 signer (window.nostr) -->
+  <script id="wnj-config">
+    window.wnjParams = {
+      accent: 'purple',
+      compactMode: true,
+      appMetadata: { name: 'nostr-post Wiki Demo', url: 'https://saintego.github.io/nostr-post' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/window.nostr.js/dist/window.nostr.min.js" async></script>
+</head>
+<body>
+  <div style="max-width:1100px;margin:0 auto">
+    <h1>nostr-post wiki</h1>
+    <p class="subtitle">NIP-54 collaborative entity pages — kind:30818</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- How it works -->
+    <div class="card full-width" style="background:#faf5ff;border-color:#ddd6fe">
+      <h2>💡 How it works</h2>
+      <ol class="steps">
+        <li><strong>Many pubkeys</strong> can each publish a <code>kind:30818</code> event for the same <code>d-tag</code> (entity slug).</li>
+        <li>Clients <strong>resolve</strong> the canonical version (newest wins, defer markers honoured).</li>
+        <li>Tags (<code>t</code>, <code>i</code>, <code>title</code>) are relay-indexed. A <strong>Djot table</strong> in <code>content</code> makes structured data readable in other wiki clients.</li>
+        <li>Reviews cite the entity via <code>["a","30818:&lt;pubkey&gt;:&lt;dTag&gt;"]</code> and copy all <code>i</code> tags for cross-platform lookup.</li>
+      </ol>
+    </div>
+
+    <!-- View panel -->
+    <div class="card">
+      <h2>🔍 View an entity</h2>
+      <label for="view-entity-id">Entity d-tag (slug)</label>
+      <input type="text" id="view-entity-id" placeholder="e.g. pliny-the-elder" />
+      <button onclick="loadEntity()">Load</button>
+
+      <div class="tag-row" style="margin-top:0.75rem">
+        <span class="tag" onclick="setAndLoad('pliny-the-elder')" style="cursor:pointer">pliny-the-elder</span>
+        <span class="tag" onclick="setAndLoad('bitcoin')" style="cursor:pointer">bitcoin</span>
+        <span class="tag" onclick="setAndLoad('nostr')" style="cursor:pointer">nostr</span>
+      </div>
+
+      <nostr-wiki-view id="wiki-view"></nostr-wiki-view>
+    </div>
+
+    <!-- Compose panel -->
+    <div class="card">
+      <h2>✏️ Create / edit an entity</h2>
+      <p style="font-size:0.85rem;color:#6b7280;margin-bottom:1rem">
+        Log in first. Leave entity d-tag blank to create a new entity.
+      </p>
+      <label for="compose-entity-id">Entity d-tag to edit (optional)</label>
+      <input type="text" id="compose-entity-id" placeholder="e.g. pliny-the-elder" />
+      <button onclick="loadComposer()">Load composer</button>
+
+      <nostr-wiki-composer id="wiki-composer"></nostr-wiki-composer>
+    </div>
+
+    <!-- Unsigned event preview -->
+    <div class="card full-width">
+      <h2>📋 Unsigned event (live preview)</h2>
+      <p style="font-size:0.85rem;color:#6b7280;margin-bottom:0.75rem">
+        When you click Publish, the composer emits <code>nostr-wiki-submit</code>. 
+        The raw unsigned event is shown below (sign &amp; send with your own relay client if not using <code>auto-publish</code>).
+      </p>
+      <div id="event-output">
+        <pre id="event-json"></pre>
+      </div>
+      <p id="event-placeholder" style="font-size:0.85rem;color:#9ca3af">Fill in the composer above to see the event preview here.</p>
+    </div>
+
+    <!-- CDN usage snippet -->
+    <div class="card full-width">
+      <h2>📦 Use via CDN (no build step)</h2>
+      <pre>&lt;!-- 1. Load the bundle --&gt;
+&lt;script type="module"
+  src="https://saintego.github.io/nostr-post/nostr-post.js"&gt;
+&lt;/script&gt;
+
+&lt;!-- 2. Define your entity manifest --&gt;
+&lt;script&gt;
+const BEER_MANIFEST = {
+  id: "beer-entity-v1",
+  version: "1.0.0",
+  fields: [
+    { id: 'title',       type: 'string', uiPlugin: 'text',   required: true,
+      mapTo: { kind: 30818, target: "tag",     tagName: "title" } },
+    { id: 'style',       type: 'string', uiPlugin: 'text',
+      mapTo: { kind: 30818, target: "tag",     tagName: "t" } },
+    { id: 'abv',         type: 'number', uiPlugin: 'number',
+      mapTo: { kind: 30818, target: "table" } },
+    { id: 'description', type: 'string', uiPlugin: 'textarea',
+      mapTo: { kind: 30818, target: "content" } }
+  ]
+};
+&lt;/script&gt;
+
+&lt;!-- 3. Drop in the elements --&gt;
+&lt;nostr-wiki-view   id="view"   entity-id="pliny-the-elder"&gt;&lt;/nostr-wiki-view&gt;
+&lt;nostr-wiki-composer id="composer" auto-publish&gt;&lt;/nostr-wiki-composer&gt;
+
+&lt;script type="module"&gt;
+  // Wire the manifest (can't use HTML attributes for objects)
+  document.getElementById('view').manifest     = BEER_MANIFEST;
+  document.getElementById('composer').manifest = BEER_MANIFEST;
+&lt;/script&gt;</pre>
+    </div>
+  </div><!-- /grid -->
+
+  <!-- Wiki bundle (loaded from local build for demo; swap for CDN URL in prod) -->
+  <script type="module">
+    // The CDN bundle is at the Pages root — resolves to /nostr-post.js on GitHub Pages
+    // and to .pages-local/nostr-post.js when running `pnpm preview:pages` locally.
+    import '../../nostr-post.js';
+
+    // ── Beer entity manifest ─────────────────────────────────────────────────
+    const BEER_MANIFEST = {
+      id: 'beer-entity-v1',
+      version: '1.0.0',
+      fields: [
+        { id: 'title',       type: 'string', uiPlugin: 'text',    required: true,
+          mapTo: { kind: 30818, target: 'tag',     tagName: 'title' } },
+        { id: 'style',       type: 'string', uiPlugin: 'text',
+          mapTo: { kind: 30818, target: 'tag',     tagName: 't' } },
+        { id: 'abv',         type: 'number', uiPlugin: 'number',
+          mapTo: { kind: 30818, target: 'table' } },
+        { id: 'ibu',         type: 'number', uiPlugin: 'number',
+          mapTo: { kind: 30818, target: 'table' } },
+        { id: 'external_ids', type: 'string', uiPlugin: 'text',
+          mapTo: { kind: 30818, target: 'tag',     tagName: 'i' } },
+        { id: 'description', type: 'string', uiPlugin: 'textarea',
+          mapTo: { kind: 30818, target: 'content' } },
+      ],
+    };
+
+    // Wire manifests onto the web components
+    const view     = document.getElementById('wiki-view');
+    const composer = document.getElementById('wiki-composer');
+    view.manifest     = BEER_MANIFEST;
+    composer.manifest = BEER_MANIFEST;
+
+    // ── Helper: load entity into view component ──────────────────────────────
+    window.loadEntity = function () {
+      const id = document.getElementById('view-entity-id').value.trim();
+      if (!id) return;
+      view.entityId = id;
+    };
+    window.setAndLoad = function (slug) {
+      document.getElementById('view-entity-id').value = slug;
+      view.entityId = slug;
+    };
+
+    // ── Helper: load entity into composer component ──────────────────────────
+    window.loadComposer = function () {
+      const id = document.getElementById('compose-entity-id').value.trim();
+      composer.entityId = id || undefined;
+    };
+
+    // ── Intercept nostr-wiki-submit to show event JSON ───────────────────────
+    // (composer runs without auto-publish so you can inspect the event first)
+    composer.addEventListener('nostr-wiki-submit', (e) => {
+      const output = document.getElementById('event-output');
+      const json   = document.getElementById('event-json');
+      const placeholder = document.getElementById('event-placeholder');
+      json.textContent  = JSON.stringify(e.detail.event, null, 2);
+      output.classList.add('visible');
+      placeholder.style.display = 'none';
+    });
+
+    // ── Auto-publish after login ─────────────────────────────────────────────
+    document.addEventListener('nlAuth', async (e) => {
+      if (e.detail.type === 'login' || e.detail.type === 'signup') {
+        if (window.nostr) {
+          const pubkey = await window.nostr.getPublicKey();
+          console.log('Logged in as', pubkey);
+        }
+      }
+    });
+  </script>
+</body>
+</html>

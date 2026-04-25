@@ -78,6 +78,218 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
     },
   },
 
+  // ── NIP-54 Wiki Entity (kind:30818) ──────────────────────────────────────
+
+  'wiki-brewery-entity': {
+    id: 'brewery-entity-v1',
+    version: '1.0.0',
+    fields: [
+      {
+        id: 'name',
+        type: 'string',
+        uiPlugin: 'text',
+        required: true,
+        mapTo: { kind: 30818, target: 'tag', tagName: 'title' },
+        metadata: { label: 'Brewery Name', placeholder: 'e.g. Russian River Brewing' },
+      },
+      {
+        id: 'country',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'Country', placeholder: 'United States' },
+      },
+      {
+        id: 'city',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'City', placeholder: 'Santa Rosa, CA' },
+      },
+      {
+        id: 'external_ids',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'tag', tagName: 'i' },
+        metadata: { label: 'External IDs', placeholder: 'untappd:brewery:3264' },
+      },
+      {
+        id: 'description',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 30818, target: 'content' },
+        metadata: { label: 'About', placeholder: 'A short history of the brewery…' },
+      },
+    ],
+    metadata: {
+      name: 'Brewery Entity (NIP-54 wiki)',
+      description: 'Collaborative wiki entity for a brewery — kind:30818.',
+    },
+  },
+
+  'wiki-beer-entity': {
+    id: 'beer-entity-v1',
+    version: '1.0.0',
+    fields: [
+      {
+        id: 'title',
+        type: 'string',
+        uiPlugin: 'text',
+        required: true,
+        mapTo: { kind: 30818, target: 'tag', tagName: 'title' },
+        metadata: { label: 'Beer Name', placeholder: 'e.g. Pliny the Elder' },
+      },
+      {
+        id: 'brewery',
+        type: 'ref',
+        uiPlugin: 'wiki-entity-picker',
+        mapTo: { kind: 30818, target: 'tag', tagName: 'a' },
+        metadata: { label: 'Brewery', entityManifest: 'brewery-entity-v1' },
+      },
+      {
+        id: 'style',
+        type: 'enum',
+        uiPlugin: 'select',
+        options: [
+          'IPA',
+          'Double IPA',
+          'Triple IPA',
+          'Stout',
+          'Imperial Stout',
+          'Porter',
+          'Lager',
+          'Pilsner',
+          'Wheat',
+          'Sour',
+          'Saison',
+          'Barleywine',
+          'Pale Ale',
+          'Amber Ale',
+          'Brown Ale',
+        ],
+        mapTo: { kind: 30818, target: 'tag', tagName: 't' },
+        metadata: { label: 'Style' },
+      },
+      {
+        id: 'abv',
+        type: 'number',
+        uiPlugin: 'number',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { step: 0.1, label: 'ABV %', placeholder: '8.0' },
+      },
+      {
+        id: 'ibu',
+        type: 'number',
+        uiPlugin: 'number',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'IBU', placeholder: '100' },
+      },
+      {
+        id: 'external_ids',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'tag', tagName: 'i' },
+        metadata: { label: 'External IDs', placeholder: 'untappd:beer:4892' },
+      },
+      {
+        id: 'description',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 30818, target: 'content' },
+        metadata: {
+          label: 'Description',
+          placeholder: 'Collaborative description of this beer…',
+        },
+      },
+    ],
+    metadata: {
+      name: 'Beer Entity (NIP-54 wiki)',
+      description:
+        'Collaborative wiki entity for a beer — kind:30818. Multiple pubkeys can contribute.',
+    },
+  },
+
+  'wiki-beer-review': {
+    id: 'beer-review-v1',
+    version: '1.0.0',
+    publishFormats: [
+      { id: 'note', label: 'Note', kinds: [1], default: true },
+      { id: 'app-data', label: 'App Data', kinds: [30078] },
+    ],
+    fields: [
+      {
+        id: 'beer',
+        type: 'ref',
+        uiPlugin: 'wiki-entity-picker',
+        required: true,
+        mapTo: { kind: 1, target: 'tag', tagName: 'a' },
+        metadata: {
+          label: 'Beer',
+          entityManifest: 'beer-entity-v1',
+        },
+      },
+      {
+        id: 'rating',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'rating' },
+          { kind: 30078, target: 'tag', tagName: 'rating' },
+        ],
+        metadata: { label: 'Rating', max: 5, showNumber: true },
+      },
+      {
+        id: 'review',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: [
+          { kind: 1, target: 'content' },
+          { kind: 30078, target: 'content' },
+        ],
+        required: true,
+        metadata: { label: 'Review', placeholder: 'Your tasting notes...' },
+      },
+      {
+        id: 'tags',
+        type: 'string',
+        uiPlugin: 'hashtag',
+        attachTo: 'review',
+        mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        metadata: {
+          label: 'Tags',
+          suggestions: [
+            'hoppy',
+            'crisp',
+            'smooth',
+            'bitter',
+            'sweet',
+            'fruity',
+            'crafted',
+            'seasonal',
+          ],
+        },
+      },
+      {
+        id: 'media',
+        type: 'string',
+        uiPlugin: 'media',
+        attachTo: 'review',
+        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        metadata: {
+          label: 'Beer Photo',
+          accept: ['image/*'],
+          maxFiles: 2,
+          expandable: true,
+        },
+      },
+    ],
+    metadata: {
+      name: 'Beer Review',
+      description:
+        'Review a beer entity — links to the wiki entity via `a` tag and copies all `i` tags for cross-platform lookup.',
+    },
+  },
+
   'venue-review': {
     id: 'venue-review-v1',
     version: '1.0.0',
@@ -649,131 +861,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
       description:
         'Product review with 5-star rating and multiple NIP-73 product identifiers (gtin/ean/upc/asin) as i tags',
       tags: ['product', 'review', 'shopping', 'retail'],
-    },
-  },
-
-  'beer-review': {
-    id: 'beer-review-v1',
-    version: '1.0.0',
-    fields: [
-      {
-        id: 'review',
-        type: 'string',
-        uiPlugin: 'textarea',
-        mapTo: { kind: 1, target: 'content' },
-        required: true,
-        metadata: {
-          label: 'Tasting Notes',
-          placeholder: 'Describe the aroma, taste, mouthfeel, and overall impression...',
-        },
-      },
-      {
-        id: 'rating',
-        type: 'number',
-        uiPlugin: 'stars',
-        mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
-        required: true,
-        metadata: {
-          label: 'Rating',
-          max: 5,
-          min: 0.25,
-          step: 0.25,
-          showNumber: true,
-        },
-      },
-      {
-        id: 'name',
-        type: 'string',
-        uiPlugin: 'text',
-        mapTo: { kind: 1, target: 'tag', tagName: 'name' },
-        required: true,
-        metadata: {
-          label: 'Beer Name',
-          placeholder: 'e.g. Hoppy IPA',
-        },
-      },
-      {
-        id: 'brewery',
-        type: 'string',
-        uiPlugin: 'text',
-        mapTo: { kind: 1, target: 'tag', tagName: 'brewery' },
-        required: true,
-        metadata: {
-          label: 'Brewery',
-          placeholder: 'Brewery or distributor name',
-        },
-      },
-      {
-        id: 'style',
-        type: 'string',
-        uiPlugin: 'hashtag',
-        mapTo: { kind: 1, target: 'tag', tagName: 'style' },
-        metadata: {
-          label: 'Beer Style',
-          suggestions: [
-            'IPA',
-            'Lager',
-            'Pilsner',
-            'Stout',
-            'Porter',
-            'Sour',
-            'Wheat',
-            'Amber',
-            'Pale Ale',
-            'Saison',
-          ],
-        },
-      },
-      {
-        id: 'abv',
-        type: 'number',
-        uiPlugin: 'text',
-        mapTo: { kind: 1, target: 'tag', tagName: 'abv' },
-        metadata: {
-          step: 0.1,
-          label: 'ABV %',
-          placeholder: 'Alcohol by volume',
-        },
-      },
-      {
-        id: 'tags',
-        type: 'string',
-        uiPlugin: 'hashtag',
-        attachTo: 'review',
-        mapTo: { kind: 1, target: 'tag', tagName: 't' },
-        metadata: {
-          label: 'Tags',
-          suggestions: [
-            'hoppy',
-            'crisp',
-            'smooth',
-            'bitter',
-            'sweet',
-            'fruity',
-            'crafted',
-            'seasonal',
-          ],
-        },
-      },
-      {
-        id: 'media',
-        type: 'string',
-        uiPlugin: 'media',
-        attachTo: 'review',
-        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
-        metadata: {
-          label: 'Beer Photo',
-          accept: ['image/*'],
-          maxFiles: 2,
-          expandable: true,
-        },
-      },
-    ],
-    metadata: {
-      name: 'Beer Review (Untappd-style)',
-      description:
-        'Beer tasting review with 5-star rating, brewery, style, ABV, tasting notes, and beer photo',
-      tags: ['beer', 'review', 'craft', 'tasting'],
     },
   },
 
