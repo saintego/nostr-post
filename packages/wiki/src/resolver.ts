@@ -41,7 +41,10 @@ export const defaultResolver: WikiResolverFunction = (events: WikiEvent[]): Wiki
   const candidates = events.filter((e) => !deferredIds.has(e.id));
   const pool = candidates.length > 0 ? candidates : events;
 
-  return pool.sort((a, b) => b.created_at - a.created_at)[0] ?? null;
+  return pool.reduce<WikiEvent | null>(
+    (newest, event) => (newest === null || event.created_at > newest.created_at ? event : newest),
+    null
+  );
 };
 
 /**

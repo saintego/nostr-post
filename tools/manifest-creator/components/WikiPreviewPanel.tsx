@@ -126,6 +126,7 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
   const [committedEntityId, setCommittedEntityId] = useState('');
   const [pendingEvent, setPendingEvent] = useState<unknown>(null);
   const [componentsLoaded, setComponentsLoaded] = useState(false);
+  const [componentsError, setComponentsError] = useState(false);
   const [reviews, setReviews] = useState<ReviewEvent[]>([]);
   const [reviewsLoading, setReviewsLoading] = useState(false);
 
@@ -135,10 +136,9 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
 
   // Load wiki web components client-side, then sync manifest once elements are defined.
   useEffect(() => {
-    Promise.all([
-      import('@nostr-post/wiki/web').catch(() => {}),
-      import('@nostr-post/plugin-wiki-entity/web').catch(() => {}),
-    ]).then(() => setComponentsLoaded(true));
+    Promise.all([import('@nostr-post/wiki/web'), import('@nostr-post/plugin-wiki-entity/web')])
+      .then(() => setComponentsLoaded(true))
+      .catch(() => setComponentsError(true));
   }, []);
 
   // Sync manifest onto both web components — runs after load and on every manifest change.
@@ -162,7 +162,13 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
     if (!el) return;
     const handler = (e: Event) => {
       const query = (e as CustomEvent<{ query: string }>).detail?.query ?? '';
-      const slug = query.toLowerCase().replace(/\s+/g, '-');
+      // Use the same normalization as the composer / nip54 so the slug is valid.
+      const slug = query
+        .toLowerCase()
+        .replace(/\s+/g, '-')
+        .replace(/[^a-z0-9-]/g, '')
+        .replace(/-{2,}/g, '-')
+        .replace(/^-+|-+$/g, '');
       setEntityId(slug);
       setCommittedEntityId(slug);
       setActiveTab('compose');
@@ -191,7 +197,10 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
           setReviews([]);
           return;
         }
-        const found = await fetchEvents({ '#a': aTags } as never, DEFAULT_WIKI_RELAYS);
+        const found = await fetchEvents(
+          { '#a': aTags, kinds: [1, 30078], limit: 50 } as never,
+          DEFAULT_WIKI_RELAYS
+        );
         setReviews(found as unknown as ReviewEvent[]);
       } catch {
         setReviews([]);
@@ -204,7 +213,7 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
   // Listen for composer events
   useEffect(() => {
     const el = composerRef.current;
-    if (!el) return;
+    if (!el || !componentsLoaded) return;
 
     const onSubmit = (e: Event) => setPendingEvent((e as CustomEvent).detail.event);
     const onPublished = (e: Event) => setPendingEvent((e as CustomEvent).detail.event);
@@ -214,7 +223,7 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
       el.removeEventListener('nostr-wiki-submit', onSubmit);
       el.removeEventListener('nostr-wiki-published', onPublished);
     };
-  });
+  }, [componentsLoaded]);
 
   const commitEntityId = () => {
     setCommittedEntityId(entityId.trim());
@@ -233,6 +242,13 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
       </div>
 
       <div style={styles.body}>
+        {componentsError && (
+          <div style={{ color: '#b91c1c', padding: '0.75rem', fontSize: '0.875rem' }}>
+            Failed to load wiki components. Check that <code>@nostr-post/wiki</code> and{' '}
+            <code>@nostr-post/plugin-wiki-entity</code> are installed.
+          </div>
+        )}
+
         {/* Entity ID picker — shared across tabs */}
         <div style={styles.row}>
           <div style={{ flex: 1 }}>

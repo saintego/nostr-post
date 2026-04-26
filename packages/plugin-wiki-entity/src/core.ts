@@ -95,26 +95,32 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
   },
 
   /**
+   * Serialises the field value into the canonical string that becomes the tag
+   * value. For wiki-entity-picker this is the NIP-54 `a`-tag address:
+   *   "30818:<resolvedPubkey>:<dTag>"
+   *
+   * This is what the coordinator writes as the primary tag value (combined
+   * with `mapTo.tagName: 'a'`). `extraTags` is then reserved solely for
+   * supplemental `i` tags copied from the entity.
+   */
+  serializeValue: (value: unknown): string => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
+    const entity = value as WikiEntityData;
+    return `30818:${entity.resolvedPubkey}:${entity.dTag}`;
+  },
+
+  /**
    * extraTags implementation.
    *
-   * Given the WikiEntityData selected by the picker, returns the tags to
-   * append to the published event:
-   *   ["a", "30818:<pubkey>:<dTag>"]
-   *   ["i", "<externalId>"]  (one per external ID)
+   * Emits only the `i` tags copied from the entity at selection time for
+   * cross-platform discovery. The `a` tag is handled by `serializeValue`
+   * together with the field's `mapTo.tagName: 'a'` — no duplication.
    */
   extraTags: (value: unknown, _field: PostField): [string, ...string[]][] => {
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return [];
     }
     const entity = value as WikiEntityData;
-    const result: [string, ...string[]][] = [
-      ['a', `30818:${entity.resolvedPubkey}:${entity.dTag}`],
-    ];
-
-    for (const id of entity.externalIds ?? []) {
-      result.push(['i', id]);
-    }
-
-    return result;
+    return (entity.externalIds ?? []).map((id): [string, string] => ['i', id]);
   },
 };

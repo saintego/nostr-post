@@ -247,7 +247,8 @@ export class NostrWikiComposer extends LitElement {
         ? (this._formData[titleField.id] as string | undefined)
         : undefined;
       const dTag =
-        this.entityId ?? (titleValue ? normalizeDTag(titleValue) : normalizeDTag(this.manifest.id));
+        this.entityId?.trim() ||
+        (titleValue ? normalizeDTag(titleValue) : normalizeDTag(this.manifest.id));
       const unsignedEvent = manifestToWikiEvent(this.manifest, this._formData, { dTag });
 
       if (this.autoPublish) {
@@ -294,7 +295,20 @@ export class NostrWikiComposer extends LitElement {
         void this._onSave();
       }}>
         <header class="wiki-composer-header">
-          <h3>${this._baseEvent ? 'Edit: ' + String(this._formData['title'] ?? this.entityId ?? '') : 'New entity'}</h3>
+          <h3>${
+            this._baseEvent
+              ? 'Edit: ' +
+                (() => {
+                  const tf = this.manifest?.fields.find((f) => {
+                    const targets = Array.isArray(f.mapTo) ? f.mapTo : [f.mapTo];
+                    return targets.some((t) => t.target === 'tag' && t.tagName === 'title');
+                  });
+                  return tf
+                    ? String(this._formData[tf.id] ?? this.entityId ?? '')
+                    : String(this.entityId ?? '');
+                })()
+              : 'New entity'
+          }</h3>
           ${this._baseEvent ? html`<small>Forking from ${this._baseEvent.pubkey.slice(0, 8)}…</small>` : nothing}
         </header>
 
@@ -395,7 +409,10 @@ export class NostrWikiComposer extends LitElement {
           ?required=${f.required}
           @input=${(e: InputEvent) => {
             const raw = (e.target as HTMLInputElement).value;
-            this._onFieldChange(f.id, f.type === 'number' ? Number(raw) : raw);
+            this._onFieldChange(
+              f.id,
+              f.type === 'number' ? (raw === '' ? undefined : Number(raw)) : raw
+            );
           }}
         />
       </div>

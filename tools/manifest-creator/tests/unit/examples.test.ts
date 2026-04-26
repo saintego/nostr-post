@@ -123,7 +123,7 @@ describe('EXAMPLE_MANIFESTS', () => {
           for (const target of targets) {
             expect(target.kind).toBeTypeOf('number');
             expect(target.target).toBeDefined();
-            expect(['content', 'tag']).toContain(target.target);
+            expect(['content', 'tag', 'table']).toContain(target.target);
           }
         }
       }

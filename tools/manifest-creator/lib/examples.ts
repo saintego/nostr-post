@@ -222,7 +222,10 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         type: 'ref',
         uiPlugin: 'wiki-entity-picker',
         required: true,
-        mapTo: { kind: 1, target: 'tag', tagName: 'a' },
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'a' },
+          { kind: 30078, target: 'tag', tagName: 'a' },
+        ],
         metadata: {
           label: 'Beer',
           entityManifest: 'beer-entity-v1',
@@ -254,7 +257,10 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         type: 'string',
         uiPlugin: 'hashtag',
         attachTo: 'review',
-        mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 't' },
+          { kind: 30078, target: 'tag', tagName: 't' },
+        ],
         metadata: {
           label: 'Tags',
           suggestions: [
@@ -274,7 +280,10 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         type: 'string',
         uiPlugin: 'media',
         attachTo: 'review',
-        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'r' },
+          { kind: 30078, target: 'tag', tagName: 'r' },
+        ],
         metadata: {
           label: 'Beer Photo',
           accept: ['image/*'],

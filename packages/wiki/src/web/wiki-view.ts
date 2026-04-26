@@ -233,10 +233,20 @@ export class NostrWikiView extends LitElement {
       })
       .filter((f) => data[f.id] !== undefined);
 
+    const titleField = manifest.fields.find((f) => {
+      const targets = Array.isArray(f.mapTo) ? f.mapTo : [f.mapTo];
+      return targets.some(
+        (t) => t.kind === WIKI_KIND && t.target === 'tag' && t.tagName === 'title'
+      );
+    });
+    const titleValue = titleField
+      ? String(data[titleField.id] ?? data['__dTag'] ?? '')
+      : String(data['__dTag'] ?? '');
+
     return html`
       <div class="wiki-view">
         <header class="wiki-header">
-          <h2>${String(data['title'] ?? data['__dTag'] ?? '')}</h2>
+          <h2>${titleValue}</h2>
           <span class="wiki-badge">${_allEvents.length} contributor(s)</span>
         </header>
 

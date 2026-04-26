@@ -66,7 +66,7 @@ A wiki entity is a collaborative document where **many pubkeys each publish thei
         id: "abv",
         type: "number",
         uiPlugin: "number",
-        mapTo: { kind: 30818, target: "tag", tagName: "abv" },
+        mapTo: { kind: 30818, target: "table" },
       },
       {
         id: "description",
@@ -112,7 +112,15 @@ npm install @nostr-post/wiki
 
 ## Entity manifest
 
-Define the shape of your entity. All `mapTo` targets with `kind: 30818` are stored as tags (relay-indexed) **and** duplicated into a Djot table in the `content` field for readability in other wiki clients.
+Define the shape of your entity. Each field's `mapTo.target` determines where its data lives:
+
+| `target`    | Where data is stored                                     | Use for                                              |
+| ----------- | -------------------------------------------------------- | ---------------------------------------------------- |
+| `'tag'`     | Nostr event `tags` array only — relay-filterable         | `title`, `t` (style), `a` (cross-refs), `i` (ext IDs)|
+| `'table'`   | A row in a Djot pipe table in `content` — not a tag      | Numeric/structured fields: ABV, IBU, city, country   |
+| `'content'` | Prose text appended after the table in `content`         | Description, notes, free text                        |
+
+Each field goes to exactly one location — no duplication.
 
 ```typescript
 import type { NostrPostManifest } from "@nostr-post/core/types";
@@ -141,14 +149,14 @@ export const BEER_MANIFEST: NostrPostManifest = {
       id: "abv",
       type: "number",
       uiPlugin: "number",
-      mapTo: { kind: 30818, target: "tag", tagName: "abv" },
-      metadata: { label: "ABV (%)" },
+      mapTo: { kind: 30818, target: "table" },
+      metadata: { label: "ABV %" },
     },
     {
       id: "ibu",
       type: "number",
       uiPlugin: "number",
-      mapTo: { kind: 30818, target: "tag", tagName: "ibu" },
+      mapTo: { kind: 30818, target: "table" },
       metadata: { label: "IBU" },
     },
     {
@@ -178,11 +186,9 @@ export const BEER_MANIFEST: NostrPostManifest = {
     ["d", "pliny-the-elder"],
     ["title", "Pliny the Elder"],
     ["t", "Double IPA"],
-    ["abv", "8.0"],
-    ["ibu", "100"],
     ["i", "untappd:beer:4892"]
   ],
-  "content": "| Field | Value |\n|-------|-------|\n| title | Pliny the Elder |\n| style | Double IPA |\n| abv | 8.0 |\n| ibu | 100 |\n\nA legendary West Coast Double IPA brewed by Russian River Brewing Company."
+  "content": "| Field | Value |\n|-------|-------|\n| ABV % | 8.0 |\n| IBU   | 100   |\n\nA legendary West Coast Double IPA brewed by Russian River Brewing Company."
 }
 ```
 
@@ -339,7 +345,7 @@ interface WikiEventConfig {
 
 ### `wikiEventToManifestData(event, manifest)`
 
-Parses a `kind:30818` event back into a plain object keyed by field IDs. Tags are read first (canonical); the Djot table in `content` is used as fallback. Also returns `__dTag` for building `a` tags.
+Parses a `kind:30818` event back into a plain object keyed by field IDs. Each field is read from its canonical location — `target: 'tag'` fields from the event tags, `target: 'table'` fields from the Djot table in `content`, `target: 'content'` fields from prose. Also returns `__dTag` for building `a` tags.
 
 ```typescript
 function wikiEventToManifestData(
@@ -400,19 +406,17 @@ const DEFAULT_WIKI_RELAYS: string[]; // wikifreedia.xyz, nos.lol, relay.nostr.ba
 
 ## Architecture
 
-### Dual-write strategy
+### Storage strategy (single source of truth)
 
-Every tag field is written **twice**:
+Each field maps to exactly **one** storage location — no dual-write:
 
-1. As a Nostr tag — relay-indexed and machine-readable.
-2. As a row in a Djot pipe table at the start of the `content` field — human-readable in any wiki client that doesn't know about your manifest.
+| `mapTo.target` | Written to                                         | Read from                  |
+| -------------- | -------------------------------------------------- | -------------------------- |
+| `'tag'`        | Nostr event `tags` array                           | `tags` array               |
+| `'table'`      | Djot pipe table row in `content`                   | Djot table in `content`    |
+| `'content'`    | Prose text after the table in `content`            | Prose in `content`         |
 
-Prose fields are appended after the table.
-
-**Read order:** tags first (canonical), Djot table as fallback. This means:
-
-- Apps that write via `manifestToWikiEvent` are losslessly round-trippable via `wikiEventToManifestData`.
-- Hand-written wiki articles without nostr-post tags can still be parsed (table fallback).
+The Djot table makes structured (`table`) fields readable in any wiki client that doesn't know about your manifest. Relay-filterable fields (`t`, `i`, `title`, `a`) use `'tag'` so they can be queried via relay filters. Apps that write via `manifestToWikiEvent` are losslessly round-trippable via `wikiEventToManifestData`.
 
 ### d-tag normalisation
 
