@@ -114,11 +114,11 @@ npm install @nostr-post/wiki
 
 Define the shape of your entity. Each field's `mapTo.target` determines where its data lives:
 
-| `target`    | Where data is stored                                     | Use for                                              |
-| ----------- | -------------------------------------------------------- | ---------------------------------------------------- |
-| `'tag'`     | Nostr event `tags` array only — relay-filterable         | `title`, `t` (style), `a` (cross-refs), `i` (ext IDs)|
-| `'table'`   | A row in a Djot pipe table in `content` — not a tag      | Numeric/structured fields: ABV, IBU, city, country   |
-| `'content'` | Prose text appended after the table in `content`         | Description, notes, free text                        |
+| `target`    | Where data is stored                                | Use for                                               |
+| ----------- | --------------------------------------------------- | ----------------------------------------------------- |
+| `'tag'`     | Nostr event `tags` array only — relay-filterable    | `title`, `t` (style), `a` (cross-refs), `i` (ext IDs) |
+| `'table'`   | A row in a Djot pipe table in `content` — not a tag | Numeric/structured fields: ABV, IBU, city, country    |
+| `'content'` | Prose text appended after the table in `content`    | Description, notes, free text                         |
 
 Each field goes to exactly one location — no duplication.
 
@@ -410,11 +410,11 @@ const DEFAULT_WIKI_RELAYS: string[]; // wikifreedia.xyz, nos.lol, relay.nostr.ba
 
 Each field maps to exactly **one** storage location — no dual-write:
 
-| `mapTo.target` | Written to                                         | Read from                  |
-| -------------- | -------------------------------------------------- | -------------------------- |
-| `'tag'`        | Nostr event `tags` array                           | `tags` array               |
-| `'table'`      | Djot pipe table row in `content`                   | Djot table in `content`    |
-| `'content'`    | Prose text after the table in `content`            | Prose in `content`         |
+| `mapTo.target` | Written to                              | Read from               |
+| -------------- | --------------------------------------- | ----------------------- |
+| `'tag'`        | Nostr event `tags` array                | `tags` array            |
+| `'table'`      | Djot pipe table row in `content`        | Djot table in `content` |
+| `'content'`    | Prose text after the table in `content` | Prose in `content`      |
 
 The Djot table makes structured (`table`) fields readable in any wiki client that doesn't know about your manifest. Relay-filterable fields (`t`, `i`, `title`, `a`) use `'tag'` so they can be queried via relay filters. Apps that write via `manifestToWikiEvent` are losslessly round-trippable via `wikiEventToManifestData`.
 
