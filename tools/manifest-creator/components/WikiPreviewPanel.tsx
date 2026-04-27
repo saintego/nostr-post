@@ -1,6 +1,7 @@
 'use client';
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
+import { normalizeDTag } from '@nostr-post/wiki';
 import { useEffect, useRef, useState } from 'react';
 
 interface WikiPreviewPanelProps {
@@ -162,13 +163,7 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
     if (!el) return;
     const handler = (e: Event) => {
       const query = (e as CustomEvent<{ query: string }>).detail?.query ?? '';
-      // Use the same normalization as the composer / nip54 so the slug is valid.
-      const slug = query
-        .toLowerCase()
-        .replace(/\s+/g, '-')
-        .replace(/[^a-z0-9-]/g, '')
-        .replace(/-{2,}/g, '-')
-        .replace(/^-+|-+$/g, '');
+      const slug = normalizeDTag(query);
       setEntityId(slug);
       setCommittedEntityId(slug);
       setActiveTab('compose');

@@ -176,9 +176,9 @@ export class NostrWikiView extends LitElement {
     try {
       let filter: Record<string, unknown>;
       if (this.entityId) {
-        filter = { kinds: [WIKI_KIND], '#d': [this.entityId] };
+        filter = { kinds: [WIKI_KIND], '#d': [this.entityId], limit: 50 };
       } else {
-        filter = { kinds: [WIKI_KIND], '#i': [this.entityIId] };
+        filter = { kinds: [WIKI_KIND], '#i': [this.entityIId], limit: 50 };
       }
 
       const raw = await fetchEvents(filter as never, this.relays);
@@ -192,7 +192,7 @@ export class NostrWikiView extends LitElement {
         ] as string[];
         if (dTags.length > 0) {
           const byDTag = (await fetchEvents(
-            { kinds: [WIKI_KIND], '#d': dTags } as never,
+            { kinds: [WIKI_KIND], '#d': dTags, limit: 50 } as never,
             this.relays
           )) as unknown as WikiEvent[];
           const ids = new Set(this._allEvents.map((e) => e.id));
@@ -239,9 +239,10 @@ export class NostrWikiView extends LitElement {
         (t) => t.kind === WIKI_KIND && t.target === 'tag' && t.tagName === 'title'
       );
     });
+    const eventTitleTag = this._winningEvent.tags.find((tag) => tag[0] === 'title')?.[1];
     const titleValue = titleField
-      ? String(data[titleField.id] ?? data['__dTag'] ?? '')
-      : String(data['__dTag'] ?? '');
+      ? String(data[titleField.id] ?? eventTitleTag ?? data['__dTag'] ?? '')
+      : String(eventTitleTag ?? data['__dTag'] ?? '');
 
     return html`
       <div class="wiki-view">

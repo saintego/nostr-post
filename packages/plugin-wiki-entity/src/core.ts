@@ -121,6 +121,7 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
       return [];
     }
     const entity = value as WikiEntityData;
-    return (entity.externalIds ?? []).map((id): [string, string] => ['i', id]);
+    const ids = Array.isArray(entity.externalIds) ? entity.externalIds : [];
+    return ids.map((id): [string, string] => ['i', id]);
   },
 };

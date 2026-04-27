@@ -12,7 +12,12 @@
 
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { fetchEvents } from '@nostr-post/signer';
-import { DEFAULT_WIKI_RELAYS, WIKI_KIND, extractExternalIds } from '@nostr-post/wiki';
+import {
+  DEFAULT_WIKI_RELAYS,
+  WIKI_KIND,
+  extractExternalIds,
+  normalizeDTag,
+} from '@nostr-post/wiki';
 import { defaultResolver } from '@nostr-post/wiki';
 import type { WikiEvent } from '@nostr-post/wiki';
 import { LitElement, css, html, nothing } from 'lit';
@@ -209,7 +214,7 @@ export class WikiEntityPicker extends LitElement {
       const raw = await fetchEvents(
         {
           kinds: [WIKI_KIND],
-          '#d': [this._query.toLowerCase().replace(/\s+/g, '-')],
+          '#d': [normalizeDTag(this._query)],
           limit: 50,
         } as never,
         this._relays
@@ -323,7 +328,12 @@ export class WikiEntityPicker extends LitElement {
                       class="result-item"
                       @click=${() => this._onSelect(event)}
                       @keydown=${(e: KeyboardEvent) => {
-                        if (e.key === 'Enter' || e.key === ' ') this._onSelect(event);
+                        if (e.key === ' ') {
+                          e.preventDefault();
+                          this._onSelect(event);
+                        } else if (e.key === 'Enter') {
+                          this._onSelect(event);
+                        }
                       }}
                       tabindex="0"
                     >

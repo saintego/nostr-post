@@ -1,6 +1,6 @@
 import type { PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
-import { type WikiEntityData, wikiEntityPickerPlugin } from './core.js';
+import { type WikiEntityData, wikiEntityPickerPlugin } from './core';
 
 // Minimal PostField stub
 const makeField = (overrides: Partial<PostField> = {}): PostField =>

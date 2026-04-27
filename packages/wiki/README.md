@@ -339,7 +339,8 @@ function manifestToWikiEvent(
 
 interface WikiEventConfig {
   dTag?: string; // override the d-tag slug (default: normalise from title field)
-  relays?: string[];
+  pubkey?: string;
+  createdAt?: number;
 }
 ```
 

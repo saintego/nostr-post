@@ -250,7 +250,7 @@ export class NostrWikiComposer extends LitElement {
 
     try {
       const raw = await fetchEvents(
-        { kinds: [WIKI_KIND], '#d': [this.entityId] } as never,
+        { kinds: [WIKI_KIND], '#d': [this.entityId], limit: 50 } as never,
         this.relays
       );
       const events = raw as unknown as WikiEvent[];
@@ -288,10 +288,14 @@ export class NostrWikiComposer extends LitElement {
       const titleValue = titleField
         ? (this._formData[titleField.id] as string | undefined)
         : undefined;
+      const explicitDTag = this.entityId?.trim() || undefined;
+      const unsignedEvent = explicitDTag
+        ? manifestToWikiEvent(this.manifest, this._formData, { dTag: explicitDTag })
+        : manifestToWikiEvent(this.manifest, this._formData);
       const dTag =
-        this.entityId?.trim() ||
+        explicitDTag ||
+        unsignedEvent.tags.find((tag) => tag[0] === 'd')?.[1] ||
         (titleValue ? normalizeDTag(titleValue) : normalizeDTag(this.manifest.id));
-      const unsignedEvent = manifestToWikiEvent(this.manifest, this._formData, { dTag });
 
       if (this.autoPublish) {
         const results = await signAndPublish(unsignedEvent, this.relays);
@@ -405,11 +409,12 @@ export class NostrWikiComposer extends LitElement {
     const plugin = pluginRegistry.get(f.uiPlugin);
     if (plugin?.inputTagName) {
       const tag = unsafeStatic(plugin.inputTagName);
+      const fieldId = `field-${f.id}`;
       return html`
         <div class="wiki-field">
           <label>${label}${f.required ? ' *' : ''}</label>
           ${staticHtml`<${tag}
-            id="field-${unsafeStatic(f.id)}"
+            id=${fieldId}
             .value=${value}
             .field=${f}
             @np-value-changed=${(e: CustomEvent) => this._onFieldChange(f.id, e.detail.value)}

@@ -1,5 +1,6 @@
 import { parse, renderDjot } from '@djot/djot';
 import type { NostrPostManifest, PostField, UnsignedNostrEvent } from '@nostr-post/core/types';
+import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { interpolateTemplate } from './identity';
 import { normalizeDTag } from './normalizeDTag';
 import type { WikiEvent } from './resolver';
@@ -137,12 +138,22 @@ export function manifestToWikiEvent(
       if (target.target === 'tag' && target.tagName) {
         // Nostr event tag only — relay-filterable (t, a, i, title, d)
         if (target.tagName === 'title' && generatedTitle !== undefined) continue;
+        const plugin = pluginRegistry.get(field.uiPlugin);
         if (Array.isArray(value)) {
           for (const item of value) tags.push([target.tagName, String(item)]);
         } else {
-          const str = serializeForTable(value);
-          tags.push([target.tagName, str]);
-          if (target.tagName === 'title' && !dTag) dTag = normalizeDTag(str);
+          const str = plugin?.serializeValue
+            ? plugin.serializeValue(value)
+            : serializeForTable(value);
+          if (str) {
+            tags.push([target.tagName, str]);
+            if (target.tagName === 'title' && !dTag) dTag = normalizeDTag(str);
+          }
+        }
+        // Emit supplemental tags from the plugin (e.g. `i` tags from wiki-entity-picker)
+        if (plugin?.extraTags) {
+          const extra = plugin.extraTags(value, field);
+          for (const extraTag of extra) tags.push(extraTag);
         }
         continue;
       }

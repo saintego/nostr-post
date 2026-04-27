@@ -1,5 +1,6 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { useEffect, useRef } from 'react';
+import '@nostr-post/wiki/web';
 import type { WikiResolverFunction } from '../resolver';
 
 interface NostrWikiComposerElement extends HTMLElement {
