@@ -4,6 +4,7 @@ import { WIKI_KIND, manifestToWikiEvent, wikiEventToManifestData } from './nip54
 import { normalizeDTag } from './normalizeDTag';
 import { defaultResolver } from './resolver';
 import type { WikiEvent } from './resolver';
+import type { WikiManifest } from './types';
 
 const beerManifest: NostrPostManifest = {
   id: 'beer-entity-v1',
@@ -229,5 +230,55 @@ describe('defaultResolver', () => {
       makeEvent('b', 100, '30818:other:test'),
     ];
     expect(defaultResolver(events)?.id).toBe('a');
+  });
+});
+
+describe('wikiConfig identity generation', () => {
+  const templateManifest: WikiManifest = {
+    id: 'beer-entity-v1',
+    version: '1.0.0',
+    wikiConfig: {
+      titleTemplate: '{name} (Beer)',
+      dTagTemplate: '{name}-(beer)',
+    },
+    fields: [
+      {
+        id: 'name',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: WIKI_KIND, target: 'table' },
+      },
+    ],
+  };
+
+  it('generates title tag from titleTemplate', () => {
+    const ev = manifestToWikiEvent(templateManifest, { name: 'Bitcoin' });
+    expect(ev.tags.find((t) => t[0] === 'title')?.[1]).toBe('Bitcoin (Beer)');
+  });
+
+  it('generates d-tag from dTagTemplate', () => {
+    const ev = manifestToWikiEvent(templateManifest, { name: 'Bitcoin' });
+    expect(ev.tags.find((t) => t[0] === 'd')?.[1]).toBe('bitcoin-beer');
+  });
+
+  it('normalizes d-tag correctly', () => {
+    const ev = manifestToWikiEvent(templateManifest, { name: "What's Up?" });
+    expect(ev.tags.find((t) => t[0] === 'd')?.[1]).toBe('whats-up-beer');
+  });
+
+  it('falls back to titleTemplate for d-tag when dTagTemplate absent', () => {
+    const m: WikiManifest = { ...templateManifest, wikiConfig: { titleTemplate: '{name} (Beer)' } };
+    const ev = manifestToWikiEvent(m, { name: 'Bitcoin' });
+    expect(ev.tags.find((t) => t[0] === 'd')?.[1]).toBe('bitcoin-beer');
+  });
+
+  it('does not emit duplicate title tags when template is active', () => {
+    const ev = manifestToWikiEvent(templateManifest, { name: 'Bitcoin' });
+    expect(ev.tags.filter((t) => t[0] === 'title')).toHaveLength(1);
+  });
+
+  it('explicit config.dTag overrides template-derived d-tag', () => {
+    const ev = manifestToWikiEvent(templateManifest, { name: 'Bitcoin' }, { dTag: 'custom' });
+    expect(ev.tags.find((t) => t[0] === 'd')?.[1]).toBe('custom');
   });
 });

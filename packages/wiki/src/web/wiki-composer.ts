@@ -4,6 +4,7 @@ import { fetchEvents, signAndPublish } from '@nostr-post/signer';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
+import { interpolateTemplate } from '../identity';
 import {
   DEFAULT_WIKI_RELAYS,
   WIKI_KIND,
@@ -13,6 +14,7 @@ import {
 import { normalizeDTag } from '../normalizeDTag';
 import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { defaultResolver } from '../resolver';
+import type { WikiManifest } from '../types';
 
 @customElement('nostr-wiki-composer')
 export class NostrWikiComposer extends LitElement {
@@ -149,6 +151,22 @@ export class NostrWikiComposer extends LitElement {
       margin: 0;
     }
 
+    /* ── Identity preview ── */
+    .wiki-identity-preview {
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--nl-info-bg, #eff6ff);
+      border: 1px solid var(--nl-info-border, #bfdbfe);
+      border-radius: 6px;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+    .preview-label { color: var(--nl-text-secondary, #6b7280); margin-right: 0.3rem; }
+    .preview-value { font-weight: 500; }
+    .preview-dtag  { font-family: monospace; color: var(--nl-accent, #2563eb); }
+
     /* ── Dark mode ── */
     :host-context(.dark) form.nostr-wiki-composer { background: #1f2937; border-color: #374151; }
     :host-context(.dark) .wiki-composer-header,
@@ -184,6 +202,30 @@ export class NostrWikiComposer extends LitElement {
   @state() private _formData: Record<string, unknown> = {};
   @state() private _baseEvent?: WikiEvent;
   @state() private _published = false;
+
+  private get _wikiConfig() {
+    return (this.manifest as WikiManifest | undefined)?.wikiConfig;
+  }
+
+  private get _previewTitle(): string | undefined {
+    const t = this._wikiConfig?.titleTemplate;
+    if (!t) return undefined;
+    const result = interpolateTemplate(t, this._formData);
+    return result || undefined;
+  }
+
+  private get _previewDTag(): string | undefined {
+    const cfg = this._wikiConfig;
+    if (!cfg) return undefined;
+    if (cfg.dTagTemplate) {
+      const r = interpolateTemplate(cfg.dTagTemplate, this._formData);
+      return r ? normalizeDTag(r) : undefined;
+    }
+    if (cfg.titleTemplate && this._previewTitle) {
+      return normalizeDTag(this._previewTitle);
+    }
+    return undefined;
+  }
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -310,6 +352,22 @@ export class NostrWikiComposer extends LitElement {
               : 'New entity'
           }</h3>
           ${this._baseEvent ? html`<small>Forking from ${this._baseEvent.pubkey.slice(0, 8)}…</small>` : nothing}
+          ${
+            this._wikiConfig
+              ? html`
+            <div class="wiki-identity-preview">
+              <span class="preview-item">
+                <span class="preview-label">Title:</span>
+                <span class="preview-value">${this._previewTitle ?? html`<em>—</em>`}</span>
+              </span>
+              <span class="preview-item">
+                <span class="preview-label">d-tag:</span>
+                <code class="preview-dtag">${this._previewDTag ?? html`<em>—</em>`}</code>
+              </span>
+            </div>
+          `
+              : nothing
+          }
         </header>
 
         <div class="wiki-fields">

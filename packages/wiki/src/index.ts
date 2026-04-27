@@ -1,5 +1,8 @@
 export { normalizeDTag } from './normalizeDTag';
 
+export { interpolateTemplate, templateFieldIds } from './identity';
+export type { WikiConfig, WikiManifest } from './types';
+
 export {
   type WikiEvent,
   type WikiResolverFunction,

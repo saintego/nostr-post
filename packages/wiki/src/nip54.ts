@@ -1,7 +1,9 @@
 import { parse, renderDjot } from '@djot/djot';
 import type { NostrPostManifest, PostField, UnsignedNostrEvent } from '@nostr-post/core/types';
+import { interpolateTemplate } from './identity';
 import { normalizeDTag } from './normalizeDTag';
 import type { WikiEvent } from './resolver';
+import type { WikiManifest } from './types';
 
 export const WIKI_KIND = 30818;
 
@@ -94,7 +96,7 @@ export interface WikiEventConfig {
 }
 
 export function manifestToWikiEvent(
-  manifest: NostrPostManifest,
+  manifest: NostrPostManifest | WikiManifest,
   formData: Record<string, unknown>,
   config: WikiEventConfig = {}
 ): UnsignedNostrEvent {
@@ -102,6 +104,25 @@ export function manifestToWikiEvent(
   const tableRows: Array<[string, string]> = [];
   const proseChunks: string[] = [];
   let dTag = config.dTag;
+
+  const wikiConfig = (manifest as WikiManifest).wikiConfig;
+  let generatedTitle: string | undefined;
+
+  if (wikiConfig?.titleTemplate) {
+    const interpolated = interpolateTemplate(wikiConfig.titleTemplate, formData);
+    if (interpolated) {
+      generatedTitle = interpolated;
+      tags.push(['title', generatedTitle]);
+      if (!dTag) dTag = normalizeDTag(generatedTitle);
+    }
+  }
+
+  if (wikiConfig?.dTagTemplate && !dTag) {
+    const interpolated = interpolateTemplate(wikiConfig.dTagTemplate, formData);
+    if (interpolated) dTag = normalizeDTag(interpolated);
+  } else if (wikiConfig?.titleTemplate && !dTag && generatedTitle) {
+    dTag = normalizeDTag(generatedTitle);
+  }
 
   for (const field of manifest.fields) {
     const value = formData[field.id];
@@ -115,6 +136,7 @@ export function manifestToWikiEvent(
       }
       if (target.target === 'tag' && target.tagName) {
         // Nostr event tag only — relay-filterable (t, a, i, title, d)
+        if (target.tagName === 'title' && generatedTitle !== undefined) continue;
         if (Array.isArray(value)) {
           for (const item of value) tags.push([target.tagName, String(item)]);
         } else {

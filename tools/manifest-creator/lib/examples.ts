@@ -1,7 +1,8 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
+import type { WikiManifest } from '@nostr-post/wiki';
 
-export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
+export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest> = {
   simple: {
     ...STANDARD_KIND1_POST_MANIFEST,
     id: 'kind1-simple-post',
@@ -83,13 +84,17 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   'wiki-brewery-entity': {
     id: 'brewery-entity-v1',
     version: '1.0.0',
+    wikiConfig: {
+      titleTemplate: '{name} (Brewery)',
+      dTagTemplate: '{name}-(brewery)',
+    },
     fields: [
       {
         id: 'name',
         type: 'string',
         uiPlugin: 'text',
         required: true,
-        mapTo: { kind: 30818, target: 'tag', tagName: 'title' },
+        mapTo: { kind: 30818, target: 'table' },
         metadata: { label: 'Brewery Name', placeholder: 'e.g. Russian River Brewing' },
       },
       {
@@ -130,13 +135,17 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
   'wiki-beer-entity': {
     id: 'beer-entity-v1',
     version: '1.0.0',
+    wikiConfig: {
+      titleTemplate: '{title} (Beer)',
+      dTagTemplate: '{title}-(beer)',
+    },
     fields: [
       {
         id: 'title',
         type: 'string',
         uiPlugin: 'text',
         required: true,
-        mapTo: { kind: 30818, target: 'tag', tagName: 'title' },
+        mapTo: { kind: 30818, target: 'table' },
         metadata: { label: 'Beer Name', placeholder: 'e.g. Pliny the Elder' },
       },
       {
