@@ -168,7 +168,14 @@ export class NostrWikiView extends LitElement {
 
   private async _fetch(): Promise<void> {
     if (!this.manifest) return;
-    if (!this.entityId && !this.entityIId) return;
+    if (!this.entityId && !this.entityIId) {
+      this._loading = false;
+      this._error = undefined;
+      this._formData = undefined;
+      this._winningEvent = undefined;
+      this._allEvents = [];
+      return;
+    }
 
     this._loading = true;
     this._error = undefined;

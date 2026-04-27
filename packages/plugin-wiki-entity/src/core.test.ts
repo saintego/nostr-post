@@ -64,7 +64,7 @@ describe('wikiEntityPickerPlugin.validate', () => {
 // ── serializeValue ──────────────────────────────────────────────────────────
 
 describe('wikiEntityPickerPlugin.serializeValue', () => {
-  it('returns a NIP-10 a-tag address string', () => {
+  it('returns a NIP-33 a-tag address string', () => {
     const result = wikiEntityPickerPlugin.serializeValue!(validEntity);
     expect(result).toBe('30818:abc123pubkey:pliny-the-elder');
   });

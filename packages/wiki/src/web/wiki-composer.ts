@@ -242,11 +242,13 @@ export class NostrWikiComposer extends LitElement {
     if (!this.manifest || !this.entityId) {
       this._formData = {};
       this._baseEvent = undefined;
+      this._published = false;
       return;
     }
 
     this._loading = true;
     this._error = undefined;
+    this._published = false;
 
     try {
       const raw = await fetchEvents(
@@ -255,8 +257,13 @@ export class NostrWikiComposer extends LitElement {
       );
       const events = raw as unknown as WikiEvent[];
       const winner = this.resolver(events);
-      this._baseEvent = winner ?? undefined;
-      if (winner) this._formData = wikiEventToManifestData(winner, this.manifest);
+      if (winner) {
+        this._baseEvent = winner;
+        this._formData = wikiEventToManifestData(winner, this.manifest);
+      } else {
+        this._baseEvent = undefined;
+        this._formData = {};
+      }
     } catch (err) {
       this._error = err instanceof Error ? err.message : String(err);
     } finally {

@@ -1,7 +1,7 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { useEffect, useRef } from 'react';
 import '@nostr-post/wiki/web';
-import type { WikiResolverFunction } from '../resolver';
+import type { WikiResolverFunction } from '@nostr-post/wiki';
 
 interface NostrWikiComposerElement extends HTMLElement {
   manifest?: NostrPostManifest;
@@ -63,7 +63,14 @@ export function WikiComposer({
     if (!el) return;
     const handlePublished = (e: Event) => onPublished?.((e as CustomEvent).detail);
     const handleSubmit = (e: Event) => onSubmit?.((e as CustomEvent).detail);
-    const handleError = (e: Event) => onError?.((e as CustomEvent).detail.error);
+    const handleError = (e: Event) => {
+      const error = (e as CustomEvent).detail?.error;
+      onError?.(
+        error instanceof Error
+          ? error
+          : new Error(typeof error === 'string' ? error : String(error))
+      );
+    };
     el.addEventListener('nostr-wiki-published', handlePublished);
     el.addEventListener('nostr-wiki-submit', handleSubmit);
     el.addEventListener('nostr-wiki-error', handleError);

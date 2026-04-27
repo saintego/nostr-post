@@ -14,5 +14,5 @@
       "@nostr-post/wiki/web": ["./dist/web/index.d.ts"]
     }
   },
-  "include": ["src/react/**/*", "src/normalizeDTag.ts", "src/resolver.ts", "src/nip54.ts"]
+  "include": ["src/react/**/*"]
 }
