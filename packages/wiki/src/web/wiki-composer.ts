@@ -242,6 +242,8 @@ export class NostrWikiComposer extends LitElement {
     if (!this.manifest || !this.entityId) {
       this._formData = {};
       this._baseEvent = undefined;
+      this._loading = false;
+      this._error = undefined;
       this._published = false;
       return;
     }
