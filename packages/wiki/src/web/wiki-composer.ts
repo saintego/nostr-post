@@ -298,7 +298,9 @@ export class NostrWikiComposer extends LitElement {
     try {
       const titleField = this.manifest.fields.find((f) => {
         const targets = Array.isArray(f.mapTo) ? f.mapTo : [f.mapTo];
-        return targets.some((t) => t.target === 'tag' && t.tagName === 'title');
+        return targets.some(
+          (t) => t.kind === WIKI_KIND && t.target === 'tag' && t.tagName === 'title'
+        );
       });
       const titleValue = titleField
         ? (this._formData[titleField.id] as string | undefined)
@@ -362,7 +364,9 @@ export class NostrWikiComposer extends LitElement {
                 (() => {
                   const tf = this.manifest?.fields.find((f) => {
                     const targets = Array.isArray(f.mapTo) ? f.mapTo : [f.mapTo];
-                    return targets.some((t) => t.target === 'tag' && t.tagName === 'title');
+                    return targets.some(
+                      (t) => t.kind === WIKI_KIND && t.target === 'tag' && t.tagName === 'title'
+                    );
                   });
                   return tf
                     ? String(this._formData[tf.id] ?? this.entityId ?? '')

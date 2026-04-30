@@ -163,12 +163,12 @@ export function manifestToWikiEvent(
         continue;
       }
       if (target.target === 'table') {
-        // Djot table row only — structured wiki data, not relay-filtered
-        const label = (field.metadata?.label as string | undefined) ?? field.id;
+        // Djot table row only — structured wiki data, not relay-filtered.
+        // Key by field.id (stable) so round-tripping survives label renames.
         if (Array.isArray(value)) {
-          for (const item of value) tableRows.push([label, String(item)]);
+          for (const item of value) tableRows.push([field.id, String(item)]);
         } else {
-          tableRows.push([label, serializeForTable(value)]);
+          tableRows.push([field.id, serializeForTable(value)]);
         }
       }
     }
