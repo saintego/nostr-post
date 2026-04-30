@@ -16,10 +16,10 @@ import { fetchEvents } from '@nostr-post/signer';
 import {
   DEFAULT_WIKI_RELAYS,
   WIKI_KIND,
+  defaultResolver,
   extractExternalIds,
   normalizeDTag,
 } from '@nostr-post/wiki';
-import { defaultResolver } from '@nostr-post/wiki';
 import type { WikiEvent } from '@nostr-post/wiki';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';

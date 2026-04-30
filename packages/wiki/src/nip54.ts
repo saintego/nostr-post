@@ -249,7 +249,12 @@ export function wikiEventToManifestData(
         const label = (field.metadata?.label as string | undefined) ?? field.id;
         const tableVals = tableByKey.get(field.id) ?? tableByKey.get(label);
         if (tableVals && tableVals.length > 0) {
-          result[field.id] = tableVals.length === 1 ? castValue(tableVals[0], field) : tableVals;
+          result[field.id] =
+            tableVals.length === 1
+              ? castValue(tableVals[0], field)
+              : field.type === 'number' || field.type === 'boolean'
+                ? tableVals.map((v) => castValue(v, field)).filter((v) => v !== undefined)
+                : tableVals;
         }
       }
     }

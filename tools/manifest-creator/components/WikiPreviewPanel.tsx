@@ -193,6 +193,7 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
       setReviews([]);
       return;
     }
+    const guard = { active: true };
     setReviewsLoading(true);
     void (async () => {
       try {
@@ -202,22 +203,26 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
           { kinds: [WIKI_KIND], '#d': [committedEntityId] } as never,
           DEFAULT_WIKI_RELAYS
         );
+        if (!guard.active) return;
         const aTags = collectEntityATags(entities as never);
         if (aTags.length === 0) {
-          setReviews([]);
+          if (guard.active) setReviews([]);
           return;
         }
         const found = await fetchEvents(
           { '#a': aTags, kinds: [1, 30078], limit: 50 } as never,
           DEFAULT_WIKI_RELAYS
         );
-        setReviews(found as unknown as ReviewEvent[]);
+        if (guard.active) setReviews(found as unknown as ReviewEvent[]);
       } catch {
-        setReviews([]);
+        if (guard.active) setReviews([]);
       } finally {
-        setReviewsLoading(false);
+        if (guard.active) setReviewsLoading(false);
       }
     })();
+    return () => {
+      guard.active = false;
+    };
   }, [activeTab, committedEntityId]);
 
   // Listen for composer events

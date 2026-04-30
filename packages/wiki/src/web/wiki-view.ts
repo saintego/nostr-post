@@ -154,6 +154,7 @@ export class NostrWikiView extends LitElement {
   @state() private _formData?: Record<string, unknown>;
   @state() private _winningEvent?: WikiEvent;
   @state() private _allEvents: WikiEvent[] = [];
+  private _fetchId = 0;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -167,6 +168,7 @@ export class NostrWikiView extends LitElement {
   }
 
   private async _fetch(): Promise<void> {
+    const fetchId = ++this._fetchId;
     if (!this.manifest) return;
     if (!this.entityId && !this.entityIId) {
       this._loading = false;
@@ -189,6 +191,7 @@ export class NostrWikiView extends LitElement {
       }
 
       const raw = await fetchEvents(filter as never, this.relays);
+      if (fetchId !== this._fetchId) return;
       this._allEvents = raw as unknown as WikiEvent[];
 
       if (this.entityIId && this._allEvents.length > 0) {
@@ -202,6 +205,7 @@ export class NostrWikiView extends LitElement {
             { kinds: [WIKI_KIND], '#d': dTags, limit: 50 } as never,
             this.relays
           )) as unknown as WikiEvent[];
+          if (fetchId !== this._fetchId) return;
           const ids = new Set(this._allEvents.map((e) => e.id));
           for (const e of byDTag) {
             if (!ids.has(e.id)) this._allEvents.push(e);
@@ -213,9 +217,10 @@ export class NostrWikiView extends LitElement {
       this._winningEvent = winner ?? undefined;
       this._formData = winner ? wikiEventToManifestData(winner, this.manifest) : undefined;
     } catch (err) {
+      if (fetchId !== this._fetchId) return;
       this._error = err instanceof Error ? err.message : String(err);
     } finally {
-      this._loading = false;
+      if (fetchId === this._fetchId) this._loading = false;
     }
   }
 
