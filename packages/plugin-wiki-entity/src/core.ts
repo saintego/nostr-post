@@ -110,6 +110,23 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
   },
 
   /**
+   * Deserialises the canonical NIP-54 `a`-tag address back into the minimal
+   * structured value expected by the picker for prefill/edit flows.
+   */
+  deserializeValue: (raw: string, _field: PostField): WikiEntityData | undefined => {
+    const parts = raw.split(':');
+    if (parts.length < 3 || parts[0] !== '30818') {
+      return undefined;
+    }
+    const resolvedPubkey = parts[1];
+    const dTag = parts.slice(2).join(':');
+    if (!resolvedPubkey || !dTag) {
+      return undefined;
+    }
+    return { dTag, resolvedPubkey, externalIds: [] };
+  },
+
+  /**
    * extraTags implementation.
    *
    * Emits only the `i` tags copied from the entity at selection time for

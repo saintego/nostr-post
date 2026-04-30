@@ -143,7 +143,7 @@ export function manifestToWikiEvent(
           for (const item of value) tags.push([target.tagName, String(item)]);
         } else {
           const str = plugin?.serializeValue
-            ? plugin.serializeValue(value)
+            ? plugin.serializeValue(value, field)
             : serializeForTable(value);
           if (str) {
             tags.push([target.tagName, str]);
@@ -218,8 +218,23 @@ export function wikiEventToManifestData(
       }
       if (target.target === 'tag' && target.tagName) {
         // Read from Nostr event tags
+        const plugin = pluginRegistry.get(field.uiPlugin);
+        // Prefer resolveFromTags (has access to full tag array, e.g. for i-tags)
+        if (plugin?.resolveFromTags) {
+          const resolved = plugin.resolveFromTags(event.tags, field);
+          if (resolved !== undefined) result[field.id] = resolved;
+          continue;
+        }
         const tagValues = getAllTagValues(event.tags, target.tagName);
         if (tagValues.length > 0) {
+          // Use deserializeValue for single-value fields when available
+          if (plugin?.deserializeValue && tagValues.length === 1) {
+            const deserialized = plugin.deserializeValue(tagValues[0], field);
+            if (deserialized !== undefined) {
+              result[field.id] = deserialized;
+              continue;
+            }
+          }
           result[field.id] =
             tagValues.length === 1
               ? castValue(tagValues[0], field)
