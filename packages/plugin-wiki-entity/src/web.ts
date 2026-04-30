@@ -202,6 +202,8 @@ export class WikiEntityPicker extends LitElement {
     clearTimeout(this._debounceTimer);
 
     if (this._query.length < this._minLen) {
+      this._searchId++;
+      this._searching = false;
       this._results = [];
       return;
     }
