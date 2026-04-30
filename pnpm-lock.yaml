@@ -143,6 +143,9 @@ importers:
       '@nostr-post/plugin-venue':
         specifier: workspace:*
         version: link:../plugin-venue
+      '@nostr-post/plugin-wiki-entity':
+        specifier: workspace:*
+        version: link:../plugin-wiki-entity
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins
@@ -152,6 +155,9 @@ importers:
       '@nostr-post/web':
         specifier: workspace:*
         version: link:../web
+      '@nostr-post/wiki':
+        specifier: workspace:*
+        version: link:../wiki
     devDependencies:
       esbuild:
         specifier: ^0.24.0
@@ -304,6 +310,31 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  packages/plugin-wiki-entity:
+    dependencies:
+      '@nostr-post/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      '@nostr-post/signer':
+        specifier: workspace:*
+        version: link:../signer
+      '@nostr-post/wiki':
+        specifier: workspace:*
+        version: link:../wiki
+      lit:
+        specifier: ^3.2.1
+        version: 3.3.2
+    devDependencies:
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@25.0.3)(@vitest/ui@2.1.9)(happy-dom@15.11.7)(jsdom@23.2.0)
+
   packages/plugins:
     dependencies:
       '@nostr-post/core':
@@ -398,6 +429,37 @@ importers:
         specifier: ^5.6.3
         version: 5.9.3
 
+  packages/wiki:
+    dependencies:
+      '@djot/djot':
+        specifier: ^0.3.0
+        version: 0.3.2
+      '@nostr-post/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      '@nostr-post/signer':
+        specifier: workspace:*
+        version: link:../signer
+      lit:
+        specifier: ^3.2.1
+        version: 3.3.2
+      react:
+        specifier: '>=18'
+        version: 18.3.1
+    devDependencies:
+      '@types/react':
+        specifier: ^18.2.0
+        version: 18.3.27
+      typescript:
+        specifier: ^5.6.3
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@25.0.3)(@vitest/ui@2.1.9)(happy-dom@15.11.7)(jsdom@23.2.0)
+
   tools/manifest-creator:
     dependencies:
       '@nostr-post/core':
@@ -427,6 +489,9 @@ importers:
       '@nostr-post/plugin-venue':
         specifier: workspace:*
         version: link:../../packages/plugin-venue
+      '@nostr-post/plugin-wiki-entity':
+        specifier: workspace:*
+        version: link:../../packages/plugin-wiki-entity
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../../packages/plugins
@@ -439,6 +504,9 @@ importers:
       '@nostr-post/web':
         specifier: workspace:*
         version: link:../../packages/web
+      '@nostr-post/wiki':
+        specifier: workspace:*
+        version: link:../../packages/wiki
       '@types/react':
         specifier: ^18.0.0
         version: 18.3.27
@@ -674,6 +742,11 @@ packages:
   '@csstools/css-tokenizer@3.0.4':
     resolution: {integrity: sha512-Vd/9EVDiu6PPJt9yAh6roZP6El1xHrdvIVGjyBsHR0RYwNHgL7FJPyIIW4fANJNG6FtyZfvlRPpFI4ZM/lubvw==}
     engines: {node: '>=18'}
+
+  '@djot/djot@0.3.2':
+    resolution: {integrity: sha512-joMKR24B8rxueyFiJbpZAqEiypjvOyzTxzkhyr0q5mM/sUBaOD3unna/9IxtOotFugViyYlkIRaiXg3xM//zxg==}
+    engines: {node: '>=17.0.0'}
+    hasBin: true
 
   '@emnapi/runtime@1.7.1':
     resolution: {integrity: sha512-PVtJr5CmLwYAU9PZDMITZoR5iAOShYREoR45EyyLrbntV50mdePTgUn4AmOw90Ifcj+x2kRjdzr1HP3RrNiHGA==}
@@ -3357,6 +3430,8 @@ snapshots:
       '@csstools/css-tokenizer': 3.0.4
 
   '@csstools/css-tokenizer@3.0.4': {}
+
+  '@djot/djot@0.3.2': {}
 
   '@emnapi/runtime@1.7.1':
     dependencies:

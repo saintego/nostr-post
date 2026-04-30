@@ -51,6 +51,7 @@ export const PreviewPane = ({ manifest, manifestRef, isResolvingParents }: Previ
     import('@nostr-post/plugin-markdown/web');
     import('@nostr-post/plugin-hashtag/web');
     import('@nostr-post/plugin-venue/web');
+    import('@nostr-post/plugin-wiki-entity/web');
   }, []);
 
   const reloadCurrentPubkey = useCallback(async () => {

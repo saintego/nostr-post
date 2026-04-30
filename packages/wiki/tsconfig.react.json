@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@nostr-post/core/types": ["../core/dist/types.d.ts"],
+      "@nostr-post/plugins/registry": ["../plugins/dist/registry.d.ts"],
+      "@nostr-post/plugins/types": ["../plugins/dist/types.d.ts"],
+      "@nostr-post/signer": ["../signer/dist/index.d.ts"],
+      "@nostr-post/wiki": ["./dist/index.d.ts"],
+      "@nostr-post/wiki/web": ["./dist/web/index.d.ts"]
+    }
+  },
+  "include": ["src/react/**/*"]
+}

@@ -23,6 +23,8 @@ import '@nostr-post/plugin-reference/web';
 import '@nostr-post/plugin-markdown/web';
 import '@nostr-post/plugin-hashtag/web';
 import '@nostr-post/plugin-list/web';
+import '@nostr-post/wiki/web';
+import '@nostr-post/plugin-wiki-entity/web';
 
 // ── Re-exports for programmatic / advanced usage ────────────────────────────
 
@@ -69,3 +71,16 @@ export {
   getUserRelays,
   getDefaultRelays,
 } from '@nostr-post/web';
+
+// Wiki (NIP-54 kind:30818)
+export {
+  WIKI_KIND,
+  DEFAULT_WIKI_RELAYS,
+  manifestToWikiEvent,
+  wikiEventToManifestData,
+  buildWikiATag,
+  extractExternalIds,
+  normalizeDTag,
+  defaultResolver,
+  collectEntityATags,
+} from '@nostr-post/wiki';

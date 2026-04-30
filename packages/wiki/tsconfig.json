@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@nostr-post/core/types": ["../core/dist/types.d.ts"],
+      "@nostr-post/plugins/registry": ["../plugins/dist/registry.d.ts"],
+      "@nostr-post/plugins/types": ["../plugins/dist/types.d.ts"],
+      "@nostr-post/signer": ["../signer/dist/index.d.ts"]
+    }
+  },
+  "include": ["src/index.ts", "src/normalizeDTag.ts", "src/resolver.ts", "src/nip54.ts"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts"]
+}
