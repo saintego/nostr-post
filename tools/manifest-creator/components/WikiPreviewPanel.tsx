@@ -2,6 +2,7 @@
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { normalizeDTag } from '@nostr-post/wiki';
+import type { CSSProperties, DetailedHTMLProps, HTMLAttributes } from 'react';
 import { useEffect, useRef, useState } from 'react';
 
 interface WikiPreviewPanelProps {
@@ -24,12 +25,12 @@ interface NostrWikiComposerElement extends HTMLElement {
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'nostr-wiki-view': React.DetailedHTMLProps<
-        React.HTMLAttributes<NostrWikiViewElement>,
+      'nostr-wiki-view': DetailedHTMLProps<
+        HTMLAttributes<NostrWikiViewElement>,
         NostrWikiViewElement
       >;
-      'nostr-wiki-composer': React.DetailedHTMLProps<
-        React.HTMLAttributes<NostrWikiComposerElement>,
+      'nostr-wiki-composer': DetailedHTMLProps<
+        HTMLAttributes<NostrWikiComposerElement>,
         NostrWikiComposerElement
       >;
     }
@@ -47,7 +48,7 @@ const styles = {
     display: 'flex',
     borderBottom: '1px solid #e5e7eb',
   },
-  tab: (active: boolean): React.CSSProperties => ({
+  tab: (active: boolean): CSSProperties => ({
     padding: '0.75rem 1.25rem',
     fontSize: '0.875rem',
     fontWeight: active ? 600 : 400,
