@@ -10,6 +10,7 @@
  *   4. On selection: runs resolver → creates WikiEntityData → dispatches 'np-value-changed'
  */
 
+import { nip50Search } from '@nostr-post/core/nip50';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { fetchEvents } from '@nostr-post/signer';
 import {
@@ -211,20 +212,22 @@ export class WikiEntityPicker extends LitElement {
   private async _search(): Promise<void> {
     this._searching = true;
     try {
-      const raw = await fetchEvents(
-        {
-          kinds: [WIKI_KIND],
-          '#d': [normalizeDTag(this._query)],
-          limit: 50,
-        } as never,
-        this._relays
-      );
-      const all = raw as unknown as WikiEvent[];
+      const slug = normalizeDTag(this._query);
+      const merged = await nip50Search<WikiEvent>({
+        fetchFn: fetchEvents as never,
+        query: this._query,
+        baseFilter: { kinds: [WIKI_KIND] },
+        fallbackFilter: { '#d': [slug] },
+        nip50Limit: 30,
+        fallbackLimit: 20,
+        relays: this._relays,
+        getId: (ev) => ev.id,
+      });
 
       // Multiple pubkeys can publish the same d-tag slug. Group by d-tag and
       // resolve each group to a single winner so each article appears once.
       const byDTag = new Map<string, WikiEvent[]>();
-      for (const ev of all) {
+      for (const ev of merged) {
         const d = ev.tags.find((t) => t[0] === 'd')?.[1] ?? '';
         if (!byDTag.has(d)) byDTag.set(d, []);
         byDTag.get(d)!.push(ev);
