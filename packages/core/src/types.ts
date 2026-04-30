@@ -12,7 +12,9 @@
  * @property target - Where the data lives:
  *   - 'tag'     → Nostr event tags array (relay-filterable, e.g. 't', 'a', 'i', 'title')
  *   - 'content' → plain prose in the event content string
- *   - 'table'   → a row in a structured Djot table inside content (wiki kind:30818 only)
+ *   - 'table'   → a row in a structured Djot table inside content (wiki kind:30818 only;
+ *                 **not handled by the core coordinator** — use `@nostr-post/wiki`'s
+ *                 `manifestToWikiEvent` for this target)
  * @property tagName - Required when target is 'tag' (e.g., "t" for topic, "a" for reference)
  * @property path - JSON path for structured data in NIP-78 events (e.g., "venue.address.city")
  */

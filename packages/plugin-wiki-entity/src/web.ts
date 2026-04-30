@@ -183,6 +183,8 @@ export class WikiEntityPicker extends LitElement {
   @state() private _searching = false;
   @state() private _debounceTimer?: ReturnType<typeof setTimeout>;
 
+  private _searchId = 0;
+
   private get _config(): WikiEntityPickerConfig {
     return (this.field?.metadata as WikiEntityPickerConfig | undefined) ?? {};
   }
@@ -210,6 +212,7 @@ export class WikiEntityPicker extends LitElement {
   }
 
   private async _search(): Promise<void> {
+    const searchId = ++this._searchId;
     this._searching = true;
     try {
       const slug = normalizeDTag(this._query);
@@ -224,6 +227,8 @@ export class WikiEntityPicker extends LitElement {
         getId: (ev) => ev.id,
       });
 
+      if (searchId !== this._searchId) return;
+
       // Multiple pubkeys can publish the same d-tag slug. Group by d-tag and
       // resolve each group to a single winner so each article appears once.
       const byDTag = new Map<string, WikiEvent[]>();
@@ -236,9 +241,10 @@ export class WikiEntityPicker extends LitElement {
         .map((group) => defaultResolver(group))
         .filter((ev): ev is WikiEvent => ev !== null);
     } catch {
+      if (searchId !== this._searchId) return;
       this._results = [];
     } finally {
-      this._searching = false;
+      if (searchId === this._searchId) this._searching = false;
     }
   }
 

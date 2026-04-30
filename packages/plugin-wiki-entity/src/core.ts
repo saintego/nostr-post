@@ -36,6 +36,13 @@ export interface WikiEntityPickerConfig {
   relays?: string[];
   /** Minimum characters before triggering a search */
   minSearchLength?: number;
+  /**
+   * Set to `false` to suppress `extraTags` emission for this field.
+   * Useful when referencing an entity from another entity manifest to avoid
+   * copying the referenced entity's `i` tags into the referencing event.
+   * Defaults to `true` (extra tags are emitted).
+   */
+  emitExtraTags?: boolean;
 }
 
 export const wikiEntityPickerPlugin: NostrUIPlugin = {
@@ -133,7 +140,9 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
    * cross-platform discovery. The `a` tag is handled by `serializeValue`
    * together with the field's `mapTo.tagName: 'a'` — no duplication.
    */
-  extraTags: (value: unknown, _field: PostField): [string, ...string[]][] => {
+  extraTags: (value: unknown, field: PostField): [string, ...string[]][] => {
+    const config = field.metadata as WikiEntityPickerConfig | undefined;
+    if (config?.emitExtraTags === false) return [];
     if (!value || typeof value !== 'object' || Array.isArray(value)) {
       return [];
     }

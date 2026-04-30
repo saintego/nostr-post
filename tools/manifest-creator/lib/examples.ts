@@ -153,7 +153,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         type: 'ref',
         uiPlugin: 'wiki-entity-picker',
         mapTo: { kind: 30818, target: 'tag', tagName: 'a' },
-        metadata: { label: 'Brewery', entityManifest: 'brewery-entity-v1' },
+        metadata: { label: 'Brewery', entityManifest: 'brewery-entity-v1', emitExtraTags: false },
       },
       {
         id: 'style',

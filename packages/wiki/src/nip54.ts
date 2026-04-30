@@ -140,7 +140,12 @@ export function manifestToWikiEvent(
         if (target.tagName === 'title' && generatedTitle !== undefined) continue;
         const plugin = pluginRegistry.get(field.uiPlugin);
         if (Array.isArray(value)) {
-          for (const item of value) tags.push([target.tagName, String(item)]);
+          for (const item of value) {
+            const str = plugin?.serializeValue
+              ? plugin.serializeValue(item, field)
+              : serializeForTable(item);
+            if (str) tags.push([target.tagName, str]);
+          }
         } else {
           const str = plugin?.serializeValue
             ? plugin.serializeValue(value, field)

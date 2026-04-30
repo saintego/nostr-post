@@ -203,6 +203,8 @@ export class NostrWikiComposer extends LitElement {
   @state() private _baseEvent?: WikiEvent;
   @state() private _published = false;
 
+  private _fetchId = 0;
+
   private get _wikiConfig() {
     return (this.manifest as WikiManifest | undefined)?.wikiConfig;
   }
@@ -239,6 +241,8 @@ export class NostrWikiComposer extends LitElement {
   }
 
   private async _fetch(): Promise<void> {
+    const fetchId = ++this._fetchId;
+
     if (!this.manifest || !this.entityId) {
       this._formData = {};
       this._baseEvent = undefined;
@@ -257,6 +261,7 @@ export class NostrWikiComposer extends LitElement {
         { kinds: [WIKI_KIND], '#d': [this.entityId], limit: 50 } as never,
         this.relays
       );
+      if (fetchId !== this._fetchId) return;
       const events = raw as unknown as WikiEvent[];
       const winner = this.resolver(events);
       if (winner) {
@@ -267,9 +272,10 @@ export class NostrWikiComposer extends LitElement {
         this._formData = {};
       }
     } catch (err) {
+      if (fetchId !== this._fetchId) return;
       this._error = err instanceof Error ? err.message : String(err);
     } finally {
-      this._loading = false;
+      if (fetchId === this._fetchId) this._loading = false;
     }
   }
 
