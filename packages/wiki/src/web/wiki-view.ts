@@ -234,6 +234,7 @@ export class NostrWikiView extends LitElement {
     const { manifest, _formData: data, _allEvents } = this;
 
     const infoFields = manifest.fields
+      .filter((f) => f.visibility?.view !== 'hidden' && !f.attachTo)
       .filter((f) => {
         const targets = Array.isArray(f.mapTo) ? f.mapTo : [f.mapTo];
         return targets.some((t) => {

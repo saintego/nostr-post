@@ -395,7 +395,7 @@ export class NostrWikiComposer extends LitElement {
 
         <div class="wiki-fields">
           ${this.manifest.fields
-            .filter((f) => f.visibility?.edit !== 'hidden')
+            .filter((f) => f.visibility?.edit !== 'hidden' && !f.attachTo)
             .map((f) => this._renderField(f))}
         </div>
 

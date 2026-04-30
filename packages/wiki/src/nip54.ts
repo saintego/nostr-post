@@ -166,7 +166,7 @@ export function manifestToWikiEvent(
         // Djot table row only — structured wiki data, not relay-filtered.
         // Key by field.id (stable) so round-tripping survives label renames.
         if (Array.isArray(value)) {
-          for (const item of value) tableRows.push([field.id, String(item)]);
+          for (const item of value) tableRows.push([field.id, serializeForTable(item)]);
         } else {
           tableRows.push([field.id, serializeForTable(value)]);
         }
