@@ -21,6 +21,21 @@ interface NostrWikiComposerElement extends HTMLElement {
   autoPublish?: boolean;
 }
 
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'nostr-wiki-view': React.DetailedHTMLProps<
+        React.HTMLAttributes<NostrWikiViewElement>,
+        NostrWikiViewElement
+      >;
+      'nostr-wiki-composer': React.DetailedHTMLProps<
+        React.HTMLAttributes<NostrWikiComposerElement>,
+        NostrWikiComposerElement
+      >;
+    }
+  }
+}
+
 const styles = {
   panel: {
     background: 'white',
@@ -272,8 +287,6 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
               <code>{'{"kinds":[30818],"#d":["' + (committedEntityId || '<slug>') + '"]}'}</code>{' '}
               across all pubkeys, resolves to the newest non-deferred event.
             </div>
-            {/* Suppress TS unknown JSX element — dynamic import defines the element at runtime */}
-            {/* @ts-ignore */}
             <nostr-wiki-view ref={viewRef} />
           </>
         )}
@@ -285,7 +298,6 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
               Pre-fills from the resolved event (if entity d-tag is set). Publishes a new{' '}
               <code>kind:30818</code> event with the same d-tag — your fork is added to the pool.
             </div>
-            {/* @ts-ignore */}
             <nostr-wiki-composer ref={composerRef} />
 
             {pendingEvent && (
