@@ -1,8 +1,9 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { describe, expect, it } from 'vitest';
+import { pluginRegistry } from '@nostr-post/plugins/registry';
+import { afterEach, describe, expect, it } from 'vitest';
 import { WIKI_KIND, manifestToWikiEvent, wikiEventToManifestData } from './nip54';
 import { normalizeDTag } from './normalizeDTag';
-import { defaultResolver } from './resolver';
+import { countContributors, defaultResolver, groupByDTag, selectNewestEntity } from './resolver';
 import type { WikiEvent } from './resolver';
 import type { WikiManifest } from './types';
 
@@ -277,8 +278,131 @@ describe('wikiConfig identity generation', () => {
     expect(ev.tags.filter((t) => t[0] === 'title')).toHaveLength(1);
   });
 
+  it('dTagTemplate takes precedence over titleTemplate when both are set', () => {
+    const m: WikiManifest = {
+      ...templateManifest,
+      wikiConfig: { titleTemplate: '{name} (Beer)', dTagTemplate: 'beer-{name}' },
+    };
+    const ev = manifestToWikiEvent(m, { name: 'Bitcoin' });
+    expect(ev.tags.find((t) => t[0] === 'd')?.[1]).toBe('beer-bitcoin');
+    expect(ev.tags.find((t) => t[0] === 'title')?.[1]).toBe('Bitcoin (Beer)');
+  });
+
+  it('falls back to titleTemplate when dTagTemplate interpolates to empty', () => {
+    const m: WikiManifest = {
+      ...templateManifest,
+      wikiConfig: { titleTemplate: '{name} (Beer)', dTagTemplate: '{missing}' },
+    };
+    const ev = manifestToWikiEvent(m, { name: 'Bitcoin' });
+    expect(ev.tags.find((t) => t[0] === 'd')?.[1]).toBe('bitcoin-beer');
+  });
+
   it('explicit config.dTag overrides template-derived d-tag', () => {
     const ev = manifestToWikiEvent(templateManifest, { name: 'Bitcoin' }, { dTag: 'custom' });
     expect(ev.tags.find((t) => t[0] === 'd')?.[1]).toBe('custom');
+  });
+});
+
+describe('manifestToWikiEvent edge cases', () => {
+  const tableManifest: NostrPostManifest = {
+    id: 'm',
+    version: '1.0.0',
+    fields: [
+      {
+        id: 'notes',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: WIKI_KIND, target: 'table' },
+      },
+      {
+        id: 'tags',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: WIKI_KIND, target: 'tag', tagName: 't' },
+      },
+    ],
+  };
+
+  it('keeps table rows on one line when values contain newlines and pipes', () => {
+    const ev = manifestToWikiEvent(tableManifest, { notes: 'line one\nline | two' });
+    const row = ev.content.split('\n').find((l) => l.startsWith('| notes'));
+    expect(row).toContain('line one line \\| two');
+    const data = wikiEventToManifestData({ ...ev, id: 'x' }, tableManifest);
+    expect(data['notes']).toBe('line one line | two');
+  });
+
+  it('skips null values instead of emitting "null"', () => {
+    const ev = manifestToWikiEvent(tableManifest, { notes: null, tags: null });
+    expect(ev.content).not.toContain('null');
+    expect(ev.tags.filter((t) => t[0] === 't')).toHaveLength(0);
+  });
+
+  it('skips null items inside array values', () => {
+    const ev = manifestToWikiEvent(tableManifest, { tags: ['a', null, 'b'] });
+    expect(ev.tags.filter((t) => t[0] === 't').map((t) => t[1])).toEqual(['a', 'b']);
+  });
+});
+
+describe('manifestToWikiEvent plugin extraTags', () => {
+  afterEach(() => {
+    pluginRegistry.unregister('test-extra');
+  });
+
+  it('emits extraTags once per field even with several tag targets', () => {
+    pluginRegistry.register({
+      id: 'test-extra',
+      type: 'string',
+      extraTags: () => [['i', 'ext:1']],
+    } as never);
+    const m: NostrPostManifest = {
+      id: 'm',
+      version: '1.0.0',
+      fields: [
+        {
+          id: 'ref',
+          type: 'string',
+          uiPlugin: 'test-extra',
+          mapTo: [
+            { kind: WIKI_KIND, target: 'tag', tagName: 'a' },
+            { kind: WIKI_KIND, target: 'tag', tagName: 'r' },
+          ],
+        },
+      ],
+    };
+    const ev = manifestToWikiEvent(m, { ref: 'x' });
+    expect(ev.tags.filter((t) => t[0] === 'i')).toEqual([['i', 'ext:1']]);
+  });
+});
+
+describe('resolver helpers', () => {
+  const ev = (id: string, pubkey: string, d: string, created_at: number): WikiEvent => ({
+    id,
+    pubkey,
+    kind: WIKI_KIND,
+    created_at,
+    tags: d ? [['d', d]] : [],
+    content: '',
+  });
+
+  it('groupByDTag groups events by d-tag', () => {
+    const groups = groupByDTag([ev('1', 'a', 'x', 1), ev('2', 'b', 'y', 2), ev('3', 'c', 'x', 3)]);
+    expect(groups.get('x')?.map((e) => e.id)).toEqual(['1', '3']);
+    expect(groups.get('y')?.map((e) => e.id)).toEqual(['2']);
+  });
+
+  it('countContributors counts distinct pubkeys', () => {
+    expect(
+      countContributors([ev('1', 'a', 'x', 1), ev('2', 'a', 'x', 2), ev('3', 'b', 'x', 3)])
+    ).toBe(2);
+  });
+
+  it('selectNewestEntity picks the d-tag with the newest resolved winner', () => {
+    const events = [ev('1', 'a', 'old', 100), ev('2', 'b', 'new', 300), ev('3', 'c', 'old', 200)];
+    expect(selectNewestEntity(events)).toBe('new');
+  });
+
+  it('selectNewestEntity ignores events without a d-tag', () => {
+    expect(selectNewestEntity([ev('1', 'a', '', 500), ev('2', 'b', 'x', 1)])).toBe('x');
+    expect(selectNewestEntity([ev('1', 'a', '', 500)])).toBeUndefined();
   });
 });

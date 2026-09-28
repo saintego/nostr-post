@@ -47,7 +47,8 @@ function extractTableFromAst(ast: AstDoc): { rows: Array<[string, string]>; tabl
   return { rows, tableIndex };
 }
 
-const escapeCell = (v: string): string => v.replace(/\|/g, '\\|');
+// Djot table rows are single-line: collapse line breaks and escape the cell delimiter.
+const escapeCell = (v: string): string => v.replace(/\r?\n+/g, ' ').replace(/\|/g, '\\|');
 
 function serializeForTable(value: unknown): string {
   if (typeof value === 'string') return value;
@@ -58,14 +59,13 @@ function serializeForTable(value: unknown): string {
 
 function buildDjotTable(rows: Array<[string, string]>): string {
   if (rows.length === 0) return '';
-  const col1 = Math.max(5, ...rows.map(([k]) => k.length));
-  const col2 = Math.max(5, ...rows.map(([, v]) => v.length));
+  const escaped = rows.map(([k, v]): [string, string] => [escapeCell(k), escapeCell(v)]);
+  const col1 = Math.max(5, ...escaped.map(([k]) => k.length));
+  const col2 = Math.max(5, ...escaped.map(([, v]) => v.length));
   const pad = (s: string, n: number) => s.padEnd(n);
   const sep = `| ${'-'.repeat(col1)} | ${'-'.repeat(col2)} |`;
   const header = `| ${pad('Field', col1)} | ${pad('Value', col2)} |`;
-  const dataRows = rows.map(
-    ([k, v]) => `| ${pad(escapeCell(k), col1)} | ${pad(escapeCell(v), col2)} |`
-  );
+  const dataRows = escaped.map(([k, v]) => `| ${pad(k, col1)} | ${pad(v, col2)} |`);
   return [header, sep, ...dataRows].join('\n');
 }
 
@@ -114,21 +114,21 @@ export function manifestToWikiEvent(
     if (interpolated) {
       generatedTitle = interpolated;
       tags.push(['title', generatedTitle]);
-      if (!dTag) dTag = normalizeDTag(generatedTitle);
     }
   }
 
-  if (wikiConfig?.dTagTemplate && !dTag) {
+  // Precedence: explicit config.dTag > dTagTemplate > titleTemplate-derived.
+  if (!dTag && wikiConfig?.dTagTemplate) {
     const interpolated = interpolateTemplate(wikiConfig.dTagTemplate, formData);
     if (interpolated) dTag = normalizeDTag(interpolated);
-  } else if (wikiConfig?.titleTemplate && !dTag && generatedTitle) {
-    dTag = normalizeDTag(generatedTitle);
   }
+  if (!dTag && generatedTitle) dTag = normalizeDTag(generatedTitle);
 
   for (const field of manifest.fields) {
     const value = formData[field.id];
-    if (value === undefined) continue;
+    if (value === undefined || value === null) continue;
     const targets = Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo];
+    let extraTagsEmitted = false;
     for (const target of targets) {
       if (target.kind !== WIKI_KIND) continue;
       if (target.target === 'content') {
@@ -141,6 +141,7 @@ export function manifestToWikiEvent(
         const plugin = pluginRegistry.get(field.uiPlugin);
         if (Array.isArray(value)) {
           for (const item of value) {
+            if (item === undefined || item === null) continue;
             const str = plugin?.serializeValue
               ? plugin.serializeValue(item, field)
               : serializeForTable(item);
@@ -156,7 +157,8 @@ export function manifestToWikiEvent(
           }
         }
         // Emit supplemental tags from the plugin (e.g. `i` tags from wiki-entity-picker)
-        if (plugin?.extraTags) {
+        if (plugin?.extraTags && !extraTagsEmitted) {
+          extraTagsEmitted = true;
           const extra = plugin.extraTags(value, field);
           for (const extraTag of extra) tags.push(extraTag);
         }
@@ -166,7 +168,11 @@ export function manifestToWikiEvent(
         // Djot table row only — structured wiki data, not relay-filtered.
         // Key by field.id (stable) so round-tripping survives label renames.
         if (Array.isArray(value)) {
-          for (const item of value) tableRows.push([field.id, serializeForTable(item)]);
+          for (const item of value) {
+            if (item !== undefined && item !== null) {
+              tableRows.push([field.id, serializeForTable(item)]);
+            }
+          }
         } else {
           tableRows.push([field.id, serializeForTable(value)]);
         }

@@ -1,6 +1,7 @@
 export { normalizeDTag } from './normalizeDTag';
 
 export { interpolateTemplate, templateFieldIds } from './identity';
+export { validateWikiForm } from './validate';
 export type { WikiConfig, WikiManifest } from './types';
 
 export {
@@ -8,6 +9,9 @@ export {
   type WikiResolverFunction,
   defaultResolver,
   collectEntityATags,
+  groupByDTag,
+  countContributors,
+  selectNewestEntity,
 } from './resolver';
 
 export {

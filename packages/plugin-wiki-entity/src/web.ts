@@ -18,12 +18,18 @@ import {
   WIKI_KIND,
   defaultResolver,
   extractExternalIds,
+  groupByDTag,
   normalizeDTag,
 } from '@nostr-post/wiki';
 import type { WikiEvent } from '@nostr-post/wiki';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { type WikiEntityData, type WikiEntityPickerConfig, wikiEntityPickerPlugin } from './core';
+import {
+  type WikiEntityData,
+  type WikiEntityPickerConfig,
+  matchesEntityQuery,
+  wikiEntityPickerPlugin,
+} from './core';
 
 @customElement('wiki-entity-picker')
 export class WikiEntityPicker extends LitElement {
@@ -181,7 +187,7 @@ export class WikiEntityPicker extends LitElement {
   @state() private _query = '';
   @state() private _results: WikiEvent[] = [];
   @state() private _searching = false;
-  @state() private _debounceTimer?: ReturnType<typeof setTimeout>;
+  private _debounceTimer?: ReturnType<typeof setTimeout>;
 
   private _searchId = 0;
 
@@ -208,9 +214,18 @@ export class WikiEntityPicker extends LitElement {
       return;
     }
 
+    // Show "Searching…" during the debounce so "No entities found" doesn't
+    // flash before the query has even been sent.
+    this._searching = true;
     this._debounceTimer = setTimeout(() => {
       void this._search();
     }, 300);
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    clearTimeout(this._debounceTimer);
+    this._searchId++;
   }
 
   private async _search(): Promise<void> {
@@ -231,15 +246,13 @@ export class WikiEntityPicker extends LitElement {
 
       if (searchId !== this._searchId) return;
 
+      // Relays without NIP-50 support often ignore `search` and return arbitrary
+      // wiki events, so keep only events whose title or d-tag match the query.
+      const matching = merged.filter((ev) => matchesEntityQuery(ev.tags, this._query));
+
       // Multiple pubkeys can publish the same d-tag slug. Group by d-tag and
       // resolve each group to a single winner so each article appears once.
-      const byDTag = new Map<string, WikiEvent[]>();
-      for (const ev of merged) {
-        const d = ev.tags.find((t) => t[0] === 'd')?.[1] ?? '';
-        if (!byDTag.has(d)) byDTag.set(d, []);
-        byDTag.get(d)!.push(ev);
-      }
-      this._results = [...byDTag.values()]
+      this._results = [...groupByDTag(matching).values()]
         .map((group) => defaultResolver(group))
         .filter((ev): ev is WikiEvent => ev !== null);
     } catch {

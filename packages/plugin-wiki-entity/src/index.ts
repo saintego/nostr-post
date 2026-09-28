@@ -5,4 +5,9 @@
  * For the Lit web component, import '@nostr-post/plugin-wiki-entity/web'.
  */
 
-export { wikiEntityPickerPlugin, type WikiEntityData, type WikiEntityPickerConfig } from './core';
+export {
+  matchesEntityQuery,
+  wikiEntityPickerPlugin,
+  type WikiEntityData,
+  type WikiEntityPickerConfig,
+} from './core';

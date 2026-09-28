@@ -15,6 +15,7 @@ import { normalizeDTag } from '../normalizeDTag';
 import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { defaultResolver } from '../resolver';
 import type { WikiManifest } from '../types';
+import { validateWikiForm } from '../validate';
 
 @customElement('nostr-wiki-composer')
 export class NostrWikiComposer extends LitElement {
@@ -204,6 +205,8 @@ export class NostrWikiComposer extends LitElement {
   @state() private _published = false;
 
   private _fetchId = 0;
+  /** Identity of the last load; manifest edits that keep it don't discard input. */
+  private _loadedKey?: string;
 
   private get _wikiConfig() {
     return (this.manifest as WikiManifest | undefined)?.wikiConfig;
@@ -229,15 +232,27 @@ export class NostrWikiComposer extends LitElement {
     return undefined;
   }
 
-  override connectedCallback(): void {
-    super.connectedCallback();
+  // First fetch happens in the initial updated() call, which reports every
+  // property set before the first render — no separate connectedCallback fetch.
+  override updated(changed: Map<string, unknown>): void {
+    if (!changed.has('entityId') && !changed.has('manifest')) return;
+    // A new manifest object with the same id/version (e.g. a React parent
+    // re-rendering an inline manifest) must not wipe what the user typed.
+    const key = this.manifest
+      ? `${this.manifest.id}@${this.manifest.version}|${this.entityId ?? ''}`
+      : undefined;
+    if (key === this._loadedKey) return;
+    this._loadedKey = key;
     void this._fetch();
   }
 
-  override updated(changed: Map<string, unknown>): void {
-    if (changed.has('entityId') || changed.has('manifest')) {
-      void this._fetch();
-    }
+  private _titleFieldId(): string | undefined {
+    return this.manifest?.fields.find((f) => {
+      const targets = Array.isArray(f.mapTo) ? f.mapTo : [f.mapTo];
+      return targets.some(
+        (t) => t.kind === WIKI_KIND && t.target === 'tag' && t.tagName === 'title'
+      );
+    })?.id;
   }
 
   private async _fetch(): Promise<void> {
@@ -292,18 +307,18 @@ export class NostrWikiComposer extends LitElement {
 
   private async _onSave(): Promise<void> {
     if (!this.manifest) return;
+    const validationError = validateWikiForm(this.manifest, this._formData);
+    if (validationError) {
+      this._error = validationError;
+      return;
+    }
     this._publishing = true;
     this._error = undefined;
 
     try {
-      const titleField = this.manifest.fields.find((f) => {
-        const targets = Array.isArray(f.mapTo) ? f.mapTo : [f.mapTo];
-        return targets.some(
-          (t) => t.kind === WIKI_KIND && t.target === 'tag' && t.tagName === 'title'
-        );
-      });
-      const titleValue = titleField
-        ? (this._formData[titleField.id] as string | undefined)
+      const titleFieldId = this._titleFieldId();
+      const titleValue = titleFieldId
+        ? (this._formData[titleFieldId] as string | undefined)
         : undefined;
       const explicitDTag = this.entityId?.trim() || undefined;
       const unsignedEvent = explicitDTag
@@ -358,22 +373,7 @@ export class NostrWikiComposer extends LitElement {
         void this._onSave();
       }}>
         <header class="wiki-composer-header">
-          <h3>${
-            this._baseEvent
-              ? 'Edit: ' +
-                (() => {
-                  const tf = this.manifest?.fields.find((f) => {
-                    const targets = Array.isArray(f.mapTo) ? f.mapTo : [f.mapTo];
-                    return targets.some(
-                      (t) => t.kind === WIKI_KIND && t.target === 'tag' && t.tagName === 'title'
-                    );
-                  });
-                  return tf
-                    ? String(this._formData[tf.id] ?? this.entityId ?? '')
-                    : String(this.entityId ?? '');
-                })()
-              : 'New entity'
-          }</h3>
+          <h3>${this._baseEvent ? `Edit: ${this._headerTitle()}` : 'New entity'}</h3>
           ${this._baseEvent ? html`<small>Forking from ${this._baseEvent.pubkey.slice(0, 8)}…</small>` : nothing}
           ${
             this._wikiConfig
@@ -408,6 +408,12 @@ export class NostrWikiComposer extends LitElement {
         </div>
       </form>
     `;
+  }
+
+  private _headerTitle(): string {
+    const titleFieldId = this._titleFieldId();
+    const fromField = titleFieldId ? this._formData[titleFieldId] : undefined;
+    return String(this._previewTitle ?? fromField ?? this.entityId ?? '');
   }
 
   private _renderField(f: PostField) {

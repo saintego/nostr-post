@@ -63,3 +63,44 @@ export function collectEntityATags(events: WikiEvent[]): string[] {
   }
   return [...seen];
 }
+
+/**
+ * Group events by their d-tag. Events without a d-tag are grouped under ''.
+ * The resolver assumes every event it receives shares one d-tag, so callers
+ * that may receive several entities (search results, `#i` lookups) should
+ * group first and resolve each group separately.
+ */
+export function groupByDTag(events: WikiEvent[]): Map<string, WikiEvent[]> {
+  const groups = new Map<string, WikiEvent[]>();
+  for (const event of events) {
+    const dTag = event.tags.find((t) => t[0] === 'd')?.[1] ?? '';
+    const group = groups.get(dTag);
+    if (group) group.push(event);
+    else groups.set(dTag, [event]);
+  }
+  return groups;
+}
+
+/** Number of distinct pubkeys that published a version of the entity. */
+export function countContributors(events: WikiEvent[]): number {
+  return new Set(events.map((e) => e.pubkey)).size;
+}
+
+/**
+ * From events that may span several entities, return the d-tag of the entity
+ * whose resolved winner is newest. Events without a d-tag are ignored.
+ */
+export function selectNewestEntity(
+  events: WikiEvent[],
+  resolver: WikiResolverFunction = defaultResolver
+): string | undefined {
+  let best: { dTag: string; createdAt: number } | undefined;
+  for (const [dTag, group] of groupByDTag(events)) {
+    if (!dTag) continue;
+    const winner = resolver(group);
+    if (winner && (!best || winner.created_at > best.createdAt)) {
+      best = { dTag, createdAt: winner.created_at };
+    }
+  }
+  return best?.dTag;
+}

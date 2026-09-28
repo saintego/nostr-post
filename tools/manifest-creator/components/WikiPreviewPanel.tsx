@@ -192,6 +192,7 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
   useEffect(() => {
     if (activeTab !== 'twoHop' || !committedEntityId) {
       setReviews([]);
+      setReviewsLoading(false);
       return;
     }
     const controller = new AbortController();
@@ -210,11 +211,13 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
           if (!controller.signal.aborted) setReviews([]);
           return;
         }
-        const found = await fetchEvents(
-          { '#a': aTags, kinds: [1, 30078], limit: 50 } as never,
+        // Reviews can be any kind the review manifest targets, so don't filter by
+        // kind on the relay; only drop other wiki versions that cite this entity.
+        const found = (await fetchEvents(
+          { '#a': aTags, limit: 50 } as never,
           DEFAULT_WIKI_RELAYS
-        );
-        if (!controller.signal.aborted) setReviews(found as unknown as ReviewEvent[]);
+        )) as unknown as ReviewEvent[];
+        if (!controller.signal.aborted) setReviews(found.filter((ev) => ev.kind !== WIKI_KIND));
       } catch {
         if (!controller.signal.aborted) setReviews([]);
       } finally {
@@ -224,7 +227,9 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
     return () => controller.abort();
   }, [activeTab, committedEntityId]);
 
-  // Listen for composer events
+  // Listen for composer events. The composer only exists on the Compose tab,
+  // so re-attach whenever the tab changes.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: activeTab remounts the composer ref
   useEffect(() => {
     const el = composerRef.current;
     if (!el || !componentsLoaded) return;
@@ -237,7 +242,7 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
       el.removeEventListener('nostr-wiki-submit', onSubmit);
       el.removeEventListener('nostr-wiki-published', onPublished);
     };
-  }, [componentsLoaded]);
+  }, [componentsLoaded, activeTab]);
 
   const commitEntityId = () => {
     setCommittedEntityId(entityId.trim());

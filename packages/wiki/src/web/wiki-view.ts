@@ -5,7 +5,7 @@ import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { DEFAULT_WIKI_RELAYS, WIKI_KIND, wikiEventToManifestData } from '../nip54';
 import type { WikiEvent, WikiResolverFunction } from '../resolver';
-import { defaultResolver } from '../resolver';
+import { countContributors, defaultResolver, selectNewestEntity } from '../resolver';
 
 @customElement('nostr-wiki-view')
 export class NostrWikiView extends LitElement {
@@ -156,11 +156,8 @@ export class NostrWikiView extends LitElement {
   @state() private _allEvents: WikiEvent[] = [];
   private _fetchId = 0;
 
-  override connectedCallback(): void {
-    super.connectedCallback();
-    void this._fetch();
-  }
-
+  // First fetch happens in the initial updated() call, which reports every
+  // property set before the first render — no separate connectedCallback fetch.
   override updated(changed: Map<string, unknown>): void {
     if (changed.has('entityId') || changed.has('entityIId') || changed.has('manifest')) {
       void this._fetch();
@@ -169,8 +166,7 @@ export class NostrWikiView extends LitElement {
 
   private async _fetch(): Promise<void> {
     const fetchId = ++this._fetchId;
-    if (!this.manifest) return;
-    if (!this.entityId && !this.entityIId) {
+    if (!this.manifest || (!this.entityId && !this.entityIId)) {
       this._loading = false;
       this._error = undefined;
       this._formData = undefined;
@@ -190,30 +186,17 @@ export class NostrWikiView extends LitElement {
         filter = { kinds: [WIKI_KIND], '#i': [this.entityIId], limit: 50 };
       }
 
-      const raw = await fetchEvents(filter as never, this.relays);
+      let events = (await fetchEvents(filter as never, this.relays)) as unknown as WikiEvent[];
       if (fetchId !== this._fetchId) return;
-      this._allEvents = raw as unknown as WikiEvent[];
 
-      if (this.entityIId && this._allEvents.length > 0) {
-        const dTags = [
-          ...new Set(
-            this._allEvents.map((e) => e.tags.find((t) => t[0] === 'd')?.[1]).filter(Boolean)
-          ),
-        ] as string[];
-        if (dTags.length > 0) {
-          const byDTag = (await fetchEvents(
-            { kinds: [WIKI_KIND], '#d': dTags, limit: 50 } as never,
-            this.relays
-          )) as unknown as WikiEvent[];
-          if (fetchId !== this._fetchId) return;
-          const ids = new Set(this._allEvents.map((e) => e.id));
-          for (const e of byDTag) {
-            if (!ids.has(e.id)) this._allEvents.push(e);
-          }
-        }
+      if (!this.entityId && events.length > 0) {
+        const expanded = await this._loadEntityVersions(events, fetchId);
+        if (expanded === null) return;
+        events = expanded;
       }
 
-      const winner = this.resolver(this._allEvents);
+      const winner = this.resolver(events);
+      this._allEvents = events;
       this._winningEvent = winner ?? undefined;
       this._formData = winner ? wikiEventToManifestData(winner, this.manifest) : undefined;
     } catch (err) {
@@ -222,6 +205,29 @@ export class NostrWikiView extends LitElement {
     } finally {
       if (fetchId === this._fetchId) this._loading = false;
     }
+  }
+
+  /**
+   * Several entities can share an `i` tag, but the resolver assumes a single
+   * d-tag. Pick one entity (the d-tag whose resolved winner is newest) and load
+   * every version of it. Returns null when a newer fetch has superseded this one.
+   */
+  private async _loadEntityVersions(
+    events: WikiEvent[],
+    fetchId: number
+  ): Promise<WikiEvent[] | null> {
+    const chosen = selectNewestEntity(events, this.resolver);
+    if (!chosen) return [];
+    const versions = (await fetchEvents(
+      { kinds: [WIKI_KIND], '#d': [chosen], limit: 50 } as never,
+      this.relays
+    )) as unknown as WikiEvent[];
+    if (fetchId !== this._fetchId) return null;
+    const byId = new Map<string, WikiEvent>();
+    for (const e of [...events, ...versions]) {
+      if (e.tags.find((t) => t[0] === 'd')?.[1] === chosen) byId.set(e.id, e);
+    }
+    return [...byId.values()];
   }
 
   override render() {
@@ -261,7 +267,7 @@ export class NostrWikiView extends LitElement {
       <div class="wiki-view">
         <header class="wiki-header">
           <h2>${titleValue}</h2>
-          <span class="wiki-badge">${_allEvents.length} contributor(s)</span>
+          <span class="wiki-badge">${countContributors(_allEvents)} contributor(s)</span>
         </header>
 
         ${

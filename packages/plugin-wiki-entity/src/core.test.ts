@@ -1,6 +1,6 @@
 import type { PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
-import { type WikiEntityData, wikiEntityPickerPlugin } from './core';
+import { type WikiEntityData, matchesEntityQuery, wikiEntityPickerPlugin } from './core';
 
 // Minimal PostField stub
 const makeField = (overrides: Partial<PostField> = {}): PostField =>
@@ -106,5 +106,86 @@ describe('wikiEntityPickerPlugin.extraTags', () => {
   it('returns empty array for null value', () => {
     const tags = wikiEntityPickerPlugin.extraTags!(null, makeField());
     expect(tags).toEqual([]);
+  });
+});
+
+// ── resolveFromTags ─────────────────────────────────────────────────────────
+
+describe('wikiEntityPickerPlugin.resolveFromTags', () => {
+  const tags = [
+    ['a', '30818:abc123pubkey:pliny-the-elder'],
+    ['i', 'untappd:beer:4892'],
+    ['i', 'rb:beer:9'],
+  ];
+
+  it('restores the entity including its i-tags', () => {
+    expect(wikiEntityPickerPlugin.resolveFromTags!(tags, makeField())).toEqual({
+      dTag: 'pliny-the-elder',
+      resolvedPubkey: 'abc123pubkey',
+      externalIds: ['untappd:beer:4892', 'rb:beer:9'],
+    });
+  });
+
+  it('ignores a-tags that are not wiki addresses', () => {
+    const other = [['a', '30023:pk:article'], ...tags];
+    const result = wikiEntityPickerPlugin.resolveFromTags!(other, makeField()) as WikiEntityData;
+    expect(result.dTag).toBe('pliny-the-elder');
+  });
+
+  it('does not attach i-tags when emitExtraTags is false', () => {
+    const field = makeField({ metadata: { emitExtraTags: false } });
+    const result = wikiEntityPickerPlugin.resolveFromTags!(tags, field) as WikiEntityData;
+    expect(result.externalIds).toEqual([]);
+  });
+
+  it('returns undefined when no wiki a-tag is present', () => {
+    expect(wikiEntityPickerPlugin.resolveFromTags!([['i', 'x']], makeField())).toBeUndefined();
+  });
+
+  it('round-trips with serializeValue + extraTags', () => {
+    const field = makeField();
+    const emitted = [
+      ['a', wikiEntityPickerPlugin.serializeValue!(validEntity)],
+      ...wikiEntityPickerPlugin.extraTags!(validEntity, field),
+    ];
+    const restored = wikiEntityPickerPlugin.resolveFromTags!(emitted, field) as WikiEntityData;
+    expect(restored.externalIds).toEqual(validEntity.externalIds);
+    expect(wikiEntityPickerPlugin.serializeValue!(restored)).toBe(
+      wikiEntityPickerPlugin.serializeValue!(validEntity)
+    );
+  });
+});
+
+// ── matchesEntityQuery ──────────────────────────────────────────────────────
+
+describe('matchesEntityQuery', () => {
+  const tags = [
+    ['d', 'pliny-the-elder'],
+    ['title', 'Pliny the Elder'],
+  ];
+
+  it('matches on title, case-insensitive', () => {
+    expect(matchesEntityQuery(tags, 'ELDER')).toBe(true);
+  });
+
+  it('matches on d-tag via the normalized slug', () => {
+    expect(matchesEntityQuery(tags, 'pliny the')).toBe(true);
+    expect(matchesEntityQuery([['d', 'pliny-the-elder']], 'Pliny The')).toBe(true);
+  });
+
+  it('rejects unrelated events (relays that ignore NIP-50 search)', () => {
+    expect(
+      matchesEntityQuery(
+        [
+          ['d', 'bitcoin'],
+          ['title', 'Bitcoin'],
+        ],
+        'pliny'
+      )
+    ).toBe(false);
+  });
+
+  it('rejects an empty query', () => {
+    expect(matchesEntityQuery(tags, '   ')).toBe(false);
   });
 });
