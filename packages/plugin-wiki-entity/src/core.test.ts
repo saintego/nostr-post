@@ -1,6 +1,17 @@
-import type { PostField } from '@nostr-post/plugins/types';
+import type { NostrUIPlugin, PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
 import { type WikiEntityData, matchesEntityQuery, wikiEntityPickerPlugin } from './core';
+
+// Resolve optional plugin hooks once, failing loudly if one is missing.
+function hook<K extends keyof NostrUIPlugin>(name: K): NonNullable<NostrUIPlugin[K]> {
+  const fn = wikiEntityPickerPlugin[name];
+  if (!fn) throw new Error(`wikiEntityPickerPlugin.${String(name)} is not defined`);
+  return fn as NonNullable<NostrUIPlugin[K]>;
+}
+const validate = hook('validate');
+const serializeValue = hook('serializeValue');
+const extraTags = hook('extraTags');
+const resolveFromTags = hook('resolveFromTags');
 
 // Minimal PostField stub
 const makeField = (overrides: Partial<PostField> = {}): PostField =>
@@ -24,38 +35,35 @@ const validEntity: WikiEntityData = {
 
 describe('wikiEntityPickerPlugin.validate', () => {
   it('returns success for a valid entity', () => {
-    const result = wikiEntityPickerPlugin.validate!(validEntity, makeField());
+    const result = validate(validEntity, makeField());
     expect(result.success).toBe(true);
   });
 
   it('returns success for undefined when field is optional', () => {
-    const result = wikiEntityPickerPlugin.validate!(undefined, makeField({ required: false }));
+    const result = validate(undefined, makeField({ required: false }));
     expect(result.success).toBe(true);
   });
 
   it('returns error for undefined when field is required', () => {
-    const result = wikiEntityPickerPlugin.validate!(undefined, makeField({ required: true }));
+    const result = validate(undefined, makeField({ required: true }));
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.code).toBe('REQUIRED');
   });
 
   it('returns error for non-object value', () => {
-    const result = wikiEntityPickerPlugin.validate!('not-an-object', makeField());
+    const result = validate('not-an-object', makeField());
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.code).toBe('INVALID_TYPE');
   });
 
   it('returns error when dTag is missing', () => {
-    const result = wikiEntityPickerPlugin.validate!({ ...validEntity, dTag: '' }, makeField());
+    const result = validate({ ...validEntity, dTag: '' }, makeField());
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.code).toBe('INVALID_VALUE');
   });
 
   it('returns error when resolvedPubkey is missing', () => {
-    const result = wikiEntityPickerPlugin.validate!(
-      { ...validEntity, resolvedPubkey: '' },
-      makeField()
-    );
+    const result = validate({ ...validEntity, resolvedPubkey: '' }, makeField());
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.code).toBe('INVALID_VALUE');
   });
@@ -65,16 +73,16 @@ describe('wikiEntityPickerPlugin.validate', () => {
 
 describe('wikiEntityPickerPlugin.serializeValue', () => {
   it('returns a NIP-33 a-tag address string', () => {
-    const result = wikiEntityPickerPlugin.serializeValue!(validEntity);
+    const result = serializeValue(validEntity);
     expect(result).toBe('30818:abc123pubkey:pliny-the-elder');
   });
 
   it('returns empty string for null', () => {
-    expect(wikiEntityPickerPlugin.serializeValue!(null)).toBe('');
+    expect(serializeValue(null)).toBe('');
   });
 
   it('returns empty string for a non-object', () => {
-    expect(wikiEntityPickerPlugin.serializeValue!('bad')).toBe('');
+    expect(serializeValue('bad')).toBe('');
   });
 });
 
@@ -82,7 +90,7 @@ describe('wikiEntityPickerPlugin.serializeValue', () => {
 
 describe('wikiEntityPickerPlugin.extraTags', () => {
   it('returns i-tags for each external ID', () => {
-    const tags = wikiEntityPickerPlugin.extraTags!(validEntity, makeField());
+    const tags = extraTags(validEntity, makeField());
     expect(tags).toEqual([
       ['i', 'untappd:beer:4892'],
       ['i', 'rb:beer:9'],
@@ -90,21 +98,18 @@ describe('wikiEntityPickerPlugin.extraTags', () => {
   });
 
   it('does NOT emit an a-tag (handled by serializeValue)', () => {
-    const tags = wikiEntityPickerPlugin.extraTags!(validEntity, makeField());
+    const tags = extraTags(validEntity, makeField());
     const aTags = tags.filter((t) => t[0] === 'a');
     expect(aTags).toHaveLength(0);
   });
 
   it('returns empty array when externalIds is empty', () => {
-    const tags = wikiEntityPickerPlugin.extraTags!(
-      { ...validEntity, externalIds: [] },
-      makeField()
-    );
+    const tags = extraTags({ ...validEntity, externalIds: [] }, makeField());
     expect(tags).toEqual([]);
   });
 
   it('returns empty array for null value', () => {
-    const tags = wikiEntityPickerPlugin.extraTags!(null, makeField());
+    const tags = extraTags(null, makeField());
     expect(tags).toEqual([]);
   });
 });
@@ -119,7 +124,7 @@ describe('wikiEntityPickerPlugin.resolveFromTags', () => {
   ];
 
   it('restores the entity including its i-tags', () => {
-    expect(wikiEntityPickerPlugin.resolveFromTags!(tags, makeField())).toEqual({
+    expect(resolveFromTags(tags, makeField())).toEqual({
       dTag: 'pliny-the-elder',
       resolvedPubkey: 'abc123pubkey',
       externalIds: ['untappd:beer:4892', 'rb:beer:9'],
@@ -128,31 +133,26 @@ describe('wikiEntityPickerPlugin.resolveFromTags', () => {
 
   it('ignores a-tags that are not wiki addresses', () => {
     const other = [['a', '30023:pk:article'], ...tags];
-    const result = wikiEntityPickerPlugin.resolveFromTags!(other, makeField()) as WikiEntityData;
+    const result = resolveFromTags(other, makeField()) as WikiEntityData;
     expect(result.dTag).toBe('pliny-the-elder');
   });
 
   it('does not attach i-tags when emitExtraTags is false', () => {
     const field = makeField({ metadata: { emitExtraTags: false } });
-    const result = wikiEntityPickerPlugin.resolveFromTags!(tags, field) as WikiEntityData;
+    const result = resolveFromTags(tags, field) as WikiEntityData;
     expect(result.externalIds).toEqual([]);
   });
 
   it('returns undefined when no wiki a-tag is present', () => {
-    expect(wikiEntityPickerPlugin.resolveFromTags!([['i', 'x']], makeField())).toBeUndefined();
+    expect(resolveFromTags([['i', 'x']], makeField())).toBeUndefined();
   });
 
   it('round-trips with serializeValue + extraTags', () => {
     const field = makeField();
-    const emitted = [
-      ['a', wikiEntityPickerPlugin.serializeValue!(validEntity)],
-      ...wikiEntityPickerPlugin.extraTags!(validEntity, field),
-    ];
-    const restored = wikiEntityPickerPlugin.resolveFromTags!(emitted, field) as WikiEntityData;
+    const emitted = [['a', serializeValue(validEntity)], ...extraTags(validEntity, field)];
+    const restored = resolveFromTags(emitted, field) as WikiEntityData;
     expect(restored.externalIds).toEqual(validEntity.externalIds);
-    expect(wikiEntityPickerPlugin.serializeValue!(restored)).toBe(
-      wikiEntityPickerPlugin.serializeValue!(validEntity)
-    );
+    expect(serializeValue(restored)).toBe(serializeValue(validEntity));
   });
 });
 

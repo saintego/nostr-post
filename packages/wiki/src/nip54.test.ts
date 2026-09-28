@@ -157,29 +157,29 @@ describe('wikiEventToManifestData', () => {
 
   it('round-trips title through tags', () => {
     const data = wikiEventToManifestData(makeWikiEvent({}), beerManifest);
-    expect(data['title']).toBe('Pliny the Elder');
+    expect(data.title).toBe('Pliny the Elder');
   });
 
   it('round-trips numeric abv through Djot table', () => {
     const data = wikiEventToManifestData(makeWikiEvent({}), beerManifest);
-    expect(data['abv']).toBe(8);
+    expect(data.abv).toBe(8);
   });
 
   it('round-trips multiple i tags as array', () => {
     const data = wikiEventToManifestData(makeWikiEvent({}), beerManifest);
-    const ids = data['external_ids'] as string[];
+    const ids = data.external_ids as string[];
     expect(ids).toContain('untappd:beer:4892');
     expect(ids).toContain('ratebeer:24239');
   });
 
   it('round-trips description prose', () => {
     const data = wikiEventToManifestData(makeWikiEvent({}), beerManifest);
-    expect(String(data['description'])).toContain('Russian River Brewing');
+    expect(String(data.description)).toContain('Russian River Brewing');
   });
 
   it('exposes __dTag in result', () => {
     const data = wikiEventToManifestData(makeWikiEvent({}), beerManifest);
-    expect(data['__dTag']).toBe('pliny-the-elder');
+    expect(data.__dTag).toBe('pliny-the-elder');
   });
 
   it('abv always comes from Djot table (no Nostr tag for it)', () => {
@@ -192,7 +192,7 @@ describe('wikiEventToManifestData', () => {
       tags: base.tags.filter((t) => t[0] === 'd' || t[0] === 'title'),
     };
     const data = wikiEventToManifestData(strippedEvent, beerManifest);
-    expect(data['abv']).toBeDefined();
+    expect(data.abv).toBeDefined();
   });
 });
 
@@ -328,7 +328,7 @@ describe('manifestToWikiEvent edge cases', () => {
     const row = ev.content.split('\n').find((l) => l.startsWith('| notes'));
     expect(row).toContain('line one line \\| two');
     const data = wikiEventToManifestData({ ...ev, id: 'x' }, tableManifest);
-    expect(data['notes']).toBe('line one line | two');
+    expect(data.notes).toBe('line one line | two');
   });
 
   it('skips null values instead of emitting "null"', () => {

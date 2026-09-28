@@ -91,7 +91,7 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
     }
 
     const entity = value as Record<string, unknown>;
-    if (typeof entity['dTag'] !== 'string' || entity['dTag'].length === 0) {
+    if (typeof entity.dTag !== 'string' || entity.dTag.length === 0) {
       return {
         success: false,
         error: {
@@ -102,7 +102,7 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
       };
     }
 
-    if (typeof entity['resolvedPubkey'] !== 'string' || entity['resolvedPubkey'].length === 0) {
+    if (typeof entity.resolvedPubkey !== 'string' || entity.resolvedPubkey.length === 0) {
       return {
         success: false,
         error: {

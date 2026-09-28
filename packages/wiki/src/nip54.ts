@@ -1,5 +1,10 @@
 import { parse, renderDjot } from '@djot/djot';
-import type { NostrPostManifest, PostField, UnsignedNostrEvent } from '@nostr-post/core/types';
+import type {
+  NostrPostManifest,
+  NostrTarget,
+  PostField,
+  UnsignedNostrEvent,
+} from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { interpolateTemplate } from './identity';
 import { normalizeDTag } from './normalizeDTag';
@@ -96,183 +101,220 @@ export interface WikiEventConfig {
   createdAt?: number;
 }
 
+type Tag = [string, ...string[]];
+
+/** Mutable accumulator shared by the per-target serializers below. */
+interface WikiEventParts {
+  tags: Tag[];
+  tableRows: Array<[string, string]>;
+  proseChunks: string[];
+  dTag?: string;
+  generatedTitle?: string;
+}
+
+const isPresent = (v: unknown): boolean => v !== undefined && v !== null;
+
+const fieldTargets = (field: PostField): NostrTarget[] =>
+  Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo];
+
+/**
+ * Applies `wikiConfig` templates. Precedence for the d-tag:
+ * explicit config.dTag > dTagTemplate > titleTemplate-derived.
+ */
+function applyIdentityTemplates(
+  parts: WikiEventParts,
+  wikiConfig: WikiManifest['wikiConfig'],
+  formData: Record<string, unknown>
+): void {
+  if (wikiConfig?.titleTemplate) {
+    const title = interpolateTemplate(wikiConfig.titleTemplate, formData);
+    if (title) {
+      parts.generatedTitle = title;
+      parts.tags.push(['title', title]);
+    }
+  }
+  if (!parts.dTag && wikiConfig?.dTagTemplate) {
+    const interpolated = interpolateTemplate(wikiConfig.dTagTemplate, formData);
+    if (interpolated) parts.dTag = normalizeDTag(interpolated);
+  }
+  if (!parts.dTag && parts.generatedTitle) parts.dTag = normalizeDTag(parts.generatedTitle);
+}
+
+/** Nostr event tag only — relay-filterable (t, a, i, title, d). */
+function addTagTarget(
+  parts: WikiEventParts,
+  field: PostField,
+  value: unknown,
+  tagName: string
+): void {
+  // The title template is the sole source of the title tag when present.
+  if (tagName === 'title' && parts.generatedTitle !== undefined) return;
+  const plugin = pluginRegistry.get(field.uiPlugin);
+  const serialize = (v: unknown): string =>
+    plugin?.serializeValue ? plugin.serializeValue(v, field) : serializeForTable(v);
+
+  const items = Array.isArray(value) ? value.filter(isPresent) : [value];
+  for (const item of items) {
+    const str = serialize(item);
+    if (!str) continue;
+    parts.tags.push([tagName, str]);
+    if (tagName === 'title' && !Array.isArray(value) && !parts.dTag) {
+      parts.dTag = normalizeDTag(str);
+    }
+  }
+}
+
+/**
+ * Djot table row only — structured wiki data, not relay-filtered.
+ * Keyed by field.id (stable) so round-tripping survives label renames.
+ */
+function addTableTarget(parts: WikiEventParts, field: PostField, value: unknown): void {
+  const items = Array.isArray(value) ? value.filter(isPresent) : [value];
+  for (const item of items) parts.tableRows.push([field.id, serializeForTable(item)]);
+}
+
+function addField(parts: WikiEventParts, field: PostField, value: unknown): void {
+  let hasTagTarget = false;
+  for (const target of fieldTargets(field)) {
+    if (target.kind !== WIKI_KIND) continue;
+    if (target.target === 'content') {
+      parts.proseChunks.push(typeof value === 'string' ? value : String(value));
+    } else if (target.target === 'tag' && target.tagName) {
+      hasTagTarget = true;
+      addTagTarget(parts, field, value, target.tagName);
+    } else if (target.target === 'table') {
+      addTableTarget(parts, field, value);
+    }
+  }
+  // Supplemental plugin tags (e.g. `i` tags from wiki-entity-picker), once per field.
+  const plugin = hasTagTarget ? pluginRegistry.get(field.uiPlugin) : undefined;
+  if (plugin?.extraTags) parts.tags.push(...plugin.extraTags(value, field));
+}
+
 export function manifestToWikiEvent(
   manifest: NostrPostManifest | WikiManifest,
   formData: Record<string, unknown>,
   config: WikiEventConfig = {}
 ): UnsignedNostrEvent {
-  const tags: [string, ...string[]][] = [];
-  const tableRows: Array<[string, string]> = [];
-  const proseChunks: string[] = [];
-  let dTag = config.dTag;
-
-  const wikiConfig = (manifest as WikiManifest).wikiConfig;
-  let generatedTitle: string | undefined;
-
-  if (wikiConfig?.titleTemplate) {
-    const interpolated = interpolateTemplate(wikiConfig.titleTemplate, formData);
-    if (interpolated) {
-      generatedTitle = interpolated;
-      tags.push(['title', generatedTitle]);
-    }
-  }
-
-  // Precedence: explicit config.dTag > dTagTemplate > titleTemplate-derived.
-  if (!dTag && wikiConfig?.dTagTemplate) {
-    const interpolated = interpolateTemplate(wikiConfig.dTagTemplate, formData);
-    if (interpolated) dTag = normalizeDTag(interpolated);
-  }
-  if (!dTag && generatedTitle) dTag = normalizeDTag(generatedTitle);
+  const parts: WikiEventParts = { tags: [], tableRows: [], proseChunks: [], dTag: config.dTag };
+  applyIdentityTemplates(parts, (manifest as WikiManifest).wikiConfig, formData);
 
   for (const field of manifest.fields) {
     const value = formData[field.id];
-    if (value === undefined || value === null) continue;
-    const targets = Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo];
-    let extraTagsEmitted = false;
-    for (const target of targets) {
-      if (target.kind !== WIKI_KIND) continue;
-      if (target.target === 'content') {
-        proseChunks.push(typeof value === 'string' ? value : String(value));
-        continue;
-      }
-      if (target.target === 'tag' && target.tagName) {
-        // Nostr event tag only — relay-filterable (t, a, i, title, d)
-        if (target.tagName === 'title' && generatedTitle !== undefined) continue;
-        const plugin = pluginRegistry.get(field.uiPlugin);
-        if (Array.isArray(value)) {
-          for (const item of value) {
-            if (item === undefined || item === null) continue;
-            const str = plugin?.serializeValue
-              ? plugin.serializeValue(item, field)
-              : serializeForTable(item);
-            if (str) tags.push([target.tagName, str]);
-          }
-        } else {
-          const str = plugin?.serializeValue
-            ? plugin.serializeValue(value, field)
-            : serializeForTable(value);
-          if (str) {
-            tags.push([target.tagName, str]);
-            if (target.tagName === 'title' && !dTag) dTag = normalizeDTag(str);
-          }
-        }
-        // Emit supplemental tags from the plugin (e.g. `i` tags from wiki-entity-picker)
-        if (plugin?.extraTags && !extraTagsEmitted) {
-          extraTagsEmitted = true;
-          const extra = plugin.extraTags(value, field);
-          for (const extraTag of extra) tags.push(extraTag);
-        }
-        continue;
-      }
-      if (target.target === 'table') {
-        // Djot table row only — structured wiki data, not relay-filtered.
-        // Key by field.id (stable) so round-tripping survives label renames.
-        if (Array.isArray(value)) {
-          for (const item of value) {
-            if (item !== undefined && item !== null) {
-              tableRows.push([field.id, serializeForTable(item)]);
-            }
-          }
-        } else {
-          tableRows.push([field.id, serializeForTable(value)]);
-        }
-      }
-    }
+    if (isPresent(value)) addField(parts, field, value);
   }
 
-  if (!dTag) dTag = normalizeDTag(manifest.id);
-  const filteredTags = tags.filter((t) => t[0] !== 'd');
-  const allTags: [string, ...string[]][] = [['d', dTag], ...filteredTags];
-  const tablePart = buildDjotTable(tableRows);
-  const prosePart = proseChunks.join('\n\n').trim();
-  const content = [tablePart, prosePart].filter(Boolean).join('\n\n');
+  const dTag = parts.dTag || normalizeDTag(manifest.id);
+  const tablePart = buildDjotTable(parts.tableRows);
+  const prosePart = parts.proseChunks.join('\n\n').trim();
 
   return {
     kind: WIKI_KIND,
     created_at: config.createdAt ?? Math.floor(Date.now() / 1000),
-    tags: allTags,
-    content,
+    tags: [['d', dTag], ...parts.tags.filter((t) => t[0] !== 'd')],
+    content: [tablePart, prosePart].filter(Boolean).join('\n\n'),
     pubkey: config.pubkey ?? '',
   };
 }
+
+/**
+ * Casts raw string values to the field's type: a single value becomes a
+ * scalar, several stay an array (cast element-wise for `castArrayTypes`).
+ */
+function castValues(
+  values: string[],
+  field: PostField,
+  castArrayTypes: ReadonlyArray<PostField['type']>
+): unknown {
+  if (values.length === 1) return castValue(values[0], field);
+  if (!castArrayTypes.includes(field.type)) return values;
+  return values.map((v) => castValue(v, field)).filter(isPresent);
+}
+
+function readTagTarget(event: WikiEvent, field: PostField, tagName: string): unknown {
+  const plugin = pluginRegistry.get(field.uiPlugin);
+  // Prefer resolveFromTags (has access to full tag array, e.g. for i-tags)
+  if (plugin?.resolveFromTags) return plugin.resolveFromTags(event.tags, field);
+
+  const tagValues = getAllTagValues(event.tags, tagName);
+  if (tagValues.length === 0) return undefined;
+  // Use deserializeValue for single-value fields when available
+  if (plugin?.deserializeValue && tagValues.length === 1) {
+    const deserialized = plugin.deserializeValue(tagValues[0], field);
+    if (deserialized !== undefined) return deserialized;
+  }
+  return castValues(tagValues, field, ['number']);
+}
+
+function readTableTarget(tableByKey: Map<string, string[]>, field: PostField): unknown {
+  const label = (field.metadata?.label as string | undefined) ?? field.id;
+  const tableVals = tableByKey.get(field.id) ?? tableByKey.get(label);
+  if (!tableVals || tableVals.length === 0) return undefined;
+  return castValues(tableVals, field, ['number', 'boolean']);
+}
+
+function parseWikiContent(content: string): {
+  tableByKey: Map<string, string[]>;
+  prose: string;
+} {
+  const ast = parse(content) as unknown as AstDoc;
+  const { rows, tableIndex } = extractTableFromAst(ast);
+
+  const tableByKey = new Map<string, string[]>();
+  for (const [key, value] of rows) {
+    const existing = tableByKey.get(key);
+    if (existing) existing.push(value);
+    else tableByKey.set(key, [value]);
+  }
+
+  const proseChildren = tableIndex === -1 ? ast.children : ast.children.slice(tableIndex + 1);
+  const prose =
+    proseChildren.length > 0 ? renderDjot({ ...ast, children: proseChildren } as never).trim() : '';
+  return { tableByKey, prose };
+}
+
+interface WikiReadContext {
+  event: WikiEvent;
+  tableByKey: Map<string, string[]>;
+  prose: string;
+  /** Only the first content-mapped field receives the prose. */
+  proseFieldId?: string;
+}
+
+function readTarget(ctx: WikiReadContext, field: PostField, target: NostrTarget): unknown {
+  if (target.target === 'content') {
+    return field.id === ctx.proseFieldId ? ctx.prose : undefined;
+  }
+  if (target.target === 'tag' && target.tagName) {
+    return readTagTarget(ctx.event, field, target.tagName);
+  }
+  if (target.target === 'table') return readTableTarget(ctx.tableByKey, field);
+  return undefined;
+}
+
+const wikiTargets = (field: PostField): NostrTarget[] =>
+  fieldTargets(field).filter((t) => t.kind === WIKI_KIND);
 
 export function wikiEventToManifestData(
   event: WikiEvent,
   manifest: NostrPostManifest
 ): Record<string, unknown> {
+  const { tableByKey, prose } = parseWikiContent(event.content);
+  const proseFieldId = prose
+    ? manifest.fields.find((f) => wikiTargets(f).some((t) => t.target === 'content'))?.id
+    : undefined;
+  const ctx: WikiReadContext = { event, tableByKey, prose, proseFieldId };
+
   const result: Record<string, unknown> = {};
-  const ast = parse(event.content) as unknown as AstDoc;
-  const { rows: tableRows, tableIndex } = extractTableFromAst(ast);
-
-  const tableByKey = new Map<string, string[]>();
-  for (const [key, value] of tableRows) {
-    const existing = tableByKey.get(key) ?? [];
-    existing.push(value);
-    tableByKey.set(key, existing);
-  }
-
-  const proseChildren = tableIndex === -1 ? ast.children : ast.children.slice(tableIndex + 1);
-  const proseDoc: AstDoc = { ...ast, children: proseChildren };
-  const proseStr = proseChildren.length > 0 ? renderDjot(proseDoc as never).trim() : '';
-  let proseFieldAssigned = false;
-
   for (const field of manifest.fields) {
-    const targets = Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo];
-    for (const target of targets) {
-      if (target.kind !== WIKI_KIND) continue;
-      if (target.target === 'content') {
-        if (!proseFieldAssigned && proseStr) {
-          result[field.id] = proseStr;
-          proseFieldAssigned = true;
-        }
-        continue;
-      }
-      if (target.target === 'tag' && target.tagName) {
-        // Read from Nostr event tags
-        const plugin = pluginRegistry.get(field.uiPlugin);
-        // Prefer resolveFromTags (has access to full tag array, e.g. for i-tags)
-        if (plugin?.resolveFromTags) {
-          const resolved = plugin.resolveFromTags(event.tags, field);
-          if (resolved !== undefined) result[field.id] = resolved;
-          continue;
-        }
-        const tagValues = getAllTagValues(event.tags, target.tagName);
-        if (tagValues.length > 0) {
-          // Use deserializeValue for single-value fields when available
-          if (plugin?.deserializeValue && tagValues.length === 1) {
-            const deserialized = plugin.deserializeValue(tagValues[0], field);
-            if (deserialized !== undefined) {
-              result[field.id] = deserialized;
-              continue;
-            }
-          }
-          result[field.id] =
-            tagValues.length === 1
-              ? castValue(tagValues[0], field)
-              : field.type === 'number'
-                ? tagValues.map((v) => castValue(v, field)).filter((v) => v !== undefined)
-                : tagValues;
-        }
-        continue;
-      }
-      if (target.target === 'table') {
-        // Read from Djot table
-        const label = (field.metadata?.label as string | undefined) ?? field.id;
-        const tableVals = tableByKey.get(field.id) ?? tableByKey.get(label);
-        if (tableVals && tableVals.length > 0) {
-          result[field.id] =
-            tableVals.length === 1
-              ? castValue(tableVals[0], field)
-              : field.type === 'number' || field.type === 'boolean'
-                ? tableVals.map((v) => castValue(v, field)).filter((v) => v !== undefined)
-                : tableVals;
-        }
-      }
+    for (const target of wikiTargets(field)) {
+      const value = readTarget(ctx, field, target);
+      if (value !== undefined) result[field.id] = value;
     }
   }
 
   const dTag = getTag(event.tags, 'd');
-  if (dTag) result['__dTag'] = dTag;
+  if (dTag) result.__dTag = dTag;
   return result;
 }
 

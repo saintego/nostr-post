@@ -179,22 +179,8 @@ export class NostrWikiView extends LitElement {
     this._error = undefined;
 
     try {
-      let filter: Record<string, unknown>;
-      if (this.entityId) {
-        filter = { kinds: [WIKI_KIND], '#d': [this.entityId], limit: 50 };
-      } else {
-        filter = { kinds: [WIKI_KIND], '#i': [this.entityIId], limit: 50 };
-      }
-
-      let events = (await fetchEvents(filter as never, this.relays)) as unknown as WikiEvent[];
-      if (fetchId !== this._fetchId) return;
-
-      if (!this.entityId && events.length > 0) {
-        const expanded = await this._loadEntityVersions(events, fetchId);
-        if (expanded === null) return;
-        events = expanded;
-      }
-
+      const events = await this._loadEvents(fetchId);
+      if (events === null) return;
       const winner = this.resolver(events);
       this._allEvents = events;
       this._winningEvent = winner ?? undefined;
@@ -205,6 +191,20 @@ export class NostrWikiView extends LitElement {
     } finally {
       if (fetchId === this._fetchId) this._loading = false;
     }
+  }
+
+  /**
+   * Fetches every version of the entity, by d-tag or by `i` tag. Returns null
+   * when a newer fetch has superseded this one.
+   */
+  private async _loadEvents(fetchId: number): Promise<WikiEvent[] | null> {
+    const filter = this.entityId
+      ? { kinds: [WIKI_KIND], '#d': [this.entityId], limit: 50 }
+      : { kinds: [WIKI_KIND], '#i': [this.entityIId], limit: 50 };
+    const events = (await fetchEvents(filter as never, this.relays)) as unknown as WikiEvent[];
+    if (fetchId !== this._fetchId) return null;
+    if (this.entityId || events.length === 0) return events;
+    return this._loadEntityVersions(events, fetchId);
   }
 
   /**
@@ -260,8 +260,8 @@ export class NostrWikiView extends LitElement {
     });
     const eventTitleTag = this._winningEvent.tags.find((tag) => tag[0] === 'title')?.[1];
     const titleValue = titleField
-      ? String(data[titleField.id] ?? eventTitleTag ?? data['__dTag'] ?? '')
-      : String(eventTitleTag ?? data['__dTag'] ?? '');
+      ? String(data[titleField.id] ?? eventTitleTag ?? data.__dTag ?? '')
+      : String(eventTitleTag ?? data.__dTag ?? '');
 
     return html`
       <div class="wiki-view">

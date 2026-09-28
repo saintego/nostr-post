@@ -3,6 +3,7 @@ import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { fetchEvents, signAndPublish } from '@nostr-post/signer';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { interpolateTemplate } from '../identity';
 import {
@@ -16,6 +17,10 @@ import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { defaultResolver } from '../resolver';
 import type { WikiManifest } from '../types';
 import { validateWikiForm } from '../validate';
+
+/** An empty number input clears the value instead of storing 0. */
+const parseNumberInput = (raw: string): number | undefined =>
+  raw === '' ? undefined : Number(raw);
 
 @customElement('nostr-wiki-composer')
 export class NostrWikiComposer extends LitElement {
@@ -419,7 +424,6 @@ export class NostrWikiComposer extends LitElement {
   private _renderField(f: PostField) {
     const value = this._formData[f.id];
     const label = (f.metadata?.label as string | undefined) ?? f.id;
-    const placeholder = (f.metadata?.placeholder as string | undefined) ?? '';
 
     if (f.visibility?.edit === 'readonly') {
       return html`
@@ -430,80 +434,78 @@ export class NostrWikiComposer extends LitElement {
       `;
     }
 
-    // Plugin web component (stars, wiki-entity-picker, …)
+    // Plugin web components aren't labelable elements, so their label has no `for`.
     const plugin = pluginRegistry.get(f.uiPlugin);
-    if (plugin?.inputTagName) {
-      const tag = unsafeStatic(plugin.inputTagName);
-      const fieldId = `field-${f.id}`;
-      return html`
-        <div class="wiki-field">
-          <label>${label}${f.required ? ' *' : ''}</label>
-          ${staticHtml`<${tag}
-            id=${fieldId}
-            .value=${value}
-            .field=${f}
-            @np-value-changed=${(e: CustomEvent) => this._onFieldChange(f.id, e.detail.value)}
-          ></${tag}>`}
-        </div>
-      `;
-    }
-
-    // Textarea
-    if (f.uiPlugin === 'textarea') {
-      return html`
-        <div class="wiki-field">
-          <label for="field-${f.id}">${label}${f.required ? ' *' : ''}</label>
-          <textarea
-            id="field-${f.id}"
-            .value=${String(value ?? '')}
-            placeholder=${placeholder}
-            ?required=${f.required}
-            @input=${(e: InputEvent) => this._onFieldChange(f.id, (e.target as HTMLTextAreaElement).value)}
-          ></textarea>
-        </div>
-      `;
-    }
-
-    // Select / enum
-    if ((f.uiPlugin === 'select' || f.type === 'enum') && f.options?.length) {
-      return html`
-        <div class="wiki-field">
-          <label for="field-${f.id}">${label}${f.required ? ' *' : ''}</label>
-          <select
-            id="field-${f.id}"
-            ?required=${f.required}
-            @change=${(e: Event) => this._onFieldChange(f.id, (e.target as HTMLSelectElement).value)}
-          >
-            <option value="" ?selected=${!value}>— select —</option>
-            ${(f.options as string[]).map(
-              (opt) => html`
-              <option value=${opt} ?selected=${opt === value}>${opt}</option>
-            `
-            )}
-          </select>
-        </div>
-      `;
-    }
-
-    // Number or text
+    const control = plugin?.inputTagName
+      ? this._renderPluginControl(f, value, plugin.inputTagName)
+      : this._renderNativeControl(f, value);
     return html`
       <div class="wiki-field">
-        <label for="field-${f.id}">${label}${f.required ? ' *' : ''}</label>
-        <input
+        <label for=${ifDefined(plugin?.inputTagName ? undefined : `field-${f.id}`)}>
+          ${label}${f.required ? ' *' : ''}
+        </label>
+        ${control}
+      </div>
+    `;
+  }
+
+  /** Plugin web component (stars, wiki-entity-picker, …). */
+  private _renderPluginControl(f: PostField, value: unknown, tagName: string) {
+    const tag = unsafeStatic(tagName);
+    return staticHtml`<${tag}
+      id=${`field-${f.id}`}
+      .value=${value}
+      .field=${f}
+      @np-value-changed=${(e: CustomEvent) => this._onFieldChange(f.id, e.detail.value)}
+    ></${tag}>`;
+  }
+
+  private _renderNativeControl(f: PostField, value: unknown) {
+    const placeholder = (f.metadata?.placeholder as string | undefined) ?? '';
+
+    if (f.uiPlugin === 'textarea') {
+      return html`
+        <textarea
           id="field-${f.id}"
-          type=${f.type === 'number' ? 'number' : 'text'}
           .value=${String(value ?? '')}
           placeholder=${placeholder}
           ?required=${f.required}
-          @input=${(e: InputEvent) => {
-            const raw = (e.target as HTMLInputElement).value;
-            this._onFieldChange(
-              f.id,
-              f.type === 'number' ? (raw === '' ? undefined : Number(raw)) : raw
-            );
-          }}
-        />
-      </div>
+          @input=${(e: InputEvent) => this._onFieldChange(f.id, (e.target as HTMLTextAreaElement).value)}
+        ></textarea>
+      `;
+    }
+
+    if ((f.uiPlugin === 'select' || f.type === 'enum') && f.options?.length) {
+      return this._renderSelect(f, value, f.options as string[]);
+    }
+
+    // Number or text
+    const isNumber = f.type === 'number';
+    return html`
+      <input
+        id="field-${f.id}"
+        type=${isNumber ? 'number' : 'text'}
+        .value=${String(value ?? '')}
+        placeholder=${placeholder}
+        ?required=${f.required}
+        @input=${(e: InputEvent) => {
+          const raw = (e.target as HTMLInputElement).value;
+          this._onFieldChange(f.id, isNumber ? parseNumberInput(raw) : raw);
+        }}
+      />
+    `;
+  }
+
+  private _renderSelect(f: PostField, value: unknown, options: string[]) {
+    return html`
+      <select
+        id="field-${f.id}"
+        ?required=${f.required}
+        @change=${(e: Event) => this._onFieldChange(f.id, (e.target as HTMLSelectElement).value)}
+      >
+        <option value="" ?selected=${!value}>— select —</option>
+        ${options.map((opt) => html`<option value=${opt} ?selected=${opt === value}>${opt}</option>`)}
+      </select>
     `;
   }
 }
