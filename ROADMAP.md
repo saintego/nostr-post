@@ -82,7 +82,7 @@
 - [ ] Performance optimizations
 - [ ] Remove `wss://relay.nostr.band` from `DEFAULT_RELAYS` / `DEFAULT_WIKI_RELAYS` (doesn't respond; every fetch waits for its timeout)
 - [ ] Pin `next` in nextjs-demo and manifest-creator (`"latest"` re-resolves on every lockfile change)
-- [ ] Bring oversized files under the 500-line limit (ManifestEditor, FieldEditor, plugin-markdown input, web view/feed, plugin-geo/venue input, core coordinator, wiki-composer)
+- [ ] Bring oversized files under the 500-line limit: plugin-markdown input, web view/feed, plugin-geo/venue input, core coordinator, wiki-composer (manifest-creator ManifestEditor and FieldEditor are done)
 - [ ] Venue linking UI improvements (OSM ID deep links)
 - [ ] Additional plugins: polls, calendars, markets, date, tags, mentions
 - [ ] Plugin examples, plugin developer documentation and plugin validation examples

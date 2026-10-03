@@ -86,7 +86,15 @@ const PublishTab = ({
           overflowY: 'auto',
         }}
       >
-        {JSON.stringify(manifestToEvent(manifest, currentPubkey || '<pubkey>'), null, 2)}
+        {JSON.stringify(
+          // Fixed created_at: a live timestamp differs between server render and hydration
+          {
+            ...manifestToEvent(manifest, currentPubkey || '<pubkey>'),
+            created_at: '<publish time>',
+          },
+          null,
+          2
+        )}
       </pre>
     </details>
   </div>

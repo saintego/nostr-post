@@ -1,109 +1,19 @@
 'use client';
 
 import { getManifestAvailableKinds, getUsedKinds } from '@nostr-post/core/manifestMappings';
-import type { NostrPostManifest, PostField, PublishFormat } from '@nostr-post/core/types';
+import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { useRef } from 'react';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
 import { FieldEditor } from './FieldEditor';
+import { PublishFormatsEditor } from './PublishFormatsEditor';
+import { WikiConfigEditor } from './WikiConfigEditor';
 import { SUPPORTED_KINDS, formatKindLabel } from './kindLabels';
+import { styles } from './manifestEditorStyles';
 
 interface ManifestEditorProps {
   manifest: NostrPostManifest;
   onChange: (manifest: NostrPostManifest) => void;
 }
-
-const styles = {
-  panel: {
-    background: 'white',
-    borderRadius: '0.5rem',
-    border: '1px solid #e5e7eb',
-    padding: '1.5rem',
-  },
-  panelHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '1.5rem',
-    paddingBottom: '1rem',
-    borderBottom: '1px solid #e5e7eb',
-  },
-  panelTitle: {
-    fontSize: '1.25rem',
-    fontWeight: 600,
-    margin: 0,
-  },
-  section: {
-    marginBottom: '1.5rem',
-  },
-  label: {
-    display: 'block',
-    fontWeight: 500,
-    marginBottom: '0.5rem',
-    color: '#374151',
-  },
-  input: {
-    width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    fontSize: '1rem',
-    boxSizing: 'border-box' as const,
-  },
-  textarea: {
-    width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    fontSize: '1rem',
-    minHeight: '80px',
-    fontFamily: 'inherit',
-    boxSizing: 'border-box' as const,
-  },
-  multiSelect: {
-    width: '100%',
-    padding: '0.5rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-    background: 'white',
-    boxSizing: 'border-box' as const,
-  },
-  button: {
-    padding: '0.5rem 1rem',
-    background: '#8b5cf6',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    cursor: 'pointer',
-  },
-  secondaryButton: {
-    padding: '0.5rem 1rem',
-    background: '#6b7280',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    cursor: 'pointer',
-  },
-  buttonGroup: {
-    display: 'flex',
-    gap: '0.5rem',
-    flexWrap: 'wrap' as const,
-  },
-  fieldList: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '1rem',
-  },
-  helperText: {
-    margin: 0,
-    fontSize: '0.8125rem',
-    color: '#6b7280',
-  },
-} as const;
 
 const getConfiguredManifestKinds = (manifest: NostrPostManifest): number[] => {
   const availableKinds = getManifestAvailableKinds(manifest);
@@ -150,45 +60,6 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
       ...manifest,
       [key]: value,
     });
-  };
-
-  const updatePublishFormats = (publishFormats: PublishFormat[] | undefined) => {
-    onChange({
-      ...manifest,
-      publishFormats: publishFormats && publishFormats.length > 0 ? publishFormats : undefined,
-    });
-  };
-
-  const addPublishFormat = () => {
-    const existingFormats = manifest.publishFormats ?? [];
-    const nextFormat: PublishFormat = {
-      id: `format-${Date.now()}`,
-      label: `Format ${existingFormats.length + 1}`,
-      description: '',
-      kinds: [manifestKinds[0] ?? 1],
-      userSelectable: true,
-      default: !existingFormats.some((format) => format.default),
-    };
-    updatePublishFormats([...existingFormats, nextFormat]);
-  };
-
-  const updatePublishFormat = (index: number, patch: Partial<PublishFormat>) => {
-    const nextFormats = (manifest.publishFormats ?? []).map((format, formatIndex) => {
-      if (formatIndex === index) return { ...format, ...patch };
-      if (patch.default) return { ...format, default: false };
-      return format;
-    });
-    updatePublishFormats(nextFormats);
-  };
-
-  const deletePublishFormat = (index: number) => {
-    const nextFormats = (manifest.publishFormats ?? []).filter(
-      (_, formatIndex) => formatIndex !== index
-    );
-    if (nextFormats.length > 0 && !nextFormats.some((format) => format.default)) {
-      nextFormats[0] = { ...nextFormats[0], default: true };
-    }
-    updatePublishFormats(nextFormats);
   };
 
   const addField = () => {
@@ -328,6 +199,8 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
         />
       </div>
 
+      <WikiConfigEditor manifest={manifest} onChange={onChange} />
+
       <div style={styles.section}>
         <label style={styles.label} htmlFor="manifest-extends">
           Extends:
@@ -423,218 +296,7 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
         )}
       </fieldset>
 
-      <div style={styles.section}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '1rem',
-          }}
-        >
-          <div>
-            <div style={styles.label}>Publish Formats:</div>
-            <p style={{ margin: 0, fontSize: '0.8125rem', color: '#6b7280' }}>
-              Optional event-selection choices shown in the composer UI.
-            </p>
-          </div>
-          <button type="button" style={styles.secondaryButton} onClick={addPublishFormat}>
-            + Add Format
-          </button>
-        </div>
-
-        {manifest.publishFormats && manifest.publishFormats.length > 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.75rem',
-              marginTop: '0.75rem',
-            }}
-          >
-            {manifest.publishFormats.map((format, index) => (
-              <div
-                key={`${format.id}-${index}`}
-                style={{
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '0.5rem',
-                  padding: '0.75rem',
-                  background: '#f9fafb',
-                }}
-              >
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-                    gap: '0.75rem',
-                  }}
-                >
-                  {(() => {
-                    const formatIdInputId = `publish-format-id-${index}`;
-                    const formatLabelInputId = `publish-format-label-${index}`;
-                    const formatDescriptionInputId = `publish-format-description-${index}`;
-                    const formatKindsGroupId = `publish-format-kinds-${index}`;
-                    const formatKindsHelperId = `publish-format-kinds-helper-${index}`;
-
-                    return (
-                      <>
-                        <div style={{ minWidth: 0 }}>
-                          <label style={styles.label} htmlFor={formatIdInputId}>
-                            Format ID
-                          </label>
-                          <input
-                            id={formatIdInputId}
-                            style={styles.input}
-                            type="text"
-                            value={format.id}
-                            onChange={(e) => updatePublishFormat(index, { id: e.target.value })}
-                            placeholder="kind1-note"
-                          />
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <label style={styles.label} htmlFor={formatLabelInputId}>
-                            Label
-                          </label>
-                          <input
-                            id={formatLabelInputId}
-                            style={styles.input}
-                            type="text"
-                            value={format.label}
-                            onChange={(e) => updatePublishFormat(index, { label: e.target.value })}
-                            placeholder="Kind 1 note"
-                          />
-                        </div>
-                        <div style={{ gridColumn: '1 / -1' }}>
-                          <label style={styles.label} htmlFor={formatDescriptionInputId}>
-                            Description
-                          </label>
-                          <input
-                            id={formatDescriptionInputId}
-                            style={styles.input}
-                            type="text"
-                            value={format.description || ''}
-                            onChange={(e) =>
-                              updatePublishFormat(index, {
-                                description: e.target.value || undefined,
-                              })
-                            }
-                            placeholder="Describe when this publish option should be used"
-                          />
-                        </div>
-                        <div style={{ gridColumn: '1 / -1' }}>
-                          <label
-                            id={formatKindsGroupId}
-                            style={styles.label}
-                            htmlFor={`publish-format-kinds-select-${index}`}
-                          >
-                            Included Kinds
-                          </label>
-                          <select
-                            id={`publish-format-kinds-select-${index}`}
-                            multiple
-                            aria-labelledby={formatKindsGroupId}
-                            aria-describedby={formatKindsHelperId}
-                            style={{ ...styles.multiSelect, marginTop: '0.25rem' }}
-                            size={Math.min(Math.max(manifestKinds.length, 2), 6)}
-                            value={format.kinds.map(String)}
-                            onChange={(e) => {
-                              const nextKinds = Array.from(e.target.selectedOptions)
-                                .map((option) => Number(option.value))
-                                .filter((kind) => Number.isFinite(kind))
-                                .sort((a, b) => a - b);
-
-                              if (nextKinds.length > 0) {
-                                updatePublishFormat(index, { kinds: nextKinds });
-                              }
-                            }}
-                          >
-                            {manifestKinds.map((kind) => {
-                              return (
-                                <option key={`${format.id}-kind-${kind}`} value={kind}>
-                                  {formatKindLabel(kind)}
-                                </option>
-                              );
-                            })}
-                          </select>
-                          <p
-                            id={formatKindsHelperId}
-                            style={{ ...styles.helperText, marginTop: '0.35rem' }}
-                          >
-                            Use Cmd/Ctrl-click to select multiple kinds. Each format must include at
-                            least one kind.
-                          </p>
-                        </div>
-                        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                          <label
-                            style={{
-                              ...styles.label,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.35rem',
-                              marginBottom: 0,
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={format.default === true}
-                              onChange={(e) =>
-                                updatePublishFormat(index, { default: e.target.checked })
-                              }
-                            />
-                            Default format
-                          </label>
-                          <label
-                            style={{
-                              ...styles.label,
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.35rem',
-                              marginBottom: 0,
-                            }}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={format.userSelectable !== false}
-                              onChange={(e) =>
-                                updatePublishFormat(index, { userSelectable: e.target.checked })
-                              }
-                            />
-                            User selectable
-                          </label>
-                        </div>
-                      </>
-                    );
-                  })()}
-                </div>
-
-                <div style={{ marginTop: '0.75rem', display: 'flex', justifyContent: 'flex-end' }}>
-                  <button
-                    type="button"
-                    style={{ ...styles.secondaryButton, background: '#dc2626' }}
-                    onClick={() => deletePublishFormat(index)}
-                  >
-                    Delete Format
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div
-            style={{
-              marginTop: '0.75rem',
-              padding: '0.75rem',
-              borderRadius: '0.5rem',
-              background: '#f5f3ff',
-              color: '#5b21b6',
-              fontSize: '0.875rem',
-            }}
-          >
-            No publish formats yet. Add one to let users choose between Kind 1, NIP-78, or hybrid
-            publishing.
-          </div>
-        )}
-      </div>
+      <PublishFormatsEditor manifest={manifest} manifestKinds={manifestKinds} onChange={onChange} />
 
       <div style={styles.section}>
         <label style={styles.label} htmlFor="manifest-name">
