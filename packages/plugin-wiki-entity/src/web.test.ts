@@ -21,6 +21,7 @@ vi.mock('@nostr-post/signer', () => ({
     wikiEvent('bitcoin', 'Bitcoin'),
     wikiEvent('bitcoin-history', 'bitcoin-history'),
     wikiEvent('bitcoin-beer', 'Bitcoin (Beer)'),
+    wikiEvent('bitcoin-beer', 'Bitcoin (Beer)', 'pk2'),
     wikiEvent('bitcoin-brewery', 'Bitcoin (Brewery)'),
   ]),
 }));
@@ -123,12 +124,58 @@ describe('<wiki-entity-picker> search', () => {
     } as never);
     const { p } = await pickerWithQuery('bitcoin', { entityManifest: 'beer-entity-test' });
     await p._search();
-    expect(p._results.map((e: { tags: string[][] }) => e.tags[0]?.[1])).toEqual(['bitcoin-beer']);
+    expect(p._results.map((r: { event: { tags: string[][] } }) => r.event.tags[0]?.[1])).toEqual([
+      'bitcoin-beer',
+    ]);
   });
 
   it('is unscoped when the entity manifest is unknown', async () => {
     const { p } = await pickerWithQuery('bitcoin', { entityManifest: 'not-registered' });
     await p._search();
     expect(p._results).toHaveLength(4);
+  });
+});
+
+describe('<wiki-entity-picker> result details and preview', () => {
+  it('counts versions per entity and previews without selecting', async () => {
+    const { picker, p } = await pickerWithQuery('bitcoin', { entityManifest: 'beer-entity-test' });
+    await p._search();
+    expect(p._results[0].versions).toBe(2);
+    await picker.updateComplete;
+
+    const row = picker.shadowRoot?.querySelector('.result-item');
+    expect(row?.querySelector('.result-slug')?.textContent).toBe('bitcoin-beer');
+    expect(row?.querySelector('.result-meta')?.textContent).toContain('2 versions');
+
+    (row?.querySelector('.preview-btn') as HTMLButtonElement).click();
+    await picker.updateComplete;
+    const view = picker.shadowRoot?.querySelector('nostr-wiki-view') as HTMLElement & {
+      entityId?: string;
+      manifest?: { id: string };
+    };
+    expect(view?.entityId).toBe('bitcoin-beer');
+    expect(view?.manifest?.id).toBe('beer-entity-test');
+    expect(picker.value).toBeUndefined();
+  });
+
+  it('previews articles of unknown type as text', async () => {
+    const { picker, p } = await pickerWithQuery('bitcoin', { entityManifest: 'not-registered' });
+    p._previewDTag = 'bitcoin';
+    await picker.updateComplete;
+    const view = picker.shadowRoot?.querySelector('nostr-wiki-view') as HTMLElement & {
+      manifest?: { id: string };
+    };
+    expect(view?.manifest?.id).toBe('wiki-entity-text-preview');
+  });
+
+  it('offers a preview of the selected entity', async () => {
+    const { picker } = await pickerWithQuery('', {});
+    picker.value = { dTag: 'bitcoin-beer', resolvedPubkey: 'pk', externalIds: [] };
+    await picker.updateComplete;
+    expect(picker.shadowRoot?.querySelector('.selected-slug')?.textContent).toBe('bitcoin-beer');
+    (picker.shadowRoot?.querySelector('.preview-btn') as HTMLButtonElement).click();
+    // happy-dom mis-renders this re-render (verified in Chrome), so check the state it drives
+    // biome-ignore lint/suspicious/noExplicitAny: reading private state in a test
+    expect((picker as any)._previewDTag).toBe('bitcoin-beer');
   });
 });

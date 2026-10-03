@@ -6,7 +6,9 @@
  */
 
 export {
+  TEXT_ONLY_ENTITY_MANIFEST,
   entityPrefill,
+  entitySnippet,
   entityTypeAffixes,
   entityTypeDTag,
   type EntityTypeAffixes,

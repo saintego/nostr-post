@@ -28,9 +28,11 @@ import { ref } from 'lit/directives/ref.js';
 import '@nostr-post/wiki/web';
 import {
   type EntityTypeAffixes,
+  TEXT_ONLY_ENTITY_MANIFEST,
   type WikiEntityData,
   type WikiEntityPickerConfig,
   entityPrefill,
+  entitySnippet,
   entityTypeAffixes,
   entityTypeDTag,
   getEntityManifest,
@@ -60,7 +62,10 @@ export class WikiEntityPicker extends LitElement {
   field?: { id: string; required?: boolean; metadata?: Record<string, unknown> };
 
   @state() private _query = '';
-  @state() private _results: WikiEvent[] = [];
+  /** Resolved version of each matching entity and how many versions were found */
+  @state() private _results: Array<{ event: WikiEvent; versions: number }> = [];
+  /** d-tag of the entity shown in the preview overlay */
+  @state() private _previewDTag?: string;
   @state() private _searching = false;
   /** Entity being created in the dialog */
   @state() private _creating?: { manifest: NostrPostManifest; prefill: Record<string, unknown> };
@@ -141,9 +146,10 @@ export class WikiEntityPicker extends LitElement {
 
       // Multiple pubkeys can publish the same d-tag slug. Group by d-tag and
       // resolve each group to a single winner so each article appears once.
-      this._results = [...groupByDTag(matching).values()]
-        .map((group) => defaultResolver(group))
-        .filter((ev): ev is WikiEvent => ev !== null);
+      this._results = [...groupByDTag(matching).values()].flatMap((group) => {
+        const event = defaultResolver(group);
+        return event ? [{ event, versions: group.length }] : [];
+      });
     } catch {
       if (searchId !== this._searchId) return;
       this._results = [];
@@ -232,37 +238,118 @@ export class WikiEntityPicker extends LitElement {
     for (const type of DIALOG_EVENTS) el.addEventListener(type, (e) => e.stopPropagation());
   };
 
-  private _renderCreateDialog() {
-    if (!this._creating) return nothing;
-    const stop = (e: Event) => e.stopPropagation();
+  /** Overlay shared by the create dialog and the preview */
+  private _renderModal(title: string, body: unknown, onClose: () => void) {
     return html`
-      <div class="modal-backdrop" @click=${() => {
-        this._creating = undefined;
-      }}>
+      <div class="modal-backdrop" @click=${onClose}>
         <div
           class="modal"
           role="dialog"
           aria-modal="true"
-          aria-label="Create entity"
-          @click=${stop}
+          aria-label=${title}
+          @click=${(e: Event) => e.stopPropagation()}
           ${ref(this._isolateDialog)}
         >
           <div class="modal-header">
-            <span>Create ${this._creating.manifest.metadata?.name ?? 'entity'}</span>
-            <button type="button" class="clear-btn" aria-label="Close" @click=${() => {
-              this._creating = undefined;
-            }}>×</button>
+            <span>${title}</span>
+            <button type="button" class="clear-btn" aria-label="Close" @click=${onClose}>×</button>
           </div>
-          <div class="modal-body">
-            <nostr-wiki-composer
-              auto-publish
-              .manifest=${this._creating.manifest}
-              .prefill=${this._creating.prefill}
-              .relays=${this._relays}
-              @nostr-wiki-published=${(e: CustomEvent) => this._onEntityPublished(e)}
-            ></nostr-wiki-composer>
+          <div class="modal-body">${body}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderCreateDialog() {
+    const creating = this._creating;
+    if (!creating) return nothing;
+    return this._renderModal(
+      `Create ${creating.manifest.metadata?.name ?? 'entity'}`,
+      html`
+        <nostr-wiki-composer
+          auto-publish
+          .manifest=${creating.manifest}
+          .prefill=${creating.prefill}
+          .relays=${this._relays}
+          @nostr-wiki-published=${(e: CustomEvent) => this._onEntityPublished(e)}
+        ></nostr-wiki-composer>
+      `,
+      () => {
+        this._creating = undefined;
+      }
+    );
+  }
+
+  /** Read-only view of an entity; articles of unknown type show their text */
+  private _renderPreview() {
+    const dTag = this._previewDTag;
+    if (!dTag) return nothing;
+    const manifest = getEntityManifest(this._config.entityManifest) ?? TEXT_ONLY_ENTITY_MANIFEST;
+    return this._renderModal(
+      dTag,
+      html`
+        <nostr-wiki-view
+          .manifest=${manifest}
+          .entityId=${dTag}
+          .relays=${this._relays}
+        ></nostr-wiki-view>
+      `,
+      () => {
+        this._previewDTag = undefined;
+      }
+    );
+  }
+
+  /** Eye button that opens the preview without selecting the row */
+  private _previewButton(dTag: string) {
+    const open = (e: Event) => {
+      e.stopPropagation();
+      this._previewDTag = dTag;
+    };
+    return html`
+      <button
+        type="button"
+        class="preview-btn"
+        title="Preview"
+        aria-label="Preview ${dTag}"
+        @click=${open}
+        @keydown=${(e: KeyboardEvent) => e.stopPropagation()}
+      >👁</button>
+    `;
+  }
+
+  private _renderResult({ event, versions }: { event: WikiEvent; versions: number }) {
+    const dTag = event.tags.find((t) => t[0] === 'd')?.[1] ?? '';
+    const title = event.tags.find((t) => t[0] === 'title')?.[1] ?? dTag;
+    const snippet = entitySnippet(event.tags, event.content);
+    const select = () => this._onSelect(event);
+    return html`
+      <div
+        role="option"
+        class="result-item"
+        @click=${select}
+        @keydown=${(e: KeyboardEvent) => {
+          if (e.key === ' ' || e.key === 'Enter') {
+            e.preventDefault();
+            select();
+          }
+        }}
+        tabindex="0"
+      >
+        <div class="result-main">
+          <div class="result-line">
+            <span class="result-title">${title}</span>
+            <span class="result-meta">
+              ${new Date(event.created_at * 1000).toLocaleDateString()} ·
+              ${versions} version${versions === 1 ? '' : 's'}
+            </span>
+          </div>
+          <div class="result-line">
+            <span class="result-slug">${dTag}</span>
+            ${snippet ? html`<span class="result-snippet">${snippet}</span>` : nothing}
           </div>
         </div>
+        ${this._previewButton(dTag)}
       </div>
     `;
   }
@@ -272,9 +359,11 @@ export class WikiEntityPicker extends LitElement {
       return html`
         <div class="selected">
           <span class="selected-name">${this.value.displayName ?? this.value.dTag}</span>
-          <span class="selected-pubkey">${this.value.resolvedPubkey.slice(0, 8)}…</span>
+          <span class="selected-slug">${this.value.dTag}</span>
+          ${this._previewButton(this.value.dTag)}
           <button type="button" class="clear-btn" @click=${this._clear} aria-label="Clear selection">×</button>
         </div>
+        ${this._renderPreview()}
       `;
     }
 
@@ -299,30 +388,7 @@ export class WikiEntityPicker extends LitElement {
             ? html`
               <div class="dropdown" role="listbox">
                 ${this._searching ? html`<div class="status-row">Searching…</div>` : nothing}
-                ${this._results.map((event) => {
-                  const dTag = event.tags.find((t) => t[0] === 'd')?.[1] ?? '';
-                  const title = event.tags.find((t) => t[0] === 'title')?.[1] ?? dTag;
-                  return html`
-                    <div
-                      role="option"
-                      class="result-item"
-                      @click=${() => this._onSelect(event)}
-                      @keydown=${(e: KeyboardEvent) => {
-                        if (e.key === ' ') {
-                          e.preventDefault();
-                          this._onSelect(event);
-                        } else if (e.key === 'Enter') {
-                          this._onSelect(event);
-                        }
-                      }}
-                      tabindex="0"
-                    >
-                      <span class="result-title">${title}</span>
-                      <span class="result-pubkey">${event.pubkey.slice(0, 8)}…</span>
-                      <span class="result-arrow">↵</span>
-                    </div>
-                  `;
-                })}
+                ${this._results.map((result) => this._renderResult(result))}
                 ${
                   !this._searching &&
                   this._results.length === 0 &&
@@ -341,6 +407,7 @@ export class WikiEntityPicker extends LitElement {
             : nothing
         }
         ${this._renderCreateDialog()}
+        ${this._renderPreview()}
       </div>
     `;
   }

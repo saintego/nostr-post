@@ -23,7 +23,7 @@ export const pickerStyles = css`
     color: var(--nl-text, #111827);
     flex: 1;
   }
-  .selected-pubkey {
+  .selected-slug {
     font-size: 0.7rem;
     color: var(--nl-text-secondary, #6b7280);
     font-family: monospace;
@@ -89,20 +89,60 @@ export const pickerStyles = css`
   .result-item:focus {
     background: color-mix(in srgb, var(--nl-primary, #6366f1) 8%, transparent);
   }
+  .result-main {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+  .result-line {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+  }
   .result-title {
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--nl-text, #111827);
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .result-pubkey {
+  .result-meta,
+  .result-slug {
+    flex-shrink: 0;
     font-size: 0.7rem;
     color: var(--nl-text-secondary, #6b7280);
+  }
+  .result-slug {
     font-family: monospace;
   }
-  .result-arrow {
+  .result-snippet {
+    min-width: 0;
     font-size: 0.75rem;
     color: var(--nl-text-secondary, #6b7280);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .preview-btn {
+    flex-shrink: 0;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 0.375rem;
+    padding: 0.15rem 0.35rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1;
+  }
+  .preview-btn:hover,
+  .preview-btn:focus-visible {
+    border-color: var(--nl-border, #e5e7eb);
+    background: var(--nl-bg, white);
   }
 
   .status-row {

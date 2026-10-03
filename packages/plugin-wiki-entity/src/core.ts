@@ -112,6 +112,46 @@ export function entityTypeDTag(name: string, { prefix, suffix }: EntityTypeAffix
   return slug ? `${prefix}${slug}${suffix}` : '';
 }
 
+/** Lines that are markup rather than text: tables, rules, code fences, link-only lines */
+const NON_TEXT_LINE = /^(\||[-=*_]{3,}|```|\[\[?[^\]]*\]\]?$)/;
+
+/**
+ * A short plain-text description of an entity: its `summary` tag, else the
+ * first line of text in the content, without markdown markup.
+ */
+export function entitySnippet(tags: string[][], content: string, maxLength = 120): string {
+  const summary = tags.find((t) => t[0] === 'summary')?.[1]?.trim();
+  const line =
+    summary ||
+    content
+      .split('\n')
+      .map((l) => l.trim())
+      .find((l) => /\p{L}/u.test(l) && !NON_TEXT_LINE.test(l)) ||
+    '';
+  const text = line
+    .replace(/^[#>*\-+\s]+/, '')
+    .replace(/\[\[([^\]|]+)(\|[^\]]*)?\]\]/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[*_`]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  return text.length > maxLength ? `${text.slice(0, maxLength - 1).trimEnd()}…` : text;
+}
+
+/** Shows an entity's text when its own manifest isn't known (preview of foreign articles). */
+export const TEXT_ONLY_ENTITY_MANIFEST: NostrPostManifest = {
+  id: 'wiki-entity-text-preview',
+  version: '1.0.0',
+  fields: [
+    {
+      id: 'content',
+      type: 'string',
+      uiPlugin: 'markdown',
+      mapTo: { kind: 30818, target: 'content' },
+    },
+  ],
+};
+
 /** Parses a `30818:<pubkey>:<d-tag>` address into a minimal entity value. */
 function parseWikiAddress(raw: string): WikiEntityData | undefined {
   const parts = raw.split(':');

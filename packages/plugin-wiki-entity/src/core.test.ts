@@ -2,6 +2,7 @@ import type { NostrUIPlugin, PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
 import {
   type WikiEntityData,
+  entitySnippet,
   entityTypeAffixes,
   entityTypeDTag,
   matchesEntityQuery,
@@ -238,5 +239,25 @@ describe('entity type scoping', () => {
     expect(matchesEntityType('bitcoin-brewery', affixes)).toBe(false);
     expect(matchesEntityType('-beer', affixes)).toBe(false);
     expect(matchesEntityType('bitcoin', { prefix: '', suffix: '' })).toBe(true);
+  });
+});
+
+describe('entitySnippet', () => {
+  it('prefers the summary tag', () => {
+    expect(entitySnippet([['summary', 'A Czech lager']], 'Long text')).toBe('A Czech lager');
+  });
+
+  it('uses the first text line, skipping tables, rules and markup', () => {
+    const content = '| abv | 8 |\n|---|---|\n\n# **Pliny** the [[Elder]]\nMore text';
+    expect(entitySnippet([], content)).toBe('Pliny the Elder');
+  });
+
+  it('keeps link text and truncates long lines', () => {
+    expect(entitySnippet([], 'See [the site](https://x.y) now')).toBe('See the site now');
+    expect(entitySnippet([], 'a'.repeat(200), 10)).toBe(`${'a'.repeat(9)}…`);
+  });
+
+  it('is empty without text', () => {
+    expect(entitySnippet([], '| a | b |\n|---|---|')).toBe('');
   });
 });
