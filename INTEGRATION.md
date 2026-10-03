@@ -624,10 +624,8 @@ content: {
 - [x] Photos linked via NIP-98 (nostr.build)
 - [x] Geohash with NIP-52 prefix tags (relay filtering)
 - [x] OSM venue identity via NIP-73 tags
-- [ ] Search/filter reviews by venue
-- [ ] Show reviews on map
-- [ ] User profile + review history
-- [ ] Reputation/trust scoring
+
+Open items are tracked in [ROADMAP.md](./ROADMAP.md#venue-reviews-from-integrationmd).
 
 ---
 

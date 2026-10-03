@@ -37,6 +37,10 @@
     "./eventUpdates": {
       "types": "./dist/eventUpdates.d.ts",
       "import": "./dist/eventUpdates.js"
+    },
+    "./nip50": {
+      "types": "./dist/nip50.d.ts",
+      "import": "./dist/nip50.js"
     }
   },
   "scripts": {

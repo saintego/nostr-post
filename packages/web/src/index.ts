@@ -28,6 +28,8 @@ export {
   hasNostrSigner,
   fetchEvents,
   fetchEventsFromRelay,
+  fetchUserRelays,
+  getPublishRelays,
   type SignedEvent,
   type Nip07Provider,
 } from './signer';

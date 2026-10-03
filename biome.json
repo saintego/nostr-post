@@ -20,7 +20,8 @@
       "examples/*/.next",
       "tools/*/dist",
       "tools/*/.next",
-      "tools/*/out"
+      "tools/*/out",
+      "**/nostr-bridge.d.ts"
     ]
   },
   "formatter": {

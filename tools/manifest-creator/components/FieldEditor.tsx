@@ -2,6 +2,9 @@
 
 import { getFieldTargets, isStructuredContentKind } from '@nostr-post/core/manifestMappings';
 import type { NostrTarget, PostField } from '@nostr-post/core/types';
+import { AdditionalMappings } from './AdditionalMappings';
+import { EntityManifestInput } from './EntityManifestInput';
+import { styles } from './fieldEditorStyles';
 import { formatKindLabel } from './kindLabels';
 
 interface FieldEditorProps {
@@ -12,83 +15,27 @@ interface FieldEditorProps {
   onDelete: () => void;
 }
 
-const styles = {
-  fieldItem: {
-    padding: '1rem',
-    border: '1px solid #e5e7eb',
-    borderRadius: '0.375rem',
-    background: '#f9fafb',
-  },
-  fieldHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '0.75rem',
-  },
-  fieldTitle: {
-    fontWeight: 600,
-    color: '#111827',
-  },
-  deleteButton: {
-    padding: '0.25rem 0.75rem',
-    background: '#dc2626',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.375rem',
-    fontSize: '0.75rem',
-    cursor: 'pointer',
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(2, 1fr)',
-    gap: '0.75rem',
-  },
-  formGroup: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    gap: '0.25rem',
-  },
-  label: {
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: '#374151',
-  },
-  input: {
-    padding: '0.5rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-  },
-  select: {
-    padding: '0.5rem',
-    border: '1px solid #d1d5db',
-    borderRadius: '0.375rem',
-    fontSize: '0.875rem',
-  },
-  checkbox: {
-    width: '1rem',
-    height: '1rem',
-  },
-  helperText: {
-    fontSize: '0.75rem',
-    color: '#6b7280',
-  },
-  mappingCard: {
-    border: '1px dashed #d1d5db',
-    borderRadius: '0.375rem',
-    padding: '0.75rem',
-    background: 'white',
-  },
-  smallButton: {
-    padding: '0.35rem 0.65rem',
-    background: '#6b7280',
-    color: 'white',
-    border: 'none',
-    borderRadius: '0.375rem',
-    fontSize: '0.75rem',
-    cursor: 'pointer',
-  },
-} as const;
+/** Default value as shown in the text input (lists comma-separated) */
+const formatDefaultValue = (field: PostField): string => {
+  if (field.defaultValue === undefined) return '';
+  return Array.isArray(field.defaultValue)
+    ? (field.defaultValue as string[]).join(', ')
+    : String(field.defaultValue);
+};
+
+/** Default value from the text input, typed for the field */
+const parseDefaultValue = (field: PostField, raw: string): unknown => {
+  if (!raw) return undefined;
+  if (field.uiPlugin === 'hashtag') return raw.split(/[,\s]+/).filter(Boolean);
+  if (field.type === 'number') return Number(raw);
+  return raw;
+};
+
+/** Field visibility with `mode` set; "visible" is the default, so it's stored as unset */
+const withVisibility = (field: PostField, mode: 'edit' | 'view', value: string) => ({
+  ...field.visibility,
+  [mode]: value === 'visible' ? undefined : value,
+});
 
 export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }: FieldEditorProps) {
   const currentTargets = getFieldTargets(field);
@@ -96,7 +43,6 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
     kind: kinds[0] ?? 1,
     target: 'content' as const,
   };
-  const additionalMappingsHeadingId = `${field.id}-additional-mappings`;
 
   const update = (key: keyof PostField, value: unknown) => {
     onChange({
@@ -243,6 +189,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             <option value="hashtag">hashtag</option>
             <option value="reference">reference</option>
             <option value="list">list</option>
+            <option value="wiki-entity-picker">wiki-entity-picker</option>
           </select>
         </div>
 
@@ -361,6 +308,13 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
           />
         </div>
 
+        {field.uiPlugin === 'wiki-entity-picker' && (
+          <EntityManifestInput
+            value={(field.metadata?.entityManifest as string | undefined) ?? ''}
+            onChange={(v) => updateMetadata('entityManifest', v || undefined)}
+          />
+        )}
+
         <div style={styles.formGroup}>
           <label style={styles.label} htmlFor="field-default">
             Default Value:
@@ -369,25 +323,8 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             id="field-default"
             style={styles.input}
             type="text"
-            value={
-              field.defaultValue !== undefined
-                ? Array.isArray(field.defaultValue)
-                  ? (field.defaultValue as string[]).join(', ')
-                  : String(field.defaultValue)
-                : ''
-            }
-            onChange={(e) => {
-              const raw = e.target.value;
-              if (!raw) {
-                update('defaultValue', undefined);
-              } else if (field.uiPlugin === 'hashtag') {
-                update('defaultValue', raw.split(/[,\s]+/).filter(Boolean));
-              } else if (field.type === 'number') {
-                update('defaultValue', Number(raw));
-              } else {
-                update('defaultValue', raw);
-              }
-            }}
+            value={formatDefaultValue(field)}
+            onChange={(e) => update('defaultValue', parseDefaultValue(field, e.target.value))}
             placeholder={field.uiPlugin === 'hashtag' ? 'tag1, tag2, ...' : 'Default value'}
           />
         </div>
@@ -400,13 +337,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             id="field-edit-vis"
             style={styles.select}
             value={field.visibility?.edit || 'visible'}
-            onChange={(e) => {
-              const val = e.target.value;
-              update('visibility', {
-                ...field.visibility,
-                edit: val === 'visible' ? undefined : val,
-              });
-            }}
+            onChange={(e) => update('visibility', withVisibility(field, 'edit', e.target.value))}
           >
             <option value="visible">visible</option>
             <option value="hidden">hidden</option>
@@ -422,13 +353,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             id="field-view-vis"
             style={styles.select}
             value={field.visibility?.view || 'visible'}
-            onChange={(e) => {
-              const val = e.target.value;
-              update('visibility', {
-                ...field.visibility,
-                view: val === 'visible' ? undefined : val,
-              });
-            }}
+            onChange={(e) => update('visibility', withVisibility(field, 'view', e.target.value))}
           >
             <option value="visible">visible</option>
             <option value="hidden">hidden</option>
@@ -447,140 +372,14 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
           </label>
         </div>
 
-        <div
-          style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div id={additionalMappingsHeadingId} style={styles.label}>
-                Additional Event Mappings
-              </div>
-              <div style={styles.helperText}>
-                Add extra targets when this field should publish to both Kind 1 and NIP-78.
-              </div>
-            </div>
-            <button type="button" style={styles.smallButton} onClick={addMapping}>
-              + Add Mapping
-            </button>
-          </div>
-
-          {currentTargets.length === 1 ? (
-            <div style={styles.helperText}>Only the primary mapping is configured.</div>
-          ) : (
-            currentTargets.slice(1).map((target, index) => (
-              <div key={`${field.id}-mapping-${index + 1}`} style={styles.mappingCard}>
-                {(() => {
-                  const mappingIndex = index + 1;
-                  const kindInputId = `${field.id}-mapping-kind-${mappingIndex}`;
-                  const targetInputId = `${field.id}-mapping-target-${mappingIndex}`;
-                  const tagNameInputId = `${field.id}-mapping-tag-${mappingIndex}`;
-                  const pathInputId = `${field.id}-mapping-path-${mappingIndex}`;
-
-                  return (
-                    <>
-                      <div
-                        style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          marginBottom: '0.75rem',
-                        }}
-                      >
-                        <strong style={{ fontSize: '0.875rem', color: '#111827' }}>
-                          Mapping {index + 2}
-                        </strong>
-                        <button
-                          type="button"
-                          style={{ ...styles.smallButton, background: '#dc2626' }}
-                          onClick={() => removeMapping(index + 1)}
-                        >
-                          Remove
-                        </button>
-                      </div>
-
-                      <div style={styles.grid}>
-                        <div style={styles.formGroup}>
-                          <label style={styles.label} htmlFor={kindInputId}>
-                            Kind
-                          </label>
-                          <select
-                            id={kindInputId}
-                            style={styles.select}
-                            value={target.kind}
-                            onChange={(e) =>
-                              updateTargetAt(index + 1, { kind: Number(e.target.value) })
-                            }
-                          >
-                            {kinds.map((kind) => (
-                              <option key={kind} value={kind}>
-                                {formatKindLabel(kind)}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div style={styles.formGroup}>
-                          <label style={styles.label} htmlFor={targetInputId}>
-                            Target
-                          </label>
-                          <select
-                            id={targetInputId}
-                            style={styles.select}
-                            value={target.target}
-                            onChange={(e) =>
-                              updateTargetAt(index + 1, {
-                                target: e.target.value as 'content' | 'tag',
-                              })
-                            }
-                          >
-                            <option value="content">content</option>
-                            <option value="tag">tag</option>
-                          </select>
-                        </div>
-
-                        {target.target === 'tag' && (
-                          <div style={styles.formGroup}>
-                            <label style={styles.label} htmlFor={tagNameInputId}>
-                              Tag Name
-                            </label>
-                            <input
-                              id={tagNameInputId}
-                              style={styles.input}
-                              type="text"
-                              value={target.tagName || ''}
-                              onChange={(e) =>
-                                updateTargetAt(index + 1, { tagName: e.target.value || undefined })
-                              }
-                              placeholder="tagName"
-                            />
-                          </div>
-                        )}
-
-                        {target.target === 'content' && isStructuredContentKind(target.kind) && (
-                          <div style={styles.formGroup}>
-                            <label style={styles.label} htmlFor={pathInputId}>
-                              JSON Path
-                            </label>
-                            <input
-                              id={pathInputId}
-                              style={styles.input}
-                              type="text"
-                              value={target.path || ''}
-                              onChange={(e) =>
-                                updateTargetAt(index + 1, { path: e.target.value || undefined })
-                              }
-                              placeholder="e.g. ratings.overall"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-            ))
-          )}
-        </div>
+        <AdditionalMappings
+          field={field}
+          kinds={kinds}
+          targets={currentTargets}
+          onAddMapping={addMapping}
+          onRemoveMapping={removeMapping}
+          onUpdateTarget={updateTargetAt}
+        />
       </div>
     </div>
   );

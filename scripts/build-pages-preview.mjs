@@ -55,9 +55,14 @@ copyDir(join(root, 'packages/cdn/dist'), deployDir);
 cpSync(join(root, 'packages/cdn/index.html'), join(deployDir, 'index.html'));
 cpSync(join(root, 'packages/cdn/examples-index.html'), join(deployDir, 'examples/index.html'));
 copyDir(join(root, 'examples/basic/dist'), join(deployDir, 'examples/basic'));
-copyDir(join(root, 'examples/pwa-share'), join(deployDir, 'examples/pwa-share'));
+cpSync(join(root, 'examples/pwa-share'), join(deployDir, 'examples/pwa-share'), {
+  recursive: true,
+});
 copyDir(join(root, 'examples/react-demo/dist'), join(deployDir, 'examples/react-demo'));
 copyDir(join(root, 'examples/nextjs-demo/out'), join(deployDir, 'examples/nextjs-demo'));
+cpSync(join(root, 'examples/wiki-demo'), join(deployDir, 'examples/wiki-demo'), {
+  recursive: true,
+});
 copyDir(join(root, 'tools/manifest-creator/out'), join(deployDir, 'manifest-creator'));
 
 console.log('Done. Local artifact at .pages-local');

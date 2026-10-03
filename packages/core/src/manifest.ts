@@ -37,6 +37,17 @@ export const validateNostrTarget = (target: NostrTarget): Result<void, Validatio
     };
   }
 
+  if (target.target === 'table' && target.kind !== 30818) {
+    return {
+      success: false,
+      error: {
+        field: 'target',
+        message: 'target "table" is only valid for kind 30818 (NIP-54 wiki)',
+        code: 'INVALID_TARGET',
+      },
+    };
+  }
+
   if (!isValidKindNumber(target.kind)) {
     return {
       success: false,
