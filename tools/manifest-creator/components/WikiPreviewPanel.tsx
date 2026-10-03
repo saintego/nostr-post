@@ -1,9 +1,9 @@
 'use client';
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { normalizeDTag } from '@nostr-post/wiki';
 import type { CSSProperties, DetailedHTMLProps, HTMLAttributes } from 'react';
 import { useEffect, useRef, useState } from 'react';
+import { registerEntityManifests } from '../lib/entityManifests';
 
 interface WikiPreviewPanelProps {
   manifest: NostrPostManifest;
@@ -196,21 +196,10 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
     if (composerRef.current) composerRef.current.entityId = committedEntityId || undefined;
   }, [componentsLoaded, committedEntityId, activeTab]);
 
-  // Handle wiki-entity-create events bubbling up from picker (composed:true crosses shadow DOM).
-  // Switch to Compose tab and pre-fill the slug so the user can create the missing entity.
+  // Let entity pickers in the composer create entities with these manifests.
   useEffect(() => {
-    const el = panelRef.current;
-    if (!el) return;
-    const handler = (e: Event) => {
-      const query = (e as CustomEvent<{ query: string }>).detail?.query ?? '';
-      const slug = normalizeDTag(query);
-      setEntityId(slug);
-      setCommittedEntityId(slug);
-      setActiveTab('compose');
-    };
-    el.addEventListener('wiki-entity-create', handler);
-    return () => el.removeEventListener('wiki-entity-create', handler);
-  }, []);
+    void registerEntityManifests(manifest);
+  }, [manifest]);
 
   // Fetch reviews when Find Reviews tab is active with a committed entity slug.
   useEffect(() => {

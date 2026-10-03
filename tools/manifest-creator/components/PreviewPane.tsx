@@ -8,6 +8,7 @@ import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { NostrPostFeed, type NostrPostFeedRef, type SignedEvent } from '@nostr-post/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { registerEntityManifests } from '../lib/entityManifests';
 import { cacheEvents, loadCachedEvents } from './previewPaneHelpers';
 import { styles } from './previewPaneStyles';
 
@@ -53,6 +54,11 @@ export const PreviewPane = ({ manifest, manifestRef, isResolvingParents }: Previ
     import('@nostr-post/plugin-venue/web');
     import('@nostr-post/plugin-wiki-entity/web');
   }, []);
+
+  // Let entity pickers ("+ Create") open a composer for the referenced entity manifest
+  useEffect(() => {
+    void registerEntityManifests(manifest);
+  }, [manifest]);
 
   const reloadCurrentPubkey = useCallback(async () => {
     try {

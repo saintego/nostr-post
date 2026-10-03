@@ -7,6 +7,7 @@
  * No DOM dependencies — safe for SSR/Node.
  */
 
+import type { NostrPostManifest } from '@nostr-post/core/types';
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
 import { normalizeDTag } from '@nostr-post/wiki';
 
@@ -31,8 +32,11 @@ export interface WikiEntityData {
  *   "metadata": { "entityManifest": "beer-entity-v1" } }
  */
 export interface WikiEntityPickerConfig {
-  /** ID of the manifest that defines the entity type being picked */
-  entityManifest?: string;
+  /**
+   * The manifest that defines the entity type being picked: its id (looked up
+   * with registerEntityManifest) or the manifest itself. Enables "+ Create".
+   */
+  entityManifest?: string | NostrPostManifest;
   /** Relays to search for entities */
   relays?: string[];
   /** Minimum characters before triggering a search */
@@ -44,6 +48,34 @@ export interface WikiEntityPickerConfig {
    * Defaults to `true` (extra tags are emitted).
    */
   emitExtraTags?: boolean;
+}
+
+const entityManifests = new Map<string, NostrPostManifest>();
+
+/** Make an entity manifest available to pickers whose `entityManifest` is its id. */
+export function registerEntityManifest(manifest: NostrPostManifest): void {
+  entityManifests.set(manifest.id, manifest);
+}
+
+/** Resolve a picker's `entityManifest` setting to a manifest, if known. */
+export function getEntityManifest(
+  ref: string | NostrPostManifest | undefined
+): NostrPostManifest | undefined {
+  if (!ref) return undefined;
+  return typeof ref === 'string' ? entityManifests.get(ref) : ref;
+}
+
+/**
+ * Form data that puts `name` into the entity's name field: the first
+ * `{placeholder}` of wikiConfig.titleTemplate, else the first required string field.
+ */
+export function entityPrefill(manifest: NostrPostManifest, name: string): Record<string, unknown> {
+  const titleTemplate = (manifest as { wikiConfig?: { titleTemplate?: string } }).wikiConfig
+    ?.titleTemplate;
+  const fromTemplate = titleTemplate?.match(/\{(\w+)\}/)?.[1];
+  const fieldId =
+    fromTemplate ?? manifest.fields.find((f) => f.required && f.type === 'string')?.id;
+  return fieldId ? { [fieldId]: name } : {};
 }
 
 /** Parses a `30818:<pubkey>:<d-tag>` address into a minimal entity value. */

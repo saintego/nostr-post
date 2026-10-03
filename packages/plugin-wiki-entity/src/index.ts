@@ -6,7 +6,10 @@
  */
 
 export {
+  entityPrefill,
+  getEntityManifest,
   matchesEntityQuery,
+  registerEntityManifest,
   wikiEntityPickerPlugin,
   type WikiEntityData,
   type WikiEntityPickerConfig,

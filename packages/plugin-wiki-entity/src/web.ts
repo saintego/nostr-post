@@ -11,6 +11,7 @@
  */
 
 import { nip50Search } from '@nostr-post/core/nip50';
+import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { fetchEvents } from '@nostr-post/signer';
 import {
@@ -24,12 +25,26 @@ import {
 import type { WikiEvent } from '@nostr-post/wiki';
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { ref } from 'lit/directives/ref.js';
+import '@nostr-post/wiki/web';
 import {
   type WikiEntityData,
   type WikiEntityPickerConfig,
+  entityPrefill,
+  getEntityManifest,
   matchesEntityQuery,
   wikiEntityPickerPlugin,
 } from './core';
+
+/** Events from the create dialog's composer that must not reach the form around the picker */
+const DIALOG_EVENTS = [
+  'np-value-changed',
+  'nostr-wiki-field-change',
+  'nostr-wiki-submit',
+  'nostr-wiki-published',
+  'nostr-wiki-error',
+  'wiki-entity-create',
+];
 
 @customElement('wiki-entity-picker')
 export class WikiEntityPicker extends LitElement {
@@ -163,6 +178,40 @@ export class WikiEntityPicker extends LitElement {
       background: color-mix(in srgb, var(--nl-primary, #6366f1) 8%, transparent);
     }
 
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      background: rgba(17, 24, 39, 0.5);
+    }
+    .modal {
+      width: min(640px, 100%);
+      max-height: calc(100vh - 2rem);
+      overflow: auto;
+      border-radius: 10px;
+      background: var(--nl-bg, white);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--nl-border, #e5e7eb);
+      font-weight: 600;
+    }
+    .modal-body {
+      padding: 1rem;
+    }
+
+    :host-context(.dark) .modal {
+      background: #1f2937;
+      color: #f9fafb;
+    }
     :host-context(.dark) .search-input,
     :host-context(.dark) .dropdown {
       background: #1f2937;
@@ -187,6 +236,8 @@ export class WikiEntityPicker extends LitElement {
   @state() private _query = '';
   @state() private _results: WikiEvent[] = [];
   @state() private _searching = false;
+  /** Entity being created in the dialog */
+  @state() private _creating?: { manifest: NostrPostManifest; prefill: Record<string, unknown> };
   private _debounceTimer?: ReturnType<typeof setTimeout>;
 
   private _searchId = 0;
@@ -301,14 +352,74 @@ export class WikiEntityPicker extends LitElement {
     );
   }
 
+  /**
+   * Dispatches a cancelable `wiki-entity-create`; unless a host handles it
+   * (preventDefault), opens a composer for the entity manifest, if known.
+   */
   private _onCreateRequest(): void {
-    this.dispatchEvent(
+    const proceed = this.dispatchEvent(
       new CustomEvent('wiki-entity-create', {
-        detail: { query: this._query },
+        detail: { query: this._query, entityManifest: this._config.entityManifest },
         bubbles: true,
         composed: true,
+        cancelable: true,
       })
     );
+    if (!proceed) return;
+    const manifest = getEntityManifest(this._config.entityManifest);
+    if (manifest) this._creating = { manifest, prefill: entityPrefill(manifest, this._query) };
+  }
+
+  /** Select the entity the dialog just published */
+  private _onEntityPublished(e: CustomEvent): void {
+    const signed = e.detail?.results?.signedEvent as WikiEvent | undefined;
+    const dTag = (e.detail?.dTag as string | undefined) ?? '';
+    this._creating = undefined;
+    if (signed && dTag) this._onSelect(signed);
+  }
+
+  private _isolated = new WeakSet<Element>();
+
+  /** Keep the dialog composer's events from reaching the form around the picker */
+  private _isolateDialog = (el?: Element) => {
+    if (!el || this._isolated.has(el)) return;
+    this._isolated.add(el);
+    for (const type of DIALOG_EVENTS) el.addEventListener(type, (e) => e.stopPropagation());
+  };
+
+  private _renderCreateDialog() {
+    if (!this._creating) return nothing;
+    const stop = (e: Event) => e.stopPropagation();
+    return html`
+      <div class="modal-backdrop" @click=${() => {
+        this._creating = undefined;
+      }}>
+        <div
+          class="modal"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Create entity"
+          @click=${stop}
+          ${ref(this._isolateDialog)}
+        >
+          <div class="modal-header">
+            <span>Create ${this._creating.manifest.metadata?.name ?? 'entity'}</span>
+            <button type="button" class="clear-btn" aria-label="Close" @click=${() => {
+              this._creating = undefined;
+            }}>×</button>
+          </div>
+          <div class="modal-body">
+            <nostr-wiki-composer
+              auto-publish
+              .manifest=${this._creating.manifest}
+              .prefill=${this._creating.prefill}
+              .relays=${this._relays}
+              @nostr-wiki-published=${(e: CustomEvent) => this._onEntityPublished(e)}
+            ></nostr-wiki-composer>
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   override render() {
@@ -383,6 +494,7 @@ export class WikiEntityPicker extends LitElement {
             `
             : nothing
         }
+        ${this._renderCreateDialog()}
       </div>
     `;
   }
