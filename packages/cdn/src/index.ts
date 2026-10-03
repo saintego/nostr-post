@@ -60,6 +60,8 @@ export {
   hasNostrSigner,
   fetchEvents,
   fetchEventsFromRelay,
+  fetchUserRelays,
+  getPublishRelays,
   fetchManifestByATag,
   fetchManifestsByATags,
   getCachedManifest,

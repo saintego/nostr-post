@@ -74,7 +74,7 @@ export interface NostrPostFeedProps {
   search?: string;
   /** Max events to fetch */
   limit?: number;
-  /** Custom relay URLs */
+  /** Relay URLs to read from. Default: the authors' NIP-65 relays (up to 10 authors) plus defaults */
   relays?: string[];
   /** Comma-separated tag filters, e.g. "#i:osm:node:123,#g:u09tvw" */
   filterTags?: string;

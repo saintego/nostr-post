@@ -6,7 +6,12 @@
 
 import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { type FetchFilter, fetchEvents, fetchManifestByATag } from '@nostr-post/signer';
+import {
+  type FetchFilter,
+  fetchEvents,
+  fetchManifestByATag,
+  fetchUserRelays,
+} from '@nostr-post/signer';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { NostrPostElement, baseStyles } from './base-component';
@@ -29,6 +34,9 @@ import type { SignedEvent } from './signer';
 import { type NostrProfile, displayNameForPubkey, loadProfilesForEvents } from './userProfile';
 import './composer';
 import './view';
+
+/** Above this many authors, the feed skips per-author relay list lookups */
+const MAX_AUTHOR_RELAY_LOOKUPS = 10;
 
 @customElement('nostr-post-feed')
 export class NostrPostFeed extends NostrPostElement {
@@ -55,6 +63,7 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Number })
   limit?: number;
 
+  /** Relay URLs to read from. Default: the authors' NIP-65 relays (up to 10 authors) plus defaults */
   @property({ type: Array })
   relays?: string[];
 
@@ -87,6 +96,9 @@ export class NostrPostFeed extends NostrPostElement {
 
   @state()
   private events: SignedEvent[] = [];
+
+  /** Authors' NIP-65 relays plus defaults, used for reading when `relays` isn't set */
+  private authorRelays?: string[];
 
   @state()
   private isLoading = false;
@@ -201,6 +213,20 @@ export class NostrPostFeed extends NostrPostElement {
     );
   }
 
+  /** Relays to read from: explicit `relays`, else the authors' relays (see loadEvents) */
+  private get readRelays(): string[] | undefined {
+    return this.relays ?? this.authorRelays;
+  }
+
+  /** Look up the authors' relay lists, unless `relays` is set or there are too many authors */
+  private async resolveAuthorRelays(): Promise<string[] | undefined> {
+    const authors = this.authors ?? [];
+    if (this.relays || authors.length === 0 || authors.length > MAX_AUTHOR_RELAY_LOOKUPS) {
+      return undefined;
+    }
+    return fetchUserRelays(authors);
+  }
+
   private scheduleInteractionsAndProfiles(events: SignedEvent[]) {
     const nextKey = buildInteractionLoadKey(events);
     if (!nextKey || nextKey === this.interactionLoadKey) return;
@@ -221,6 +247,7 @@ export class NostrPostFeed extends NostrPostElement {
           : [1];
 
     try {
+      this.authorRelays = await this.resolveAuthorRelays();
       const onUpdate = (arr: SignedEvent[]) => {
         this.events = arr;
         this.isLoading = false;
@@ -239,7 +266,7 @@ export class NostrPostFeed extends NostrPostElement {
           filterTags: this.filterTags,
           tagFilters: this.tagFilters,
         }),
-        this.relays,
+        this.readRelays,
         { onUpdate }
       );
 
@@ -281,7 +308,7 @@ export class NostrPostFeed extends NostrPostElement {
     if (filters.length === 0) return;
 
     try {
-      const fetched = await fetchEvents(filters, this.relays, { waitForAll: true });
+      const fetched = await fetchEvents(filters, this.readRelays, { waitForAll: true });
 
       this.interactionEvents = mergeUniqueEventsById(this.interactionEvents, fetched);
     } catch (error) {
@@ -296,7 +323,7 @@ export class NostrPostFeed extends NostrPostElement {
       const loadedProfiles = await loadProfilesForEvents(
         [...this.events, ...this.interactionEvents],
         this.profileMap,
-        this.relays
+        this.readRelays
       );
 
       // Merge progressively loaded profiles by pubkey.

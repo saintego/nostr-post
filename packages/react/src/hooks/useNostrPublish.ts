@@ -11,10 +11,11 @@ import {
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
 import { useCallback, useState } from 'react';
-import { DEFAULT_RELAYS, type SignedEvent, getPublicKey, signAndPublish } from '../signer';
+import { type SignedEvent, getPublicKey, signAndPublish } from '../signer';
 
 export interface UseNostrPublishOptions {
   manifest?: NostrPostManifest;
+  /** Relays to publish to. Default: the user's relays plus defaults (see getPublishRelays) */
   relays?: string[];
   onSuccess?: (events: SignedEvent[]) => void;
   onError?: (error: Error) => void;
@@ -53,12 +54,7 @@ export interface UseNostrPublishReturn {
  * ```
  */
 export function useNostrPublish(options: UseNostrPublishOptions = {}): UseNostrPublishReturn {
-  const {
-    manifest = STANDARD_KIND1_POST_MANIFEST,
-    relays = DEFAULT_RELAYS,
-    onSuccess,
-    onError,
-  } = options;
+  const { manifest = STANDARD_KIND1_POST_MANIFEST, relays, onSuccess, onError } = options;
 
   const [isPublishing, setIsPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);

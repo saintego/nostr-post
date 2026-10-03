@@ -6,6 +6,7 @@
 
 import type { UnsignedNostrEvent } from '@nostr-post/core/types';
 import { DEFAULT_RELAYS } from './fetch';
+import { getPublishRelays } from './relays';
 
 /** Signed Nostr event with id and sig */
 export interface SignedEvent extends UnsignedNostrEvent {
@@ -134,17 +135,21 @@ export async function publishToRelays(
 }
 
 /**
- * Sign and publish an event in one step
+ * Sign and publish an event in one step. Without `relays`, publishes to the
+ * signer's relays (see getPublishRelays).
  */
 export async function signAndPublish(
   event: UnsignedNostrEvent,
-  relays: string[] = DEFAULT_RELAYS
+  relays?: string[]
 ): Promise<{
   signedEvent: SignedEvent;
   publishResults: PublishResults;
 }> {
   const signedEvent = await signEvent(event);
-  const publishResults = await publishToRelays(signedEvent, relays);
+  const publishResults = await publishToRelays(
+    signedEvent,
+    relays ?? (await getPublishRelays(signedEvent.pubkey))
+  );
   return { signedEvent, publishResults };
 }
 
@@ -169,3 +174,4 @@ export interface FetchFilter {
 export { fetchEventsFromRelay, fetchEvents, DEFAULT_RELAYS } from './fetch';
 
 export * from './manifest';
+export * from './relays';

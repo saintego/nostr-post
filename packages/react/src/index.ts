@@ -50,6 +50,8 @@ export {
   getPublicKey,
   fetchEvents,
   fetchEventsFromRelay,
+  fetchUserRelays,
+  getPublishRelays,
   hasNostrSigner,
   DEFAULT_RELAYS,
 } from './signer';
