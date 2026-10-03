@@ -1,6 +1,29 @@
 // @vitest-environment happy-dom
 import { describe, expect, it, vi } from 'vitest';
 import { registerEntityManifest } from './core';
+
+const wikiEvent = (d: string, title: string, pubkey = 'pk') => ({
+  id: `${d}-${pubkey}`,
+  pubkey,
+  sig: 's',
+  kind: 30818,
+  created_at: 1,
+  content: '',
+  tags: [
+    ['d', d],
+    ['title', title],
+  ],
+});
+
+// Relay results for "bitcoin": general wiki articles plus one beer entity
+vi.mock('@nostr-post/signer', () => ({
+  fetchEvents: vi.fn(async () => [
+    wikiEvent('bitcoin', 'Bitcoin'),
+    wikiEvent('bitcoin-history', 'bitcoin-history'),
+    wikiEvent('bitcoin-beer', 'Bitcoin (Beer)'),
+    wikiEvent('bitcoin-brewery', 'Bitcoin (Brewery)'),
+  ]),
+}));
 import './web';
 import type { WikiEntityPicker } from './web';
 
@@ -87,5 +110,25 @@ describe('<wiki-entity-picker> create', () => {
     p._onCreateRequest();
     await picker.updateComplete;
     expect(picker.shadowRoot?.querySelector('nostr-wiki-composer')).toBeNull();
+  });
+});
+
+describe('<wiki-entity-picker> search', () => {
+  it('lists only entities of the picked type', async () => {
+    registerEntityManifest({
+      id: 'beer-entity-test',
+      version: '1.0.0',
+      wikiConfig: { titleTemplate: '{title} (Beer)', dTagTemplate: '{title}-(beer)' },
+      fields: [],
+    } as never);
+    const { p } = await pickerWithQuery('bitcoin', { entityManifest: 'beer-entity-test' });
+    await p._search();
+    expect(p._results.map((e: { tags: string[][] }) => e.tags[0]?.[1])).toEqual(['bitcoin-beer']);
+  });
+
+  it('is unscoped when the entity manifest is unknown', async () => {
+    const { p } = await pickerWithQuery('bitcoin', { entityManifest: 'not-registered' });
+    await p._search();
+    expect(p._results).toHaveLength(4);
   });
 });

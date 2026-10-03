@@ -7,8 +7,12 @@
 
 export {
   entityPrefill,
+  entityTypeAffixes,
+  entityTypeDTag,
+  type EntityTypeAffixes,
   getEntityManifest,
   matchesEntityQuery,
+  matchesEntityType,
   registerEntityManifest,
   wikiEntityPickerPlugin,
   type WikiEntityData,

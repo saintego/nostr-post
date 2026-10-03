@@ -47,7 +47,7 @@
 - [x] Resolve the newest entity version across all relays, not the first relay to answer
 - [x] Keep article tables that aren't the manifest infobox (and text before them) as prose
 - [x] "+ Create" in `<wiki-entity-picker>` opens a composer for the entity manifest and selects the published entity
-- [ ] Type-scoped search: a picker only lists entities of its `entityManifest` type (e.g. d-tags ending in `-beer`), and searches/creates with that suffix
+- [x] Type-scoped search: a picker only lists entities of its `entityManifest` type (e.g. d-tags ending in `-beer`), and searches/creates with that suffix
 - [ ] Richer results: show slug, date, summary or first line and version count in picker rows; let a selected entity expand into a read-only preview
 - [ ] Wiki preview panel: replace the slug field + Load button with the entity picker; selecting keeps the current tab so Compose loads the entity for editing
 - [ ] Slug collisions: two entities with the same title (two "Bitcoin" beers) get the same d-tag and become versions of one article. Warn in the composer when the slug exists for a different entity, and disambiguate Wikipedia-style ("Bitcoin (Moonshine beer)" → `bitcoin-moonshine-beer`)

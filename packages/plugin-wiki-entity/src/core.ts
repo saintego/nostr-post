@@ -78,6 +78,40 @@ export function entityPrefill(manifest: NostrPostManifest, name: string): Record
   return fieldId ? { [fieldId]: name } : {};
 }
 
+/** Fixed d-tag parts that mark an entity type, e.g. suffix `-beer` for `{title}-(beer)` */
+export interface EntityTypeAffixes {
+  prefix: string;
+  suffix: string;
+}
+
+/**
+ * The entity type's d-tag prefix/suffix: the literal text before the first and
+ * after the last `{placeholder}` of wikiConfig.dTagTemplate (or titleTemplate,
+ * which the d-tag is derived from otherwise), normalized like a d-tag.
+ */
+export function entityTypeAffixes(manifest: NostrPostManifest): EntityTypeAffixes {
+  const config = (manifest as { wikiConfig?: { dTagTemplate?: string; titleTemplate?: string } })
+    .wikiConfig;
+  const parts = (config?.dTagTemplate ?? config?.titleTemplate)?.split(/\{\w+\}/);
+  if (!parts || parts.length < 2) return { prefix: '', suffix: '' };
+  const prefix = normalizeDTag(parts[0] ?? '');
+  const suffix = normalizeDTag(parts[parts.length - 1] ?? '');
+  return { prefix: prefix ? `${prefix}-` : '', suffix: suffix ? `-${suffix}` : '' };
+}
+
+/** Whether `dTag` belongs to the entity type (and has a name between the affixes). */
+export function matchesEntityType(dTag: string, { prefix, suffix }: EntityTypeAffixes): boolean {
+  return (
+    dTag.length > prefix.length + suffix.length && dTag.startsWith(prefix) && dTag.endsWith(suffix)
+  );
+}
+
+/** The d-tag an entity of this type named `name` gets: `bitcoin` → `bitcoin-beer`. */
+export function entityTypeDTag(name: string, { prefix, suffix }: EntityTypeAffixes): string {
+  const slug = normalizeDTag(name);
+  return slug ? `${prefix}${slug}${suffix}` : '';
+}
+
 /** Parses a `30818:<pubkey>:<d-tag>` address into a minimal entity value. */
 function parseWikiAddress(raw: string): WikiEntityData | undefined {
   const parts = raw.split(':');

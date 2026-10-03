@@ -20,7 +20,6 @@ import {
   defaultResolver,
   extractExternalIds,
   groupByDTag,
-  normalizeDTag,
 } from '@nostr-post/wiki';
 import type { WikiEvent } from '@nostr-post/wiki';
 import { LitElement, css, html, nothing } from 'lit';
@@ -28,11 +27,15 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { ref } from 'lit/directives/ref.js';
 import '@nostr-post/wiki/web';
 import {
+  type EntityTypeAffixes,
   type WikiEntityData,
   type WikiEntityPickerConfig,
   entityPrefill,
+  entityTypeAffixes,
+  entityTypeDTag,
   getEntityManifest,
   matchesEntityQuery,
+  matchesEntityType,
   wikiEntityPickerPlugin,
 } from './core';
 
@@ -174,6 +177,13 @@ export class WikiEntityPicker extends LitElement {
       text-align: left;
       transition: background 0.1s;
     }
+    .create-dtag {
+      margin-left: auto;
+      font-family: monospace;
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--nl-text-secondary, #6b7280);
+    }
     .create-btn:hover {
       background: color-mix(in srgb, var(--nl-primary, #6366f1) 8%, transparent);
     }
@@ -250,6 +260,12 @@ export class WikiEntityPicker extends LitElement {
     return this._config.minSearchLength ?? 2;
   }
 
+  /** d-tag prefix/suffix of the picked entity type; empty if the manifest isn't known */
+  private get _affixes(): EntityTypeAffixes {
+    const manifest = getEntityManifest(this._config.entityManifest);
+    return manifest ? entityTypeAffixes(manifest) : { prefix: '', suffix: '' };
+  }
+
   private get _relays(): string[] {
     return this._config.relays ?? DEFAULT_WIKI_RELAYS;
   }
@@ -283,7 +299,8 @@ export class WikiEntityPicker extends LitElement {
     const searchId = ++this._searchId;
     this._searching = true;
     try {
-      const slug = normalizeDTag(this._query);
+      const affixes = this._affixes;
+      const slug = entityTypeDTag(this._query, affixes);
       const merged = await nip50Search<WikiEvent>({
         fetchFn: fetchEvents as never,
         query: this._query,
@@ -298,8 +315,13 @@ export class WikiEntityPicker extends LitElement {
       if (searchId !== this._searchId) return;
 
       // Relays without NIP-50 support often ignore `search` and return arbitrary
-      // wiki events, so keep only events whose title or d-tag match the query.
-      const matching = merged.filter((ev) => matchesEntityQuery(ev.tags, this._query));
+      // wiki events, so keep only events whose title or d-tag match the query,
+      // and only entities of the picked type (e.g. d-tags ending in -beer).
+      const matching = merged.filter(
+        (ev) =>
+          matchesEntityQuery(ev.tags, this._query) &&
+          matchesEntityType(ev.tags.find((t) => t[0] === 'd')?.[1] ?? '', affixes)
+      );
 
       // Multiple pubkeys can publish the same d-tag slug. Group by d-tag and
       // resolve each group to a single winner so each article appears once.
@@ -368,6 +390,13 @@ export class WikiEntityPicker extends LitElement {
     if (!proceed) return;
     const manifest = getEntityManifest(this._config.entityManifest);
     if (manifest) this._creating = { manifest, prefill: entityPrefill(manifest, this._query) };
+  }
+
+  /** The d-tag "+ Create" will produce, when the type adds a prefix/suffix */
+  private _createDTagHint() {
+    const affixes = this._affixes;
+    if (!affixes.prefix && !affixes.suffix) return nothing;
+    return html`<span class="create-dtag">${entityTypeDTag(this._query, affixes)}</span>`;
   }
 
   /** Select the entity the dialog just published */
@@ -486,6 +515,7 @@ export class WikiEntityPicker extends LitElement {
                       <div class="status-row">No entities found for "${this._query}"</div>
                       <button class="create-btn" type="button" @click=${this._onCreateRequest}>
                         + Create "${this._query}"
+                        ${this._createDTagHint()}
                       </button>
                     `
                     : nothing

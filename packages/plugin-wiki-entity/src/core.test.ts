@@ -1,6 +1,13 @@
 import type { NostrUIPlugin, PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
-import { type WikiEntityData, matchesEntityQuery, wikiEntityPickerPlugin } from './core';
+import {
+  type WikiEntityData,
+  entityTypeAffixes,
+  entityTypeDTag,
+  matchesEntityQuery,
+  matchesEntityType,
+  wikiEntityPickerPlugin,
+} from './core';
 
 // Resolve optional plugin hooks once, failing loudly if one is missing.
 function hook<K extends keyof NostrUIPlugin>(name: K): NonNullable<NostrUIPlugin[K]> {
@@ -187,5 +194,49 @@ describe('matchesEntityQuery', () => {
 
   it('rejects an empty query', () => {
     expect(matchesEntityQuery(tags, '   ')).toBe(false);
+  });
+});
+
+describe('entity type scoping', () => {
+  const manifest = (wikiConfig: Record<string, string>) =>
+    ({ id: 'm', version: '1', fields: [], wikiConfig }) as never;
+
+  it('derives the suffix from dTagTemplate', () => {
+    const affixes = entityTypeAffixes(
+      manifest({ titleTemplate: '{title} (Beer)', dTagTemplate: '{title}-(beer)' })
+    );
+    expect(affixes).toEqual({ prefix: '', suffix: '-beer' });
+    expect(entityTypeDTag('Bitcoin', affixes)).toBe('bitcoin-beer');
+  });
+
+  it('falls back to titleTemplate and supports prefixes', () => {
+    expect(entityTypeAffixes(manifest({ titleTemplate: 'Brewery: {name}' }))).toEqual({
+      prefix: 'brewery-',
+      suffix: '',
+    });
+  });
+
+  it('uses the text after the last placeholder', () => {
+    expect(entityTypeAffixes(manifest({ dTagTemplate: '{title}-{brewery}-beer' }))).toEqual({
+      prefix: '',
+      suffix: '-beer',
+    });
+  });
+
+  it('is unscoped without templates or placeholders', () => {
+    expect(entityTypeAffixes(manifest({}))).toEqual({ prefix: '', suffix: '' });
+    expect(entityTypeAffixes(manifest({ dTagTemplate: 'fixed' }))).toEqual({
+      prefix: '',
+      suffix: '',
+    });
+  });
+
+  it('matches only d-tags of the type with a name part', () => {
+    const affixes = { prefix: '', suffix: '-beer' };
+    expect(matchesEntityType('bitcoin-beer', affixes)).toBe(true);
+    expect(matchesEntityType('bitcoin', affixes)).toBe(false);
+    expect(matchesEntityType('bitcoin-brewery', affixes)).toBe(false);
+    expect(matchesEntityType('-beer', affixes)).toBe(false);
+    expect(matchesEntityType('bitcoin', { prefix: '', suffix: '' })).toBe(true);
   });
 });
