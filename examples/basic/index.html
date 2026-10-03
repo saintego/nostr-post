@@ -19,14 +19,13 @@
         .subtitle { color: #6b7280; margin-bottom: 2rem; }
         #feed { margin-top: 2rem; }
     </style>
-    <script src='https://unpkg.com/nostr-login@latest/dist/unpkg.js'
-        data-bunkers="nsec.app,highlighter.com"
-        data-perms="sign_event:1"
-    ></script>
+    <!-- nostr-shard-signer sign-in. Without a client ID: Nostr-only sign-in (extension, NIP-46 bunker).
+         Set VITE_WEB3AUTH_CLIENT_ID to add Google/Apple/X: https://saintego.github.io/nostr-shard-signer/portal/ -->
+    <script src="https://saintego.github.io/nostr-shard-signer/nostr-bridge.js" data-client-id="%VITE_WEB3AUTH_CLIENT_ID%"></script>
 </head>
 <body>
     <h1>🚀 nostr-post</h1>
-    <p class="subtitle">Click the Nostr icon to login, then create a post</p>
+    <p class="subtitle">Sign in with the button in the bottom-right corner, then create a post</p>
     
     <!-- Composer - works out of the box for Kind 1 posts -->
     <nostr-post-composer id="composer" auto-publish></nostr-post-composer>
@@ -41,20 +40,17 @@
         const feed = document.getElementById('feed');
 
         // Dark mode sync
-        const syncDark = () => document.body.classList.toggle('dark', 
-            localStorage.getItem('nl-dark-mode') === 'true' || 
+        const syncDark = () => document.body.classList.toggle('dark',
             matchMedia('(prefers-color-scheme: dark)').matches);
         syncDark();
         matchMedia('(prefers-color-scheme: dark)').onchange = syncDark;
-        addEventListener('storage', e => e.key === 'nl-dark-mode' && syncDark());
 
         // Auth events - update feed to show user's posts
-        document.addEventListener('nlAuth', async e => {
-            if (e.detail.type === 'login' || e.detail.type === 'signup') {
-                const pubkey = await window.nostr.getPublicKey();
-                feed.authors = [pubkey];
-            }
+        // (replays the current state, so a restored session isn't missed)
+        NostrBridge.onAuthChange(({ loggedIn, pubkey }) => {
+            if (loggedIn) feed.authors = [pubkey];
         });
+
 
         // Refresh feed after publishing
         composer.addEventListener('nostr-post-published', () => {

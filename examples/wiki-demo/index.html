@@ -128,15 +128,10 @@
     }
   </style>
 
-  <!-- NIP-07 signer (window.nostr) -->
-  <script id="wnj-config">
-    window.wnjParams = {
-      accent: 'purple',
-      compactMode: true,
-      appMetadata: { name: 'nostr-post Wiki Demo', url: 'https://saintego.github.io/nostr-post' }
-    };
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/window.nostr.js/dist/window.nostr.min.js" async></script>
+  <!-- nostr-shard-signer sign-in: Nostr-only (extension, NIP-46 bunker) as is. Add
+       data-client-id="<Web3Auth client ID>" for Google/Apple/X sign-in; register it for this
+       origin at https://saintego.github.io/nostr-shard-signer/portal/ -->
+  <script src="https://saintego.github.io/nostr-shard-signer/nostr-bridge.js" data-layout="floating"></script>
 </head>
 <body>
   <div style="max-width:1100px;margin:0 auto">
@@ -297,14 +292,9 @@ const BEER_MANIFEST = {
       placeholder.style.display = 'none';
     });
 
-    // ── Auto-publish after login ─────────────────────────────────────────────
-    document.addEventListener('nlAuth', async (e) => {
-      if (e.detail.type === 'login' || e.detail.type === 'signup') {
-        if (window.nostr) {
-          const pubkey = await window.nostr.getPublicKey();
-          console.log('Logged in as', pubkey);
-        }
-      }
+    // ── Sign-in via nostr-shard-signer widget ───────────────────────────────
+    window.addEventListener('nostr-bridge:auth', (e) => {
+      if (e.detail.loggedIn) console.log('Logged in as', e.detail.pubkey);
     });
   </script>
 </body>

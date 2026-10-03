@@ -141,6 +141,11 @@ export function ManifestNostrPanel({ manifest, onChange, onManifestRef }: Manife
       }
     };
     getPubkey();
+    // Bridge loads after hydration, so listen for its window event rather than NostrBridge
+    const onAuth = (e: WindowEventMap['nostr-bridge:auth']) =>
+      setCurrentPubkey(e.detail.pubkey ?? undefined);
+    window.addEventListener('nostr-bridge:auth', onAuth);
+    return () => window.removeEventListener('nostr-bridge:auth', onAuth);
   }, []);
 
   const showStatus = useCallback((type: 'success' | 'error', text: string) => {

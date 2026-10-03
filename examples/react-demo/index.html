@@ -4,8 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@nostr-post/react Demo</title>
-    <!-- nostr-login for NIP-07 auth -->
-    <script src="https://unpkg.com/nostr-login@latest/dist/unpkg.js"></script>
+    <!-- nostr-shard-signer sign-in. Without a client ID: Nostr-only sign-in (extension, NIP-46 bunker).
+         Set VITE_WEB3AUTH_CLIENT_ID to add Google/Apple/X: https://saintego.github.io/nostr-shard-signer/portal/ -->
+    <script src="https://saintego.github.io/nostr-shard-signer/nostr-bridge.js" data-client-id="%VITE_WEB3AUTH_CLIENT_ID%"></script>
     <style>
       * {
         box-sizing: border-box;

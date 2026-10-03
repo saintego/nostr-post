@@ -23,10 +23,16 @@ Visit the live demo at https://saintego.github.io/nostr-post/manifest-creator/
 
 ```bash
 cd tools/manifest-creator
-pnpm dev
+pnpm dev   # optional: NEXT_PUBLIC_WEB3AUTH_CLIENT_ID=<your client id> pnpm dev
 ```
 
 Visit http://localhost:3000/ to access the tool.
+
+User sign-in uses [nostr-shard-signer](https://github.com/saintego/nostr-shard-signer).
+Without a client ID it offers Nostr-only sign-in (NIP-07 extension or NIP-46 bunker such as Amber).
+We recommend setting `NEXT_PUBLIC_WEB3AUTH_CLIENT_ID` to a Web3Auth client ID: it adds Google/Apple/X sign-in, so people
+without a Nostr key can start too. Register it for your origin in the
+[portal](https://saintego.github.io/nostr-shard-signer/portal/) (localhost cannot be registered).
 
 ## Testing
 

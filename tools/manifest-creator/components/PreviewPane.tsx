@@ -56,7 +56,7 @@ export const PreviewPane = ({ manifest, manifestRef, isResolvingParents }: Previ
 
   const reloadCurrentPubkey = useCallback(async () => {
     try {
-      const { getPublicKey, fetchEvents } = await import('@nostr-post/signer');
+      const { getPublicKey, fetchEvents, fetchUserRelays } = await import('@nostr-post/signer');
       let pubkey: string | undefined;
       try {
         pubkey = await getPublicKey();
@@ -69,7 +69,8 @@ export const PreviewPane = ({ manifest, manifestRef, isResolvingParents }: Previ
       setIsLoadingEvents(true);
 
       const kinds = manifestKindsKey ? manifestKindsKey.split(',').map((kind) => Number(kind)) : [];
-      const events = await fetchEvents({ authors: [pubkey], kinds, limit: 20 });
+      const relays = await fetchUserRelays(pubkey);
+      const events = await fetchEvents({ authors: [pubkey], kinds, limit: 20 }, relays);
       if (events.length > 0) {
         setPublishedEvents(events);
         cacheEvents(events);
@@ -87,6 +88,16 @@ export const PreviewPane = ({ manifest, manifestRef, isResolvingParents }: Previ
     if (cached.length > 0) setPublishedEvents(cached);
 
     void reloadCurrentPubkey();
+  }, [reloadCurrentPubkey]);
+
+  // Reload when the user signs in or out via the nostr-shard-signer widget
+  useEffect(() => {
+    const onAuth = (e: WindowEventMap['nostr-bridge:auth']) => {
+      if (e.detail.loggedIn) void reloadCurrentPubkey();
+      else setCurrentPubkey('');
+    };
+    window.addEventListener('nostr-bridge:auth', onAuth);
+    return () => window.removeEventListener('nostr-bridge:auth', onAuth);
   }, [reloadCurrentPubkey]);
 
   useEffect(() => {
