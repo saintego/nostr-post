@@ -202,6 +202,10 @@ export class NostrWikiComposer extends LitElement {
   @property({ type: Boolean, attribute: 'auto-publish' })
   autoPublish = false;
 
+  /** Initial form values for a new entity (used when no existing version is loaded) */
+  @property({ attribute: false })
+  prefill?: Record<string, unknown>;
+
   @state() private _loading = false;
   @state() private _publishing = false;
   @state() private _error?: string;
@@ -264,7 +268,7 @@ export class NostrWikiComposer extends LitElement {
     const fetchId = ++this._fetchId;
 
     if (!this.manifest || !this.entityId) {
-      this._formData = {};
+      this._formData = { ...this.prefill };
       this._baseEvent = undefined;
       this._loading = false;
       this._error = undefined;
@@ -279,7 +283,9 @@ export class NostrWikiComposer extends LitElement {
     try {
       const raw = await fetchEvents(
         { kinds: [WIKI_KIND], '#d': [this.entityId], limit: 50 } as never,
-        this.relays
+        this.relays,
+        // Prefill from the newest version across all relays, not the first answer
+        { waitForAll: true, relayTimeoutMs: 5000 }
       );
       if (fetchId !== this._fetchId) return;
       const events = raw as unknown as WikiEvent[];
@@ -289,7 +295,7 @@ export class NostrWikiComposer extends LitElement {
         this._formData = wikiEventToManifestData(winner, this.manifest);
       } else {
         this._baseEvent = undefined;
-        this._formData = {};
+        this._formData = { ...this.prefill };
       }
     } catch (err) {
       if (fetchId !== this._fetchId) return;

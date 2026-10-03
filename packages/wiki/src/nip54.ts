@@ -253,12 +253,24 @@ function readTableTarget(tableByKey: Map<string, string[]>, field: PostField): u
   return castValues(tableVals, field, ['number', 'boolean']);
 }
 
-function parseWikiContent(content: string): {
+/**
+ * Splits content into the infobox table and prose. A table counts as the
+ * infobox only if it is the first block and has a row for one of `tableKeys`
+ * (manifest table field ids/labels); otherwise, e.g. in articles not written
+ * with this manifest, the whole content is prose.
+ */
+function parseWikiContent(
+  content: string,
+  tableKeys: Set<string>
+): {
   tableByKey: Map<string, string[]>;
   prose: string;
 } {
   const ast = parse(content) as unknown as AstDoc;
-  const { rows, tableIndex } = extractTableFromAst(ast);
+  const extracted = extractTableFromAst(ast);
+  const isInfobox =
+    extracted.tableIndex === 0 && extracted.rows.some(([key]) => tableKeys.has(key));
+  const { rows, tableIndex } = isInfobox ? extracted : { rows: [], tableIndex: -1 };
 
   const tableByKey = new Map<string, string[]>();
   for (const [key, value] of rows) {
@@ -299,7 +311,12 @@ export function wikiEventToManifestData(
   event: WikiEvent,
   manifest: NostrPostManifest
 ): Record<string, unknown> {
-  const { tableByKey, prose } = parseWikiContent(event.content);
+  const tableKeys = new Set(
+    manifest.fields
+      .filter((f) => wikiTargets(f).some((t) => t.target === 'table'))
+      .flatMap((f) => [f.id, (f.metadata?.label as string | undefined) ?? f.id])
+  );
+  const { tableByKey, prose } = parseWikiContent(event.content, tableKeys);
   const proseFieldId = prose
     ? manifest.fields.find((f) => wikiTargets(f).some((t) => t.target === 'content'))?.id
     : undefined;

@@ -194,6 +194,20 @@ describe('wikiEventToManifestData', () => {
     const data = wikiEventToManifestData(strippedEvent, beerManifest);
     expect(data.abv).toBeDefined();
   });
+
+  it('keeps a table with no manifest rows as prose', () => {
+    const content = '| Bitcoin has no top | Because fiat has no bottom |\n|---|---|\n| a | b |';
+    const data = wikiEventToManifestData(makeWikiEvent({ content }), beerManifest);
+    expect(data.abv).toBeUndefined();
+    expect(String(data.description)).toContain('Bitcoin has no top');
+  });
+
+  it('keeps text before a table as prose', () => {
+    const content = 'Intro paragraph.\n\n| abv | 8 |\n|---|---|';
+    const data = wikiEventToManifestData(makeWikiEvent({ content }), beerManifest);
+    expect(data.abv).toBeUndefined();
+    expect(String(data.description)).toContain('Intro paragraph.');
+  });
 });
 
 describe('defaultResolver', () => {

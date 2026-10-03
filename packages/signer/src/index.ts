@@ -171,7 +171,7 @@ export interface FetchFilter {
 /**
  * Fetch events from a single relay
  */
-export { fetchEventsFromRelay, fetchEvents, DEFAULT_RELAYS } from './fetch';
+export { fetchEventsFromRelay, fetchEvents, matchesFilter, DEFAULT_RELAYS } from './fetch';
 
 export * from './manifest';
 export * from './relays';

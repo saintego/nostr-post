@@ -7,6 +7,9 @@ import { DEFAULT_WIKI_RELAYS, WIKI_KIND, wikiEventToManifestData } from '../nip5
 import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { countContributors, defaultResolver, selectNewestEntity } from '../resolver';
 
+/** Resolving the newest version needs every relay's versions, not the first answer */
+const ALL_RELAYS = { waitForAll: true, relayTimeoutMs: 5000 };
+
 @customElement('nostr-wiki-view')
 export class NostrWikiView extends LitElement {
   static styles = css`
@@ -201,7 +204,11 @@ export class NostrWikiView extends LitElement {
     const filter = this.entityId
       ? { kinds: [WIKI_KIND], '#d': [this.entityId], limit: 50 }
       : { kinds: [WIKI_KIND], '#i': [this.entityIId], limit: 50 };
-    const events = (await fetchEvents(filter as never, this.relays)) as unknown as WikiEvent[];
+    const events = (await fetchEvents(
+      filter as never,
+      this.relays,
+      ALL_RELAYS
+    )) as unknown as WikiEvent[];
     if (fetchId !== this._fetchId) return null;
     if (this.entityId || events.length === 0) return events;
     return this._loadEntityVersions(events, fetchId);
@@ -220,7 +227,8 @@ export class NostrWikiView extends LitElement {
     if (!chosen) return [];
     const versions = (await fetchEvents(
       { kinds: [WIKI_KIND], '#d': [chosen], limit: 50 } as never,
-      this.relays
+      this.relays,
+      ALL_RELAYS
     )) as unknown as WikiEvent[];
     if (fetchId !== this._fetchId) return null;
     const byId = new Map<string, WikiEvent>();
