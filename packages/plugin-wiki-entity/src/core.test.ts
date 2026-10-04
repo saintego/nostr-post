@@ -2,6 +2,7 @@ import type { NostrUIPlugin, PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
 import {
   type WikiEntityData,
+  createTarget,
   entitySnippet,
   entityTypeAffixes,
   entityTypeDTag,
@@ -259,5 +260,23 @@ describe('entitySnippet', () => {
 
   it('is empty without text', () => {
     expect(entitySnippet([], '| a | b |\n|---|---|')).toBe('');
+  });
+});
+
+describe('createTarget', () => {
+  const beer = { prefix: '', suffix: '-beer' };
+
+  it('creates a new entity when no result has its d-tag', () => {
+    expect(createTarget('bitcoin pale', ['bitcoin-beer'], beer)).toEqual({
+      dTag: 'bitcoin-pale-beer',
+      exists: false,
+    });
+  });
+
+  it('reports an existing entity with the same d-tag', () => {
+    expect(createTarget('Bitcoin', ['bitcoin-beer'], beer)).toEqual({
+      dTag: 'bitcoin-beer',
+      exists: true,
+    });
   });
 });

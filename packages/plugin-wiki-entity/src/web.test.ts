@@ -68,9 +68,12 @@ describe('<wiki-entity-picker> create', () => {
     await picker.updateComplete;
     const composer = picker.shadowRoot?.querySelector('nostr-wiki-composer') as HTMLElement & {
       prefill?: Record<string, unknown>;
+      entityId?: string;
     };
     expect(composer).toBeTruthy();
     expect(composer.prefill).toEqual({ name: 'Moonshine' });
+    // moonshine-brewery is free, so the d-tag comes from the manifest template
+    expect(composer.entityId).toBeUndefined();
 
     // A field change inside the dialog must not look like the picker's value
     composer.dispatchEvent(
@@ -103,6 +106,19 @@ describe('<wiki-entity-picker> create', () => {
     expect(outer).toHaveBeenCalledTimes(1);
     expect(picker.shadowRoot?.querySelector('nostr-wiki-composer')).toBeNull();
     document.body.removeEventListener('np-value-changed', outer);
+  });
+
+  it('leaves a taken name to the composer to make distinct', async () => {
+    // The mocked relays have bitcoin-brewery; the composer asks for a distinct slug
+    const { picker, p } = await pickerWithQuery('bitcoin', { entityManifest: breweryManifest });
+    p._onCreateRequest();
+    await picker.updateComplete;
+    const composer = picker.shadowRoot?.querySelector('nostr-wiki-composer') as HTMLElement & {
+      entityId?: string;
+      prefill?: Record<string, unknown>;
+    };
+    expect(composer.entityId).toBeUndefined();
+    expect(composer.prefill).toEqual({ name: 'bitcoin' });
   });
 
   it('lets the host take over with preventDefault', async () => {

@@ -7,6 +7,7 @@
 
 export {
   TEXT_ONLY_ENTITY_MANIFEST,
+  createTarget,
   entityPrefill,
   entitySnippet,
   entityTypeAffixes,
@@ -20,3 +21,5 @@ export {
   type WikiEntityData,
   type WikiEntityPickerConfig,
 } from './core';
+
+export { type EntitySearchResult, searchEntities } from './search';

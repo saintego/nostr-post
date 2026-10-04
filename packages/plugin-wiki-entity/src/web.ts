@@ -10,17 +10,9 @@
  *   4. On selection: runs resolver → creates WikiEntityData → dispatches 'np-value-changed'
  */
 
-import { nip50Search } from '@nostr-post/core/nip50';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { fetchEvents } from '@nostr-post/signer';
-import {
-  DEFAULT_WIKI_RELAYS,
-  WIKI_KIND,
-  defaultResolver,
-  extractExternalIds,
-  groupByDTag,
-} from '@nostr-post/wiki';
+import { DEFAULT_WIKI_RELAYS, defaultResolver, extractExternalIds } from '@nostr-post/wiki';
 import type { WikiEvent } from '@nostr-post/wiki';
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -31,15 +23,15 @@ import {
   TEXT_ONLY_ENTITY_MANIFEST,
   type WikiEntityData,
   type WikiEntityPickerConfig,
+  createTarget,
   entityPrefill,
   entitySnippet,
   entityTypeAffixes,
   entityTypeDTag,
   getEntityManifest,
-  matchesEntityQuery,
-  matchesEntityType,
   wikiEntityPickerPlugin,
 } from './core';
+import { type EntitySearchResult, searchEntities } from './search';
 import { pickerStyles } from './webStyles';
 
 /** Events from the create dialog's composer that must not reach the form around the picker */
@@ -63,10 +55,11 @@ export class WikiEntityPicker extends LitElement {
 
   @state() private _query = '';
   /** Resolved version of each matching entity and how many versions were found */
-  @state() private _results: Array<{ event: WikiEvent; versions: number }> = [];
+  @state() private _results: EntitySearchResult[] = [];
   /** d-tag of the entity shown in the preview overlay */
   @state() private _previewDTag?: string;
   @state() private _searching = false;
+  /** Entity being created in the dialog */
   /** Entity being created in the dialog */
   @state() private _creating?: { manifest: NostrPostManifest; prefill: Record<string, unknown> };
   private _debounceTimer?: ReturnType<typeof setTimeout>;
@@ -120,36 +113,12 @@ export class WikiEntityPicker extends LitElement {
     const searchId = ++this._searchId;
     this._searching = true;
     try {
-      const affixes = this._affixes;
-      const slug = entityTypeDTag(this._query, affixes);
-      const merged = await nip50Search<WikiEvent>({
-        fetchFn: fetchEvents as never,
-        query: this._query,
-        baseFilter: { kinds: [WIKI_KIND] },
-        fallbackFilter: { '#d': [slug] },
-        nip50Limit: 30,
-        fallbackLimit: 20,
+      const results = await searchEntities(this._query, {
+        entityManifest: getEntityManifest(this._config.entityManifest),
         relays: this._relays,
-        getId: (ev) => ev.id,
       });
-
       if (searchId !== this._searchId) return;
-
-      // Relays without NIP-50 support often ignore `search` and return arbitrary
-      // wiki events, so keep only events whose title or d-tag match the query,
-      // and only entities of the picked type (e.g. d-tags ending in -beer).
-      const matching = merged.filter(
-        (ev) =>
-          matchesEntityQuery(ev.tags, this._query) &&
-          matchesEntityType(ev.tags.find((t) => t[0] === 'd')?.[1] ?? '', affixes)
-      );
-
-      // Multiple pubkeys can publish the same d-tag slug. Group by d-tag and
-      // resolve each group to a single winner so each article appears once.
-      this._results = [...groupByDTag(matching).values()].flatMap((group) => {
-        const event = defaultResolver(group);
-        return event ? [{ event, versions: group.length }] : [];
-      });
+      this._results = results;
     } catch {
       if (searchId !== this._searchId) return;
       this._results = [];
@@ -198,7 +167,8 @@ export class WikiEntityPicker extends LitElement {
 
   /**
    * Dispatches a cancelable `wiki-entity-create`; unless a host handles it
-   * (preventDefault), opens a composer for the entity manifest, if known.
+   * (preventDefault), opens a composer for the entity manifest, if known. If the
+   * name's d-tag is taken, the composer asks for a distinguishing slug.
    */
   private _onCreateRequest(): void {
     const proceed = this.dispatchEvent(
@@ -219,6 +189,31 @@ export class WikiEntityPicker extends LitElement {
     const affixes = this._affixes;
     if (!affixes.prefix && !affixes.suffix) return nothing;
     return html`<span class="create-dtag">${entityTypeDTag(this._query, affixes)}</span>`;
+  }
+
+  /**
+   * "+ Create" below the results, also when some entities matched (they may not
+   * be the one the user wants). If the name's d-tag is taken, it offers to create
+   * another entity with that name; the composer then asks for a distinct slug.
+   */
+  private _renderCreateOption() {
+    const { dTag, exists } = createTarget(
+      this._query,
+      this._results.map((r) => r.event.tags.find((t) => t[0] === 'd')?.[1] ?? ''),
+      this._affixes
+    );
+    return html`
+      ${
+        this._results.length === 0
+          ? html`<div class="status-row">No entities found for "${this._query}"</div>`
+          : nothing
+      }
+      ${exists ? html`<div class="status-row">"${dTag}" already exists (above).</div>` : nothing}
+      <button class="create-btn" type="button" @click=${this._onCreateRequest}>
+        + Create ${exists ? 'another ' : ''}"${this._query}"
+        ${exists ? html`<span class="create-dtag">with a distinct slug</span>` : this._createDTagHint()}
+      </button>
+    `;
   }
 
   /** Select the entity the dialog just published */
@@ -318,7 +313,7 @@ export class WikiEntityPicker extends LitElement {
     `;
   }
 
-  private _renderResult({ event, versions }: { event: WikiEvent; versions: number }) {
+  private _renderResult({ event, versions }: EntitySearchResult) {
     const dTag = event.tags.find((t) => t[0] === 'd')?.[1] ?? '';
     const title = event.tags.find((t) => t[0] === 'title')?.[1] ?? dTag;
     const snippet = entitySnippet(event.tags, event.content);
@@ -390,16 +385,8 @@ export class WikiEntityPicker extends LitElement {
                 ${this._searching ? html`<div class="status-row">Searching…</div>` : nothing}
                 ${this._results.map((result) => this._renderResult(result))}
                 ${
-                  !this._searching &&
-                  this._results.length === 0 &&
-                  this._query.length >= this._minLen
-                    ? html`
-                      <div class="status-row">No entities found for "${this._query}"</div>
-                      <button class="create-btn" type="button" @click=${this._onCreateRequest}>
-                        + Create "${this._query}"
-                        ${this._createDTagHint()}
-                      </button>
-                    `
+                  !this._searching && this._query.length >= this._minLen
+                    ? this._renderCreateOption()
                     : nothing
                 }
               </div>

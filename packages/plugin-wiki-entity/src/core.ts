@@ -116,6 +116,19 @@ export function entityTypeDTag(name: string, { prefix, suffix }: EntityTypeAffix
 const NON_TEXT_LINE = /^(\||[-=*_]{3,}|```|\[\[?[^\]]*\]\]?$)/;
 
 /**
+ * The d-tag "+ Create" would publish for `query`, and whether an entity with it
+ * already exists (creating would then only add a version of that entity).
+ */
+export function createTarget(
+  query: string,
+  existingDTags: string[],
+  affixes: EntityTypeAffixes
+): { dTag: string; exists: boolean } {
+  const dTag = entityTypeDTag(query, affixes);
+  return { dTag, exists: existingDTags.includes(dTag) };
+}
+
+/**
  * A short plain-text description of an entity: its `summary` tag, else the
  * first line of text in the content, without markdown markup.
  */
