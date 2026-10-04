@@ -38,7 +38,7 @@ export function WikiConfigEditor({ manifest, onChange }: WikiConfigEditorProps) 
         type="text"
         value={config.titleTemplate ?? ''}
         onChange={(e) => update('titleTemplate', e.target.value)}
-        placeholder="{name} (Brewery)"
+        placeholder="{name} (Type)"
       />
       <label style={{ ...styles.label, marginTop: '0.75rem' }} htmlFor="wiki-dtag-template">
         Wiki d-tag template:
@@ -49,11 +49,11 @@ export function WikiConfigEditor({ manifest, onChange }: WikiConfigEditorProps) 
         type="text"
         value={config.dTagTemplate ?? ''}
         onChange={(e) => update('dTagTemplate', e.target.value)}
-        placeholder="{name}-(brewery)"
+        placeholder="{name}-(type)"
       />
       <p style={styles.hint}>
         Fixed text around the placeholders marks the entity type: pickers referencing this manifest
-        only list d-tags with it (e.g. <code>-brewery</code>).
+        only list d-tags with it (<code>{'{name}-(type)'}</code> → <code>-type</code>).
       </p>
     </div>
   );

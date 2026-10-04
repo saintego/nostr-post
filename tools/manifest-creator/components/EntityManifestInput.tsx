@@ -34,7 +34,7 @@ export function EntityManifestInput({ value, onChange }: EntityManifestInputProp
         list="wiki-entity-manifests"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="beer-entity-v1"
+        placeholder="ID of a wiki manifest"
       />
       <datalist id="wiki-entity-manifests">
         {wikiManifestIds.map((id) => (
