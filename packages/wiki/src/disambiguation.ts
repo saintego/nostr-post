@@ -1,5 +1,5 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { interpolateTemplate, templateFieldIds } from './identity';
+import { interpolateTemplate, templateFieldIds, templateText } from './identity';
 import { normalizeDTag } from './normalizeDTag';
 import type { WikiManifest } from './types';
 
@@ -49,9 +49,8 @@ function suggestionText(value: unknown): string | undefined {
     return text && text.length <= MAX_SUGGESTION_LENGTH && !text.includes('\n') ? text : undefined;
   }
   // Reference fields (e.g. a picked brewery): its name without "(Brewery)"
-  if (value && typeof value === 'object' && 'displayName' in value) {
-    const name = String((value as { displayName?: unknown }).displayName ?? '');
-    return suggestionText(name.replace(/\s*\([^)]*\)\s*$/, ''));
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    return suggestionText(templateText(value));
   }
   return undefined;
 }

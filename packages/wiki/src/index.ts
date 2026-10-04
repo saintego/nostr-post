@@ -1,6 +1,6 @@
 export { normalizeDTag } from './normalizeDTag';
 
-export { interpolateTemplate, templateFieldIds } from './identity';
+export { interpolateTemplate, templateFieldIds, templateText } from './identity';
 export { validateWikiForm } from './validate';
 export type { WikiConfig, WikiManifest } from './types';
 

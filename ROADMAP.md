@@ -57,7 +57,7 @@
 - [ ] Prose after an infobox table is still re-rendered from the Djot AST, which escapes markup like `[[wikilinks]]`
 - [x] Slug collisions on create: the composer checks whether a new entity's d-tag is taken and, if so, asks for a distinguishing qualifier (suggested from other fields such as the brewery or style, or typed: year, edition) → `bitcoin-moonshine-beer`; publishing is blocked until the slug is free. The picker offers "+ Create another" for a taken name
 - [ ] Put the qualifier into the title too, Wikipedia-style ("Bitcoin (Moonshine beer)"); now only the d-tag is distinct
-- [ ] Templates can use a reference field's name (`{brewery}` currently renders `[object Object]`)
+- [x] Templates can use a reference field's name: `{brewery}` renders the referenced entity's name without its type ("Russian River Brewing"), e.g. `{title}-{brewery}-(beer)` → `pliny-russian-river-brewing-beer`
 - [ ] Controlled vocabularies instead of free text, stored as tags other apps can match:
   - country: ISO 3166 select → `i` tag (`iso3166:CZ`)
   - city: OpenStreetMap / Wikidata lookup (reuse plugin-geo / plugin-venue) → `i` tag with the ID plus `g` geohash

@@ -1,6 +1,23 @@
 /**
+ * A form value as plain text for templates: a reference to another entity
+ * (e.g. a picked brewery) becomes that entity's name without its type
+ * ("Russian River Brewing (Brewery)" → "Russian River Brewing"), lists are
+ * comma-separated, missing values are empty.
+ */
+export function templateText(value: unknown): string {
+  if (value === undefined || value === null) return '';
+  if (Array.isArray(value)) return value.map(templateText).filter(Boolean).join(', ');
+  if (typeof value === 'object') {
+    const ref = value as { displayName?: unknown; dTag?: unknown };
+    const name = typeof ref.displayName === 'string' ? ref.displayName : ref.dTag;
+    return typeof name === 'string' ? name.replace(/\s*\([^)]*\)\s*$/, '').trim() : '';
+  }
+  return String(value);
+}
+
+/**
  * Replace every `{fieldId}` placeholder in a template string with the
- * corresponding value from formData.
+ * corresponding value from formData (see templateText).
  *
  * - Missing or undefined values become an empty string.
  * - After substitution any run of two or more spaces is collapsed to one.
@@ -13,10 +30,7 @@
  */
 export function interpolateTemplate(template: string, formData: Record<string, unknown>): string {
   return template
-    .replace(/\{(\w+)\}/g, (_, key: string) => {
-      const v = formData[key];
-      return v !== undefined && v !== null ? String(v) : '';
-    })
+    .replace(/\{(\w+)\}/g, (_, key: string) => templateText(formData[key]))
     .replace(/\s{2,}/g, ' ')
     .trim();
 }
