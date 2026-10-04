@@ -96,6 +96,8 @@ function castValue(raw: string, field: PostField): unknown {
 
 export interface WikiEventConfig {
   dTag?: string;
+  /** Title tag to use instead of the one from wikiConfig.titleTemplate */
+  title?: string;
   pubkey?: string;
   createdAt?: number;
 }
@@ -123,10 +125,11 @@ const fieldTargets = (field: PostField): NostrTarget[] =>
 function applyIdentityTemplates(
   parts: WikiEventParts,
   wikiConfig: WikiManifest['wikiConfig'],
-  formData: Record<string, unknown>
+  formData: Record<string, unknown>,
+  titleOverride?: string
 ): void {
-  if (wikiConfig?.titleTemplate) {
-    const title = interpolateTemplate(wikiConfig.titleTemplate, formData);
+  if (titleOverride || wikiConfig?.titleTemplate) {
+    const title = titleOverride || interpolateTemplate(wikiConfig?.titleTemplate ?? '', formData);
     if (title) {
       parts.generatedTitle = title;
       parts.tags.push(['title', title]);
@@ -196,7 +199,7 @@ export function manifestToWikiEvent(
   config: WikiEventConfig = {}
 ): UnsignedNostrEvent {
   const parts: WikiEventParts = { tags: [], tableRows: [], proseChunks: [], dTag: config.dTag };
-  applyIdentityTemplates(parts, (manifest as WikiManifest).wikiConfig, formData);
+  applyIdentityTemplates(parts, (manifest as WikiManifest).wikiConfig, formData, config.title);
 
   for (const field of manifest.fields) {
     const value = formData[field.id];

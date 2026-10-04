@@ -9,9 +9,9 @@ import {
   distinguishingFieldLabels,
   distinguishingSuggestions,
   entityDTagFor,
+  entityTitleFor,
 } from '../disambiguation';
-import { entityDTagExists, fetchEntityVersions } from '../fetch';
-import { interpolateTemplate } from '../identity';
+import { checkEntityDTag, fetchEntityVersions } from '../fetch';
 import {
   DEFAULT_WIKI_RELAYS,
   WIKI_KIND,
@@ -27,6 +27,7 @@ import {
   DEFAULT_WIKI_COMPOSER_MESSAGES,
   type WikiComposerMessages,
 } from './wiki-composer-messages';
+import { type SlugStatus, renderSlugCheck } from './wiki-composer-slug';
 import { composerStyles } from './wiki-composer-styles';
 
 /** An empty number input clears the value instead of storing 0. */
@@ -73,7 +74,7 @@ export class NostrWikiComposer extends LitElement {
   /** Text added to a new entity's name to make its d-tag distinct */
   @state() private _qualifier = '';
   /** Whether a new entity's d-tag is already used by another entity */
-  @state() private _dTagStatus: 'idle' | 'checking' | 'free' | 'taken' = 'idle';
+  @state() private _dTagStatus: SlugStatus = 'idle';
   private _checkTimer?: ReturnType<typeof setTimeout>;
   private _checkId = 0;
 
@@ -85,11 +86,14 @@ export class NostrWikiComposer extends LitElement {
     return (this.manifest as WikiManifest | undefined)?.wikiConfig;
   }
 
+  /** The qualifier, if this is a new entity whose slug needed one */
+  private get _activeQualifier(): string {
+    return this._isNew ? this._qualifier.trim() : '';
+  }
+
   private get _previewTitle(): string | undefined {
-    const t = this._wikiConfig?.titleTemplate;
-    if (!t) return undefined;
-    const result = interpolateTemplate(t, this._formData);
-    return result || undefined;
+    if (!this.manifest) return undefined;
+    return entityTitleFor(this.manifest, this._formData, this._activeQualifier);
   }
 
   private get _m(): WikiComposerMessages {
@@ -103,7 +107,7 @@ export class NostrWikiComposer extends LitElement {
 
   private get _previewDTag(): string | undefined {
     if (!this.manifest) return undefined;
-    return entityDTagFor(this.manifest, this._formData, this._isNew ? this._qualifier : '');
+    return entityDTagFor(this.manifest, this._formData, this._activeQualifier);
   }
 
   override disconnectedCallback(): void {
@@ -122,8 +126,8 @@ export class NostrWikiComposer extends LitElement {
     }
     this._dTagStatus = 'checking';
     this._checkTimer = setTimeout(async () => {
-      const taken = await entityDTagExists(dTag, this.relays).catch(() => false);
-      if (checkId === this._checkId) this._dTagStatus = taken ? 'taken' : 'free';
+      const status = await checkEntityDTag(dTag, this.relays).catch(() => 'unknown' as const);
+      if (checkId === this._checkId) this._dTagStatus = status;
     }, 400);
   }
 
@@ -211,12 +215,12 @@ export class NostrWikiComposer extends LitElement {
     const titleValue = titleFieldId
       ? (this._formData[titleFieldId] as string | undefined)
       : undefined;
-    const explicitDTag =
-      this.entityId?.trim() ||
-      (this._isNew && this._qualifier.trim() ? this._previewDTag : undefined);
-    const unsignedEvent = explicitDTag
-      ? manifestToWikiEvent(manifest, this._formData, { dTag: explicitDTag })
-      : manifestToWikiEvent(manifest, this._formData);
+    const qualified = !!this._activeQualifier;
+    const explicitDTag = this.entityId?.trim() || (qualified ? this._previewDTag : undefined);
+    const unsignedEvent = manifestToWikiEvent(manifest, this._formData, {
+      dTag: explicitDTag,
+      title: qualified ? this._previewTitle : undefined,
+    });
     const dTag =
       explicitDTag ||
       unsignedEvent.tags.find((tag) => tag[0] === 'd')?.[1] ||
@@ -281,44 +285,19 @@ export class NostrWikiComposer extends LitElement {
     return undefined;
   }
 
-  /** For a new entity whose d-tag is taken: suggestions and a field to make it distinct */
+  /** For a new entity: whether its slug is free, and a way to make it distinct */
   private _renderDisambiguation() {
     if (!this._isNew || !this.manifest) return nothing;
-    const status = this._dTagStatus;
-    if (status !== 'taken' && !this._qualifier) {
-      return status === 'checking'
-        ? html`<p class="wiki-dtag-status">${this._m.checkingSlug}</p>`
-        : nothing;
-    }
-    const suggestions = distinguishingSuggestions(this.manifest, this._formData);
-    return html`
-      <div class="wiki-disambiguation" role=${status === 'taken' ? 'alert' : 'status'}>
-        ${
-          status === 'taken'
-            ? html`<p>${this._m.slugTaken(this._previewDTag ?? '')}</p>`
-            : html`<p class="wiki-dtag-status">${status === 'free' ? this._m.slugFree(this._previewDTag ?? '') : this._m.checkingSlug}</p>`
-        }
-        ${
-          suggestions.length > 0
-            ? html`<div class="wiki-suggestions">
-              ${suggestions.map(
-                (text) =>
-                  html`<button type="button" @click=${() => this._setQualifier(text)}>${text}</button>`
-              )}
-            </div>`
-            : nothing
-        }
-        <label>
-          ${this._m.distinguishBy}
-          <input
-            type="text"
-            .value=${this._qualifier}
-            placeholder=${this._m.distinguishPlaceholder(distinguishingFieldLabels(this.manifest))}
-            @input=${(e: InputEvent) => this._setQualifier((e.target as HTMLInputElement).value)}
-          />
-        </label>
-      </div>
-    `;
+    return renderSlugCheck({
+      status: this._dTagStatus,
+      dTag: this._previewDTag ?? '',
+      qualifier: this._qualifier,
+      suggestions: distinguishingSuggestions(this.manifest, this._formData),
+      placeholder: this._m.distinguishPlaceholder(distinguishingFieldLabels(this.manifest)),
+      messages: this._m,
+      onQualifier: (qualifier) => this._setQualifier(qualifier),
+      onCheckAgain: () => this._scheduleDTagCheck(),
+    });
   }
 
   override render() {

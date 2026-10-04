@@ -56,7 +56,8 @@
 - [x] Prose without an infobox is kept verbatim (re-rendering escaped `[[wikilinks]]`, and editing would have published them escaped)
 - [ ] Prose after an infobox table is still re-rendered from the Djot AST, which escapes markup like `[[wikilinks]]`
 - [x] Slug collisions on create: the composer checks whether a new entity's d-tag is taken and, if so, asks for a distinguishing qualifier (suggested from other fields such as the brewery or style, or typed: year, edition) → `bitcoin-moonshine-beer`; publishing is blocked until the slug is free. The picker offers "+ Create another" for a taken name
-- [ ] Put the qualifier into the title too, Wikipedia-style ("Bitcoin (Moonshine beer)"); now only the d-tag is distinct
+- [x] Put the qualifier into the title too, Wikipedia-style: "Bitcoin (Beer)" + "Moonshine" → title "Bitcoin (Moonshine Beer)", d-tag `bitcoin-moonshine-beer`
+- [x] Slug check can't silently say "free": if a relay fails or times out and none has the d-tag, it reports "unknown" ("Check again"; publishing isn't blocked, the qualifier input stays available)
 - [x] Templates can use a reference field's name: `{brewery}` renders the referenced entity's name without its type ("Russian River Brewing"), e.g. `{title}-{brewery}-(beer)` → `pliny-russian-river-brewing-beer`
 - [ ] Controlled vocabularies instead of free text, stored as tags other apps can match:
   - country: ISO 3166 select → `i` tag (`iso3166:CZ`)
@@ -64,6 +65,7 @@
   - beer style: BJCP style guide → `t` tag (`bjcp:21A`)
   - brewery type: Brewers Association categories (microbrewery, brewpub, …) → `t` tag
   - wiki entities stay for things the community describes (breweries, beers), not fixed vocabularies
+  - allow to edit enum in manifest editor
 - [x] Publishing wiki entities also goes to the author's own relays (signer + NIP-65 list), not only the wiki relays
 - [ ] Reading entities uses only the wiki relays; consider adding the reader's own relays (would find their own versions published elsewhere)
 - [ ] Example: OSM-based wiki inputs. When creating an OSM venue review, the venue's wiki entity is created automatically from OSM data if it doesn't exist, or updated (a new version) if the OSM data differs from the current version

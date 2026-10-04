@@ -41,6 +41,25 @@ export function entityDTagFor(
   return dTag || undefined;
 }
 
+/**
+ * The title a new entity gets, with `qualifier` added Wikipedia-style: inside a
+ * trailing parenthesis ("Bitcoin (Beer)" → "Bitcoin (Moonshine Beer)"), or as
+ * one ("Bitcoin" → "Bitcoin (Moonshine)"). Undefined without a title template.
+ */
+export function entityTitleFor(
+  manifest: NostrPostManifest,
+  formData: Record<string, unknown>,
+  qualifier = ''
+): string | undefined {
+  const template = (manifest as WikiManifest).wikiConfig?.titleTemplate;
+  if (!template) return undefined;
+  const title = interpolateTemplate(template, formData);
+  const q = qualifier.trim();
+  if (!title || !q) return title || undefined;
+  const parenthesis = title.match(/^(.*\S)\s*\(([^()]*)\)$/);
+  return parenthesis ? `${parenthesis[1]} (${q} ${parenthesis[2]})` : `${title} (${q})`;
+}
+
 /** A short text for a form value, or undefined if it doesn't make a good qualifier. */
 function suggestionText(value: unknown): string | undefined {
   if (typeof value === 'number') return String(value);

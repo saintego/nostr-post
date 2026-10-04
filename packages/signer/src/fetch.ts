@@ -30,7 +30,12 @@ function matchesTagFilter(event: SignedEvent, key: string, values: unknown): boo
 export function fetchEventsFromRelay(
   relayUrl: string,
   filter: FetchFilter | FetchFilter[],
-  options?: { onEvent?: (event: SignedEvent) => void; relayTimeoutMs?: number }
+  options?: {
+    onEvent?: (event: SignedEvent) => void;
+    relayTimeoutMs?: number;
+    /** Reject on timeout instead of resolving with the events received so far */
+    rejectOnTimeout?: boolean;
+  }
 ): Promise<SignedEvent[]> {
   return new Promise((resolve, reject) => {
     const events: SignedEvent[] = [];
@@ -41,7 +46,8 @@ export function fetchEventsFromRelay(
     const timeoutMs = options?.relayTimeoutMs ?? 10000;
     const timeout = setTimeout(() => {
       ws.close();
-      resolve(events); // Return what we have
+      if (options?.rejectOnTimeout) reject(new Error(`Timeout waiting for ${relayUrl}`));
+      else resolve(events); // Return what we have
     }, timeoutMs);
 
     ws.onopen = () => {

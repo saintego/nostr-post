@@ -4,8 +4,10 @@ import {
   distinguishingFieldLabels,
   distinguishingSuggestions,
   entityDTagFor,
+  entityTitleFor,
   nameFieldId,
 } from './disambiguation';
+import { manifestToWikiEvent } from './nip54';
 
 const beer = {
   id: 'beer',
@@ -59,5 +61,27 @@ describe('disambiguation', () => {
 
   it('names fields usable as qualifiers, skipping the name and long text', () => {
     expect(distinguishingFieldLabels(beer)).toEqual(['brewery', 'style', 'abv']);
+  });
+
+  it('puts the qualifier into the title, Wikipedia-style', () => {
+    expect(entityTitleFor(beer, { title: 'Bitcoin' })).toBe('Bitcoin (Beer)');
+    expect(entityTitleFor(beer, { title: 'Bitcoin' }, 'Moonshine')).toBe(
+      'Bitcoin (Moonshine Beer)'
+    );
+    const plain = {
+      ...beer,
+      wikiConfig: { titleTemplate: '{title}', dTagTemplate: '{title}' },
+    } as unknown as NostrPostManifest;
+    expect(entityTitleFor(plain, { title: 'Bitcoin' }, 'Moonshine')).toBe('Bitcoin (Moonshine)');
+  });
+
+  it('keeps title and d-tag consistent when publishing a qualified entity', () => {
+    const formData = { title: 'Bitcoin' };
+    const event = manifestToWikiEvent(beer, formData, {
+      dTag: entityDTagFor(beer, formData, 'Moonshine'),
+      title: entityTitleFor(beer, formData, 'Moonshine'),
+    });
+    expect(event.tags).toContainEqual(['d', 'bitcoin-moonshine-beer']);
+    expect(event.tags).toContainEqual(['title', 'Bitcoin (Moonshine Beer)']);
   });
 });
