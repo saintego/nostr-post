@@ -400,7 +400,7 @@ function collectEntityATags(events: WikiEvent[]): string[];
 
 ```typescript
 const WIKI_KIND = 30818;
-const DEFAULT_WIKI_RELAYS: string[]; // wikifreedia.xyz, nos.lol, relay.nostr.band, relay.damus.io
+const DEFAULT_WIKI_RELAYS: string[]; // wikifreedia.xyz, nos.lol, relay.damus.io
 ```
 
 ---

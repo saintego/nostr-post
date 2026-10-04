@@ -186,7 +186,7 @@ if (await signer.isAvailable()) {
   // Publish to relays
   await signer.publishEvent(signedEvent, [
     "wss://relay.damus.io",
-    "wss://relay.nostr.band",
+    "wss://relay.primal.net",
   ]);
 }
 ```
@@ -827,7 +827,7 @@ import { useNostrPublish } from "@nostr-post/react";
 
 function CustomPublisher() {
   const { publish, isPublishing } = useNostrPublish({
-    relays: ["wss://relay.damus.io", "wss://relay.nostr.band"],
+    relays: ["wss://relay.damus.io", "wss://relay.primal.net"],
     onSuccess: () => alert("Published!"),
     onError: (err) => alert(`Error: ${err}`),
   });
@@ -1616,7 +1616,7 @@ export function ArticlePublisher({ pubkey }: { pubkey: string }) {
         kind: 30078,
         dTag: "article-manifest-v1",
       }}
-      relays={["wss://relay.damus.io", "wss://relay.nostr.band"]}
+      relays={["wss://relay.damus.io", "wss://relay.primal.net"]}
       onPublish={(events) => {
         console.log(`Published ${events.length} events`);
       }}
@@ -1860,7 +1860,7 @@ async function publishWithValidation(
     ```typescript
     const relays = [
       "wss://relay.damus.io",
-      "wss://relay.nostr.band",
+      "wss://relay.primal.net",
       "wss://nostr.wine",
     ];
     ```

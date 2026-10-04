@@ -46,5 +46,5 @@ export async function getUserRelays(): Promise<string[]> {
  * Get default relays
  */
 export function getDefaultRelays(): string[] {
-  return ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
+  return ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 }

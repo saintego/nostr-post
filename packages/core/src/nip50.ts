@@ -52,7 +52,7 @@ export interface Nip50SearchOptions<T> {
  * Search for Nostr events using NIP-50 full-text search with an exact-tag
  * fallback, running both queries in parallel and merging the results.
  *
- * Relays that support NIP-50 (e.g. relay.nostr.band) will honour the `search`
+ * Relays that support NIP-50 search will honour the `search`
  * field; relays that don't will typically return nothing for that filter.
  * The fallback ensures at least exact slug matches are always returned.
  *

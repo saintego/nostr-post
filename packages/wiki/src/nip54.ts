@@ -16,7 +16,6 @@ export const WIKI_KIND = 30818;
 export const DEFAULT_WIKI_RELAYS = [
   'wss://relay.wikifreedia.xyz',
   'wss://nos.lol',
-  'wss://relay.nostr.band',
   'wss://relay.damus.io',
 ];
 

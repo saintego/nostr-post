@@ -1,6 +1,6 @@
 import type { FetchFilter, SignedEvent } from './index';
 /** Default relays to publish to */
-export const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
+export const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 
 /**
  * Whether `event` matches `filter`. Relays don't always apply filters exactly
