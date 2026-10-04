@@ -269,7 +269,10 @@ function parseWikiContent(
   const extracted = extractTableFromAst(ast);
   const isInfobox =
     extracted.tableIndex === 0 && extracted.rows.some(([key]) => tableKeys.has(key));
-  const { rows, tableIndex } = isInfobox ? extracted : { rows: [], tableIndex: -1 };
+  // Without an infobox the content is all prose: keep it verbatim. Re-rendering
+  // the AST escapes markup like [[wikilinks]], which editing would then publish.
+  if (!isInfobox) return { tableByKey: new Map(), prose: content.trim() };
+  const { rows, tableIndex } = extracted;
 
   const tableByKey = new Map<string, string[]>();
   for (const [key, value] of rows) {

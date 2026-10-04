@@ -202,6 +202,12 @@ describe('wikiEventToManifestData', () => {
     expect(String(data.description)).toContain('Bitcoin has no top');
   });
 
+  it('keeps prose without an infobox verbatim (wikilinks unescaped)', () => {
+    const content = 'The [[Bitcoin]] whitepaper by *Satoshi*.';
+    const data = wikiEventToManifestData(makeWikiEvent({ content }), beerManifest);
+    expect(data.description).toBe(content);
+  });
+
   it('keeps text before a table as prose', () => {
     const content = 'Intro paragraph.\n\n| abv | 8 |\n|---|---|';
     const data = wikiEventToManifestData(makeWikiEvent({ content }), beerManifest);
