@@ -9,7 +9,7 @@
 - [x] manifest creator or feed should show the latest version of a user's manifest after updates, even when some relays still return older versions. Filter out stale manifests, and consider using our feed components for the user-manifest list so the logic and UI stay consistent.
 - [x] A manifest can inherit from another manifest
 - [x] add kind:30818 for objects that are used for review (beer, product, map venue detail)
-- [ ] add multi-language support (i18n) for built-in plugins UI components(maybe Lingui.js style)
+- [ ] add multi-language support (i18n) for built-in plugins UI components(maybe Lingui.js style). Started: `<nostr-wiki-composer>` takes its text from an overridable messages object (`WikiComposerMessages`); still inline: other web components (picker, view, composer/feed in @nostr-post/web), validation messages (`validateWikiForm`), manifest-creator UI
 - [ ] add multi-language support (i18n) for manifest via NIP-78 or kind:30818, d = "{manifestId}:i18n:{locale}", we would need to address version in translations
 - [ ] add style customization options for web components (CSS custom properties, theming)
 - [ ] fix pwa example shared image/text, it's not getting to post input now
@@ -50,8 +50,13 @@
 - [x] Type-scoped search: a picker only lists entities of its `entityManifest` type (e.g. d-tags ending in `-beer`), and searches/creates with that suffix
 - [x] Richer results: show slug, date, summary or first line and version count in picker rows; preview overlay (👁) for results and the selected entity
 - [ ] `<nostr-wiki-view>` shows article prose as plain text (raw markdown/Djot): no plugin implements `renderView`; render it formatted
-- [ ] Wiki preview panel: replace the slug field + Load button with the entity picker; selecting keeps the current tab so Compose loads the entity for editing
-- [ ] Slug collisions: two entities with the same title (two "Bitcoin" beers) get the same d-tag and become versions of one article. Warn in the composer when the slug exists for a different entity, and disambiguate Wikipedia-style ("Bitcoin (Moonshine beer)" → `bitcoin-moonshine-beer`)
+- [x] Wiki preview panel: entity browser (search list that stays open, + New) with View / Edit / Versions / Reviews for the selected entity
+- [x] Versions: list every version (newest first, the shown one marked), open one read-only, edit from any version
+- [ ] Versions: compare two versions (changed fields + text diff)
+- [x] Prose without an infobox is kept verbatim (re-rendering escaped `[[wikilinks]]`, and editing would have published them escaped)
+- [ ] Prose after an infobox table is still re-rendered from the Djot AST, which escapes markup like `[[wikilinks]]`
+- [x] Slug collisions on create: the composer checks whether a new entity's d-tag is taken and, if so, asks for a distinguishing qualifier (suggested from other fields such as the brewery or style, or typed: year, edition) → `bitcoin-moonshine-beer`; publishing is blocked until the slug is free. The picker offers "+ Create another" for a taken name
+- [ ] Put the qualifier into the title too, Wikipedia-style ("Bitcoin (Moonshine beer)"); now only the d-tag is distinct
 - [ ] Templates can use a reference field's name (`{brewery}` currently renders `[object Object]`)
 - [ ] Controlled vocabularies instead of free text, stored as tags other apps can match:
   - country: ISO 3166 select → `i` tag (`iso3166:CZ`)
@@ -59,6 +64,9 @@
   - beer style: BJCP style guide → `t` tag (`bjcp:21A`)
   - brewery type: Brewers Association categories (microbrewery, brewpub, …) → `t` tag
   - wiki entities stay for things the community describes (breweries, beers), not fixed vocabularies
+- [x] Publishing wiki entities also goes to the author's own relays (signer + NIP-65 list), not only the wiki relays
+- [ ] Reading entities uses only the wiki relays; consider adding the reader's own relays (would find their own versions published elsewhere)
+- [ ] Example: OSM-based wiki inputs. When creating an OSM venue review, the venue's wiki entity is created automatically from OSM data if it doesn't exist, or updated (a new version) if the OSM data differs from the current version
 
 ### Venue Reviews (from INTEGRATION.md)
 
@@ -81,7 +89,7 @@
 - [ ] User testing: get feedback from real-world usage, identify pain points and confusing APIs
 - [ ] API stabilization: stabilize the manifest schema, document breaking changes
 - [ ] Performance optimizations
-- [ ] Remove `wss://relay.nostr.band` from `DEFAULT_RELAYS` / `DEFAULT_WIKI_RELAYS` (doesn't respond; every fetch waits for its timeout)
+- [x] Remove `wss://relay.nostr.band` from `DEFAULT_RELAYS` / `DEFAULT_WIKI_RELAYS` (doesn't respond; every fetch waited ~10 s for it); `DEFAULT_RELAYS` uses `wss://relay.primal.net` instead
 - [ ] Pin `next` in nextjs-demo and manifest-creator (`"latest"` re-resolves on every lockfile change)
 - [ ] Bring oversized files under the 500-line limit: plugin-markdown input, web view/feed, plugin-geo/venue input, core coordinator, wiki-composer (manifest-creator ManifestEditor and FieldEditor are done)
 - [ ] Venue linking UI improvements (OSM ID deep links)

@@ -49,6 +49,15 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
 - Biome for linting and formatting: `pnpm lint`, `pnpm lint:fix`, `pnpm format`. The pre-commit
   hook (lefthook) formats staged files.
 
+## User-facing text
+
+- Shared components serve every manifest and entity type: keep their wording generic. Don't
+  hard-code domain examples ("brewery", "barrel aged"); derive them from the manifest (field
+  labels, values) instead.
+- Prepare for translation: put a component's user-facing text in a messages object with English
+  defaults that apps can override (see `packages/wiki/src/web/wiki-composer-messages.ts`), not
+  inline in templates. Move existing inline text over when you touch it.
+
 ## Keep ROADMAP.md in sync
 
 ROADMAP.md is the single list of open work. Other docs (DEVELOPMENT_GUIDE.md, INTEGRATION.md,
