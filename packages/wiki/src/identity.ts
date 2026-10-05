@@ -27,12 +27,17 @@ export function templateText(value: unknown): string {
  *   interpolateTemplate("{name} (Beer)", { name: "Bitcoin" })  → "Bitcoin (Beer)"
  *   interpolateTemplate("{name}-(beer)", { name: "Bitcoin" })  → "Bitcoin-(beer)"
  *   interpolateTemplate("{a} {b}", { a: "Hello" })             → "Hello"
+ *   interpolateTemplate("{a} ({b})", { a: "Hello" })           → "Hello"
  */
 export function interpolateTemplate(template: string, formData: Record<string, unknown>): string {
-  return template
-    .replace(/\{(\w+)\}/g, (_, key: string) => templateText(formData[key]))
-    .replace(/\s{2,}/g, ' ')
-    .trim();
+  return (
+    template
+      .replace(/\{(\w+)\}/g, (_, key: string) => templateText(formData[key]))
+      // An empty optional part leaves "()" behind: "Café ({city})" without a city
+      .replace(/\(\s*\)/g, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim()
+  );
 }
 
 /**

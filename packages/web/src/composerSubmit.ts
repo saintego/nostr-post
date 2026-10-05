@@ -14,6 +14,7 @@ import {
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
+import type { NostrUIPlugin } from '@nostr-post/plugins/types';
 import { html } from 'lit';
 import { parseExtraTags } from './composerForm';
 import { applyReplyTargetToBundle } from './composerReply';
@@ -135,6 +136,36 @@ export const validateAndCoordinate = (
 
   return { bundle, addressableDTag };
 };
+
+// ---------------------------------------------------------------------------
+// Plugin beforePublish hooks
+// ---------------------------------------------------------------------------
+
+/** Run the plugins' beforePublish hooks for fields with a value; returns their tags. */
+export const runBeforePublish = async (
+  manifest: NostrPostManifest,
+  formData: Record<string, unknown>,
+  pubkey: string,
+  getPlugin: (id: string) => NostrUIPlugin | undefined = (id) => pluginRegistry.get(id)
+): Promise<[string, ...string[]][]> => {
+  const tags: [string, ...string[]][] = [];
+  for (const field of manifest.fields) {
+    const value = formData[field.id];
+    const plugin = field.uiPlugin ? getPlugin(field.uiPlugin) : undefined;
+    if (value === undefined || value === null || value === '' || !plugin?.beforePublish) continue;
+    tags.push(...(await plugin.beforePublish(value, field, { pubkey })));
+  }
+  return tags;
+};
+
+/** Add tags to every event of a bundle */
+export const withTags = (bundle: EventBundle, tags: [string, ...string[]][]): EventBundle =>
+  tags.length === 0
+    ? bundle
+    : {
+        ...bundle,
+        events: bundle.events.map((event) => ({ ...event, tags: [...event.tags, ...tags] })),
+      };
 
 // ---------------------------------------------------------------------------
 // Sign-and-publish bundle

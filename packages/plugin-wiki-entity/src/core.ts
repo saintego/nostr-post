@@ -50,20 +50,8 @@ export interface WikiEntityPickerConfig {
   emitExtraTags?: boolean;
 }
 
-const entityManifests = new Map<string, NostrPostManifest>();
-
-/** Make an entity manifest available to pickers whose `entityManifest` is its id. */
-export function registerEntityManifest(manifest: NostrPostManifest): void {
-  entityManifests.set(manifest.id, manifest);
-}
-
-/** Resolve a picker's `entityManifest` setting to a manifest, if known. */
-export function getEntityManifest(
-  ref: string | NostrPostManifest | undefined
-): NostrPostManifest | undefined {
-  if (!ref) return undefined;
-  return typeof ref === 'string' ? entityManifests.get(ref) : ref;
-}
+// The registry lives in @nostr-post/wiki so other plugins (e.g. venue) share it
+export { getEntityManifest, registerEntityManifest } from '@nostr-post/wiki';
 
 /**
  * Form data that puts `name` into the entity's name field: the first

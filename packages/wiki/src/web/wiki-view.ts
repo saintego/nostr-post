@@ -7,6 +7,7 @@ import { fetchEntityVersions } from '../fetch';
 import { DEFAULT_WIKI_RELAYS, WIKI_KIND, wikiEventToManifestData } from '../nip54';
 import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { countContributors, defaultResolver, selectNewestEntity } from '../resolver';
+import { DEFAULT_WIKI_VIEW_MESSAGES, type WikiViewMessages } from './wiki-view-messages';
 import { viewStyles } from './wiki-view-styles';
 
 /** Resolving the newest version needs every relay's versions, not the first answer */
@@ -33,6 +34,10 @@ export class NostrWikiView extends LitElement {
   /** Show this version instead of fetching and resolving the entity */
   @property({ attribute: false })
   event?: WikiEvent;
+
+  /** Overrides for the view's user-facing text (e.g. translations) */
+  @property({ attribute: false })
+  messages?: Partial<WikiViewMessages>;
 
   @state() private _loading = false;
   @state() private _error?: string;
@@ -133,11 +138,29 @@ export class NostrWikiView extends LitElement {
     return [...byId.values()];
   }
 
+  private get _m(): WikiViewMessages {
+    return { ...DEFAULT_WIKI_VIEW_MESSAGES, ...this.messages };
+  }
+
+  /** "© OpenStreetMap contributors"-style lines for the event's `source` tags */
+  private _renderSources(event: WikiEvent) {
+    const sources = event.tags.filter((t) => t[0] === 'source' && t[1]);
+    if (sources.length === 0) return nothing;
+    return html`<div class="wiki-sources">
+      ${sources.map((t) =>
+        t[2]?.startsWith('https://')
+          ? html`<a href=${t[2]} target="_blank" rel="noopener">${this._m.sourceAttribution(t[1])}</a>`
+          : html`<span>${this._m.sourceAttribution(t[1])}</span>`
+      )}
+    </div>`;
+  }
+
   override render() {
-    if (this._loading) return html`<slot name="loading"><p>Loading…</p></slot>`;
-    if (this._error) return html`<slot name="error"><p>Error: ${this._error}</p></slot>`;
+    const m = this._m;
+    if (this._loading) return html`<slot name="loading"><p>${m.loading}</p></slot>`;
+    if (this._error) return html`<slot name="error"><p>${m.error(this._error)}</p></slot>`;
     if (!this._winningEvent || !this._formData || !this.manifest) {
-      return html`<slot name="empty"><p>No entity found.</p></slot>`;
+      return html`<slot name="empty"><p>${m.notFound}</p></slot>`;
     }
 
     const { manifest, _formData: data, _allEvents } = this;
@@ -173,7 +196,7 @@ export class NostrWikiView extends LitElement {
           <span class="wiki-badge">${
             this.event
               ? `${this.event.pubkey.slice(0, 8)}… · ${new Date(this.event.created_at * 1000).toLocaleString()}`
-              : `${countContributors(_allEvents)} contributor(s)`
+              : m.contributors(countContributors(_allEvents))
           }</span>
         </header>
 
@@ -204,6 +227,7 @@ export class NostrWikiView extends LitElement {
 
         ${this._renderProseField()}
 
+        ${this._renderSources(this._winningEvent)}
         ${this.event ? nothing : this._renderVersionList()}
       </div>
     `;
@@ -213,7 +237,7 @@ export class NostrWikiView extends LitElement {
     const { _allEvents } = this;
     return html`
         <details class="wiki-contributors">
-          <summary>All versions (${_allEvents.length})</summary>
+          <summary>${this._m.allVersions(_allEvents.length)}</summary>
           ${_allEvents.map(
             (e) => html`
             <div class="wiki-contributor">

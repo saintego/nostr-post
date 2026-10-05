@@ -308,6 +308,83 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
     },
   },
 
+  // ── Venue hub (NIP-54 kind:30818), filled from OpenStreetMap ─────────────
+  // `metadata.sources.osm` names the OSM tag(s) a field comes from (`a|b`: first
+  // present; `@name`, `@street`, `@city` from the picked venue). Fields without a
+  // source (description) are community-written and never overwritten by OSM.
+  'wiki-venue-entity': {
+    id: 'venue-entity-v1',
+    version: '1.0.0',
+    wikiConfig: {
+      titleTemplate: '{name} ({city})',
+      dTagTemplate: '{name}-{city}-(venue)',
+    },
+    fields: [
+      {
+        id: 'name',
+        type: 'string',
+        uiPlugin: 'text',
+        required: true,
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'Name', sources: { osm: '@name' } },
+      },
+      {
+        id: 'category',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'tag', tagName: 't' },
+        metadata: { label: 'Category', sources: { osm: 'amenity|shop|craft|tourism|leisure' } },
+      },
+      {
+        id: 'street',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'Street', sources: { osm: '@street' } },
+      },
+      {
+        id: 'city',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'City', sources: { osm: '@city' } },
+      },
+      {
+        id: 'opening_hours',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'Opening hours', sources: { osm: 'opening_hours' } },
+      },
+      {
+        id: 'website',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'Website', sources: { osm: 'website|contact:website' } },
+      },
+      {
+        id: 'phone',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'Phone', sources: { osm: 'phone|contact:phone' } },
+      },
+      {
+        id: 'description',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 30818, target: 'content' },
+        metadata: { label: 'About', placeholder: 'What the community knows about this place…' },
+      },
+    ],
+    metadata: {
+      name: 'Venue Entity (NIP-54 wiki)',
+      description:
+        'Venue hub — kind:30818, filled from OpenStreetMap when a venue review is published; reviews link to it.',
+    },
+  },
+
   'venue-review': {
     id: 'venue-review-v1',
     version: '1.0.0',
@@ -381,6 +458,8 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
           label: 'Venue',
           precision: 6,
           providers: ['osm'],
+          // Create/update the venue's wiki page (the venue hub) from OSM and link it
+          wikiEntity: 'venue-entity-v1',
         },
       },
       {

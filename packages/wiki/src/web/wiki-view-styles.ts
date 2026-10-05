@@ -125,4 +125,11 @@ export const viewStyles = css`
   :host-context(.dark) .wiki-field dd  { border-color: #374151; }
   :host-context(.dark) .wiki-prose     { color: #d1d5db; }
   :host-context(.dark) dl.wiki-infobox { border-color: #374151; }
+  .wiki-sources {
+    padding: 0.4rem 1.25rem;
+    border-top: 1px solid var(--nl-border, #e5e7eb);
+    font-size: 0.7rem;
+    color: var(--nl-text-secondary, #6b7280);
+  }
+  .wiki-sources a { color: inherit; }
 `;

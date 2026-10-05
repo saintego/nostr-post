@@ -293,12 +293,21 @@ importers:
 
   packages/plugin-venue:
     dependencies:
+      '@nostr-post/core':
+        specifier: workspace:*
+        version: link:../core
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../plugin-geo
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins
+      '@nostr-post/signer':
+        specifier: workspace:*
+        version: link:../signer
+      '@nostr-post/wiki':
+        specifier: workspace:*
+        version: link:../wiki
       lit:
         specifier: ^3.2.1
         version: 3.3.2

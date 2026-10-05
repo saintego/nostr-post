@@ -27,8 +27,10 @@ import { composerStyle } from './composerStyle';
 import { renderSubmitButton } from './composerSubmit';
 import {
   type ValidationResult,
+  runBeforePublish,
   signAndPublishBundle,
   validateAndCoordinate,
+  withTags,
 } from './composerSubmit';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
 import { type SignedEvent, fetchManifestByATag, getPublicKey } from './signer';
@@ -324,7 +326,7 @@ export class NostrPostComposer extends NostrPostElement {
       const { bundle, addressableDTag } = outcome;
 
       if (this.autoPublish) {
-        const signedEvents = await signAndPublishBundle(bundle, this.relays);
+        const signedEvents = await this._publish(manifest, bundle, pubkey);
         this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
         this.successMessage = `Published to ${signedEvents.length} event(s)!`;
       } else {
@@ -341,6 +343,16 @@ export class NostrPostComposer extends NostrPostElement {
     } finally {
       this.isSubmitting = false;
     }
+  }
+
+  /** Let plugins publish related events first (e.g. a venue's wiki entity), then the post */
+  private async _publish(
+    manifest: NostrPostManifest,
+    bundle: EventBundle,
+    pubkey: string
+  ): Promise<SignedEvent[]> {
+    const hookTags = await runBeforePublish(manifest, this._formData, pubkey);
+    return signAndPublishBundle(withTags(bundle, hookTags), this.relays);
   }
 
   private updateReplyTarget(

@@ -1,4 +1,5 @@
 export { normalizeDTag } from './normalizeDTag';
+export { getEntityManifest, registerEntityManifest } from './registry';
 
 export { interpolateTemplate, templateFieldIds, templateText } from './identity';
 export { validateWikiForm } from './validate';

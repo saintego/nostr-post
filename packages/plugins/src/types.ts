@@ -74,6 +74,12 @@ export interface ValidationError {
 
 export type Result<T, E = Error> = { success: true; data: T } | { success: false; error: E };
 
+/** Context passed to a plugin's beforePublish hook */
+export interface BeforePublishContext {
+  /** Hex pubkey of the post's author */
+  pubkey: string;
+}
+
 /**
  * Plugin interface.
  *
@@ -157,6 +163,20 @@ export interface NostrUIPlugin {
    * @returns Array of extra [tagName, ...values] tags to add
    */
   extraTags?: (value: unknown, field: PostField) => [string, ...string[]][];
+
+  /**
+   * Async step before the post is signed and published; only runs when the
+   * composer publishes itself (auto-publish). Lets a plugin publish related
+   * events first, e.g. the venue plugin creating or updating the venue's wiki
+   * entity, and link them from the post.
+   *
+   * @returns Extra tags added to every event of the post (e.g. an `a` tag)
+   */
+  beforePublish?: (
+    value: unknown,
+    field: PostField,
+    ctx: BeforePublishContext
+  ) => Promise<[string, ...string[]][]>;
 
   /**
    * Resolve a rich view value from all event tags.

@@ -68,7 +68,15 @@
   - allow to edit enum in manifest editor
 - [x] Publishing wiki entities also goes to the author's own relays (signer + NIP-65 list), not only the wiki relays
 - [ ] Reading entities uses only the wiki relays; consider adding the reader's own relays (would find their own versions published elsewhere)
-- [ ] Example: OSM-based wiki inputs. When creating an OSM venue review, the venue's wiki entity is created automatically from OSM data if it doesn't exist, or updated (a new version) if the OSM data differs from the current version
+- [x] Example: OSM-based wiki inputs (venue hub). Publishing an OSM venue review creates the venue's wiki entity (`venue-entity-v1`) from OSM if missing, or a new version when the OSM element changed since the synced version (only OSM-sourced fields; community fields kept), and links the review via `a`. Opt-out checkbox in the venue field; `source` tag + "© OpenStreetMap contributors". Generic `beforePublish` plugin hook; fields declare `metadata.sources.osm`
+- [ ] Add manifest creator visual representation for wikiEntity: 'venue-entity-v1',
+- [ ] Venue hub: Google Places as a second source (`gplace:` `i` tag, `sources.google` fields, rating snapshot "4.2 from 50 reviews, as of <date>")
+- [ ] Venue hub: computed Nostr review stats in the venue view (count + average from reviews referencing the entity; computed live, not stored)
+- [ ] Venue hub: photo gallery aggregated from those reviews' media
+- [ ] Venue hub: area search ("venues near me") via the entity's `g` prefix tags
+- [ ] Venue hub: brewery location as a reference field to a venue entity
+- [ ] Venue hub: create a venue entity from an OSM search directly in the wiki picker/panel
+- [ ] Venue hub: when the slug check is "unknown" (relay unreachable), new venue slugs skip to the street qualifier (`louvre-národní-prague-venue`); retry the check instead of settling for a longer slug
 
 ### Venue Reviews (from INTEGRATION.md)
 
@@ -93,7 +101,7 @@
 - [ ] Performance optimizations
 - [x] Remove `wss://relay.nostr.band` from `DEFAULT_RELAYS` / `DEFAULT_WIKI_RELAYS` (doesn't respond; every fetch waited ~10 s for it); `DEFAULT_RELAYS` uses `wss://relay.primal.net` instead
 - [ ] Pin `next` in nextjs-demo and manifest-creator (`"latest"` re-resolves on every lockfile change)
-- [ ] Bring oversized files under the 500-line limit: plugin-markdown input, web view/feed, plugin-geo/venue input, core coordinator, wiki-composer (manifest-creator ManifestEditor and FieldEditor are done)
+- [ ] Bring oversized files under the 500-line limit: plugin-markdown input, web view/feed, plugin-geo input, core coordinator (done: manifest-creator ManifestEditor and FieldEditor, wiki-composer, plugin-venue input)
 - [ ] Venue linking UI improvements (OSM ID deep links)
 - [ ] Additional plugins: polls, calendars, markets, date, tags, mentions
 - [ ] Plugin examples, plugin developer documentation and plugin validation examples

@@ -27,6 +27,13 @@ describe('templateText', () => {
 });
 
 describe('interpolateTemplate with references', () => {
+  it('drops an empty optional part in parentheses', () => {
+    expect(interpolateTemplate('{name} ({city})', { name: 'Café' })).toBe('Café');
+    expect(interpolateTemplate('{name} ({city})', { name: 'Café', city: 'Prague' })).toBe(
+      'Café (Prague)'
+    );
+  });
+
   it('fills a reference field with its name, not [object Object]', () => {
     expect(interpolateTemplate('{title} by {brewery}', { title: 'Pliny', brewery })).toBe(
       'Pliny by Russian River Brewing'
