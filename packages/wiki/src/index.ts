@@ -1,5 +1,11 @@
 export { normalizeDTag } from './normalizeDTag';
-export { getEntityManifest, registerEntityManifest } from './registry';
+export {
+  type EntityManifestRef,
+  getEntityManifest,
+  registerEntityManifest,
+  resolveEntityManifest,
+} from './registry';
+export { type ExternalIdLink, externalIdLink } from './externalIds';
 
 export { interpolateTemplate, templateFieldIds, templateText } from './identity';
 export { validateWikiForm } from './validate';
@@ -17,6 +23,8 @@ export {
 
 export { checkEntityDTag, type DTagAvailability, fetchEntityVersions } from './fetch';
 export {
+  type EntityTypeAffixes,
+  entityTypeAffixes,
   distinguishingFieldLabels,
   distinguishingSuggestions,
   entityDTagFor,
@@ -27,6 +35,7 @@ export {
 export {
   WIKI_KIND,
   DEFAULT_WIKI_RELAYS,
+  STANDARD_WIKI_MANIFEST,
   manifestToWikiEvent,
   wikiEventToManifestData,
   buildWikiATag,

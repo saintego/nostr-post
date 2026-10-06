@@ -8,7 +8,13 @@
  */
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import type { WikiEvent } from '@nostr-post/wiki';
+import {
+  type EntityTypeAffixes,
+  type WikiEvent,
+  entityDTagFor,
+  entityTypeAffixes,
+  normalizeDTag,
+} from '@nostr-post/wiki';
 import type { VenueData } from './core';
 import type { OsmElement } from './osm';
 
@@ -134,4 +140,34 @@ export function entitySyncAction(
   return synced === undefined || osm.version > synced
     ? { kind: 'update', base }
     : { kind: 'none', base };
+}
+
+/** Details that could tell this venue apart from another with the same name and city */
+export function venueQualifierSuggestions(venue: VenueData): string[] {
+  const { street, district, postcode } = venue.address ?? {};
+  return [street, district, postcode].filter(
+    (s, i, all): s is string => !!s && all.indexOf(s) === i
+  );
+}
+
+/** The editable part of a slug: without the entity type's fixed prefix/suffix */
+export function slugBody(dTag: string, { prefix, suffix }: EntityTypeAffixes): string {
+  const withoutPrefix = prefix && dTag.startsWith(prefix) ? dTag.slice(prefix.length) : dTag;
+  return suffix && withoutPrefix.endsWith(suffix)
+    ? withoutPrefix.slice(0, -suffix.length)
+    : withoutPrefix;
+}
+
+/**
+ * A new venue page's d-tag: the slug the user edited (normalized, with the
+ * type's prefix/suffix), else the one generated from the manifest template.
+ */
+export function venueDTag(
+  manifest: NostrPostManifest,
+  data: Record<string, unknown>,
+  editedSlug?: string
+): string | undefined {
+  const affixes = entityTypeAffixes(manifest);
+  const edited = slugBody(normalizeDTag(editedSlug ?? ''), affixes);
+  return edited ? `${affixes.prefix}${edited}${affixes.suffix}` : entityDTagFor(manifest, data);
 }

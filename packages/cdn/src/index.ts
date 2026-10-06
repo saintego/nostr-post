@@ -78,6 +78,7 @@ export {
 export {
   WIKI_KIND,
   DEFAULT_WIKI_RELAYS,
+  STANDARD_WIKI_MANIFEST,
   manifestToWikiEvent,
   wikiEventToManifestData,
   buildWikiATag,
@@ -85,4 +86,22 @@ export {
   normalizeDTag,
   defaultResolver,
   collectEntityATags,
+  fetchEntityVersions,
+  checkEntityDTag,
+  externalIdLink,
+  // Entity manifests: register your own, or reference a published one by its 30078: address
+  registerEntityManifest,
+  getEntityManifest,
+  resolveEntityManifest,
 } from '@nostr-post/wiki';
+
+// Wiki entity picker (search, create)
+export { searchEntities, entityTypeAffixes } from '@nostr-post/plugin-wiki-entity';
+
+// Venues and the venue hub (wiki entity filled from OpenStreetMap)
+export {
+  searchNominatim,
+  fetchOsmElement,
+  findVenueEntity,
+  syncVenueEntity,
+} from '@nostr-post/plugin-venue';

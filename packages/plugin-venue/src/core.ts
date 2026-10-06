@@ -55,11 +55,20 @@ export interface VenueData {
    * `metadata.wikiEntity`). Unset means yes.
    */
   syncWiki?: boolean;
+  /**
+   * The new wiki page's slug as edited by the user next to the publish button
+   * (without the type suffix); unset means the slug generated from the template.
+   */
+  wikiSlug?: string;
+  /** The venue's wiki entity a post links to (from its `a` tag), when reading a post */
+  wikiEntity?: { pubkey: string; dTag: string };
 }
 
 export interface VenueAddress {
   street?: string;
   houseNumber?: string;
+  /** District, quarter or neighbourhood */
+  district?: string;
   city?: string;
   postcode?: string;
   country?: string;
@@ -166,6 +175,7 @@ export const nominatimToVenue = (result: NominatimResult, precision = 6): VenueD
 const nominatimAddress = (a: Record<string, string>): VenueAddress => ({
   street: a.road ?? a.pedestrian,
   houseNumber: a.house_number,
+  district: a.suburb ?? a.quarter ?? a.neighbourhood ?? a.city_district,
   city: a.city ?? a.town ?? a.village ?? a.municipality ?? a.hamlet,
   postcode: a.postcode,
   country: a.country,
@@ -321,6 +331,11 @@ export const venuePlugin: NostrUIPlugin = {
     if (locationTag) {
       venue.name = locationTag[1];
     }
+
+    // The venue's wiki entity (`a` tag "30818:<pubkey>:<d-tag>")
+    const [, pubkey, ...dTag] =
+      tags.find((t) => t[0] === 'a' && t[1]?.startsWith('30818:'))?.[1]?.split(':') ?? [];
+    if (pubkey && dTag.length > 0) venue.wikiEntity = { pubkey, dTag: dTag.join(':') };
 
     return venue;
   },

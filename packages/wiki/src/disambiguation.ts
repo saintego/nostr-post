@@ -104,3 +104,23 @@ export function distinguishingFieldLabels(manifest: NostrPostManifest): string[]
     .map((f) => (f.metadata?.label as string | undefined) ?? f.id)
     .slice(0, MAX_EXAMPLE_LABELS);
 }
+
+/** Fixed d-tag parts that mark an entity type, e.g. suffix `-beer` for `{title}-(beer)` */
+export interface EntityTypeAffixes {
+  prefix: string;
+  suffix: string;
+}
+
+/**
+ * The entity type's d-tag prefix/suffix: the literal text before the first and
+ * after the last `{placeholder}` of wikiConfig.dTagTemplate (or titleTemplate,
+ * which the d-tag is derived from otherwise), normalized like a d-tag.
+ */
+export function entityTypeAffixes(manifest: NostrPostManifest): EntityTypeAffixes {
+  const config = (manifest as WikiManifest).wikiConfig;
+  const parts = (config?.dTagTemplate ?? config?.titleTemplate)?.split(/\{\w+\}/);
+  if (!parts || parts.length < 2) return { prefix: '', suffix: '' };
+  const prefix = normalizeDTag(parts[0] ?? '');
+  const suffix = normalizeDTag(parts[parts.length - 1] ?? '');
+  return { prefix: prefix ? `${prefix}-` : '', suffix: suffix ? `-${suffix}` : '' };
+}

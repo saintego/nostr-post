@@ -49,6 +49,20 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
 - Biome for linting and formatting: `pnpm lint`, `pnpm lint:fix`, `pnpm format`. The pre-commit
   hook (lefthook) formats staged files.
 
+## Packages are the product
+
+- Packages (`packages/*`) must work standalone, as they will be published to npm and in the CDN
+  bundle (`packages/cdn`). A feature must work in any app that imports the package, not only in
+  the manifest creator or an example.
+- Don't rely on setup that only an app does (e.g. registering manifests from
+  `tools/manifest-creator/lib/examples.ts`). Accept inline values, or resolve references from
+  Nostr (e.g. a published manifest's `30078:` address); app-specific data like example
+  manifests stays in the app.
+- Public API goes through the package's entry points and, for plain-HTML users, the CDN bundle's
+  exports.
+- Keep `examples/*` and `tools/manifest-creator` thin: they compose package features. Logic or UI
+  that other apps would need belongs in a package.
+
 ## User-facing text
 
 - Shared components serve every manifest and entity type: keep their wording generic. Don't

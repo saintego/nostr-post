@@ -132,4 +132,17 @@ export const viewStyles = css`
     color: var(--nl-text-secondary, #6b7280);
   }
   .wiki-sources a { color: inherit; }
+  .wiki-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.5rem 1.25rem;
+    border-top: 1px solid var(--nl-border, #e5e7eb);
+    font-size: 0.8rem;
+  }
+  .wiki-links-label {
+    font-weight: 600;
+    color: var(--nl-text-secondary, #6b7280);
+  }
+  .wiki-links a { color: var(--nl-primary, #6366f1); }
 `;

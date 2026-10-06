@@ -3,7 +3,7 @@
 import { getFieldTargets, isStructuredContentKind } from '@nostr-post/core/manifestMappings';
 import type { NostrTarget, PostField } from '@nostr-post/core/types';
 import { AdditionalMappings } from './AdditionalMappings';
-import { EntityManifestInput } from './EntityManifestInput';
+import { EntityManifestInput, WIKI_MANIFEST_KEYS } from './EntityManifestInput';
 import { styles } from './fieldEditorStyles';
 import { formatKindLabel } from './kindLabels';
 
@@ -36,6 +36,10 @@ const withVisibility = (field: PostField, mode: 'edit' | 'view', value: string) 
   ...field.visibility,
   [mode]: value === 'visible' ? undefined : value,
 });
+
+/** The field's wiki entity manifest setting (picker or venue), if its plugin has one */
+const wikiManifestFor = (field: PostField) =>
+  field.uiPlugin ? WIKI_MANIFEST_KEYS[field.uiPlugin] : undefined;
 
 export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }: FieldEditorProps) {
   const currentTargets = getFieldTargets(field);
@@ -109,6 +113,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
   };
 
   const label = (field.metadata?.label as string) || field.id;
+  const wikiManifest = wikiManifestFor(field);
   const placeholder = field.metadata?.placeholder as string | undefined;
 
   return (
@@ -308,10 +313,12 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
           />
         </div>
 
-        {field.uiPlugin === 'wiki-entity-picker' && (
+        {wikiManifest && (
           <EntityManifestInput
-            value={(field.metadata?.entityManifest as string | undefined) ?? ''}
-            onChange={(v) => updateMetadata('entityManifest', v || undefined)}
+            label={wikiManifest.label}
+            inputId={`field-${wikiManifest.key}`}
+            value={(field.metadata?.[wikiManifest.key] as string | undefined) ?? ''}
+            onChange={(v) => updateMetadata(wikiManifest.key, v || undefined)}
           />
         )}
 

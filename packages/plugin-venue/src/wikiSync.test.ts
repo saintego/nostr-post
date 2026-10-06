@@ -72,13 +72,25 @@ describe('syncVenueEntity', () => {
     ]);
   });
 
-  it('adds the street when another venue has the slug', async () => {
-    (checkEntityDTag as Mock).mockImplementation(async (d: string) =>
-      d === 'café-louvre-prague-venue' ? 'taken' : 'free'
+  it('refuses a slug another venue has, instead of picking a qualifier', async () => {
+    (checkEntityDTag as Mock).mockResolvedValue('taken');
+    await expect(syncVenueEntity(venue, field)).rejects.toThrow(
+      /already uses "café-louvre-prague-venue"/
     );
+    expect(signEvent).not.toHaveBeenCalled();
+  });
+
+  it('uses the slug the user edited, keeping the type suffix', async () => {
+    await syncVenueEntity({ ...venue, wikiSlug: 'Café Louvre Národní' }, field);
+    expect(signedTags()).toContainEqual(['d', 'café-louvre-národní-venue']);
+    expect(signedTags()).toContainEqual(['title', 'Café Louvre (Prague)']);
+  });
+
+  it('keeps the plain slug when the check stays unknown, and retries first', async () => {
+    (checkEntityDTag as Mock).mockResolvedValue('unknown');
     await syncVenueEntity(venue, field);
-    expect(signedTags()).toContainEqual(['d', 'café-louvre-národní-prague-venue']);
-    expect(signedTags()).toContainEqual(['title', 'Café Louvre (Národní Prague)']);
+    expect(signedTags()).toContainEqual(['d', 'café-louvre-prague-venue']);
+    expect(checkEntityDTag).toHaveBeenCalledTimes(2);
   });
 
   it('only links an entity that is up to date with OSM', async () => {
@@ -103,6 +115,17 @@ describe('syncVenueEntity', () => {
     expect(event.tags.filter((t: string[]) => t[0] === 'source')).toEqual([
       ['source', 'OpenStreetMap', 'https://www.openstreetmap.org/copyright', 'node/123/v5'],
     ]);
+  });
+
+  it('accepts the entity manifest inline, without registering it', async () => {
+    const tags = await syncVenueEntity(venue, {
+      id: 'venue',
+      type: 'geo',
+      uiPlugin: 'venue',
+      metadata: { wikiEntity: { ...venueManifest, id: 'inline-venue-entity' } },
+    } as never);
+    expect(tags[0]?.[0]).toBe('a');
+    expect(signedTags()).toContainEqual(['d', 'café-louvre-prague-venue']);
   });
 
   it('does nothing when the user opted out', async () => {

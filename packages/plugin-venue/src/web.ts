@@ -16,12 +16,14 @@ import { venuePlugin } from './core';
 // Import web components (side-effect: defines custom elements)
 import './web/input';
 import './web/view';
+import './web/wikiPublish';
 
 // Register the plugin with its web component tag names
 pluginRegistry.register({
   ...venuePlugin,
   inputTagName: 'np-venue-input',
   viewTagName: 'np-venue-view',
+  publishSummaryTagName: 'np-venue-wiki-publish',
 });
 
 // Re-export components for direct usage

@@ -19,6 +19,24 @@ export const DEFAULT_WIKI_RELAYS = [
   'wss://relay.damus.io',
 ];
 
+/**
+ * Generic wiki manifest: just the article text. Used to show any wiki entity
+ * when its own manifest isn't known (the wiki counterpart of core's
+ * STANDARD_KIND1_POST_MANIFEST); <nostr-wiki-view> falls back to it.
+ */
+export const STANDARD_WIKI_MANIFEST: NostrPostManifest = {
+  id: 'standard-wiki-v1',
+  version: '1.0.0',
+  fields: [
+    {
+      id: 'content',
+      type: 'string',
+      uiPlugin: 'markdown',
+      mapTo: { kind: WIKI_KIND, target: 'content' },
+    },
+  ],
+};
+
 type AstNode = { tag: string; [key: string]: unknown };
 type AstDoc = {
   tag: 'doc';

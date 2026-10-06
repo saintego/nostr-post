@@ -135,6 +135,15 @@ export interface NostrUIPlugin {
   inputTagName?: string;
 
   /**
+   * Custom element tag name shown next to the post's publish button when the
+   * composer publishes itself, for fields with a value. Lets the plugin show
+   * and confirm what its beforePublish hook will publish (e.g. the venue's wiki
+   * page and its slug). Same contract as inputTagName: .value and .field in,
+   * 'np-value-changed' out (updates the field's value).
+   */
+  publishSummaryTagName?: string;
+
+  /**
    * Custom element tag name for the view component.
    * Set automatically when the plugin's /web entrypoint is imported.
    * The element must accept .value and .field properties.

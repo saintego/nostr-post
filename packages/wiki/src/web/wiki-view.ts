@@ -3,8 +3,14 @@ import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { fetchEvents } from '@nostr-post/signer';
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { type ExternalIdLink, externalIdLink } from '../externalIds';
 import { fetchEntityVersions } from '../fetch';
-import { DEFAULT_WIKI_RELAYS, WIKI_KIND, wikiEventToManifestData } from '../nip54';
+import {
+  DEFAULT_WIKI_RELAYS,
+  STANDARD_WIKI_MANIFEST,
+  WIKI_KIND,
+  wikiEventToManifestData,
+} from '../nip54';
 import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { countContributors, defaultResolver, selectNewestEntity } from '../resolver';
 import { DEFAULT_WIKI_VIEW_MESSAGES, type WikiViewMessages } from './wiki-view-messages';
@@ -67,12 +73,12 @@ export class NostrWikiView extends LitElement {
     this._error = undefined;
     this._allEvents = [event];
     this._winningEvent = event;
-    this._formData = this.manifest ? wikiEventToManifestData(event, this.manifest) : undefined;
+    this._formData = wikiEventToManifestData(event, this._manifest);
   }
 
   private async _fetch(): Promise<void> {
     const fetchId = ++this._fetchId;
-    if (!this.manifest || (!this.entityId && !this.entityIId)) {
+    if (!this.entityId && !this.entityIId) {
       this._loading = false;
       this._error = undefined;
       this._formData = undefined;
@@ -90,7 +96,7 @@ export class NostrWikiView extends LitElement {
       const winner = this.resolver(events);
       this._allEvents = events;
       this._winningEvent = winner ?? undefined;
-      this._formData = winner ? wikiEventToManifestData(winner, this.manifest) : undefined;
+      this._formData = winner ? wikiEventToManifestData(winner, this._manifest) : undefined;
     } catch (err) {
       if (fetchId !== this._fetchId) return;
       this._error = err instanceof Error ? err.message : String(err);
@@ -138,8 +144,29 @@ export class NostrWikiView extends LitElement {
     return [...byId.values()];
   }
 
+  /** The given manifest, or the standard one (article text) for wiki pages of unknown type */
+  private get _manifest(): NostrPostManifest {
+    return this.manifest ?? STANDARD_WIKI_MANIFEST;
+  }
+
   private get _m(): WikiViewMessages {
     return { ...DEFAULT_WIKI_VIEW_MESSAGES, ...this.messages };
+  }
+
+  /** Links to the entity's external pages, from its `i` tags of known kinds */
+  private _renderLinks(event: WikiEvent) {
+    const links = event.tags
+      .filter((t) => t[0] === 'i' && t[1])
+      .map((t) => externalIdLink(t[1]))
+      .filter((link): link is ExternalIdLink => !!link);
+    if (links.length === 0) return nothing;
+    return html`<div class="wiki-links">
+      <span class="wiki-links-label">${this._m.links}</span>
+      ${links.map(
+        (link) =>
+          html`<a href=${link.url} target="_blank" rel="noopener">${this._m.externalLink(link.provider)}</a>`
+      )}
+    </div>`;
   }
 
   /** "© OpenStreetMap contributors"-style lines for the event's `source` tags */
@@ -159,11 +186,11 @@ export class NostrWikiView extends LitElement {
     const m = this._m;
     if (this._loading) return html`<slot name="loading"><p>${m.loading}</p></slot>`;
     if (this._error) return html`<slot name="error"><p>${m.error(this._error)}</p></slot>`;
-    if (!this._winningEvent || !this._formData || !this.manifest) {
+    if (!this._winningEvent || !this._formData) {
       return html`<slot name="empty"><p>${m.notFound}</p></slot>`;
     }
 
-    const { manifest, _formData: data, _allEvents } = this;
+    const { _manifest: manifest, _formData: data, _allEvents } = this;
 
     const infoFields = manifest.fields
       .filter((f) => f.visibility?.view !== 'hidden' && !f.attachTo)
@@ -227,6 +254,7 @@ export class NostrWikiView extends LitElement {
 
         ${this._renderProseField()}
 
+        ${this._renderLinks(this._winningEvent)}
         ${this._renderSources(this._winningEvent)}
         ${this.event ? nothing : this._renderVersionList()}
       </div>
@@ -251,8 +279,8 @@ export class NostrWikiView extends LitElement {
   }
 
   private _renderProseField() {
-    if (!this.manifest || !this._formData) return nothing;
-    const contentField = this.manifest.fields.find((f) => {
+    if (!this._formData) return nothing;
+    const contentField = this._manifest.fields.find((f) => {
       const targets = Array.isArray(f.mapTo) ? f.mapTo : [f.mapTo];
       return targets.some((t) => t.kind === WIKI_KIND && t.target === 'content');
     });

@@ -18,17 +18,27 @@ const wikiManifestIds = Object.values(EXAMPLE_MANIFESTS)
 interface EntityManifestInputProps {
   value: string;
   onChange: (value: string) => void;
+  label?: string;
+  inputId?: string;
 }
 
-/** `entityManifest` of a wiki-entity-picker field: the entity type it picks and creates. */
-export function EntityManifestInput({ value, onChange }: EntityManifestInputProps) {
+/**
+ * A field's wiki entity manifest: what a wiki-entity-picker picks and creates
+ * (`entityManifest`), or the wiki page a venue field creates/updates (`wikiEntity`).
+ */
+export function EntityManifestInput({
+  value,
+  onChange,
+  label = 'Entity manifest:',
+  inputId = 'field-entity-manifest',
+}: EntityManifestInputProps) {
   return (
     <div style={styles.formGroup}>
-      <label style={styles.label} htmlFor="field-entity-manifest">
-        Entity manifest:
+      <label style={styles.label} htmlFor={inputId}>
+        {label}
       </label>
       <input
-        id="field-entity-manifest"
+        id={inputId}
         style={styles.input}
         type="text"
         list="wiki-entity-manifests"
@@ -44,3 +54,9 @@ export function EntityManifestInput({ value, onChange }: EntityManifestInputProp
     </div>
   );
 }
+
+/** Which metadata key holds a field's wiki entity manifest, by UI plugin */
+export const WIKI_MANIFEST_KEYS: Record<string, { key: string; label: string }> = {
+  'wiki-entity-picker': { key: 'entityManifest', label: 'Entity manifest:' },
+  venue: { key: 'wikiEntity', label: 'Wiki page manifest (created/updated from OSM):' },
+};

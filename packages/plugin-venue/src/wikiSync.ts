@@ -7,16 +7,17 @@ import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { fetchEvents, getPublishRelays, publishToRelays, signEvent } from '@nostr-post/signer';
 import {
   DEFAULT_WIKI_RELAYS,
+  type DTagAvailability,
+  type EntityManifestRef,
   WIKI_KIND,
   type WikiEvent,
   buildWikiATag,
   checkEntityDTag,
   defaultResolver,
-  entityDTagFor,
   entityTitleFor,
   fetchEntityVersions,
-  getEntityManifest,
   manifestToWikiEvent,
+  resolveEntityManifest,
   selectNewestEntity,
   wikiEventToManifestData,
 } from '@nostr-post/wiki';
@@ -26,6 +27,7 @@ import {
   type EntitySyncAction,
   entitySyncAction,
   mergeOsmFields,
+  venueDTag,
   venueEntityTags,
   venueIdentifiers,
   venueToEntityData,
@@ -66,10 +68,17 @@ export async function planVenueEntity(
   return { action: entitySyncAction(base, osm), osm };
 }
 
+/** Slug availability, asked twice when the first answer is "unknown" (a relay didn't answer) */
+export async function slugAvailability(dTag: string, relays: string[]): Promise<DTagAvailability> {
+  const first = await checkEntityDTag(dTag, relays);
+  return first === 'unknown' ? checkEntityDTag(dTag, relays) : first;
+}
+
 /**
- * A free d-tag (and matching title) for a new venue entity: the template's own
- * (name + city), else qualified by the street, else by the OSM ID (unique).
- * An unverifiable slug ("unknown") is skipped, to never overwrite another venue.
+ * The d-tag and title of a new venue entity: the slug the user confirmed next
+ * to the publish button (generated from the template unless edited; it can't
+ * be changed later). Refuses a slug another venue definitely has; one that
+ * can't be verified is used, since the venue wasn't found by its IDs either.
  */
 async function newEntityIdentity(
   manifest: NostrPostManifest,
@@ -77,18 +86,14 @@ async function newEntityIdentity(
   venue: VenueData,
   relays: string[]
 ): Promise<{ dTag: string; title?: string }> {
-  const osmQualifier = [venue.osmType, venue.osmId].filter(Boolean).join(' ');
-  const street = venue.address?.street;
-  for (const qualifier of ['', street, osmQualifier]) {
-    if (qualifier === undefined) continue;
-    const dTag = entityDTagFor(manifest, data, qualifier);
-    if (!dTag) continue;
-    const isLast = qualifier === osmQualifier;
-    if (isLast || (await checkEntityDTag(dTag, relays)) === 'free') {
-      return { dTag, title: entityTitleFor(manifest, data, qualifier) };
-    }
+  const dTag = venueDTag(manifest, data, venue.wikiSlug);
+  if (!dTag) throw new Error('The venue has no name for its wiki page slug');
+  if ((await slugAvailability(dTag, relays)) === 'taken') {
+    throw new Error(
+      `Another venue's wiki page already uses "${dTag}". Change the slug next to the publish button.`
+    );
   }
-  return { dTag: entityDTagFor(manifest, data, osmQualifier) ?? osmQualifier };
+  return { dTag, title: entityTitleFor(manifest, data) };
 }
 
 /** Tags from `extra` that the event doesn't have yet (same name and value) */
@@ -103,7 +108,8 @@ function addMissingTags(tags: Tag[], extra: Tag[]): Tag[] {
  * the entity is up to date with OSM.
  */
 export async function syncVenueEntity(venue: VenueData, field: PostField): Promise<Tag[]> {
-  const manifest = getEntityManifest(field.metadata?.wikiEntity as string | NostrPostManifest);
+  // A registered id, an inline manifest, or a published manifest's address
+  const manifest = await resolveEntityManifest(field.metadata?.wikiEntity as EntityManifestRef);
   if (!manifest || venue.syncWiki === false || venueIdentifiers(venue).length === 0) return [];
 
   const relays = DEFAULT_WIKI_RELAYS;

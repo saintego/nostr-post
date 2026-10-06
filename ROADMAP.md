@@ -69,14 +69,18 @@
 - [x] Publishing wiki entities also goes to the author's own relays (signer + NIP-65 list), not only the wiki relays
 - [ ] Reading entities uses only the wiki relays; consider adding the reader's own relays (would find their own versions published elsewhere)
 - [x] Example: OSM-based wiki inputs (venue hub). Publishing an OSM venue review creates the venue's wiki entity (`venue-entity-v1`) from OSM if missing, or a new version when the OSM element changed since the synced version (only OSM-sourced fields; community fields kept), and links the review via `a`. Opt-out checkbox in the venue field; `source` tag + "© OpenStreetMap contributors". Generic `beforePublish` plugin hook; fields declare `metadata.sources.osm`
-- [ ] Add manifest creator visual representation for wikiEntity: 'venue-entity-v1',
+- [x] Add manifest creator visual representation for wikiEntity: 'venue-entity-v1' (venue fields have a "Wiki page manifest" input, like the picker's "Entity manifest")
+- [x] Entity manifests can be referenced by a published manifest's address (`30078:<pubkey>:nostr-post:<id>`), resolved from relays (`resolveEntityManifest`), besides a registered id or an inline manifest: pickers and venue fields work in any app, not only where the manifest creator registered its examples
+- [ ] Publish `venue-entity-v1` as a NIP-78 manifest and reference it by address in the examples (now registered from the manifest creator's examples)
+- [ ] Show all data: posts and wiki pages show the clean manifest-based format, with a collapsed full view of everything (all tags; wiki table rows the manifest doesn't know, e.g. fields added in a newer manifest version), instead of always listing raw tags
 - [ ] Venue hub: Google Places as a second source (`gplace:` `i` tag, `sources.google` fields, rating snapshot "4.2 from 50 reviews, as of <date>")
 - [ ] Venue hub: computed Nostr review stats in the venue view (count + average from reviews referencing the entity; computed live, not stored)
 - [ ] Venue hub: photo gallery aggregated from those reviews' media
 - [ ] Venue hub: area search ("venues near me") via the entity's `g` prefix tags
 - [ ] Venue hub: brewery location as a reference field to a venue entity
 - [ ] Venue hub: create a venue entity from an OSM search directly in the wiki picker/panel
-- [ ] Venue hub: when the slug check is "unknown" (relay unreachable), new venue slugs skip to the street qualifier (`louvre-národní-prague-venue`); retry the check instead of settling for a longer slug
+- [x] Venue hub: the slug of a new venue page is never qualified automatically (no street or OSM ID): it's an always-editable input next to the publish button ("Wiki page slug (permanent)", the type suffix `-venue` fixed), with ✓ free / used by another venue / couldn't verify, the create/update/link action and the opt-out checkbox. Only when the slug is taken, details (street, district, postcode) are offered to append. A taken slug stops publishing; an "unknown" check is retried once. Generic `publishSummaryTagName` plugin hook renders it
+- [x] Venue hub: the wiki view links the entity's external IDs (OpenStreetMap, Google Maps); a post's venue view shows the linked venue wiki page (collapsed, loaded when opened)
 
 ### Venue Reviews (from INTEGRATION.md)
 

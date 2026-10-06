@@ -6,7 +6,6 @@
  */
 
 export {
-  TEXT_ONLY_ENTITY_MANIFEST,
   createTarget,
   entityPrefill,
   entitySnippet,

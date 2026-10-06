@@ -174,14 +174,14 @@ describe('<wiki-entity-picker> result details and preview', () => {
     expect(picker.value).toBeUndefined();
   });
 
-  it('previews articles of unknown type as text', async () => {
+  it('leaves the manifest of unknown types to the view (article text)', async () => {
     const { picker, p } = await pickerWithQuery('bitcoin', { entityManifest: 'not-registered' });
     p._previewDTag = 'bitcoin';
     await picker.updateComplete;
     const view = picker.shadowRoot?.querySelector('nostr-wiki-view') as HTMLElement & {
       manifest?: { id: string };
     };
-    expect(view?.manifest?.id).toBe('wiki-entity-text-preview');
+    expect(view?.manifest).toBeUndefined();
   });
 
   it('offers a preview of the selected entity', async () => {

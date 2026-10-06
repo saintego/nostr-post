@@ -28,7 +28,6 @@ import {
 // Ensure the geo input web component is registered
 import '@nostr-post/plugin-geo/web';
 import { venueInputStyles } from './inputStyles';
-import './wikiStatus';
 
 @customElement('np-venue-input')
 export class NpVenueInput extends LitElement {
@@ -352,12 +351,6 @@ export class NpVenueInput extends LitElement {
               : nothing
           }
         </div>
-        <np-venue-wiki-status
-          .venue=${v}
-          .field=${this.field}
-          @venue-wiki-sync-change=${(e: CustomEvent<{ syncWiki: boolean }>) =>
-            this.emitValue({ ...v, syncWiki: e.detail.syncWiki })}
-        ></np-venue-wiki-status>
         <button class="clear-btn" @click=${this.clearVenue}>
           Clear venue info
         </button>

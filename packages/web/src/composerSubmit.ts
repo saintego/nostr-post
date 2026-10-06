@@ -15,7 +15,8 @@ import {
 } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import type { NostrUIPlugin } from '@nostr-post/plugins/types';
-import { html } from 'lit';
+import { type TemplateResult, html } from 'lit';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { parseExtraTags } from './composerForm';
 import { applyReplyTargetToBundle } from './composerReply';
 import { type SignedEvent, getUserRelays, signAndPublish } from './signer';
@@ -157,6 +158,31 @@ export const runBeforePublish = async (
   }
   return tags;
 };
+
+/**
+ * Plugins' publish summaries (publishSummaryTagName), shown next to the publish
+ * button: what their beforePublish hooks will publish, for the user to confirm.
+ */
+export const renderPublishSummaries = (
+  manifest: NostrPostManifest,
+  formData: Record<string, unknown>,
+  onFieldChange: (fieldId: string, value: unknown) => void
+): TemplateResult[] =>
+  manifest.fields.flatMap((field) => {
+    const value = formData[field.id];
+    const tagName = field.uiPlugin
+      ? pluginRegistry.get(field.uiPlugin)?.publishSummaryTagName
+      : undefined;
+    if (!tagName || value === undefined || value === null || value === '') return [];
+    const tag = unsafeStatic(tagName);
+    return [
+      staticHtml`<${tag}
+        .value=${value}
+        .field=${field}
+        @np-value-changed=${(e: CustomEvent) => onFieldChange(field.id, e.detail.value)}
+      ></${tag}>`,
+    ];
+  });
 
 /** Add tags to every event of a bundle */
 export const withTags = (bundle: EventBundle, tags: [string, ...string[]][]): EventBundle =>

@@ -12,7 +12,12 @@
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { DEFAULT_WIKI_RELAYS, defaultResolver, extractExternalIds } from '@nostr-post/wiki';
+import {
+  DEFAULT_WIKI_RELAYS,
+  defaultResolver,
+  extractExternalIds,
+  resolveEntityManifest,
+} from '@nostr-post/wiki';
 import type { WikiEvent } from '@nostr-post/wiki';
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -20,7 +25,6 @@ import { ref } from 'lit/directives/ref.js';
 import '@nostr-post/wiki/web';
 import {
   type EntityTypeAffixes,
-  TEXT_ONLY_ENTITY_MANIFEST,
   type WikiEntityData,
   type WikiEntityPickerConfig,
   createTarget,
@@ -101,6 +105,15 @@ export class WikiEntityPicker extends LitElement {
     this._debounceTimer = setTimeout(() => {
       void this._search();
     }, 300);
+  }
+
+  /** An entity manifest given by its published address: fetch it once, then re-render */
+  override updated(changed: Map<string, unknown>): void {
+    if (!changed.has('field')) return;
+    const ref = this._config.entityManifest;
+    if (ref && !getEntityManifest(ref)) {
+      void resolveEntityManifest(ref).then((manifest) => manifest && this.requestUpdate());
+    }
   }
 
   override disconnectedCallback(): void {
@@ -279,7 +292,8 @@ export class WikiEntityPicker extends LitElement {
   private _renderPreview() {
     const dTag = this._previewDTag;
     if (!dTag) return nothing;
-    const manifest = getEntityManifest(this._config.entityManifest) ?? TEXT_ONLY_ENTITY_MANIFEST;
+    // Unknown types: <nostr-wiki-view> shows the article text (STANDARD_WIKI_MANIFEST)
+    const manifest = getEntityManifest(this._config.entityManifest);
     return this._renderModal(
       dTag,
       html`

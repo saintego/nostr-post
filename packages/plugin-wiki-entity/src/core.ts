@@ -9,7 +9,7 @@
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
-import { normalizeDTag } from '@nostr-post/wiki';
+import { type EntityTypeAffixes, normalizeDTag } from '@nostr-post/wiki';
 
 /**
  * Data shape stored for a wiki-entity-picker field.
@@ -66,26 +66,8 @@ export function entityPrefill(manifest: NostrPostManifest, name: string): Record
   return fieldId ? { [fieldId]: name } : {};
 }
 
-/** Fixed d-tag parts that mark an entity type, e.g. suffix `-beer` for `{title}-(beer)` */
-export interface EntityTypeAffixes {
-  prefix: string;
-  suffix: string;
-}
-
-/**
- * The entity type's d-tag prefix/suffix: the literal text before the first and
- * after the last `{placeholder}` of wikiConfig.dTagTemplate (or titleTemplate,
- * which the d-tag is derived from otherwise), normalized like a d-tag.
- */
-export function entityTypeAffixes(manifest: NostrPostManifest): EntityTypeAffixes {
-  const config = (manifest as { wikiConfig?: { dTagTemplate?: string; titleTemplate?: string } })
-    .wikiConfig;
-  const parts = (config?.dTagTemplate ?? config?.titleTemplate)?.split(/\{\w+\}/);
-  if (!parts || parts.length < 2) return { prefix: '', suffix: '' };
-  const prefix = normalizeDTag(parts[0] ?? '');
-  const suffix = normalizeDTag(parts[parts.length - 1] ?? '');
-  return { prefix: prefix ? `${prefix}-` : '', suffix: suffix ? `-${suffix}` : '' };
-}
+// Entity type affixes live in @nostr-post/wiki so other plugins (e.g. venue) share them
+export { type EntityTypeAffixes, entityTypeAffixes } from '@nostr-post/wiki';
 
 /** Whether `dTag` belongs to the entity type (and has a name between the affixes). */
 export function matchesEntityType(dTag: string, { prefix, suffix }: EntityTypeAffixes): boolean {
@@ -138,20 +120,6 @@ export function entitySnippet(tags: string[][], content: string, maxLength = 120
     .trim();
   return text.length > maxLength ? `${text.slice(0, maxLength - 1).trimEnd()}…` : text;
 }
-
-/** Shows an entity's text when its own manifest isn't known (preview of foreign articles). */
-export const TEXT_ONLY_ENTITY_MANIFEST: NostrPostManifest = {
-  id: 'wiki-entity-text-preview',
-  version: '1.0.0',
-  fields: [
-    {
-      id: 'content',
-      type: 'string',
-      uiPlugin: 'markdown',
-      mapTo: { kind: 30818, target: 'content' },
-    },
-  ],
-};
 
 /** Parses a `30818:<pubkey>:<d-tag>` address into a minimal entity value. */
 function parseWikiAddress(raw: string): WikiEntityData | undefined {

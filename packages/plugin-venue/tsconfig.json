@@ -13,7 +13,8 @@
       "@nostr-post/plugin-geo": ["../plugin-geo/dist/index.d.ts"],
       "@nostr-post/plugin-geo/web": ["../plugin-geo/dist/web.d.ts"],
       "@nostr-post/signer": ["../signer/dist/index.d.ts"],
-      "@nostr-post/wiki": ["../wiki/dist/index.d.ts"]
+      "@nostr-post/wiki": ["../wiki/dist/index.d.ts"],
+      "@nostr-post/wiki/web": ["../wiki/dist/web/index.d.ts"]
     }
   },
   "include": ["src/**/*"]

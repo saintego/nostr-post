@@ -27,6 +27,7 @@ import { composerStyle } from './composerStyle';
 import { renderSubmitButton } from './composerSubmit';
 import {
   type ValidationResult,
+  renderPublishSummaries,
   runBeforePublish,
   signAndPublishBundle,
   validateAndCoordinate,
@@ -415,6 +416,13 @@ export class NostrPostComposer extends NostrPostElement {
               : ''
           }
           ${renderFieldList(manifest, ctx, this.excludeFields, this.prefill)}
+          ${
+            this.autoPublish
+              ? renderPublishSummaries(manifest, this._formData, (id, val) =>
+                  this.handleFieldChange(id, val)
+                )
+              : ''
+          }
           ${renderSubmitButton(this.isSubmitting, this.isResolvingManifestRef)}
         </form>
       </div>
