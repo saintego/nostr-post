@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { externalIdLink } from './externalIds';
+import { entityLinks, externalIdLink } from './externalIds';
 
 describe('externalIdLink', () => {
   it('links OSM elements, Google places and URLs', () => {
@@ -13,5 +13,22 @@ describe('externalIdLink', () => {
 
   it('has no link for unknown kinds', () => {
     expect(externalIdLink('untappd:beer:4892')).toBeUndefined();
+  });
+});
+
+describe('entityLinks', () => {
+  it('links known i tags and r URLs, once each', () => {
+    expect(
+      entityLinks([
+        ['d', 'x'],
+        ['i', 'osm:node:1'],
+        ['i', 'isbn:123'],
+        ['r', 'https://example.org/x'],
+        ['r', 'https://example.org/x'],
+      ])
+    ).toEqual([
+      { url: 'https://www.openstreetmap.org/node/1', provider: 'OpenStreetMap' },
+      { url: 'https://example.org/x', provider: 'example.org' },
+    ]);
   });
 });

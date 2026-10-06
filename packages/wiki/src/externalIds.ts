@@ -20,3 +20,15 @@ export function externalIdLink(id: string): ExternalIdLink | undefined {
   const host = id.match(/^https?:\/\/([^/?#\s]+)/)?.[1];
   return host ? { url: id, provider: host } : undefined;
 }
+
+/**
+ * An entity's links to external pages: its `i` tags of known kinds and its
+ * `r` (URL reference) tags. Duplicates removed.
+ */
+export function entityLinks(tags: string[][]): ExternalIdLink[] {
+  const links = tags
+    .filter((t) => (t[0] === 'i' || t[0] === 'r') && t[1])
+    .map((t) => externalIdLink(t[1] as string))
+    .filter((link): link is ExternalIdLink => !!link);
+  return links.filter((link, i) => links.findIndex((l) => l.url === link.url) === i);
+}

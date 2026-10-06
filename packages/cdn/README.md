@@ -116,7 +116,7 @@ The bundle re-exports utilities for advanced usage:
 
 - `WIKI_KIND`, `DEFAULT_WIKI_RELAYS`, `STANDARD_WIKI_MANIFEST`
 - `manifestToWikiEvent`, `wikiEventToManifestData`, `unmappedTableRows`, `buildWikiATag`,
-  `extractExternalIds`, `externalIdLink`, `normalizeDTag`
+  `extractExternalIds`, `externalIdLink`, `entityLinks`, `manifestLinks`, `normalizeDTag`
 - `defaultResolver`, `collectEntityATags`, `fetchEntityVersions`, `checkEntityDTag`
 - `registerEntityManifest`, `getEntityManifest`, `resolveEntityManifest`: entity manifests by id,
   inline, or by a published manifest's `30078:` address

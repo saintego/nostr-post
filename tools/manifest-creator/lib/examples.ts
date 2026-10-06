@@ -318,6 +318,14 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
     wikiConfig: {
       titleTemplate: '{name} ({city})',
       dTagTemplate: '{name}-{city}-(venue)',
+      // Derived when shown, not stored: BTC Map lists the places OSM marks as accepting bitcoin
+      links: [
+        {
+          label: 'BTC Map',
+          url: 'https://btcmap.org/merchant/{i:osm}',
+          when: { field: 'bitcoin', equals: 'yes' },
+        },
+      ],
     },
     fields: [
       {
@@ -369,6 +377,48 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'table' },
         metadata: { label: 'Phone', sources: { osm: 'phone|contact:phone' } },
+      },
+      // Bitcoin payments, as mapped on OSM for BTC Map (wikiConfig.links adds the BTC Map link)
+      {
+        id: 'bitcoin',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'Bitcoin accepted', sources: { osm: 'currency:XBT|payment:bitcoin' } },
+      },
+      {
+        id: 'lightning',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'Lightning', sources: { osm: 'payment:lightning' } },
+      },
+      {
+        id: 'lightning_contactless',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Contactless Lightning',
+          sources: { osm: 'payment:lightning_contactless' },
+        },
+      },
+      {
+        id: 'onchain',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'On-chain', sources: { osm: 'payment:onchain' } },
+      },
+      {
+        id: 'bitcoin_checked',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Bitcoin payments checked on',
+          sources: { osm: 'check_date:currency:XBT|survey:date|check_date' },
+        },
       },
       {
         id: 'description',

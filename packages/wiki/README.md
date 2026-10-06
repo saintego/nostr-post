@@ -11,6 +11,7 @@ NIP-54 collaborative wiki entities (`kind:30818`) for the `nostr-post` ecosystem
 - [Installation](#installation)
 - [Entity manifest](#entity-manifest)
   - [Title and d-tag templates](#title-and-d-tag-templates)
+  - [Derived links](#derived-links)
   - [Unknown and newer fields](#unknown-and-newer-fields)
 - [Referencing entity manifests](#referencing-entity-manifests)
 - [Example: the venue hub (OpenStreetMap)](#example-the-venue-hub-openstreetmap)
@@ -209,6 +210,26 @@ const BEER_MANIFEST: WikiManifest = {
   - `distinguishingSuggestions(manifest, formData)` lists details taken from the form's values.
   - `entityTypeAffixes(manifest)` returns the fixed prefix and suffix around the editable name.
 
+### Derived links
+
+`wikiConfig.links` adds links worked out from an entity's data when it's shown. They aren't stored
+on the event, so a site changing its URLs needs only a manifest update.
+
+```typescript
+wikiConfig: {
+  links: [
+    {
+      label: "BTC Map",
+      url: "https://btcmap.org/merchant/{i:osm}", // {i:osm}: the osm: i tag without prefix → node:123
+      when: { field: "bitcoin", equals: "yes" }, // optional condition on a field's value
+    },
+  ],
+}
+```
+
+`{fieldId}` placeholders take a field's value (URL-encoded). A link is left out when a placeholder
+has no value or the condition fails. `manifestLinks(manifest, tags, formData)` computes them.
+
 ### Unknown and newer fields
 
 Readers may have an older manifest than the writer. `wikiEventToManifestData` reads the fields the
@@ -262,6 +283,10 @@ an `a` tag.
 - The entity carries every external ID as an `i` tag (`osm:node:123`), a geohash with its prefixes
   (`g`), and `["source", "OpenStreetMap", <copyright URL>, "node/123/v42"]` for attribution and
   for the imported version.
+- Bitcoin payments come from the OSM tags [BTC Map](https://btcmap.org) uses (`currency:XBT`,
+  `payment:lightning`, `payment:onchain`, `payment:lightning_contactless`, `check_date:currency:XBT`).
+  The example manifest maps them to infobox rows, and its `wikiConfig.links` shows a BTC Map link
+  for places that accept bitcoin (see [Derived links](#derived-links)).
 - Next to the publish button, the composer shows what will happen, an editable slug and an
   opt-out checkbox. This uses the plugin hooks `beforePublish` and `publishSummaryTagName`
   (see [PLUGINS.md](../../PLUGINS.md)).
@@ -355,7 +380,8 @@ const reviews = await fetchEvents({ "#a": aTags });
 ### `<nostr-wiki-view>`
 
 Displays a resolved wiki entity as a read-only infobox and its article, with:
-- a Links row for external IDs (OpenStreetMap, Google Maps, …);
+- a Links row: external IDs (OpenStreetMap, Google Maps, …), `r` URL tags and the manifest's
+  [derived links](#derived-links);
 - the attribution line from a `source` tag;
 - contributors and all versions;
 - a collapsed "All data" section: infobox rows the manifest doesn't know, all tags and the source.

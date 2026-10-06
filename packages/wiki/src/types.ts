@@ -38,6 +38,29 @@ export interface WikiConfig {
    * fallback applies.
    */
   dTagTemplate?: string;
+
+  /**
+   * Links to external pages derived from the entity's data, shown next to the
+   * links from its `i` tags. Derived when shown, never stored on the event.
+   */
+  links?: WikiLinkTemplate[];
+}
+
+/**
+ * A link derived from an entity, e.g. a venue's BTC Map page:
+ * `{ label: 'BTC Map', url: 'https://btcmap.org/merchant/{i:osm}', when: { field: 'bitcoin', equals: 'yes' } }`
+ */
+export interface WikiLinkTemplate {
+  /** Link text, e.g. the site's name */
+  label: string;
+  /**
+   * URL template: `{i:<namespace>}` is the entity's `i` tag value without that
+   * prefix (`i:osm` → `node:123`), `{fieldId}` a field's value. The link is
+   * left out when a placeholder has no value.
+   */
+  url: string;
+  /** Show only when this field's value equals `equals` (case-insensitive) */
+  when?: { field: string; equals: string };
 }
 
 /**

@@ -5,11 +5,12 @@ export {
   registerEntityManifest,
   resolveEntityManifest,
 } from './registry';
-export { type ExternalIdLink, externalIdLink } from './externalIds';
+export { type ExternalIdLink, entityLinks, externalIdLink } from './externalIds';
+export { linkFromTemplate, manifestLinks } from './links';
 
 export { interpolateTemplate, templateFieldIds, templateText } from './identity';
 export { validateWikiForm } from './validate';
-export type { WikiConfig, WikiManifest } from './types';
+export type { WikiConfig, WikiLinkTemplate, WikiManifest } from './types';
 
 export {
   type WikiEvent,

@@ -16,7 +16,8 @@
 - [ ] fix pwa example shared image/text, it's not getting to post input now
 - [ ] fix list plugin to use lists(nip-51?) instead of manifests
 - [ ] User mention support: mention autocomplete, user tagging
-- [ ] User profile support: display name, profile picture, and profile metadata in comments and posts
+- [ ] Show user names on posts and comments reliably (`packages/web/src/userProfile.ts`): today names often fall back to a truncated hex pubkey because profiles (kind 0) are read only from the default relays (add the `purplepag.es` indexer and the author's NIP-65 relays), `fetchAuthorProfile` takes the first event a relay returns instead of the newest, and every `<nostr-post-view>` fetches its own profile (share one batched, in-flight-deduplicated cache with the feed). Fallback to a short `npub`, not hex; show the NIP-05 identifier when verified
+- [ ] User profile view: a `<nostr-profile>` web component (+ React wrapper) with picture, name, about, NIP-05, website and the user's posts (optionally filtered by manifest, e.g. their reviews); post and comment author names link to it (app-overridable link target)
 - [ ] add link to library in web component footers for better discoverability
 - [ ] Publish npm packages for each package (packages/\*) with CI, semantic
       versioning, and automated releases to the npm registry
@@ -62,7 +63,8 @@
 - [x] Templates can use a reference field's name: `{brewery}` renders the referenced entity's name without its type ("Russian River Brewing"), e.g. `{title}-{brewery}-(beer)` → `pliny-russian-river-brewing-beer`
 - [ ] Controlled vocabularies instead of free text, stored as tags other apps can match:
   - country: ISO 3166 select → `i` tag (`iso3166:CZ`)
-  - city: OpenStreetMap / Wikidata lookup (reuse plugin-geo / plugin-venue) → `i` tag with the ID plus `g` geohash
+  - city: OpenStreetMap / Wikidata lookup (reuse plugin-geo / plugin-venue) → `i` tag with the ID plus `g` geohash(flying breweries dont need to have location)
+  - venue entity as a reference field to a brewery location?
   - beer style: BJCP style guide → `t` tag (`bjcp:21A`)
   - brewery type: Brewers Association categories (microbrewery, brewpub, …) → `t` tag
   - wiki entities stay for things the community describes (breweries, beers), not fixed vocabularies
@@ -78,8 +80,10 @@
 - [ ] Venue hub: computed Nostr review stats in the venue view (count + average from reviews referencing the entity; computed live, not stored)
 - [ ] Venue hub: photo gallery aggregated from those reviews' media
 - [ ] Venue hub: area search ("venues near me") via the entity's `g` prefix tags
-- [ ] Venue hub: venue entity as a reference field to a brewery location
 - [ ] Venue hub: create a venue entity from an OSM search directly in the wiki picker/panel
+- [x] Venue hub: add btc payment availability from btcmap data. BTC Map's data are OSM tags (`currency:XBT`, `payment:lightning`, `payment:onchain`, `payment:lightning_contactless`, `check_date:currency:XBT`), so `venue-entity-v1` maps them to infobox rows via `sources.osm`. The BTC Map link isn't stored: entity manifests can declare derived links (`wikiConfig.links`, e.g. `https://btcmap.org/merchant/{i:osm}` when `bitcoin` is "yes"), shown in the wiki view's Links row (which also shows `r` URLs). Existing entities get the rows on their next OSM-triggered update
+- [ ] Manifest creator: edit `wikiConfig.links` (derived links) in the wiki settings; now only via JSON
+- [ ] Venue hub: BTC Map extras from its API (`api.btcmap.org/v4/places`): verification date as BTC Map computes it, comments, boosts; and a "₿ accepts bitcoin" badge in the venue picker and the review's venue view
 - [x] Venue hub: the slug of a new venue page is never qualified automatically (no street or OSM ID): it's an always-editable input next to the publish button ("Wiki page slug (permanent)", the type suffix `-venue` fixed), with ✓ free / used by another venue / couldn't verify, the create/update/link action and the opt-out checkbox. Only when the slug is taken, details (street, district, postcode) are offered to append. A taken slug stops publishing; an "unknown" check is retried once. Generic `publishSummaryTagName` plugin hook renders it
 - [x] Venue hub: the wiki view links the entity's external IDs (OpenStreetMap, Google Maps); a post's venue view shows the linked venue wiki page (collapsed, loaded when opened)
 
@@ -87,7 +91,7 @@
 
 - [ ] Search/filter reviews by venue
 - [ ] Show reviews on map
-- [ ] User profile + review history
+- [ ] User profile + review history (built on the `<nostr-profile>` view above, filtered to reviews)
 - [ ] Reputation/trust scoring
 
 ### Quality, Tooling & Docs (from DEVELOPMENT_GUIDE.md)

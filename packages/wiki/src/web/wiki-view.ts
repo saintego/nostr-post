@@ -3,8 +3,9 @@ import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { fetchEvents } from '@nostr-post/signer';
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { type ExternalIdLink, externalIdLink } from '../externalIds';
+import { entityLinks } from '../externalIds';
 import { fetchEntityVersions } from '../fetch';
+import { manifestLinks } from '../links';
 import {
   DEFAULT_WIKI_RELAYS,
   STANDARD_WIKI_MANIFEST,
@@ -154,12 +155,12 @@ export class NostrWikiView extends LitElement {
     return { ...DEFAULT_WIKI_VIEW_MESSAGES, ...this.messages };
   }
 
-  /** Links to the entity's external pages, from its `i` tags of known kinds */
+  /** Links to the entity's external pages: `i` tags of known kinds, `r` URLs, manifest links */
   private _renderLinks(event: WikiEvent) {
-    const links = event.tags
-      .filter((t) => t[0] === 'i' && t[1])
-      .map((t) => externalIdLink(t[1]))
-      .filter((link): link is ExternalIdLink => !!link);
+    const links = [
+      ...entityLinks(event.tags),
+      ...manifestLinks(this._manifest, event.tags, this._formData ?? {}),
+    ];
     if (links.length === 0) return nothing;
     return html`<div class="wiki-links">
       <span class="wiki-links-label">${this._m.links}</span>

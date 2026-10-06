@@ -93,6 +93,8 @@ export {
   fetchEntityVersions,
   checkEntityDTag,
   externalIdLink,
+  entityLinks,
+  manifestLinks,
   // Entity manifests: register your own, or reference a published one by its 30078: address
   registerEntityManifest,
   getEntityManifest,
