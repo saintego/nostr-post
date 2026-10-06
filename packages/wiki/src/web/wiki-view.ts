@@ -9,6 +9,7 @@ import {
   DEFAULT_WIKI_RELAYS,
   STANDARD_WIKI_MANIFEST,
   WIKI_KIND,
+  unmappedTableRows,
   wikiEventToManifestData,
 } from '../nip54';
 import type { WikiEvent, WikiResolverFunction } from '../resolver';
@@ -169,6 +170,29 @@ export class NostrWikiView extends LitElement {
     </div>`;
   }
 
+  /**
+   * Everything the event contains, collapsed: infobox rows the manifest
+   * doesn't read, all tags and the raw source, so nothing is hidden by the
+   * clean, manifest-based rendering above.
+   */
+  private _renderAllData(event: WikiEvent) {
+    const m = this._m;
+    const unmapped = unmappedTableRows(event, this._manifest);
+    return html`<details class="wiki-all-data">
+      <summary>${m.allData}</summary>
+      ${
+        unmapped.length > 0
+          ? html`<h4>${m.otherFields}</h4>
+            <dl>${unmapped.map(([key, value]) => html`<dt>${key}</dt><dd>${value}</dd>`)}</dl>`
+          : nothing
+      }
+      <h4>${m.tags}</h4>
+      <ul>${event.tags.map((t) => html`<li><code>${t[0]}</code> ${t.slice(1).join(', ')}</li>`)}</ul>
+      <h4>${m.source}</h4>
+      <pre>${event.content}</pre>
+    </details>`;
+  }
+
   /** "© OpenStreetMap contributors"-style lines for the event's `source` tags */
   private _renderSources(event: WikiEvent) {
     const sources = event.tags.filter((t) => t[0] === 'source' && t[1]);
@@ -256,6 +280,7 @@ export class NostrWikiView extends LitElement {
 
         ${this._renderLinks(this._winningEvent)}
         ${this._renderSources(this._winningEvent)}
+        ${this._renderAllData(this._winningEvent)}
         ${this.event ? nothing : this._renderVersionList()}
       </div>
     `;

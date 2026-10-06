@@ -38,6 +38,7 @@ export {
   STANDARD_WIKI_MANIFEST,
   manifestToWikiEvent,
   wikiEventToManifestData,
+  unmappedTableRows,
   buildWikiATag,
   extractExternalIds,
   type WikiEventConfig,

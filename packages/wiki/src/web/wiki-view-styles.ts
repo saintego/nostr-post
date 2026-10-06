@@ -145,4 +145,32 @@ export const viewStyles = css`
     color: var(--nl-text-secondary, #6b7280);
   }
   .wiki-links a { color: var(--nl-primary, #6366f1); }
+  details.wiki-all-data {
+    border-top: 1px solid var(--nl-border, #e5e7eb);
+    padding: 0.5rem 1.25rem;
+    font-size: 0.75rem;
+  }
+  details.wiki-all-data summary {
+    cursor: pointer;
+    color: var(--nl-text-secondary, #6b7280);
+    font-weight: 500;
+  }
+  details.wiki-all-data h4 { margin: 0.6rem 0 0.25rem; font-size: 0.75rem; }
+  details.wiki-all-data dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.15rem 0.75rem;
+    margin: 0;
+  }
+  details.wiki-all-data dd { margin: 0; }
+  details.wiki-all-data ul { margin: 0; padding-left: 1rem; word-break: break-all; }
+  details.wiki-all-data pre {
+    margin: 0;
+    padding: 0.5rem;
+    max-height: 16rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    background: var(--nl-card-bg, #f9fafb);
+    border-radius: 0.375rem;
+  }
 `;

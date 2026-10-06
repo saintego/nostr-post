@@ -53,15 +53,40 @@ function extractNodeText(node: AstNode): string {
   return children.map(extractNodeText).join('');
 }
 
+/** A table row whose cells only hold dashes (a separator Djot didn't recognize) */
+function isDashRow(row: AstNode): boolean {
+  const cells = (row as AstNode & { children?: AstNode[] }).children ?? [];
+  return (
+    cells.length > 0 &&
+    cells.every((cell) => {
+      const parts = (cell as AstNode & { children?: AstNode[] }).children ?? [];
+      return (
+        parts.length > 0 &&
+        parts.every(
+          (p) =>
+            p.tag === 'smart_punctuation' ||
+            (p.tag === 'str' && /^[-:\s]*$/.test(String((p as { text?: unknown }).text ?? '')))
+        )
+      );
+    })
+  );
+}
+
 function extractTableFromAst(ast: AstDoc): { rows: Array<[string, string]>; tableIndex: number } {
   const tableIndex = ast.children.findIndex((n) => n.tag === 'table');
   if (tableIndex === -1) return { rows: [], tableIndex: -1 };
   const table = ast.children[tableIndex] as AstNode & { children: AstNode[] };
+  const bodyRows = table.children.filter((row) => {
+    const cells = (row as AstNode & { children?: AstNode[] }).children;
+    return !(row as AstNode & { head?: boolean }).head && !!cells && cells.length >= 2;
+  });
+  // Tables written before the separator fix (`| --- |`) have no head row: the
+  // separator parses as a row of dashes; skip it and the header row before it.
+  const separator = bodyRows.findIndex(isDashRow);
+  const dataRows = separator === 1 ? bodyRows.slice(2) : bodyRows.filter((r) => !isDashRow(r));
   const rows: Array<[string, string]> = [];
-  for (const row of table.children) {
-    if ((row as AstNode & { head?: boolean }).head) continue;
+  for (const row of dataRows) {
     const cells = (row as AstNode & { children: AstNode[] }).children;
-    if (!cells || cells.length < 2) continue;
     const key = extractNodeText(cells[0]).trim();
     const value = extractNodeText(cells[1]).trim();
     if (key) rows.push([key, value]);
@@ -85,7 +110,8 @@ function buildDjotTable(rows: Array<[string, string]>): string {
   const col1 = Math.max(5, ...escaped.map(([k]) => k.length));
   const col2 = Math.max(5, ...escaped.map(([, v]) => v.length));
   const pad = (s: string, n: number) => s.padEnd(n);
-  const sep = `| ${'-'.repeat(col1)} | ${'-'.repeat(col2)} |`;
+  // No spaces inside the separator: Djot reads `| --- |` as text, not as a header separator
+  const sep = `|${'-'.repeat(col1 + 2)}|${'-'.repeat(col2 + 2)}|`;
   const header = `| ${pad('Field', col1)} | ${pad('Value', col2)} |`;
   const dataRows = escaped.map(([k, v]) => `| ${pad(k, col1)} | ${pad(v, col2)} |`);
   return [header, sep, ...dataRows].join('\n');
@@ -330,16 +356,34 @@ function readTarget(ctx: WikiReadContext, field: PostField, target: NostrTarget)
 const wikiTargets = (field: PostField): NostrTarget[] =>
   fieldTargets(field).filter((t) => t.kind === WIKI_KIND);
 
-export function wikiEventToManifestData(
-  event: WikiEvent,
-  manifest: NostrPostManifest
-): Record<string, unknown> {
-  const tableKeys = new Set(
+/** Infobox row keys the manifest reads: its table fields' ids and labels */
+const manifestTableKeys = (manifest: NostrPostManifest): Set<string> =>
+  new Set(
     manifest.fields
       .filter((f) => wikiTargets(f).some((t) => t.target === 'table'))
       .flatMap((f) => [f.id, (f.metadata?.label as string | undefined) ?? f.id])
   );
-  const { tableByKey, prose } = parseWikiContent(event.content, tableKeys);
+
+/**
+ * Infobox rows no field of `manifest` reads, e.g. fields added in a newer
+ * manifest version, so a view can still show all of an entity's data.
+ */
+export function unmappedTableRows(
+  event: WikiEvent,
+  manifest: NostrPostManifest
+): Array<[string, string]> {
+  const tableKeys = manifestTableKeys(manifest);
+  const { tableByKey } = parseWikiContent(event.content, tableKeys);
+  return [...tableByKey].flatMap(([key, values]) =>
+    tableKeys.has(key) ? [] : values.map((value): [string, string] => [key, value])
+  );
+}
+
+export function wikiEventToManifestData(
+  event: WikiEvent,
+  manifest: NostrPostManifest
+): Record<string, unknown> {
+  const { tableByKey, prose } = parseWikiContent(event.content, manifestTableKeys(manifest));
   const proseFieldId = prose
     ? manifest.fields.find((f) => wikiTargets(f).some((t) => t.target === 'content'))?.id
     : undefined;

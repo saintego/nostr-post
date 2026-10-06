@@ -34,6 +34,7 @@ import {
   renderLinkedEvents,
   renderManifestEventData,
 } from './viewLinked';
+import { DEFAULT_RAW_DATA_MESSAGES, type RawDataMessages, renderRawData } from './viewRawData';
 import { viewStyle } from './viewStyle';
 import { applyUpdateCommentsToEvent, renderUpdateComments } from './viewUpdates';
 
@@ -97,6 +98,10 @@ export class NostrPostView extends NostrPostElement {
 
   @property({ type: Boolean })
   showKind?: boolean;
+
+  /** Overrides for the "All data" section's text (e.g. translations) */
+  @property({ attribute: false })
+  messages?: Partial<RawDataMessages>;
 
   /** Field IDs to exclude from the rendered view */
   @property({ type: Array, attribute: 'exclude-fields' })
@@ -333,7 +338,6 @@ export class NostrPostView extends NostrPostElement {
     const tags = event.tags;
     const content = event.content;
     const pubkey = event.pubkey;
-    const eventId = event.id;
     const showTechnicalMeta = Boolean(this.showKind || this.showTags);
     const manifestRenderedData = renderManifestEventData(event, this.effectiveManifest);
     const shouldUseManifestRendering =
@@ -379,23 +383,7 @@ export class NostrPostView extends NostrPostElement {
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
         ${renderUpdateComments(this.interactionEvents, this.event.pubkey)}
-        ${
-          this.showTags && tags.length > 0
-            ? html`
-              <div class="view-tags">
-                ${tags.map(
-                  (tag: string[]) => html`
-                    <span class="tag">
-                      <span class="tag-name">${tag[0]}:</span>
-                      ${tag.slice(1).join(', ')}
-                    </span>
-                  `
-                )}
-              </div>
-            `
-            : ''
-        }
-        ${showTechnicalMeta && eventId ? html`<div class="view-id">ID: ${eventId}</div>` : ''}
+        ${showTechnicalMeta ? renderRawData(event, { ...DEFAULT_RAW_DATA_MESSAGES, ...this.messages }) : ''}
         ${renderEditButton(event, this.editable, this._showInlineComposer, (ev) => this.handleEditRequest(ev))}
         ${renderInlineComposer(event, this.editState)}
       </div>

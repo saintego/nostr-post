@@ -1,7 +1,12 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { afterEach, describe, expect, it } from 'vitest';
-import { WIKI_KIND, manifestToWikiEvent, wikiEventToManifestData } from './nip54';
+import {
+  WIKI_KIND,
+  manifestToWikiEvent,
+  unmappedTableRows,
+  wikiEventToManifestData,
+} from './nip54';
 import { normalizeDTag } from './normalizeDTag';
 import { countContributors, defaultResolver, groupByDTag, selectNewestEntity } from './resolver';
 import type { WikiEvent } from './resolver';
@@ -424,5 +429,48 @@ describe('resolver helpers', () => {
   it('selectNewestEntity ignores events without a d-tag', () => {
     expect(selectNewestEntity([ev('1', 'a', '', 500), ev('2', 'b', 'x', 1)])).toBe('x');
     expect(selectNewestEntity([ev('1', 'a', '', 500)])).toBeUndefined();
+  });
+});
+
+describe('unmappedTableRows', () => {
+  it('lists infobox rows the manifest has no field for', () => {
+    const withExtra = {
+      ...manifestToWikiEvent(beerManifest, beerFormData),
+      id: 'x',
+      sig: 's',
+      content:
+        '| Field | Value |\n|---|---|\n| abv | 8 |\n| brewed_since | 2004 |\n\nA hoppy beer.',
+    };
+    expect(unmappedTableRows(withExtra, beerManifest)).toEqual([['brewed_since', '2004']]);
+  });
+
+  it('is empty without an infobox', () => {
+    const event = {
+      ...manifestToWikiEvent(beerManifest, beerFormData),
+      id: 'x',
+      sig: 's',
+      content: 'Just text.',
+    };
+    expect(unmappedTableRows(event, beerManifest)).toEqual([]);
+  });
+});
+
+describe('infobox tables', () => {
+  it('writes a header Djot recognizes, so the header is not a data row', () => {
+    const event = { ...manifestToWikiEvent(beerManifest, beerFormData), id: 'x', sig: 's' };
+    expect(event.content).toMatch(/^\| Field +\| Value +\|\n\|-+\|-+\|/);
+    expect(unmappedTableRows(event, beerManifest)).toEqual([]);
+  });
+
+  it('skips the header of tables written with a padded separator', () => {
+    const content = '| Field | Value |\n| ----- | ----- |\n| abv   | 8     |\n| extra | yes   |';
+    const event = {
+      ...manifestToWikiEvent(beerManifest, beerFormData),
+      id: 'x',
+      sig: 's',
+      content,
+    };
+    expect(unmappedTableRows(event, beerManifest)).toEqual([['extra', 'yes']]);
+    expect(wikiEventToManifestData(event, beerManifest).abv).toBe(8);
   });
 });
