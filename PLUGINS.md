@@ -331,9 +331,21 @@ interface NostrUIPlugin {
     field: PostField,
   ): Record<string, unknown>;
 
+  // Async, before the post's events are signed (fields with a value only). May publish
+  // events of its own (e.g. the venue's wiki entity); returned tags are added to every
+  // event of the post (e.g. an `a` tag). Throwing stops publishing and shows the error.
+  beforePublish?(
+    value: unknown,
+    field: PostField,
+    ctx: { pubkey: string },
+  ): Promise<[string, ...string[]][]>;
+
   // Web component tag names (set by /web entrypoint)
   inputTagName?: string; // e.g. 'np-stars-input'
   viewTagName?: string; // e.g. 'np-stars-view'
+  // Shown next to the publish button when the composer publishes itself, to show and confirm
+  // what beforePublish will do (e.g. 'np-venue-wiki-publish'). Same contract as the input.
+  publishSummaryTagName?: string;
 
   // Web-only: toolbar action buttons rendered in the target field's toolbar when attachTo is set
   getFieldActions?(field: PostField): FieldAction[];

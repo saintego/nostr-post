@@ -10,6 +10,10 @@ NIP-54 collaborative wiki entities (`kind:30818`) for the `nostr-post` ecosystem
 - [Quick start (CDN)](#quick-start-cdn)
 - [Installation](#installation)
 - [Entity manifest](#entity-manifest)
+  - [Title and d-tag templates](#title-and-d-tag-templates)
+  - [Unknown and newer fields](#unknown-and-newer-fields)
+- [Referencing entity manifests](#referencing-entity-manifests)
+- [Example: the venue hub (OpenStreetMap)](#example-the-venue-hub-openstreetmap)
 - [Review manifest](#review-manifest)
 - [Two-hop review queries](#two-hop-review-queries)
 - [Web components](#web-components)
@@ -177,6 +181,40 @@ export const BEER_MANIFEST: NostrPostManifest = {
 };
 ```
 
+### Title and d-tag templates
+
+Entity slugs share one NIP-54 namespace with every wiki article, so a beer called "Bitcoin" would
+collide with the article about Bitcoin. A `wikiConfig` (type `WikiManifest`) scopes them:
+
+```typescript
+const BEER_MANIFEST: WikiManifest = {
+  id: "beer-entity-v1",
+  version: "1.0.0",
+  wikiConfig: {
+    titleTemplate: "{name} (Beer)", // => "Bitcoin (Beer)"
+    dTagTemplate: "{name}-(beer)", //  => "bitcoin-beer"
+  },
+  fields: [/* … */],
+};
+```
+
+- `{fieldId}` is replaced by the field's value. For a reference field (a picked entity) it's the
+  entity's name. Static text is kept, and the d-tag is normalized with `normalizeDTag`.
+- Without `dTagTemplate`, the d-tag is derived from the title.
+- When the slug is taken by another entity, the composer asks for a distinguishing detail (the
+  qualifier). The detail goes into the name part of both the title and the d-tag, e.g.
+  `bitcoin-moonshine-beer`. Slugs are never changed automatically.
+  - `entityDTagFor(manifest, formData, qualifier?)` and `entityTitleFor(…)` compute them.
+  - `checkEntityDTag(dTag, relays?)` reports `'free' | 'taken' | 'unknown'`.
+  - `distinguishingSuggestions(manifest, formData)` lists details taken from the form's values.
+  - `entityTypeAffixes(manifest)` returns the fixed prefix and suffix around the editable name.
+
+### Unknown and newer fields
+
+Readers may have an older manifest than the writer. `wikiEventToManifestData` reads the fields the
+manifest knows. `unmappedTableRows(event, manifest)` returns the infobox rows it doesn't, and
+`<nostr-wiki-view>` shows them under "All data". Nothing is lost.
+
 ### Generated Nostr event
 
 ```json
@@ -191,6 +229,43 @@ export const BEER_MANIFEST: NostrPostManifest = {
   "content": "| Field | Value |\n|-------|-------|\n| ABV % | 8.0 |\n| IBU   | 100   |\n\nA legendary West Coast Double IPA brewed by Russian River Brewing Company."
 }
 ```
+
+The table's separator row has no inner spaces (`|---|---|`): Djot reads `| --- |` as a data row.
+Tables written that way by older versions are still read correctly.
+
+---
+
+## Referencing entity manifests
+
+Fields that point to an entity type, i.e. the picker's `metadata.entityManifest` and the venue
+field's `metadata.wikiEntity`, take an `EntityManifestRef`. Any app can resolve one:
+
+- **A published manifest's address** (`30078:<pubkey>:nostr-post:<id>`): fetched from relays with
+  `resolveEntityManifest(ref)` and remembered. This makes custom entity types work without any
+  setup code.
+- **An inline manifest object.**
+- **An id registered with `registerEntityManifest(manifest)`**: app-local, e.g. for examples.
+
+`getEntityManifest(ref)` returns an already-known manifest synchronously. Without a manifest,
+`<nostr-wiki-view>` uses `STANDARD_WIKI_MANIFEST`, which shows the article text.
+
+## Example: the venue hub (OpenStreetMap)
+
+`@nostr-post/plugin-venue` uses a wiki entity as the hub for a venue's data. When a venue field
+has `metadata.wikiEntity`, publishing a review also creates the venue's entity from OpenStreetMap.
+If the entity exists and OSM has a newer version, it's updated instead. The review links to it with
+an `a` tag.
+
+- Entity fields declare their source with `metadata.sources: { osm: "<osm key>" }`. Alternatives
+  are separated by `|`, and `@name`, `@street` and `@city` come from the address. Updates replace
+  only these fields; community fields and prose are kept.
+- The entity carries every external ID as an `i` tag (`osm:node:123`), a geohash with its prefixes
+  (`g`), and `["source", "OpenStreetMap", <copyright URL>, "node/123/v42"]` for attribution and
+  for the imported version.
+- Next to the publish button, the composer shows what will happen, an editable slug and an
+  opt-out checkbox. This uses the plugin hooks `beforePublish` and `publishSummaryTagName`
+  (see [PLUGINS.md](../../PLUGINS.md)).
+- API: `findVenueEntity`, `planVenueEntity`, `syncVenueEntity`, `fetchOsmElement`.
 
 ---
 
@@ -262,15 +337,21 @@ const reviews = await fetchEvents({ "#a": aTags });
 
 ### `<nostr-wiki-view>`
 
-Displays a resolved wiki entity as a read-only infobox.
+Displays a resolved wiki entity as a read-only infobox and its article, with:
+- a Links row for external IDs (OpenStreetMap, Google Maps, …);
+- the attribution line from a `source` tag;
+- contributors and all versions;
+- a collapsed "All data" section: infobox rows the manifest doesn't know, all tags and the source.
 
-| Attribute / Property        | Type                   | Description                                               |
-| --------------------------- | ---------------------- | --------------------------------------------------------- |
-| `entity-id` / `entityId`    | `string`               | Entity d-tag (slug) to load                               |
-| `entity-i-id` / `entityIId` | `string`               | External ID to look up (`i` tag) — triggers two-hop query |
-| `manifest`                  | `NostrPostManifest`    | Field definitions (property only)                         |
-| `relays`                    | `string[]`             | Override relay list (property only)                       |
-| `resolver`                  | `WikiResolverFunction` | Custom resolver (property only)                           |
+| Attribute / Property        | Type                        | Description                                                   |
+| --------------------------- | --------------------------- | ------------------------------------------------------------- |
+| `entity-id` / `entityId`    | `string`                    | Entity d-tag (slug) to load                                   |
+| `entity-i-id` / `entityIId` | `string`                    | External ID to look up (`i` tag) — triggers two-hop query     |
+| `manifest`                  | `NostrPostManifest`         | Field definitions; defaults to `STANDARD_WIKI_MANIFEST`       |
+| `event`                     | `WikiEvent`                 | Show this version instead of fetching (property only)         |
+| `relays`                    | `string[]`                  | Override relay list (property only)                           |
+| `resolver`                  | `WikiResolverFunction`      | Custom resolver (property only)                               |
+| `messages`                  | `Partial<WikiViewMessages>` | Override user-facing text, e.g. translations (property only)  |
 
 **Slots:**
 
@@ -286,10 +367,16 @@ A form for creating or editing a wiki entity. Pre-fills from the resolved event 
 
 | Attribute / Property           | Type                | Description                               |
 | ------------------------------ | ------------------- | ----------------------------------------- |
-| `entity-id` / `entityId`       | `string`            | Existing entity to pre-fill and fork      |
-| `manifest`                     | `NostrPostManifest` | Field definitions (property only)         |
-| `relays`                       | `string[]`          | Override relay list (property only)       |
-| `auto-publish` / `autoPublish` | `boolean`           | Publish automatically using NIP-07 signer |
+| `entity-id` / `entityId`       | `string`                        | Existing entity to pre-fill and fork                          |
+| `manifest`                     | `NostrPostManifest`             | Field definitions (property only)                             |
+| `baseEvent`                    | `WikiEvent`                     | Edit from this version instead of the newest (property only)  |
+| `prefill`                      | `Record<string, unknown>`       | Initial values for a new entity (property only)               |
+| `relays`                       | `string[]`                      | Relays to load from and publish to (property only)            |
+| `auto-publish` / `autoPublish` | `boolean`                       | Publish automatically using NIP-07 signer                     |
+| `messages`                     | `Partial<WikiComposerMessages>` | Override user-facing text, e.g. translations (property only)  |
+
+Publishing goes to `relays` plus the author's own relays (NIP-65). For a new entity the composer
+checks that the slug is free and asks for a distinguishing detail when it isn't.
 
 **Events emitted:**
 
@@ -338,7 +425,8 @@ function manifestToWikiEvent(
 ): UnsignedNostrEvent;
 
 interface WikiEventConfig {
-  dTag?: string; // override the d-tag slug (default: normalise from title field)
+  dTag?: string; // override the d-tag slug (default: from wikiConfig templates, else the title)
+  title?: string; // override the title tag
   pubkey?: string;
   createdAt?: number;
 }
@@ -353,6 +441,15 @@ function wikiEventToManifestData(
   event: WikiEvent,
   manifest: NostrPostManifest,
 ): Record<string, unknown>;
+```
+
+### `unmappedTableRows(event, manifest)`
+
+Infobox rows whose key is neither a field id nor a label of the manifest's `table` fields, as
+`[key, value]` pairs.
+
+```typescript
+function unmappedTableRows(event: WikiEvent, manifest: NostrPostManifest): Array<[string, string]>;
 ```
 
 ### `buildWikiATag(pubkey, dTag)`
@@ -401,6 +498,7 @@ function collectEntityATags(events: WikiEvent[]): string[];
 ```typescript
 const WIKI_KIND = 30818;
 const DEFAULT_WIKI_RELAYS: string[]; // wikifreedia.xyz, nos.lol, relay.damus.io
+const STANDARD_WIKI_MANIFEST: NostrPostManifest; // article text only, for plain NIP-54 articles
 ```
 
 ---

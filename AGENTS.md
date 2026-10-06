@@ -72,6 +72,15 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
   defaults that apps can override (see `packages/wiki/src/web/wiki-composer-messages.ts`), not
   inline in templates. Move existing inline text over when you touch it.
 
+## Keep docs in sync
+
+- When a change adds or changes public API (exports, component properties/events, manifest
+  `metadata` keys, plugin hooks), update the package README in the same commit; for the CDN
+  bundle also packages/cdn/README.md's export list. Plugin hooks are documented in PLUGINS.md.
+- When a change alters behaviour a doc describes, fix that doc. Don't add new docs for it;
+  extend the existing one.
+- Docs describe what exists. Planned work goes to ROADMAP.md.
+
 ## Keep ROADMAP.md in sync
 
 ROADMAP.md is the single list of open work. Other docs (DEVELOPMENT_GUIDE.md, INTEGRATION.md,

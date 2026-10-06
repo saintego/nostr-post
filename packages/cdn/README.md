@@ -101,6 +101,22 @@ The bundle re-exports utilities for advanced usage:
 - `signEvent`, `signAndPublish`, `publishToRelay`, `publishToRelays`
 - `getPublicKey`, `hasNostrSigner`, `fetchEvents`, `fetchEventsFromRelay`
 - `getUserRelays`, `getDefaultRelays`
+- `fetchUserRelays(pubkey)`: the user's NIP-65 relay list
+- `getPublishRelays(pubkey, relays?)`: where to publish: the signer's write relays, the user's NIP-65 write relays and `relays` (default: `DEFAULT_RELAYS`)
+
+**Wiki (NIP-54)**: see [packages/wiki](../wiki/README.md)
+
+- `WIKI_KIND`, `DEFAULT_WIKI_RELAYS`, `STANDARD_WIKI_MANIFEST`
+- `manifestToWikiEvent`, `wikiEventToManifestData`, `unmappedTableRows`, `buildWikiATag`,
+  `extractExternalIds`, `externalIdLink`, `normalizeDTag`
+- `defaultResolver`, `collectEntityATags`, `fetchEntityVersions`, `checkEntityDTag`
+- `registerEntityManifest`, `getEntityManifest`, `resolveEntityManifest`: entity manifests by id,
+  inline, or by a published manifest's `30078:` address
+- `searchEntities`, `entityTypeAffixes`
+
+**Venues and the venue hub**
+
+- `searchNominatim`, `fetchOsmElement`, `findVenueEntity`, `syncVenueEntity`
 
 **Manifest helpers (preload & cache)**
 
