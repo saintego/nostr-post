@@ -184,6 +184,14 @@ export const renderPublishSummaries = (
     ];
   });
 
+/** Detail of the composer's `nostr-post-submit` event (when it doesn't publish itself) */
+export interface NostrPostSubmitDetail {
+  bundle: EventBundle;
+  dTag?: string;
+  formData: Record<string, unknown>;
+  manifest: NostrPostManifest;
+}
+
 /** Add tags to every event of a bundle */
 export const withTags = (bundle: EventBundle, tags: [string, ...string[]][]): EventBundle =>
   tags.length === 0

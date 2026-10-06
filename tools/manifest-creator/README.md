@@ -12,6 +12,11 @@ A visual tool for creating and testing nostr-post manifests.
 - 💾 Import/Export manifests as JSON
 - 🎨 Live field configuration
 - 🔗 Automatic event coordination testing
+- 📚 Example manifests (posts, reviews, beer/brewery/venue wiki entities)
+- 🧾 Wiki entity manifests: title/d-tag templates, the entity type of picker fields
+  (`entityManifest`) and of venue fields' wiki page (`wikiEntity`)
+- 🔎 Wiki panel for entity manifests: find an entity, view it, edit it (from the newest or any
+  older version), browse its versions and find its reviews
 
 ## Usage
 

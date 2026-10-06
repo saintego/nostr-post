@@ -98,11 +98,19 @@ The bundle re-exports utilities for advanced usage:
 
 **Signing & Relays**
 
-- `signEvent`, `signAndPublish`, `publishToRelay`, `publishToRelays`
+- `signEvent`, `signAndPublish`, `publishToRelay`, `publishToRelays` (`signAndPublish` without
+  relays publishes to `getPublishRelays` of the signer's pubkey)
 - `getPublicKey`, `hasNostrSigner`, `fetchEvents`, `fetchEventsFromRelay`
 - `getUserRelays`, `getDefaultRelays`
-- `fetchUserRelays(pubkey)`: the user's NIP-65 relay list
+- `fetchUserRelays(pubkeys, relays?)`: the NIP-65 relays of one or more users plus `relays`
+  (default: `DEFAULT_RELAYS`); falls back to `relays` when no list is found
 - `getPublishRelays(pubkey, relays?)`: where to publish: the signer's write relays, the user's NIP-65 write relays and `relays` (default: `DEFAULT_RELAYS`)
+
+**Publishing a submitted post yourself** (composer without `auto-publish`)
+
+- `runBeforePublish(manifest, formData, pubkey)`: runs plugin publish hooks (e.g. the venue's wiki
+  page), returns tags for the post
+- `withTags(bundle, tags)`: adds them to every event of the submitted bundle
 
 **Wiki (NIP-54)**: see [packages/wiki](../wiki/README.md)
 

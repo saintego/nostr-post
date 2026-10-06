@@ -234,7 +234,7 @@ Built-in plugins are lazy-loaded when a manifest uses them, so manifests using `
     <nostr-post-composer></nostr-post-composer>
 
     <h1>View Posts</h1>
-    <nostr-post-feed kinds="1" limit="10"></nostr-post-feed>
+    <nostr-post-feed kinds="[1]" limit="10"></nostr-post-feed>
 
     <script type="module">
       import "@nostr-post/web";
@@ -266,7 +266,7 @@ reference. ```html
 
 <nostr-post-feed
   manifest-ref="30078:abcdef...:nostr-post:my-manifest-id"
-  kinds="1"
+  kinds="[1]"
   limit="10"
 ></nostr-post-feed>
 ````
@@ -330,13 +330,13 @@ When a `manifestRef` is provided the components will fetch the manifest (once, c
 <!-- Show posts from specific authors -->
 <nostr-post-feed
   authors='["pubkey1", "pubkey2"]'
-  kinds="1"
+  kinds="[1]"
   limit="20"
 ></nostr-post-feed>
 
 <!-- Show posts with specific hashtags -->
 <nostr-post-feed
-  kinds="1"
+  kinds="[1]"
   tags='{"t": ["nostr", "bitcoin"]}'
   limit="10"
 ></nostr-post-feed>

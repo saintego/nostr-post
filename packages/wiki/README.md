@@ -265,6 +265,9 @@ an `a` tag.
 - Next to the publish button, the composer shows what will happen, an editable slug and an
   opt-out checkbox. This uses the plugin hooks `beforePublish` and `publishSummaryTagName`
   (see [PLUGINS.md](../../PLUGINS.md)).
+- The hooks run when `<nostr-post-composer auto-publish>` publishes the review. An app that
+  publishes `nostr-post-submit` itself calls `runBeforePublish` (see the
+  [composer docs](../../USAGE_GUIDE.md#nostr-post-composer)); otherwise no wiki page is created.
 - API: `findVenueEntity`, `planVenueEntity`, `syncVenueEntity`, `fetchOsmElement`.
 
 ---
@@ -286,7 +289,8 @@ export const BEER_REVIEW_MANIFEST: NostrPostManifest = {
       uiPlugin: "wiki-entity-picker", // registered by @nostr-post/plugin-wiki-entity
       required: true,
       mapTo: { kind: 1, target: "tag", tagName: "a" },
-      metadata: { label: "Beer" },
+      // The entity type: its manifest's 30078: address, a registered id, or the manifest itself
+      metadata: { label: "Beer", entityManifest: "beer-entity-v1" },
     },
     {
       id: "rating",
@@ -306,6 +310,19 @@ export const BEER_REVIEW_MANIFEST: NostrPostManifest = {
   ],
 };
 ```
+
+---
+
+### Picker settings (`metadata`)
+
+| Key               | Default               | Description                                                                                                    |
+| ----------------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `entityManifest`  | none                  | The entity type ([reference](#referencing-entity-manifests)). Limits search to that type and enables "+ Create" |
+| `relays`          | `DEFAULT_WIKI_RELAYS` | Relays to search                                                                                               |
+| `minSearchLength` | `2`                   | Characters before searching                                                                                    |
+| `emitExtraTags`   | `true`                | `false`: don't copy the entity's `i` tags into the post (e.g. when one entity references another)               |
+
+Without `entityManifest` the picker searches all wiki articles and can't create entities.
 
 ---
 
@@ -352,6 +369,9 @@ Displays a resolved wiki entity as a read-only infobox and its article, with:
 | `relays`                    | `string[]`                  | Override relay list (property only)                           |
 | `resolver`                  | `WikiResolverFunction`      | Custom resolver (property only)                               |
 | `messages`                  | `Partial<WikiViewMessages>` | Override user-facing text, e.g. translations (property only)  |
+
+The English defaults are exported from `@nostr-post/wiki/web` as `DEFAULT_WIKI_VIEW_MESSAGES` and
+`DEFAULT_WIKI_COMPOSER_MESSAGES` (types `WikiViewMessages`, `WikiComposerMessages`).
 
 **Slots:**
 

@@ -74,6 +74,9 @@ export {
   getDefaultRelays,
 } from '@nostr-post/web';
 
+// Publishing a submitted post yourself (composer without auto-publish): plugin hooks
+export { runBeforePublish, withTags } from '@nostr-post/web';
+
 // Wiki (NIP-54 kind:30818)
 export {
   WIKI_KIND,

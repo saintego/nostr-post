@@ -33,8 +33,10 @@ export interface WikiEntityData {
  */
 export interface WikiEntityPickerConfig {
   /**
-   * The manifest that defines the entity type being picked: its id (looked up
-   * with registerEntityManifest) or the manifest itself. Enables "+ Create".
+   * The manifest that defines the entity type being picked: a published
+   * manifest's address (`30078:<pubkey>:nostr-post:<id>`, fetched from relays),
+   * an id registered with registerEntityManifest, or the manifest itself.
+   * Scopes search to that type and enables "+ Create".
    */
   entityManifest?: string | NostrPostManifest;
   /** Relays to search for entities */

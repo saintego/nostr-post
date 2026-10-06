@@ -173,5 +173,18 @@ export interface FetchFilter {
  */
 export { fetchEventsFromRelay, fetchEvents, matchesFilter, DEFAULT_RELAYS } from './fetch';
 
-export * from './manifest';
-export * from './relays';
+export {
+  fetchManifestByATag,
+  fetchManifestsByATags,
+  getCachedManifest,
+  clearManifestCache,
+  _manifestCache,
+} from './manifest';
+export {
+  RELAY_LIST_INDEXERS,
+  fetchUserRelays,
+  getPublishRelays,
+  relayListUrls,
+  publishRelayListUrls,
+  clearRelayListCache,
+} from './relays';

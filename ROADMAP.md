@@ -116,5 +116,6 @@
 - [ ] Plugin examples, plugin developer documentation and plugin validation examples
 - [ ] Advanced manifest features (conditions, dependencies)
 - [ ] plugin-list: delete the list event from relays when a list is deleted (TODO in `packages/plugin-list/src/web.ts`)
+- [ ] `<nostr-post-feed>` array attributes (`kinds`, `authors`, `ids`) only accept JSON (`kinds="[1]"`); `kinds="1,30023"` is silently ignored. Accept comma lists too
 - [ ] Docs drift check: a test that every name exported by the CDN bundle (`packages/cdn/src/index.ts`) appears in packages/cdn/README.md; later, if drift keeps happening, a read-only Sonnet docs-check agent (`.claude/agents/`) that compares entry points, component properties and plugin hooks against the READMEs before releases
 - [ ] Documentation: API reference for each package, API documentation website, more usage examples, best practices guide, video tutorials

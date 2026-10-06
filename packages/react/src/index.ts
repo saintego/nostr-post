@@ -39,6 +39,9 @@ export {
   colors,
   baseStyles,
   STANDARD_KIND1_POST_MANIFEST,
+  type NostrPostSubmitDetail,
+  runBeforePublish,
+  withTags,
 } from '@nostr-post/web';
 
 // Signer utilities (re-exported from @nostr-post/signer)

@@ -73,10 +73,11 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: String, attribute: 'manifest-ref' })
   manifestRef?: string;
 
-  @property({ type: Boolean })
+  @property({ type: Boolean, attribute: 'show-kind' })
   showKind?: boolean;
 
-  @property({ type: Boolean })
+  /** Show each post's collapsed "All data" section */
+  @property({ type: Boolean, attribute: 'show-tags' })
   showTags?: boolean;
 
   @property({ type: Boolean, attribute: 'comments-enabled' })
@@ -472,8 +473,8 @@ export class NostrPostFeed extends NostrPostElement {
                 .interactionEvents=${thread.replies}
                 .excludeFields=${this.excludeFields}
                 ?editable=${this.editable}
-                ?showKind=${this.showKind}
-                ?showTags=${this.showTags}
+                .showKind=${this.showKind}
+                .showTags=${this.showTags}
               ></nostr-post-view>
               ${
                 reactionSummaryWithAuthors.length > 0

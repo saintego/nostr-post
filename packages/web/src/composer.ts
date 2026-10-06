@@ -26,6 +26,7 @@ import { hasReplyTarget, renderReplyTargetPanel, updateReplyTargetValue } from '
 import { composerStyle } from './composerStyle';
 import { renderSubmitButton } from './composerSubmit';
 import {
+  type NostrPostSubmitDetail,
   type ValidationResult,
   renderPublishSummaries,
   runBeforePublish,
@@ -331,9 +332,12 @@ export class NostrPostComposer extends NostrPostElement {
         this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
         this.successMessage = `Published to ${signedEvents.length} event(s)!`;
       } else {
-        this.dispatchCustomEvent<{ bundle: EventBundle; dTag?: string }>('nostr-post-submit', {
+        // formData + manifest let the app run plugin hooks itself (runBeforePublish)
+        this.dispatchCustomEvent<NostrPostSubmitDetail>('nostr-post-submit', {
           bundle,
           dTag: addressableDTag,
+          formData: { ...this._formData },
+          manifest,
         });
         this.successMessage = 'Post created successfully!';
       }

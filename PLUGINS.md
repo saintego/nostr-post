@@ -334,6 +334,8 @@ interface NostrUIPlugin {
   // Async, before the post's events are signed (fields with a value only). May publish
   // events of its own (e.g. the venue's wiki entity); returned tags are added to every
   // event of the post (e.g. an `a` tag). Throwing stops publishing and shows the error.
+  // Runs when the composer publishes itself (auto-publish); apps that publish on
+  // nostr-post-submit call runBeforePublish + withTags from @nostr-post/web.
   beforePublish?(
     value: unknown,
     field: PostField,

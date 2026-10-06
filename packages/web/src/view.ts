@@ -93,10 +93,12 @@ export class NostrPostView extends NostrPostElement {
   @state()
   private _editPubkey?: string;
 
-  @property({ type: Boolean })
+  /** Show the collapsed "All data" section (kind, author, ID, time, all tags, content) */
+  @property({ type: Boolean, attribute: 'show-tags' })
   showTags?: boolean;
 
-  @property({ type: Boolean })
+  /** Same as showTags */
+  @property({ type: Boolean, attribute: 'show-kind' })
   showKind?: boolean;
 
   /** Overrides for the "All data" section's text (e.g. translations) */

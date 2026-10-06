@@ -86,9 +86,9 @@ export interface NostrPostFeedProps {
   manifest?: import('@nostr-post/core/types').NostrPostManifest;
   /** Manifest used for standard kind 1 comment composer in the feed */
   commentManifest?: import('@nostr-post/core/types').NostrPostManifest;
-  /** Show event kind badge */
+  /** Show each post's collapsed "All data" section (kind, author, ID, time, all tags, content) */
   showKind?: boolean;
-  /** Show tags */
+  /** Same as showKind */
   showTags?: boolean;
   /** Enable standard kind 1 comments in the feed */
   commentsEnabled?: boolean;
