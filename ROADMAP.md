@@ -12,6 +12,7 @@
 - [ ] add multi-language support (i18n) for built-in plugins UI components(maybe Lingui.js style). Started: `<nostr-wiki-composer>` takes its text from an overridable messages object (`WikiComposerMessages`); still inline: other web components (picker, view, composer/feed in @nostr-post/web), validation messages (`validateWikiForm`), manifest-creator UI
 - [ ] add multi-language support (i18n) for manifest via NIP-78 or kind:30818, d = "{manifestId}:i18n:{locale}", we would need to address version in translations
 - [ ] add style customization options for web components (CSS custom properties, theming)
+- [ ] Dark mode in the manifest creator (follow `prefers-color-scheme`, with a toggle); the web components' colors need CSS custom properties for it (see theming above)
 - [ ] fix pwa example shared image/text, it's not getting to post input now
 - [ ] fix list plugin to use lists(nip-51?) instead of manifests
 - [ ] User mention support: mention autocomplete, user tagging
@@ -104,6 +105,10 @@
 - [ ] API stabilization: stabilize the manifest schema, document breaking changes
 - [ ] Performance optimizations
 - [x] Remove `wss://relay.nostr.band` from `DEFAULT_RELAYS` / `DEFAULT_WIKI_RELAYS` (doesn't respond; every fetch waited ~10 s for it); `DEFAULT_RELAYS` uses `wss://relay.primal.net` instead
+- [ ] Fix build, lint and test issues so `pnpm build`, `pnpm lint` and `pnpm -r test` pass cleanly: lint reports ~2000 errors, nearly all from the nextjs-demo export (`examples/nextjs-demo/out`, not in Biome's ignore list) plus a few in packages/web, signer, plugin-reference, manifest-creator and the `next-env.d.ts` files; complexity warnings in composer, FieldEditor and viewUpdates; `plugin-list` has no tests (see below)
+- [ ] Update libraries: Biome 1.9 → 2.x (config migration), vitest 1.6/2.1 → one current version across packages, TypeScript, vite, happy-dom/jsdom, React 19 (react package + demos), nostr-tools, lit, esbuild
+- [ ] Publish the examples and the manifest creator as an nsite (static sites hosted on Nostr/Blossom), e.g. from CI on release
+- [ ] Add `llms.txt` (and `llms-full.txt`): a short index of the packages, CDN usage, manifest format and plugin API for AI agents and tools, published with the docs/nsite
 - [ ] Pin `next` in nextjs-demo and manifest-creator (`"latest"` re-resolves on every lockfile change)
 - [ ] Bring oversized files under the 500-line limit: plugin-markdown input, web view/feed, plugin-geo input, core coordinator (done: manifest-creator ManifestEditor and FieldEditor, wiki-composer, plugin-venue input)
 - [ ] Venue linking UI improvements (OSM ID deep links)
@@ -111,4 +116,5 @@
 - [ ] Plugin examples, plugin developer documentation and plugin validation examples
 - [ ] Advanced manifest features (conditions, dependencies)
 - [ ] plugin-list: delete the list event from relays when a list is deleted (TODO in `packages/plugin-list/src/web.ts`)
+- [ ] Docs drift check: a test that every name exported by the CDN bundle (`packages/cdn/src/index.ts`) appears in packages/cdn/README.md; later, if drift keeps happening, a read-only Sonnet docs-check agent (`.claude/agents/`) that compares entry points, component properties and plugin hooks against the READMEs before releases
 - [ ] Documentation: API reference for each package, API documentation website, more usage examples, best practices guide, video tutorials
