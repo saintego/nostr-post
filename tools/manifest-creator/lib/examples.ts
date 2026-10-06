@@ -102,7 +102,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'Country', placeholder: 'United States' },
+        metadata: {
+          label: 'Country',
+          description: 'Where the brewery is based',
+          placeholder: 'United States',
+        },
       },
       {
         id: 'city',
@@ -116,7 +120,12 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'tag', tagName: 'i' },
-        metadata: { label: 'External IDs', placeholder: 'untappd:brewery:3264' },
+        metadata: {
+          label: 'External IDs',
+          description:
+            'The brewery on other sites, as namespace:id (e.g. untappd:brewery:3264), so other apps can match it',
+          placeholder: 'untappd:brewery:3264',
+        },
       },
       {
         id: 'description',
@@ -153,7 +162,12 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         type: 'ref',
         uiPlugin: 'wiki-entity-picker',
         mapTo: { kind: 30818, target: 'tag', tagName: 'a' },
-        metadata: { label: 'Brewery', entityManifest: 'brewery-entity-v1', emitExtraTags: false },
+        metadata: {
+          label: 'Brewery',
+          description: 'The brewery that makes it: pick its wiki page or create one',
+          entityManifest: 'brewery-entity-v1',
+          emitExtraTags: false,
+        },
       },
       {
         id: 'style',
@@ -184,21 +198,35 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         type: 'number',
         uiPlugin: 'number',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { step: 0.1, label: 'ABV %', placeholder: '8.0' },
+        metadata: {
+          step: 0.1,
+          label: 'ABV %',
+          description: 'Alcohol by volume',
+          placeholder: '8.0',
+        },
       },
       {
         id: 'ibu',
         type: 'number',
         uiPlugin: 'number',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'IBU', placeholder: '100' },
+        metadata: {
+          label: 'IBU',
+          description: 'International Bitterness Units',
+          placeholder: '100',
+        },
       },
       {
         id: 'external_ids',
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'tag', tagName: 'i' },
-        metadata: { label: 'External IDs', placeholder: 'untappd:beer:4892' },
+        metadata: {
+          label: 'External IDs',
+          description:
+            'The beer on other sites, as namespace:id (e.g. untappd:beer:4892), so other apps can match it',
+          placeholder: 'untappd:beer:4892',
+        },
       },
       {
         id: 'description',
@@ -248,7 +276,12 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
           { kind: 1, target: 'tag', tagName: 'rating' },
           { kind: 30078, target: 'tag', tagName: 'rating' },
         ],
-        metadata: { label: 'Rating', max: 5, showNumber: true },
+        metadata: {
+          label: 'Rating',
+          description: 'Your overall impression',
+          max: 5,
+          showNumber: true,
+        },
       },
       {
         id: 'review',
@@ -334,49 +367,74 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         uiPlugin: 'text',
         required: true,
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'Name', sources: { osm: '@name' } },
+        metadata: {
+          label: 'Name',
+          description: 'From OpenStreetMap (name)',
+          sources: { osm: '@name' },
+        },
       },
       {
         id: 'category',
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'tag', tagName: 't' },
-        metadata: { label: 'Category', sources: { osm: 'amenity|shop|craft|tourism|leisure' } },
+        metadata: {
+          label: 'Category',
+          description:
+            'Kind of place, from OpenStreetMap (amenity, shop, craft, tourism or leisure)',
+          sources: { osm: 'amenity|shop|craft|tourism|leisure' },
+        },
       },
       {
         id: 'street',
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'Street', sources: { osm: '@street' } },
+        metadata: {
+          label: 'Street',
+          description: 'Street and house number, from OpenStreetMap',
+          sources: { osm: '@street' },
+        },
       },
       {
         id: 'city',
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'City', sources: { osm: '@city' } },
+        metadata: { label: 'City', description: 'From OpenStreetMap', sources: { osm: '@city' } },
       },
       {
         id: 'opening_hours',
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'Opening hours', sources: { osm: 'opening_hours' } },
+        metadata: {
+          label: 'Opening hours',
+          description: 'In OpenStreetMap opening_hours syntax',
+          sources: { osm: 'opening_hours' },
+        },
       },
       {
         id: 'website',
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'Website', sources: { osm: 'website|contact:website' } },
+        metadata: {
+          label: 'Website',
+          description: 'From OpenStreetMap',
+          sources: { osm: 'website|contact:website' },
+        },
       },
       {
         id: 'phone',
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'Phone', sources: { osm: 'phone|contact:phone' } },
+        metadata: {
+          label: 'Phone',
+          description: 'From OpenStreetMap',
+          sources: { osm: 'phone|contact:phone' },
+        },
       },
       // Bitcoin payments, as mapped on OSM for BTC Map (wikiConfig.links adds the BTC Map link)
       {
@@ -384,14 +442,23 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'Bitcoin accepted', sources: { osm: 'currency:XBT|payment:bitcoin' } },
+        metadata: {
+          label: 'Bitcoin accepted',
+          description:
+            'yes/no: the place accepts bitcoin, from OpenStreetMap currency:XBT (the data BTC Map shows)',
+          sources: { osm: 'currency:XBT|payment:bitcoin' },
+        },
       },
       {
         id: 'lightning',
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'Lightning', sources: { osm: 'payment:lightning' } },
+        metadata: {
+          label: 'Lightning',
+          description: 'yes/no: Lightning payments, from OpenStreetMap payment:lightning',
+          sources: { osm: 'payment:lightning' },
+        },
       },
       {
         id: 'lightning_contactless',
@@ -400,6 +467,8 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         mapTo: { kind: 30818, target: 'table' },
         metadata: {
           label: 'Contactless Lightning',
+          description:
+            'yes/no: tap-to-pay Lightning cards (e.g. Bolt Card), from OpenStreetMap payment:lightning_contactless',
           sources: { osm: 'payment:lightning_contactless' },
         },
       },
@@ -408,7 +477,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         type: 'string',
         uiPlugin: 'text',
         mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'On-chain', sources: { osm: 'payment:onchain' } },
+        metadata: {
+          label: 'On-chain',
+          description: 'yes/no: on-chain bitcoin payments, from OpenStreetMap payment:onchain',
+          sources: { osm: 'payment:onchain' },
+        },
       },
       {
         id: 'bitcoin_checked',
@@ -417,6 +490,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         mapTo: { kind: 30818, target: 'table' },
         metadata: {
           label: 'Bitcoin payments checked on',
+          description: 'When someone last confirmed the bitcoin payment data on OpenStreetMap',
           sources: { osm: 'check_date:currency:XBT|survey:date|check_date' },
         },
       },
@@ -425,7 +499,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         type: 'string',
         uiPlugin: 'textarea',
         mapTo: { kind: 30818, target: 'content' },
-        metadata: { label: 'About', placeholder: 'What the community knows about this place…' },
+        metadata: {
+          label: 'About',
+          description: 'Written by the community; never overwritten from OpenStreetMap',
+          placeholder: 'What the community knows about this place…',
+        },
       },
     ],
     metadata: {
@@ -506,6 +584,8 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         required: true,
         metadata: {
           label: 'Venue',
+          description:
+            'Search OpenStreetMap for the place; its wiki page is created or updated when you publish',
           precision: 6,
           providers: ['osm'],
           // Create/update the venue's wiki page (the venue hub) from OSM and link it

@@ -10,7 +10,7 @@
 - [x] A manifest can inherit from another manifest
 - [x] add kind:30818 for objects that are used for review (beer, product, map venue detail)
 - [ ] add multi-language support (i18n) for built-in plugins UI components(maybe Lingui.js style). Started: `<nostr-wiki-composer>` takes its text from an overridable messages object (`WikiComposerMessages`); still inline: other web components (picker, view, composer/feed in @nostr-post/web), validation messages (`validateWikiForm`), manifest-creator UI
-- [ ] add multi-language support (i18n) for manifest via NIP-78 or kind:30818, d = "{manifestId}:i18n:{locale}", we would need to address version in translations
+- [ ] add multi-language support (i18n) for manifest via NIP-78 or kind:30818, d = "{manifestId}:i18n:{locale}", we would need to address version in translations (labels, placeholders and field descriptions)
 - [ ] add style customization options for web components (CSS custom properties, theming)
 - [ ] Dark mode in the manifest creator (follow `prefers-color-scheme`, with a toggle); the web components' colors need CSS custom properties for it (see theming above)
 - [ ] fix pwa example shared image/text, it's not getting to post input now
@@ -82,6 +82,7 @@
 - [ ] Venue hub: area search ("venues near me") via the entity's `g` prefix tags
 - [ ] Venue hub: create a venue entity from an OSM search directly in the wiki picker/panel
 - [x] Venue hub: add btc payment availability from btcmap data. BTC Map's data are OSM tags (`currency:XBT`, `payment:lightning`, `payment:onchain`, `payment:lightning_contactless`, `check_date:currency:XBT`), so `venue-entity-v1` maps them to infobox rows via `sources.osm`. The BTC Map link isn't stored: entity manifests can declare derived links (`wikiConfig.links`, e.g. `https://btcmap.org/merchant/{i:osm}` when `bitcoin` is "yes"), shown in the wiki view's Links row (which also shows `r` URLs). Existing entities get the rows on their next OSM-triggered update
+- [x] Self-documenting manifests: fields have a `metadata.description` (what the field means, where its value comes from), shown as help text in the post and wiki composers and as a label tooltip in views, editable in the manifest creator; the examples have descriptions. MANIFEST.md documents every manifest, field, plugin `metadata` and `wikiConfig` key (moved out of the wiki README)
 - [ ] Manifest creator: edit `wikiConfig.links` (derived links) in the wiki settings; now only via JSON
 - [ ] Venue hub: BTC Map extras from its API (`api.btcmap.org/v4/places`): verification date as BTC Map computes it, comments, boosts; and a "₿ accepts bitcoin" badge in the venue picker and the review's venue view
 - [x] Venue hub: the slug of a new venue page is never qualified automatically (no street or OSM ID): it's an always-editable input next to the publish button ("Wiki page slug (permanent)", the type suffix `-venue` fixed), with ✓ free / used by another venue / couldn't verify, the create/update/link action and the opt-out checkbox. Only when the slug is taken, details (street, district, postcode) are offered to append. A taken slug stops publishing; an "unknown" check is retried once. Generic `publishSummaryTagName` plugin hook renders it

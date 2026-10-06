@@ -1,3 +1,4 @@
+import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { getPublishRelays, publishToRelays, signEvent } from '@nostr-post/signer';
@@ -359,7 +360,11 @@ export class NostrWikiComposer extends LitElement {
 
   private _renderField(f: PostField) {
     const value = this._formData[f.id];
-    const label = (f.metadata?.label as string | undefined) ?? f.id;
+    const label = fieldLabel(f);
+    const description = fieldDescription(f);
+    const help = description
+      ? html`<div class="wiki-field-description">${description}</div>`
+      : nothing;
 
     if (f.visibility?.edit === 'readonly') {
       return html`
@@ -380,7 +385,7 @@ export class NostrWikiComposer extends LitElement {
         <label for=${ifDefined(plugin?.inputTagName ? undefined : `field-${f.id}`)}>
           ${label}${f.required ? ' *' : ''}
         </label>
-        ${control}
+        ${help} ${control}
       </div>
     `;
   }

@@ -83,6 +83,7 @@ The bundle re-exports utilities for advanced usage:
 **Core**
 
 - `validateManifest`, `getFieldsByKind`, `getUsedKinds`, `findFieldById`, `getRequiredFields`
+- `fieldLabel(field)`, `fieldDescription(field)`: a field's label and description (see [MANIFEST.md](../../MANIFEST.md#field-metadata))
 - `coordinateEvents`, `validateFormData`
 
 **Plugin Registry**

@@ -92,6 +92,11 @@ export const composerStyles = css`
   /* ── Plugin web components ── */
   .wiki-field > [id^="field-"] { width: 100%; }
 
+  .wiki-field-description {
+    font-size: 0.8rem;
+    color: var(--nl-text-secondary, #6b7280);
+  }
+
   /* ── Error ── */
   .wiki-error {
     margin: 0 1.25rem 0.75rem;

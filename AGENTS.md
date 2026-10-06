@@ -74,9 +74,12 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
 
 ## Keep docs in sync
 
-- When a change adds or changes public API (exports, component properties/events, manifest
-  `metadata` keys, plugin hooks), update the package README in the same commit; for the CDN
-  bundle also packages/cdn/README.md's export list. Plugin hooks are documented in PLUGINS.md.
+- When a change adds or changes public API (exports, component properties/events, plugin
+  hooks), update the package README in the same commit; for the CDN bundle also
+  packages/cdn/README.md's export list. Plugin hooks are documented in PLUGINS.md.
+- Manifest keys (manifest, field, plugin `metadata`, `wikiConfig`) are documented in MANIFEST.md.
+  What a specific manifest's fields mean belongs in the manifest itself: `metadata.description`
+  of the manifest and of each field, not in a README.
 - When a change alters behaviour a doc describes, fix that doc. Don't add new docs for it;
   extend the existing one.
 - Docs describe what exists. Planned work goes to ROADMAP.md.

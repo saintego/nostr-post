@@ -159,6 +159,11 @@ export const viewStyle = css`
     font-size: 0.875rem;
   }
 
+  .linked-field-label[title] {
+    cursor: help;
+    text-decoration: underline dotted;
+  }
+
   .linked-field-label {
     font-weight: 500;
     color: var(--nl-text-secondary, #6b7280);

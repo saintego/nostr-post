@@ -1,8 +1,10 @@
+import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { fetchEvents } from '@nostr-post/signer';
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { entityLinks } from '../externalIds';
 import { fetchEntityVersions } from '../fetch';
 import { manifestLinks } from '../links';
@@ -258,7 +260,7 @@ export class NostrWikiView extends LitElement {
           <dl class="wiki-infobox">
             ${infoFields.map((f) => {
               const value = data[f.id];
-              const label = (f.metadata?.label as string | undefined) ?? f.id;
+              const label = fieldLabel(f);
               const plugin = pluginRegistry.get(f.uiPlugin);
               const rendered = plugin?.renderView
                 ? plugin.renderView(value, f)
@@ -267,7 +269,7 @@ export class NostrWikiView extends LitElement {
                   : String(value);
               return html`
                 <div class="wiki-field">
-                  <dt>${label}</dt>
+                  <dt title=${ifDefined(fieldDescription(f))}>${label}</dt>
                   <dd>${rendered}</dd>
                 </div>
               `;

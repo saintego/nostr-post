@@ -5,6 +5,7 @@
  * using manifest field definitions and plugin view components.
  */
 
+import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import {
   type ResolvedPostField,
   getFieldTargets,
@@ -14,6 +15,7 @@ import {
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html } from 'lit';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import type { DisplayableEvent } from './view';
 
@@ -37,7 +39,7 @@ export const getNestedValue = (obj: Record<string, unknown>, path: string): unkn
  */
 const renderLinkedTagField = (tag: string[], field: PostField) => {
   const rawValue = tag[1];
-  const label = (field.metadata?.label as string) || field.id;
+  const label = fieldLabel(field);
   const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
 
   let value: unknown = rawValue;
@@ -51,14 +53,14 @@ const renderLinkedTagField = (tag: string[], field: PostField) => {
     const viewTag = unsafeStatic(plugin.viewTagName);
     return html`
       <div class="linked-field">
-        <span class="linked-field-label">${label}:</span>
+        <span class="linked-field-label" title=${ifDefined(fieldDescription(field))}>${label}:</span>
         ${staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`}
       </div>
     `;
   }
   return html`
     <div class="linked-field">
-      <span class="linked-field-label">${label}:</span>
+      <span class="linked-field-label" title=${ifDefined(fieldDescription(field))}>${label}:</span>
       <span>${String(value)}</span>
     </div>
   `;
@@ -74,7 +76,7 @@ const renderLinkedFieldValue = (
     const viewTag = unsafeStatic(plugin.viewTagName);
     return html`
       <div class="linked-field">
-        <span class="linked-field-label">${label}:</span>
+        <span class="linked-field-label" title=${ifDefined(fieldDescription(field))}>${label}:</span>
         ${staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`}
       </div>
     `;
@@ -82,7 +84,7 @@ const renderLinkedFieldValue = (
 
   return html`
     <div class="linked-field">
-      <span class="linked-field-label">${label}:</span>
+      <span class="linked-field-label" title=${ifDefined(fieldDescription(field))}>${label}:</span>
       <span>${String(value)}</span>
     </div>
   `;
@@ -153,7 +155,7 @@ const renderLinkedTagPlugins = (tags: string[][], fields: PostField[]) => {
       if (field.visibility?.view === 'hidden') continue;
 
       const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
-      const label = (field.metadata?.label as string) || field.id;
+      const label = fieldLabel(field);
 
       const groupValue = getLinkedTagGroupValue(plugin, field, group, tags);
       if (groupValue !== undefined) {
@@ -187,7 +189,7 @@ const renderStructuredContentFields = (fields: PostField[], data: Record<string,
 
     if (value === undefined || value === null) continue;
 
-    const label = (field.metadata?.label as string) || field.id;
+    const label = fieldLabel(field);
 
     // Try plugin view component
     const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
@@ -195,7 +197,7 @@ const renderStructuredContentFields = (fields: PostField[], data: Record<string,
       const viewTag = unsafeStatic(plugin.viewTagName);
       results.push(html`
         <div class="linked-field">
-          <span class="linked-field-label">${label}:</span>
+          <span class="linked-field-label" title=${ifDefined(fieldDescription(field))}>${label}:</span>
           ${staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`}
         </div>
       `);
@@ -203,7 +205,7 @@ const renderStructuredContentFields = (fields: PostField[], data: Record<string,
       // Fallback: render as text
       results.push(html`
         <div class="linked-field">
-          <span class="linked-field-label">${label}:</span>
+          <span class="linked-field-label" title=${ifDefined(fieldDescription(field))}>${label}:</span>
           <span>${String(value)}</span>
         </div>
       `);

@@ -35,6 +35,8 @@ export {
   getUsedKinds,
   findFieldById,
   getRequiredFields,
+  fieldLabel,
+  fieldDescription,
 } from '@nostr-post/core/manifest';
 export { coordinateEvents, validateFormData } from '@nostr-post/core/coordinator';
 

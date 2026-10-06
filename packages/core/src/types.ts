@@ -64,6 +64,23 @@ export interface FieldVisibility {
   view?: 'visible' | 'hidden';
 }
 
+/**
+ * A field's descriptive metadata. Plugins add their own keys (e.g. the venue
+ * field's `wikiEntity`, the picker's `entityManifest`); see MANIFEST.md.
+ */
+export interface FieldMetadata {
+  /** Label shown in composers and views (default: the field id) */
+  label?: string;
+  /** Example input shown in an empty input */
+  placeholder?: string;
+  /**
+   * What the field means and where its value comes from, for people filling in
+   * or reading it: help text in composers, a tooltip on labels in views
+   */
+  description?: string;
+  [key: string]: unknown;
+}
+
 export interface PostField {
   id: string;
   type: FieldType;
@@ -73,7 +90,7 @@ export interface PostField {
   mapBehavior?: FieldMapBehavior;
   required?: boolean;
   options?: string[];
-  metadata?: Record<string, unknown>;
+  metadata?: FieldMetadata;
   /** Default value to prefill in the composer. For hashtags: string[], for geo: geohash, etc. */
   defaultValue?: unknown;
   /** Controls field visibility in the composer and viewer. */

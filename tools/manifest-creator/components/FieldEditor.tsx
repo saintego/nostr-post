@@ -112,9 +112,9 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
     }
   };
 
-  const label = (field.metadata?.label as string) || field.id;
+  const label = field.metadata?.label || field.id;
   const wikiManifest = wikiManifestFor(field);
-  const placeholder = field.metadata?.placeholder as string | undefined;
+  const placeholder = field.metadata?.placeholder;
 
   return (
     <div style={styles.fieldItem}>
@@ -310,6 +310,20 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             value={placeholder || ''}
             onChange={(e) => updateMetadata('placeholder', e.target.value)}
             placeholder="Placeholder text..."
+          />
+        </div>
+
+        <div style={styles.formGroup}>
+          <label style={styles.label} htmlFor="field-description">
+            Description:
+          </label>
+          <input
+            id="field-description"
+            style={styles.input}
+            type="text"
+            value={field.metadata?.description ?? ''}
+            onChange={(e) => updateMetadata('description', e.target.value || undefined)}
+            placeholder="What it means, where the value comes from"
           />
         </div>
 

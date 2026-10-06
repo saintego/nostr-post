@@ -394,6 +394,9 @@ interface NostrUIPlugin {
 
 ## Existing Plugins
 
+Each plugin's manifest `metadata` keys are listed in [MANIFEST.md](./MANIFEST.md#plugin-metadata).
+When a plugin reads a new key, add it there.
+
 | Package                        | ID          | Type     | Description                                                                      |
 | ------------------------------ | ----------- | -------- | -------------------------------------------------------------------------------- |
 | `@nostr-post/plugin-stars`     | `stars`     | `number` | Interactive star rating (configurable max via `metadata.max`)                    |
@@ -403,6 +406,9 @@ interface NostrUIPlugin {
 | `@nostr-post/plugin-markdown`  | `markdown`  | `string` | Markdown editor with live preview (WYSIWYG mode supported)                       |
 | `@nostr-post/plugin-hashtag`   | `hashtag`   | `string` | Hashtag array input; auto-extracts from target field when `attachTo` is set      |
 | `@nostr-post/plugin-reference` | `reference` | `string` | URL/nostr reference list; auto-extracts from target field when `attachTo` is set |
+| `@nostr-post/plugin-identifier` | `identifier` | `string` | External identifier (NIP-73 `i` tag), e.g. an ISBN, with an optional fixed prefix |
+| `@nostr-post/plugin-list` | `list` | `string` | Pick or create lists |
+| `@nostr-post/plugin-wiki-entity` | `wiki-entity-picker` | `ref` | Search, pick and create wiki entities (NIP-54); links the post with an `a` tag |
 
 ## Custom Field Types
 

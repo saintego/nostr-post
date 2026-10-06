@@ -60,6 +60,9 @@ export const viewStyles = css`
   .wiki-field:last-child dt,
   .wiki-field:last-child dd { border-bottom: none; }
 
+
+  .wiki-field dt[title] { cursor: help; text-decoration: underline dotted; }
+
   .wiki-field dt {
     font-size: 0.69rem;
     font-weight: 600;

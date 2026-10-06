@@ -5,6 +5,7 @@
  * in its own file, separate from lifecycle, state, and event publishing.
  */
 
+import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import type { FieldActionContext, NostrUIPlugin } from '@nostr-post/plugins/types';
@@ -281,7 +282,7 @@ function renderFieldToolbar(
       )}
       ${expandableAttached.map((attachedField) => {
         const isExpanded = ctx.expandedFields.has(attachedField.id);
-        const label = (attachedField.metadata?.label as string) || attachedField.id;
+        const label = fieldLabel(attachedField);
         const icon = getPluginIcon(attachedField);
         return html`
           <button
@@ -324,7 +325,8 @@ export function renderField(
   const error = ctx.errors[field.id];
   const isRequired = field.required === true;
   const readonly = ctx.isReadonly(field);
-  const label = (field.metadata?.label as string) || field.id;
+  const label = fieldLabel(field);
+  const description = fieldDescription(field);
 
   const toolbar = readonly ? nothing : renderFieldToolbar(field, ctx);
 
@@ -334,6 +336,7 @@ export function renderField(
       style="${isHidden ? 'display: none;' : ''}"
     >
       <label class="${isRequired ? 'required' : ''}">${label}</label>
+      ${description ? html`<div class="field-description">${description}</div>` : nothing}
       ${toolbar}
       ${readonly ? renderFieldView(field, value) : renderFieldInput(field, value, ctx)}
       ${readonly ? nothing : renderAttachedExpandedFields(field, ctx)}
@@ -348,7 +351,7 @@ export function renderField(
  */
 export function renderExpandableField(field: PostField, ctx: FieldRenderContext): TemplateResult {
   const isExpanded = ctx.expandedFields.has(field.id);
-  const label = (field.metadata?.label as string) || field.id;
+  const label = fieldLabel(field);
   const icon = getPluginIcon(field);
 
   return html`

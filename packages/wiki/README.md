@@ -10,11 +10,9 @@ NIP-54 collaborative wiki entities (`kind:30818`) for the `nostr-post` ecosystem
 - [Quick start (CDN)](#quick-start-cdn)
 - [Installation](#installation)
 - [Entity manifest](#entity-manifest)
-  - [Title and d-tag templates](#title-and-d-tag-templates)
-  - [Derived links](#derived-links)
+  - [Templates, derived links and other manifest keys](#templates-derived-links-and-other-manifest-keys)
   - [Unknown and newer fields](#unknown-and-newer-fields)
-- [Referencing entity manifests](#referencing-entity-manifests)
-- [Example: the venue hub (OpenStreetMap)](#example-the-venue-hub-openstreetmap)
+- [Entity manifest references and the venue hub](#entity-manifest-references-and-the-venue-hub)
 - [Review manifest](#review-manifest)
 - [Two-hop review queries](#two-hop-review-queries)
 - [Web components](#web-components)
@@ -182,53 +180,13 @@ export const BEER_MANIFEST: NostrPostManifest = {
 };
 ```
 
-### Title and d-tag templates
+### Templates, derived links and other manifest keys
 
-Entity slugs share one NIP-54 namespace with every wiki article, so a beer called "Bitcoin" would
-collide with the article about Bitcoin. A `wikiConfig` (type `WikiManifest`) scopes them:
-
-```typescript
-const BEER_MANIFEST: WikiManifest = {
-  id: "beer-entity-v1",
-  version: "1.0.0",
-  wikiConfig: {
-    titleTemplate: "{name} (Beer)", // => "Bitcoin (Beer)"
-    dTagTemplate: "{name}-(beer)", //  => "bitcoin-beer"
-  },
-  fields: [/* … */],
-};
-```
-
-- `{fieldId}` is replaced by the field's value. For a reference field (a picked entity) it's the
-  entity's name. Static text is kept, and the d-tag is normalized with `normalizeDTag`.
-- Without `dTagTemplate`, the d-tag is derived from the title.
-- When the slug is taken by another entity, the composer asks for a distinguishing detail (the
-  qualifier). The detail goes into the name part of both the title and the d-tag, e.g.
-  `bitcoin-moonshine-beer`. Slugs are never changed automatically.
-  - `entityDTagFor(manifest, formData, qualifier?)` and `entityTitleFor(…)` compute them.
-  - `checkEntityDTag(dTag, relays?)` reports `'free' | 'taken' | 'unknown'`.
-  - `distinguishingSuggestions(manifest, formData)` lists details taken from the form's values.
-  - `entityTypeAffixes(manifest)` returns the fixed prefix and suffix around the editable name.
-
-### Derived links
-
-`wikiConfig.links` adds links worked out from an entity's data when it's shown. They aren't stored
-on the event, so a site changing its URLs needs only a manifest update.
-
-```typescript
-wikiConfig: {
-  links: [
-    {
-      label: "BTC Map",
-      url: "https://btcmap.org/merchant/{i:osm}", // {i:osm}: the osm: i tag without prefix → node:123
-      when: { field: "bitcoin", equals: "yes" }, // optional condition on a field's value
-    },
-  ],
-}
-```
-
-`{fieldId}` placeholders take a field's value (URL-encoded). A link is left out when a placeholder
-has no value or the condition fails. `manifestLinks(manifest, tags, formData)` computes them.
+`wikiConfig` scopes slugs with title/d-tag templates (`"{name}-(beer)"` → `bitcoin-beer`, so a beer
+doesn't collide with the article about Bitcoin) and declares links derived from the entity's data.
+All manifest keys, including the picker's and the venue field's, are documented in
+[MANIFEST.md](../../MANIFEST.md#wiki-entity-manifests). Functions for them: `entityDTagFor`, `entityTitleFor`,
+`checkEntityDTag`, `distinguishingSuggestions`, `entityTypeAffixes`, `manifestLinks`.
 
 ### Unknown and newer fields
 
@@ -256,44 +214,14 @@ Tables written that way by older versions are still read correctly.
 
 ---
 
-## Referencing entity manifests
+## Entity manifest references and the venue hub
 
-Fields that point to an entity type, i.e. the picker's `metadata.entityManifest` and the venue
-field's `metadata.wikiEntity`, take an `EntityManifestRef`. Any app can resolve one:
-
-- **A published manifest's address** (`30078:<pubkey>:nostr-post:<id>`): fetched from relays with
-  `resolveEntityManifest(ref)` and remembered. This makes custom entity types work without any
-  setup code.
-- **An inline manifest object.**
-- **An id registered with `registerEntityManifest(manifest)`**: app-local, e.g. for examples.
-
-`getEntityManifest(ref)` returns an already-known manifest synchronously. Without a manifest,
-`<nostr-wiki-view>` uses `STANDARD_WIKI_MANIFEST`, which shows the article text.
-
-## Example: the venue hub (OpenStreetMap)
-
-`@nostr-post/plugin-venue` uses a wiki entity as the hub for a venue's data. When a venue field
-has `metadata.wikiEntity`, publishing a review also creates the venue's entity from OpenStreetMap.
-If the entity exists and OSM has a newer version, it's updated instead. The review links to it with
-an `a` tag.
-
-- Entity fields declare their source with `metadata.sources: { osm: "<osm key>" }`. Alternatives
-  are separated by `|`, and `@name`, `@street` and `@city` come from the address. Updates replace
-  only these fields; community fields and prose are kept.
-- The entity carries every external ID as an `i` tag (`osm:node:123`), a geohash with its prefixes
-  (`g`), and `["source", "OpenStreetMap", <copyright URL>, "node/123/v42"]` for attribution and
-  for the imported version.
-- Bitcoin payments come from the OSM tags [BTC Map](https://btcmap.org) uses (`currency:XBT`,
-  `payment:lightning`, `payment:onchain`, `payment:lightning_contactless`, `check_date:currency:XBT`).
-  The example manifest maps them to infobox rows, and its `wikiConfig.links` shows a BTC Map link
-  for places that accept bitcoin (see [Derived links](#derived-links)).
-- Next to the publish button, the composer shows what will happen, an editable slug and an
-  opt-out checkbox. This uses the plugin hooks `beforePublish` and `publishSummaryTagName`
-  (see [PLUGINS.md](../../PLUGINS.md)).
-- The hooks run when `<nostr-post-composer auto-publish>` publishes the review. An app that
-  publishes `nostr-post-submit` itself calls `runBeforePublish` (see the
-  [composer docs](../../USAGE_GUIDE.md#nostr-post-composer)); otherwise no wiki page is created.
-- API: `findVenueEntity`, `planVenueEntity`, `syncVenueEntity`, `fetchOsmElement`.
+Pickers and venue fields refer to an entity manifest by a published `30078:` address, an inline
+object or a registered id: `resolveEntityManifest(ref)` fetches and remembers it,
+`getEntityManifest(ref)` returns a known one, `registerEntityManifest(manifest)` registers one.
+`@nostr-post/plugin-venue` uses a wiki entity as the hub for a venue's data, filled from
+OpenStreetMap when a review is published. See [MANIFEST.md](../../MANIFEST.md#referencing-entity-manifests) and
+[the venue hub](../../MANIFEST.md#venue-hub).
 
 ---
 
@@ -338,16 +266,9 @@ export const BEER_REVIEW_MANIFEST: NostrPostManifest = {
 
 ---
 
-### Picker settings (`metadata`)
-
-| Key               | Default               | Description                                                                                                    |
-| ----------------- | --------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `entityManifest`  | none                  | The entity type ([reference](#referencing-entity-manifests)). Limits search to that type and enables "+ Create" |
-| `relays`          | `DEFAULT_WIKI_RELAYS` | Relays to search                                                                                               |
-| `minSearchLength` | `2`                   | Characters before searching                                                                                    |
-| `emitExtraTags`   | `true`                | `false`: don't copy the entity's `i` tags into the post (e.g. when one entity references another)               |
-
-Without `entityManifest` the picker searches all wiki articles and can't create entities.
+The picker's `metadata` keys (`entityManifest`, `relays`, `minSearchLength`, `emitExtraTags`) are
+listed in [MANIFEST.md](../../MANIFEST.md#plugin-metadata). Without `entityManifest` the picker searches all wiki
+articles and can't create entities.
 
 ---
 
@@ -381,7 +302,7 @@ const reviews = await fetchEvents({ "#a": aTags });
 
 Displays a resolved wiki entity as a read-only infobox and its article, with:
 - a Links row: external IDs (OpenStreetMap, Google Maps, …), `r` URL tags and the manifest's
-  [derived links](#derived-links);
+  [derived links](../../MANIFEST.md#derived-links);
 - the attribution line from a `source` tag;
 - contributors and all versions;
 - a collapsed "All data" section: infobox rows the manifest doesn't know, all tags and the source.
