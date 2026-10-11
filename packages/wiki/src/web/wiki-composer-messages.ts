@@ -14,6 +14,8 @@ export interface WikiComposerMessages {
   titleLabel: string;
   dTagLabel: string;
   selectPlaceholder: string;
+  /** Placeholder of the search input of an enum field with a long option list */
+  searchPlaceholder: string;
   publish: string;
   publishing: string;
   checkingSlug: string;
@@ -38,6 +40,7 @@ export const DEFAULT_WIKI_COMPOSER_MESSAGES: WikiComposerMessages = {
   titleLabel: 'Title:',
   dTagLabel: 'd-tag:',
   selectPlaceholder: '— select —',
+  searchPlaceholder: 'Type to search…',
   publish: 'Publish',
   publishing: 'Publishing…',
   checkingSlug: 'Checking whether the slug is free…',

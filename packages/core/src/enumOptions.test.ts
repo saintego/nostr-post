@@ -3,7 +3,9 @@ import { coordinateEvents } from './coordinator';
 import {
   fieldOptionLabel,
   groupFieldOptions,
+  isSearchableEnum,
   matchFieldOption,
+  optionValueForText,
   validateFieldOptions,
 } from './enumOptions';
 import { applyUpdateCommentsToEvent } from './eventUpdates';
@@ -88,5 +90,21 @@ describe('enum options', () => {
     };
     const update = { ...event, created_at: 2, content: 'update:style:Hazy IPA', tags: [] };
     expect(applyUpdateCommentsToEvent(event, manifest, [update]).tags).toEqual([['t', 'hazy-ipa']]);
+  });
+
+  it('searches long lists, or when metadata.searchable says so', () => {
+    expect(isSearchableEnum(style)).toBe(false);
+    const many = Array.from({ length: 21 }, (_, n) => `o${n}`);
+    expect(isSearchableEnum({ ...style, options: many })).toBe(true);
+    expect(isSearchableEnum({ ...style, options: many, metadata: { searchable: false } })).toBe(
+      false
+    );
+    expect(isSearchableEnum({ ...style, metadata: { searchable: true } })).toBe(true);
+  });
+
+  it('maps typed text to a value, or clears it', () => {
+    expect(optionValueForText(style, 'american ipa')).toBe('american-ipa');
+    expect(optionValueForText(style, 'not a style')).toBe('');
+    expect(optionValueForText(style, '  ')).toBe('');
   });
 });

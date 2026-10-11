@@ -110,9 +110,13 @@ options: [
 | ------------- | ----------------------------------------------------------------------------------------- |
 | `value`       | Required, unique. What is published, through the field's `mapTo` like any field value    |
 | `label`       | Shown in selects and views; default: the value                                            |
-| `group`       | Selects list the option under this heading (`<optgroup>`)                                 |
+| `group`       | Selects list the option under this heading (`<optgroup>`); the search list shows it beside the option |
 | `description` | Tooltip on the option                                                                     |
 | `code`        | The option's code in an external list (e.g. a BJCP style code). Not published; may repeat |
+
+Composers show a select, or for more than 20 options a search input that filters the labels as
+you type (`metadata.searchable: true | false` overrides that). Text that matches no option clears
+the value.
 
 The value is published once, where `mapTo` says, so an event holds one piece of information per
 field. Prefer readable values (`american-ipa` in a `t` tag) over codes few people know. A wiki

@@ -1,4 +1,3 @@
-import { groupFieldOptions, optionLabel } from '@nostr-post/core/enumOptions';
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
@@ -25,6 +24,7 @@ import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { defaultResolver } from '../resolver';
 import type { WikiManifest } from '../types';
 import { validateWikiForm } from '../validate';
+import { renderEnumControl } from './enumControl';
 import {
   DEFAULT_WIKI_COMPOSER_MESSAGES,
   type WikiComposerMessages,
@@ -418,7 +418,7 @@ export class NostrWikiComposer extends LitElement {
     }
 
     if ((f.uiPlugin === 'select' || f.type === 'enum') && f.options?.length) {
-      return this._renderSelect(f, value);
+      return renderEnumControl(f, value, (v) => this._onFieldChange(f.id, v), this._m);
     }
 
     // Number or text
@@ -435,25 +435,6 @@ export class NostrWikiComposer extends LitElement {
           this._onFieldChange(f.id, isNumber ? parseNumberInput(raw) : raw);
         }}
       />
-    `;
-  }
-
-  private _renderSelect(f: PostField, value: unknown) {
-    return html`
-      <select
-        id="field-${f.id}"
-        ?required=${f.required}
-        @change=${(e: Event) => this._onFieldChange(f.id, (e.target as HTMLSelectElement).value)}
-      >
-        <option value="" ?selected=${!value}>${this._m.selectPlaceholder}</option>
-        ${groupFieldOptions(f).map(({ group, options }) => {
-          const items = options.map(
-            (opt) =>
-              html`<option value=${opt.value} title=${ifDefined(opt.description)} ?selected=${opt.value === value}>${optionLabel(opt)}</option>`
-          );
-          return group ? html`<optgroup label=${group}>${items}</optgroup>` : items;
-        })}
-      </select>
     `;
   }
 }

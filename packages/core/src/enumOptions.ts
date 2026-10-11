@@ -67,6 +67,23 @@ export const groupFieldOptions = (field: PostField): { group: string; options: E
   return groups;
 };
 
+/** Enum fields with more options than this get a search input instead of a select */
+export const SEARCHABLE_OPTION_COUNT = 20;
+
+/**
+ * Whether an enum field is picked by typing to search (`metadata.searchable`),
+ * by default when it has more than SEARCHABLE_OPTION_COUNT options.
+ */
+export const isSearchableEnum = (field: PostField): boolean => {
+  const searchable = field.metadata?.searchable;
+  if (typeof searchable === 'boolean') return searchable;
+  return (field.options?.length ?? 0) > SEARCHABLE_OPTION_COUNT;
+};
+
+/** The value for text typed into a search input: the matching option's value, else `''` */
+export const optionValueForText = (field: PostField, text: string): string =>
+  text.trim() ? (matchFieldOption(field, text)?.value ?? '') : '';
+
 const optionsError = (message: string): Result<void, ValidationError> => ({
   success: false,
   error: { field: 'options', message, code: 'INVALID_ENUM_OPTIONS' },

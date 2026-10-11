@@ -66,7 +66,7 @@
   - place: the venue hub (venue wiki page, `a` tag) plus the levels below
   - city or country only (flying breweries, no taproom): no wiki page; `i` `osm:relation:…`, `i` `wikidata:Q…`, coarse `g` for a city
   - every level: `i` `iso3166:CZ` (NIP-73) from Nominatim's `country_code`
-- [ ] Searchable select for long enum lists (BJCP has 121 options; native `<select>` with groups for now)
+- [x] Searchable select for long enum lists: more than 20 options (or `metadata.searchable`) get a search input with a `<datalist>` in the post and wiki composers
 - [x] Entity manifests registered by an app or given inline resolve `extends`: parents by registered id first, then from relays (by address or bare id)
 - [ ] Link a BJCP style to its bjcp.org page (`/style/2021/21/21A/american-ipa/`: needs the option's code and category, which `wikiConfig.links` placeholders can't reach yet)
 - [x] Publishing wiki entities also goes to the author's own relays (signer + NIP-65 list), not only the wiki relays
