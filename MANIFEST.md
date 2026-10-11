@@ -100,7 +100,7 @@ stored value:
 
 ```typescript
 options: [
-  { value: "american-ipa", label: "American IPA", group: "21. IPA", code: "21A" },
+  { value: "american-ipa", label: "American IPA", group: "21. IPA", code: "21A", category: "21" },
   { value: "kellerbier", label: "Kellerbier", group: "27. Historical Beer", code: "27A" },
   "other",
 ]
@@ -112,7 +112,7 @@ options: [
 | `label`       | Shown in selects and views; default: the value                                            |
 | `group`       | Selects list the option under this heading (`<optgroup>`); the search list shows it beside the option |
 | `description` | Tooltip on the option                                                                     |
-| `code`        | The option's code in an external list (e.g. a BJCP style code). Not published; may repeat |
+| other keys    | Strings that aren't published, e.g. `code` and `category` in an external list. They may repeat; [link templates](#derived-links) read them as `{fieldId.key}` |
 
 Composers show a select, or for more than 20 options a search input that filters the labels as
 you type (`metadata.searchable: true | false` overrides that). Text that matches no option clears
@@ -126,7 +126,8 @@ with an older list still load.
 
 Long, shared lists belong in a base manifest that other manifests `extends`. The manifest creator's
 `beer-style-bjcp-2021` example (`tools/manifest-creator/lib/manifests/beerStyleBjcp2021.json`) holds the 121 BJCP 2021 beer
-styles, mapped to `t` for posts and wiki entities; the beer entity extends it.
+styles, mapped to `t` for posts and wiki entities; the beer entity extends it and links each style to bjcp.org with
+`https://www.bjcp.org/style/2021/{style.category}/{style.code}/`.
 
 ## Plugin metadata
 
@@ -183,7 +184,7 @@ shown. They aren't stored on the event, so a site changing its URLs needs only a
 | Key     | Description                                                                                                                           |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `label` | Link text, e.g. the site's name                                                                                                       |
-| `url`   | `{i:<namespace>}`: the entity's `i` tag value without the prefix (`{i:osm}` → `node:123`); `{fieldId}`: a field's value (URL-encoded) |
+| `url`   | `{i:<namespace>}`: the entity's `i` tag value without the prefix (`{i:osm}` → `node:123`); `{fieldId}`: a field's value; `{fieldId.key}`: a key of the option selected in an enum field (`{style.code}`). Values are URL-encoded |
 | `when`  | Optional: `{ field, equals }`, shown only when that field's value matches (case-insensitive)                                          |
 
 A link is left out when a placeholder has no value. The wiki view shows these next to the links

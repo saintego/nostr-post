@@ -9,15 +9,35 @@ interface OptionsEditorProps {
   onChange: (field: PostField) => void;
 }
 
-const OPTION_KEYS = ['value', 'label', 'group', 'code', 'description'] as const;
+const OPTION_KEYS = ['value', 'label', 'group', 'description'] as const;
 type OptionKey = (typeof OPTION_KEYS)[number];
 
 const PLACEHOLDERS: Record<OptionKey, string> = {
   value: 'Stored value, e.g. american-ipa',
   label: 'Label (default: value)',
   group: 'Group',
-  code: 'Code in an external list, e.g. 21A',
   description: 'Description',
+};
+
+/** An option's other keys as text: `code=21A, category=21` */
+const extraText = (option: EnumOption): string =>
+  Object.entries(option)
+    .filter(([k, v]) => !(OPTION_KEYS as readonly string[]).includes(k) && v)
+    .map(([k, v]) => `${k}=${v}`)
+    .join(', ');
+
+/** The option with its other keys replaced by those in `text` (`key=value, …`) */
+const withExtraText = (option: EnumOption, text: string): EnumOption => {
+  const base: EnumOption = { value: option.value };
+  for (const key of OPTION_KEYS) if (option[key]) base[key] = option[key];
+  for (const pair of text.split(',')) {
+    const [key = '', ...rest] = pair.split('=');
+    const value = rest.join('=').trim();
+    if (key.trim() && value && !(OPTION_KEYS as readonly string[]).includes(key.trim())) {
+      base[key.trim()] = value;
+    }
+  }
+  return base;
 };
 
 /** An option as stored: a plain string when it has nothing but a value */
@@ -40,6 +60,14 @@ const rowStyle = {
   borderRadius: '0.375rem',
   background: 'white',
 } as const;
+
+/** Where each input sits in an option card; the extra data input takes row 2, column 2 */
+const GRID_POSITION: Record<OptionKey, { gridRow: number; gridColumn: number | string }> = {
+  value: { gridRow: 1, gridColumn: 1 },
+  label: { gridRow: 1, gridColumn: 2 },
+  group: { gridRow: 2, gridColumn: 1 },
+  description: { gridRow: 3, gridColumn: '1 / span 2' },
+};
 
 const optionInputStyle = { ...styles.input, minWidth: 0 } as const;
 
@@ -67,7 +95,7 @@ export function OptionsEditor({ field, onChange }: OptionsEditorProps) {
           <div style={styles.label}>Options</div>
           <div style={styles.helperText}>
             The value is published; the label is shown. Options with a group are listed under it.
-            The code isn't published.
+            Extra data (e.g. <code>code=21A</code>) isn't published; link templates can read it.
           </div>
         </div>
         <button
@@ -82,13 +110,12 @@ export function OptionsEditor({ field, onChange }: OptionsEditorProps) {
       {options.map((option, index) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: options are edited in place, values may repeat while typing
         <div key={index} style={rowStyle}>
-          {OPTION_KEYS.map((key, keyIndex) => (
+          {OPTION_KEYS.map((key) => (
             <input
               key={key}
               style={{
                 ...optionInputStyle,
-                gridRow: Math.floor(keyIndex / 2) + 1,
-                gridColumn: key === 'description' ? '1 / span 2' : undefined,
+                ...GRID_POSITION[key],
               }}
               type="text"
               aria-label={`Option ${index + 1} ${key}`}
@@ -97,6 +124,20 @@ export function OptionsEditor({ field, onChange }: OptionsEditorProps) {
               placeholder={PLACEHOLDERS[key]}
             />
           ))}
+          {/* Parsed on blur: reformatting while typing would move the cursor */}
+          <input
+            key={`extra-${extraText(option)}`}
+            style={{ ...optionInputStyle, gridRow: 2, gridColumn: 2 }}
+            type="text"
+            aria-label={`Option ${index + 1} extra data`}
+            defaultValue={extraText(option)}
+            onBlur={(e) =>
+              setOptions(
+                options.map((o, i) => (i === index ? withExtraText(o, e.target.value) : o))
+              )
+            }
+            placeholder="Extra data, e.g. code=21A"
+          />
           <div style={{ display: 'flex', gap: '0.25rem', gridColumn: 3, gridRow: '1 / span 3' }}>
             <button type="button" style={styles.smallButton} onClick={() => moveOption(index, -1)}>
               ↑

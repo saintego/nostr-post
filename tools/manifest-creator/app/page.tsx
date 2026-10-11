@@ -147,7 +147,11 @@ export default function Home() {
       <div style={styles.container}>
         <div style={styles.grid}>
           <div>
-            <ManifestEditor manifest={manifest} onChange={setManifest} />
+            <ManifestEditor
+              manifest={manifest}
+              resolvedManifest={resolvedManifest}
+              onChange={setManifest}
+            />
             <ManifestNostrPanel
               manifest={manifest}
               onChange={setManifest}

@@ -12,6 +12,8 @@ import { styles } from './manifestEditorStyles';
 
 interface ManifestEditorProps {
   manifest: NostrPostManifest;
+  /** The manifest with its `extends` parents merged in, for choices that include inherited fields */
+  resolvedManifest?: NostrPostManifest;
   onChange: (manifest: NostrPostManifest) => void;
 }
 
@@ -28,7 +30,7 @@ const getEditorAvailableKinds = (manifest: NostrPostManifest): number[] => {
   return Array.from(new Set([...SUPPORTED_KINDS, ...configuredKinds])).sort((a, b) => a - b);
 };
 
-export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
+export function ManifestEditor({ manifest, resolvedManifest, onChange }: ManifestEditorProps) {
   const configuredManifestKinds = getConfiguredManifestKinds(manifest);
   const manifestKinds = getEditorAvailableKinds(manifest);
 
@@ -199,7 +201,11 @@ export function ManifestEditor({ manifest, onChange }: ManifestEditorProps) {
         />
       </div>
 
-      <WikiConfigEditor manifest={manifest} onChange={onChange} />
+      <WikiConfigEditor
+        manifest={manifest}
+        fieldIds={(resolvedManifest ?? manifest).fields.map((f) => f.id)}
+        onChange={onChange}
+      />
 
       <div style={styles.section}>
         <label style={styles.label} htmlFor="manifest-extends">

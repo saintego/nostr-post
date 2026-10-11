@@ -55,7 +55,8 @@ export interface WikiLinkTemplate {
   label: string;
   /**
    * URL template: `{i:<namespace>}` is the entity's `i` tag value without that
-   * prefix (`i:osm` → `node:123`), `{fieldId}` a field's value. The link is
+   * prefix (`i:osm` → `node:123`), `{fieldId}` a field's value, `{fieldId.key}`
+   * a key of the option selected in an enum field (`{style.code}`). The link is
    * left out when a placeholder has no value.
    */
   url: string;

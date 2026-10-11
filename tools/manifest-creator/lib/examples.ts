@@ -196,6 +196,10 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
     wikiConfig: {
       titleTemplate: '{title} (Beer)',
       dTagTemplate: '{title}-(beer)',
+      // The style's page in the BJCP guidelines; local styles (X1…) have none and get no link
+      links: [
+        { label: 'BJCP', url: 'https://www.bjcp.org/style/2021/{style.category}/{style.code}/' },
+      ],
     },
     fields: [
       {

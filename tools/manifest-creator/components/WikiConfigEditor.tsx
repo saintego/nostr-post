@@ -1,5 +1,6 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import type { WikiManifest } from '@nostr-post/wiki';
+import { WikiLinksEditor } from './WikiLinksEditor';
 
 const styles = {
   section: { marginBottom: '1.5rem' },
@@ -17,11 +18,13 @@ const styles = {
 
 interface WikiConfigEditorProps {
   manifest: NostrPostManifest;
+  /** Field ids link conditions can test, including inherited fields */
+  fieldIds: string[];
   onChange: (manifest: NostrPostManifest) => void;
 }
 
-/** Title and d-tag templates of a NIP-54 wiki manifest (shown only for wiki manifests). */
-export function WikiConfigEditor({ manifest, onChange }: WikiConfigEditorProps) {
+/** Title and d-tag templates and derived links of a NIP-54 wiki manifest (shown only for wiki manifests). */
+export function WikiConfigEditor({ manifest, fieldIds, onChange }: WikiConfigEditorProps) {
   if (!('wikiConfig' in manifest)) return null;
   const config = (manifest as WikiManifest).wikiConfig ?? {};
   const update = (key: 'titleTemplate' | 'dTagTemplate', value: string) =>
@@ -55,6 +58,16 @@ export function WikiConfigEditor({ manifest, onChange }: WikiConfigEditorProps) 
         Fixed text around the placeholders marks the entity type: pickers referencing this manifest
         only list d-tags with it (<code>{'{name}-(type)'}</code> → <code>-type</code>).
       </p>
+      <WikiLinksEditor
+        links={config.links ?? []}
+        fieldIds={fieldIds}
+        onChange={(links) =>
+          onChange({
+            ...manifest,
+            wikiConfig: { ...config, links: links.length > 0 ? links : undefined },
+          } as never)
+        }
+      />
     </div>
   );
 }

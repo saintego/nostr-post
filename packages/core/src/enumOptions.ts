@@ -102,9 +102,8 @@ const optionProblem = (option: unknown): string | undefined => {
   if (typeof record.value !== 'string' || record.value === '') {
     return 'Each option must be a non-empty string or have a non-empty string value';
   }
-  if (!['label', 'description', 'group', 'code'].every((k) => isOptionalString(record[k]))) {
-    return `Option "${record.value}": label, description, group and code must be strings`;
-  }
+  const nonString = Object.keys(record).find((k) => !isOptionalString(record[k]));
+  if (nonString) return `Option "${record.value}": "${nonString}" must be a string`;
   return undefined;
 };
 
