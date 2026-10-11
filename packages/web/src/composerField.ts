@@ -5,6 +5,7 @@
  * in its own file, separate from lifecycle, state, and event publishing.
  */
 
+import { groupFieldOptions, optionLabel } from '@nostr-post/core/enumOptions';
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
@@ -162,9 +163,13 @@ export function renderFieldInput(
       return html`
         <select @change=${handleInput}>
           <option value="">Select...</option>
-          ${field.options?.map(
-            (opt) => html`<option value=${opt} ?selected=${value === opt}>${opt}</option>`
-          )}
+          ${groupFieldOptions(field).map(({ group, options }) => {
+            const items = options.map(
+              (opt) =>
+                html`<option value=${opt.value} title=${ifDefined(opt.description)} ?selected=${value === opt.value}>${optionLabel(opt)}</option>`
+            );
+            return group ? html`<optgroup label=${group}>${items}</optgroup>` : items;
+          })}
         </select>
       `;
 

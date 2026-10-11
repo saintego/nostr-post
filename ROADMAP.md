@@ -61,14 +61,14 @@
 - [x] Put the qualifier into the title too, Wikipedia-style: "Bitcoin (Beer)" + "Moonshine" → title "Bitcoin (Moonshine Beer)", d-tag `bitcoin-moonshine-beer`
 - [x] Slug check can't silently say "free": if a relay fails or times out and none has the d-tag, it reports "unknown" ("Check again"; publishing isn't blocked, the qualifier input stays available)
 - [x] Templates can use a reference field's name: `{brewery}` renders the referenced entity's name without its type ("Russian River Brewing"), e.g. `{title}-{brewery}-(beer)` → `pliny-russian-river-brewing-beer`
-- [ ] Controlled vocabularies instead of free text, stored as tags other apps can match:
-  - country: ISO 3166 select → `i` tag (`iso3166:CZ`)
-  - city: OpenStreetMap / Wikidata lookup (reuse plugin-geo / plugin-venue) → `i` tag with the ID plus `g` geohash(flying breweries dont need to have location)
-  - venue entity as a reference field to a brewery location?
-  - beer style: BJCP style guide → `t` tag (`bjcp:21A`)
-  - brewery type: Brewers Association categories (microbrewery, brewpub, …) → `t` tag
-  - wiki entities stay for things the community describes (breweries, beers), not fixed vocabularies
-  - allow to edit enum in manifest editor
+- [x] Controlled vocabularies, part 1: enum options with value, label, group, description and an unpublished `code`; one published value per field (readable values like `american-ipa` in `t`), infobox rows show the label; options editor in the manifest creator; BJCP 2021 beer styles (121, category 27 split into its beers) as the `beer-style-bjcp-2021` base manifest (imported once from beerjson/bjcp-json), which the beer entity extends; brewery type (Brewers Association segments)
+- [ ] Controlled vocabularies, part 2: brewery location from OpenStreetMap instead of free-text country and city. One venue-plugin field with `metadata.levels` (country, city, place):
+  - place: the venue hub (venue wiki page, `a` tag) plus the levels below
+  - city or country only (flying breweries, no taproom): no wiki page; `i` `osm:relation:…`, `i` `wikidata:Q…`, coarse `g` for a city
+  - every level: `i` `iso3166:CZ` (NIP-73) from Nominatim's `country_code`
+- [ ] Searchable select for long enum lists (BJCP has 121 options; native `<select>` with groups for now)
+- [x] Entity manifests registered by an app or given inline resolve `extends`: parents by registered id first, then from relays (by address or bare id)
+- [ ] Link a BJCP style to its bjcp.org page (`/style/2021/21/21A/american-ipa/`: needs the option's code and category, which `wikiConfig.links` placeholders can't reach yet)
 - [x] Publishing wiki entities also goes to the author's own relays (signer + NIP-65 list), not only the wiki relays
 - [ ] Reading entities uses only the wiki relays; consider adding the reader's own relays (would find their own versions published elsewhere)
 - [x] Example: OSM-based wiki inputs (venue hub). Publishing an OSM venue review creates the venue's wiki entity (`venue-entity-v1`) from OSM if missing, or a new version when the OSM element changed since the synced version (only OSM-sourced fields; community fields kept), and links the review via `a`. Opt-out checkbox in the venue field; `source` tag + "© OpenStreetMap contributors". Generic `beforePublish` plugin hook; fields declare `metadata.sources.osm`
@@ -115,6 +115,7 @@
 - [ ] Publish the examples and the manifest creator as an nsite (static sites hosted on Nostr/Blossom), e.g. from CI on release
 - [ ] Add `llms.txt` (and `llms-full.txt`): a short index of the packages, CDN usage, manifest format and plugin API for AI agents and tools, published with the docs/nsite
 - [ ] Pin `next` in nextjs-demo and manifest-creator (`"latest"` re-resolves on every lockfile change)
+- [ ] Rename kebab-case source files to camelCase (AGENTS.md "File names"): `packages/wiki/src/web/wiki-composer*.ts` and `wiki-view*.ts`, `packages/web/src/base-component.ts`, `packages/plugin-venue/src/fixtures.test-helpers.ts`, `tools/manifest-creator/tests/e2e/*-*.test.ts`; update imports and the docs that name them (e.g. AGENTS.md's messages-object example)
 - [ ] Bring oversized files under the 500-line limit: plugin-markdown input, web view/feed, plugin-geo input, core coordinator (done: manifest-creator ManifestEditor and FieldEditor, wiki-composer, plugin-venue input)
 - [ ] Venue linking UI improvements (OSM ID deep links)
 - [ ] Additional plugins: polls, calendars, markets, date, tags, mentions

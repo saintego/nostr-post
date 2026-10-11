@@ -84,6 +84,7 @@ The bundle re-exports utilities for advanced usage:
 
 - `validateManifest`, `getFieldsByKind`, `getUsedKinds`, `findFieldById`, `getRequiredFields`
 - `fieldLabel(field)`, `fieldDescription(field)`: a field's label and description (see [MANIFEST.md](../../MANIFEST.md#field-metadata))
+- `fieldOptionLabel(field, value)`, `groupFieldOptions(field)`, `matchFieldOption(field, text)`: an enum field's option labels and groups, and the option a stored text stands for (see [MANIFEST.md](../../MANIFEST.md#enum-options))
 - `coordinateEvents`, `validateFormData`
 
 **Plugin Registry**

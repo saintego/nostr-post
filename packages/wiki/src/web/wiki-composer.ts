@@ -1,3 +1,4 @@
+import { groupFieldOptions, optionLabel } from '@nostr-post/core/enumOptions';
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
@@ -417,7 +418,7 @@ export class NostrWikiComposer extends LitElement {
     }
 
     if ((f.uiPlugin === 'select' || f.type === 'enum') && f.options?.length) {
-      return this._renderSelect(f, value, f.options as string[]);
+      return this._renderSelect(f, value);
     }
 
     // Number or text
@@ -437,7 +438,7 @@ export class NostrWikiComposer extends LitElement {
     `;
   }
 
-  private _renderSelect(f: PostField, value: unknown, options: string[]) {
+  private _renderSelect(f: PostField, value: unknown) {
     return html`
       <select
         id="field-${f.id}"
@@ -445,7 +446,13 @@ export class NostrWikiComposer extends LitElement {
         @change=${(e: Event) => this._onFieldChange(f.id, (e.target as HTMLSelectElement).value)}
       >
         <option value="" ?selected=${!value}>${this._m.selectPlaceholder}</option>
-        ${options.map((opt) => html`<option value=${opt} ?selected=${opt === value}>${opt}</option>`)}
+        ${groupFieldOptions(f).map(({ group, options }) => {
+          const items = options.map(
+            (opt) =>
+              html`<option value=${opt.value} title=${ifDefined(opt.description)} ?selected=${opt.value === value}>${optionLabel(opt)}</option>`
+          );
+          return group ? html`<optgroup label=${group}>${items}</optgroup>` : items;
+        })}
       </select>
     `;
   }

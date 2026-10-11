@@ -154,6 +154,58 @@ describe('manifestToWikiEvent', () => {
   });
 });
 
+describe('enum fields', () => {
+  const styleField = {
+    id: 'style',
+    type: 'enum' as const,
+    uiPlugin: 'select',
+    options: [
+      { value: 'american-ipa', label: 'American IPA', group: '21. IPA', code: '21A' },
+      'other',
+    ],
+  };
+  const manifest: NostrPostManifest = {
+    id: 'm',
+    version: '1.0.0',
+    fields: [
+      {
+        id: 'title',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: WIKI_KIND, target: 'tag', tagName: 'title' },
+      },
+      { ...styleField, mapTo: { kind: WIKI_KIND, target: 'tag', tagName: 't' } },
+      { ...styleField, id: 'style_row', mapTo: { kind: WIKI_KIND, target: 'table' } },
+    ],
+  };
+
+  it('stores the value as one tag and the label in the infobox, and reads both back', () => {
+    const event = manifestToWikiEvent(manifest, {
+      title: 'X',
+      style: 'american-ipa',
+      style_row: 'american-ipa',
+    });
+    expect(event.tags.filter((t) => t[0] === 't')).toEqual([['t', 'american-ipa']]);
+    expect(event.content).toContain('American IPA');
+    expect(event.content).not.toContain('21A');
+    const data = wikiEventToManifestData({ ...event, id: 'e', pubkey: 'pk', sig: 's' }, manifest);
+    expect(data.style).toBe('american-ipa');
+    expect(data.style_row).toBe('american-ipa');
+  });
+
+  it('reads a label stored before options had separate values', () => {
+    const event = manifestToWikiEvent(manifest, { title: 'X' });
+    const legacy = {
+      ...event,
+      id: 'e',
+      pubkey: 'pk',
+      sig: 's',
+      tags: [...event.tags, ['t', 'American IPA']],
+    };
+    expect(wikiEventToManifestData(legacy, manifest).style).toBe('american-ipa');
+  });
+});
+
 describe('wikiEventToManifestData', () => {
   const makeWikiEvent = (partial: Partial<ReturnType<typeof manifestToWikiEvent>>): WikiEvent => {
     const base = manifestToWikiEvent(beerManifest, beerFormData);

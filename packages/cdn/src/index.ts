@@ -38,6 +38,11 @@ export {
   fieldLabel,
   fieldDescription,
 } from '@nostr-post/core/manifest';
+export {
+  fieldOptionLabel,
+  groupFieldOptions,
+  matchFieldOption,
+} from '@nostr-post/core/enumOptions';
 export { coordinateEvents, validateFormData } from '@nostr-post/core/coordinator';
 
 // Plugin registry

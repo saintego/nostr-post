@@ -16,6 +16,7 @@ Types: `NostrPostManifest`, `PostField` and `FieldMetadata` in `@nostr-post/core
 - [Manifest](#manifest)
 - [Fields](#fields)
 - [Field metadata](#field-metadata)
+- [Enum options](#enum-options)
 - [Plugin metadata](#plugin-metadata)
 - [Wiki entity manifests](#wiki-entity-manifests)
 
@@ -36,14 +37,14 @@ Types: `NostrPostManifest`, `PostField` and `FieldMetadata` in `@nostr-post/core
 }
 ```
 
-| Key              | Description                                                                                                                                                          |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`, `version`  | Required. The id identifies the manifest; publish a new version under the same id                                                                                     |
-| `extends`        | A parent's address or bare id, or an array of them; fields are merged by id ([inheritance](./ARCHITECTURE.md#manifest-inheritance))                                  |
-| `publishFormats` | Choices of event kinds (`kinds`), the `default` one, and whether the author can pick (`userSelectable`). Without it, kinds come from the fields' `mapTo`             |
-| `linkManifest`   | Default `true`. `false` for manifests that only preset the editor (e.g. hashtags) and need no custom view                                                             |
-| `metadata`       | `name`, `description` (shown in the composer's header), `author`, `tags`                                                                                              |
-| `wikiConfig`     | Wiki entity manifests only, see [below](#wiki-entity-manifests)                                                                                                       |
+| Key              | Description                                                                                                                                              |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`, `version`  | Required. The id identifies the manifest; publish a new version under the same id                                                                        |
+| `extends`        | A parent's address or bare id, or an array of them; fields are merged by id ([inheritance](./ARCHITECTURE.md#manifest-inheritance))                      |
+| `publishFormats` | Choices of event kinds (`kinds`), the `default` one, and whether the author can pick (`userSelectable`). Without it, kinds come from the fields' `mapTo` |
+| `linkManifest`   | Default `true`. `false` for manifests that only preset the editor (e.g. hashtags) and need no custom view                                                |
+| `metadata`       | `name`, `description` (shown in the composer's header), `author`, `tags`                                                                                 |
+| `wikiConfig`     | Wiki entity manifests only, see [below](#wiki-entity-manifests)                                                                                          |
 
 ## Fields
 
@@ -64,9 +65,9 @@ Types: `NostrPostManifest`, `PostField` and `FieldMetadata` in `@nostr-post/core
 | `type`         | Value type for validation                                                                                                                         |
 | `uiPlugin`     | Built-in inputs: `text`, `textarea`, `number` (`metadata.min`/`max`/`step`), `select` (with `options`). Plugins: see [below](#plugin-metadata)    |
 | `mapTo`        | Where the value is stored, or an array of places (one per kind)                                                                                   |
-| `mapBehavior`  | With several `mapTo` entries: `first-active` (default) or `all-active` (write to every published kind)                                           |
+| `mapBehavior`  | With several `mapTo` entries: `first-active` (default) or `all-active` (write to every published kind)                                            |
 | `required`     | The post can't be published without a value                                                                                                       |
-| `options`      | Allowed values of an `enum` field                                                                                                                 |
+| `options`      | Allowed values of an `enum` field: strings or objects with a label, see [enum options](#enum-options)                                             |
 | `defaultValue` | Prefilled value                                                                                                                                   |
 | `visibility`   | `{ edit: 'visible' \| 'hidden' \| 'readonly', view: 'visible' \| 'hidden' }`                                                                      |
 | `attachTo`     | Id of another field this one works on instead of showing its own input, e.g. hashtags extracted from the text field, with a button in its toolbar |
@@ -74,37 +75,68 @@ Types: `NostrPostManifest`, `PostField` and `FieldMetadata` in `@nostr-post/core
 
 `mapTo` targets:
 
-| `target`    | Stored in                                                                       | Notes                                                    |
-| ----------- | ------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| `'content'` | The event content. For NIP-78 (30078) posts a JSON object, at `path` if given   | `path`: dot path, e.g. `"venue.address.city"`            |
-| `'tag'`     | A tag named `tagName`: relay-filterable                                         | e.g. `t`, `a`, `i`, `g`, `title`, `rating`               |
-| `'table'`   | A row of the infobox table in a wiki entity's content (kind 30818 only)         | Written by `@nostr-post/wiki`, not the core coordinator  |
+| `target`    | Stored in                                                                     | Notes                                                   |
+| ----------- | ----------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `'content'` | The event content. For NIP-78 (30078) posts a JSON object, at `path` if given | `path`: dot path, e.g. `"venue.address.city"`           |
+| `'tag'`     | A tag named `tagName`: relay-filterable                                       | e.g. `t`, `a`, `i`, `g`, `title`, `rating`              |
+| `'table'`   | A row of the infobox table in a wiki entity's content (kind 30818 only)       | Written by `@nostr-post/wiki`, not the core coordinator |
 
 ## Field metadata
 
 Keys every field understands (`FieldMetadata`):
 
-| Key           | Description                                                                         |
-| ------------- | ----------------------------------------------------------------------------------- |
-| `label`       | Shown in composers and views; default: the field id                                 |
-| `description` | What the field means and where its value comes from: help text and label tooltip    |
-| `placeholder` | Example input shown in an empty input                                               |
+| Key           | Description                                                                      |
+| ------------- | -------------------------------------------------------------------------------- |
+| `label`       | Shown in composers and views; default: the field id                              |
+| `description` | What the field means and where its value comes from: help text and label tooltip |
+| `placeholder` | Example input shown in an empty input                                            |
 
 Plugins read further keys from the same object.
 
+## Enum options
+
+An `enum` field's `options` are plain strings, or objects when the text people see differs from the
+stored value:
+
+```typescript
+options: [
+  { value: "american-ipa", label: "American IPA", group: "21. IPA", code: "21A" },
+  { value: "kellerbier", label: "Kellerbier", group: "27. Historical Beer", code: "27A" },
+  "other",
+]
+```
+
+| Key           | Description                                                                               |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| `value`       | Required, unique. What is published, through the field's `mapTo` like any field value    |
+| `label`       | Shown in selects and views; default: the value                                            |
+| `group`       | Selects list the option under this heading (`<optgroup>`)                                 |
+| `description` | Tooltip on the option                                                                     |
+| `code`        | The option's code in an external list (e.g. a BJCP style code). Not published; may repeat |
+
+The value is published once, where `mapTo` says, so an event holds one piece of information per
+field. Prefer readable values (`american-ipa` in a `t` tag) over codes few people know. A wiki
+infobox row (`table` target) shows the label instead, for clients without the manifest. Reading
+matches a stored text to the option by value, or by value or label ignoring case, so events written
+with an older list still load.
+
+Long, shared lists belong in a base manifest that other manifests `extends`. The manifest creator's
+`beer-style-bjcp-2021` example (`tools/manifest-creator/lib/manifests/beerStyleBjcp2021.json`) holds the 121 BJCP 2021 beer
+styles, mapped to `t` for posts and wiki entities; the beer entity extends it.
+
 ## Plugin metadata
 
-| `uiPlugin`           | `type`   | Metadata keys                                                                                                                                                                                                                       |
-| -------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stars`              | `number` | `min`, `max`, `step`, `showNumber`                                                                                                                                                                                                  |
-| `markdown`           | `string` | `defaultMode` (`'wysiwyg'` \| `'raw'`), `minLength`, `maxLength`, `minHeight`                                                                                                                                                      |
-| `hashtag`            | `string` | `maxTags` (20), `suggestions`, `autoExtract` (from the `attachTo` field, default `true`)                                                                                                                                            |
-| `media`              | `string` | `accept` (MIME types), `maxSize` (bytes), `maxFiles`, `uploadUrl`, `allowUrl`, `allowUpload`, `urlAutoExtract`                                                                                                                     |
-| `reference`          | `string` | `urlDedupeMode` (`'normalized'` \| `'exact'` \| `'origin-path'`)                                                                                                                                                                   |
-| `identifier`         | `string` | `prefix` (NIP-73 namespace, e.g. `isbn`)                                                                                                                                                                                            |
-| `geo`                | `geo`    | `precision` (geohash length, default 6), `defaultZoom`, `allowSearch`                                                                                                                                                              |
-| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub)                                                                                       |
-| `list`               | `string` | `relays`, `allowCreate`, `allowDelete`, `defaultList`, `multiple` (default `true`)                                                                                                                                                  |
+| `uiPlugin`           | `type`   | Metadata keys                                                                                                                                                                                                                  |
+| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `stars`              | `number` | `min`, `max`, `step`, `showNumber`                                                                                                                                                                                             |
+| `markdown`           | `string` | `defaultMode` (`'wysiwyg'` \| `'raw'`), `minLength`, `maxLength`, `minHeight`                                                                                                                                                  |
+| `hashtag`            | `string` | `maxTags` (20), `suggestions`, `autoExtract` (from the `attachTo` field, default `true`)                                                                                                                                       |
+| `media`              | `string` | `accept` (MIME types), `maxSize` (bytes), `maxFiles`, `uploadUrl`, `allowUrl`, `allowUpload`, `urlAutoExtract`                                                                                                                 |
+| `reference`          | `string` | `urlDedupeMode` (`'normalized'` \| `'exact'` \| `'origin-path'`)                                                                                                                                                               |
+| `identifier`         | `string` | `prefix` (NIP-73 namespace, e.g. `isbn`)                                                                                                                                                                                       |
+| `geo`                | `geo`    | `precision` (geohash length, default 6), `defaultZoom`, `allowSearch`                                                                                                                                                          |
+| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub)                                                                                  |
+| `list`               | `string` | `relays`, `allowCreate`, `allowDelete`, `defaultList`, `multiple` (default `true`)                                                                                                                                             |
 | `wiki-entity-picker` | `ref`    | `entityManifest`: the entity type ([reference](#referencing-entity-manifests)), which limits search to it and enables "+ Create"; `relays`; `minSearchLength` (2); `emitExtraTags` (`false`: don't copy the entity's `i` tags) |
 
 Deprecated: `hashtag.autoExtractFrom`, `media.urlAutoExtractFrom` and `reference.enrichFrom`
@@ -144,11 +176,11 @@ with the article about Bitcoin. Templates scope them:
 `wikiConfig.links` adds links to external pages worked out from the entity's data when it's
 shown. They aren't stored on the event, so a site changing its URLs needs only a manifest update.
 
-| Key     | Description                                                                                                                     |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `label` | Link text, e.g. the site's name                                                                                                 |
+| Key     | Description                                                                                                                           |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `label` | Link text, e.g. the site's name                                                                                                       |
 | `url`   | `{i:<namespace>}`: the entity's `i` tag value without the prefix (`{i:osm}` → `node:123`); `{fieldId}`: a field's value (URL-encoded) |
-| `when`  | Optional: `{ field, equals }`, shown only when that field's value matches (case-insensitive)                                     |
+| `when`  | Optional: `{ field, equals }`, shown only when that field's value matches (case-insensitive)                                          |
 
 A link is left out when a placeholder has no value. The wiki view shows these next to the links
 from `i` tags (OpenStreetMap, Google Maps) and `r` URL tags.
@@ -161,6 +193,9 @@ from `i` tags (OpenStreetMap, Google Maps) and `r` URL tags.
   Works in any app without setup.
 - **An inline manifest object.**
 - **An id registered with `registerEntityManifest(manifest)`**: app-local, e.g. for examples.
+
+An entity manifest can `extends` others like any manifest; parents are looked up among registered ids
+first, then on relays.
 
 Without a manifest, `<nostr-wiki-view>` uses `STANDARD_WIKI_MANIFEST`, which shows the article text.
 

@@ -14,6 +14,14 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
 - Keep source files under 500 lines. When a change would push a file over, split it into
   focused modules first. Files already over the limit are tracked in ROADMAP.md: don't grow them.
 
+### File names
+
+- Files are camelCase: `composerField.ts`, `enumOptions.test.ts`, `beerStyleBjcp2021.json`.
+- React components are PascalCase, named after the component: `OptionsEditor.tsx`.
+- Tool config files keep their tool's name (`vitest.config.ts`, `next.config.js`).
+- Kebab-case source files from before this rule are listed in ROADMAP.md for renaming; name new
+  files next to them in camelCase.
+
 ### Exports
 
 - No barrel files: don't add `export * from` re-export files inside a package. Expose public

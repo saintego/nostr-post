@@ -4,6 +4,7 @@ import { getFieldTargets, isStructuredContentKind } from '@nostr-post/core/manif
 import type { NostrTarget, PostField } from '@nostr-post/core/types';
 import { AdditionalMappings } from './AdditionalMappings';
 import { EntityManifestInput, WIKI_MANIFEST_KEYS } from './EntityManifestInput';
+import { OptionsEditor } from './OptionsEditor';
 import { styles } from './fieldEditorStyles';
 import { formatKindLabel } from './kindLabels';
 
@@ -184,6 +185,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             onChange={(e) => update('uiPlugin', e.target.value)}
           >
             <option value="text">text</option>
+            <option value="select">select</option>
             <option value="identifier">identifier</option>
             <option value="textarea">textarea</option>
             <option value="markdown">markdown</option>
@@ -392,6 +394,8 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             Required
           </label>
         </div>
+
+        <OptionsEditor field={field} onChange={onChange} />
 
         <AdditionalMappings
           field={field}

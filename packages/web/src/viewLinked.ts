@@ -5,6 +5,7 @@
  * using manifest field definitions and plugin view components.
  */
 
+import { fieldOptionLabel } from '@nostr-post/core/enumOptions';
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import {
   type ResolvedPostField,
@@ -34,6 +35,12 @@ export const getNestedValue = (obj: Record<string, unknown>, path: string): unkn
   return current;
 };
 
+/** A value as text; enum values show their option's label */
+const displayValue = (field: PostField, value: unknown): string =>
+  field.type === 'enum' && typeof value === 'string'
+    ? fieldOptionLabel(field, value)
+    : String(value);
+
 /**
  * Render a single tag field from a linked event using its plugin view component.
  */
@@ -61,7 +68,7 @@ const renderLinkedTagField = (tag: string[], field: PostField) => {
   return html`
     <div class="linked-field">
       <span class="linked-field-label" title=${ifDefined(fieldDescription(field))}>${label}:</span>
-      <span>${String(value)}</span>
+      <span>${displayValue(field, value)}</span>
     </div>
   `;
 };
@@ -85,7 +92,7 @@ const renderLinkedFieldValue = (
   return html`
     <div class="linked-field">
       <span class="linked-field-label" title=${ifDefined(fieldDescription(field))}>${label}:</span>
-      <span>${String(value)}</span>
+      <span>${displayValue(field, value)}</span>
     </div>
   `;
 };
@@ -206,7 +213,7 @@ const renderStructuredContentFields = (fields: PostField[], data: Record<string,
       results.push(html`
         <div class="linked-field">
           <span class="linked-field-label" title=${ifDefined(fieldDescription(field))}>${label}:</span>
-          <span>${String(value)}</span>
+          <span>${displayValue(field, value)}</span>
         </div>
       `);
     }

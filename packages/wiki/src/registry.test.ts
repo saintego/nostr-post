@@ -35,4 +35,53 @@ describe('entity manifest references', () => {
   it('is undefined for an unknown id', async () => {
     expect(await resolveEntityManifest('unknown-v1')).toBeUndefined();
   });
+
+  it('merges a registered parent named in extends', async () => {
+    const field = (id: string) => ({
+      id,
+      type: 'string',
+      uiPlugin: 'text',
+      mapTo: { kind: 30818, target: 'table' },
+    });
+    registerEntityManifest({ ...manifest('base-v1'), fields: [field('style')] });
+    registerEntityManifest({
+      ...manifest('child-v1'),
+      extends: 'base-v1',
+      fields: [field('name')],
+    });
+    const resolved = getEntityManifest('child-v1');
+    expect(resolved?.fields.map((f) => f.id).sort()).toEqual(['name', 'style']);
+    expect(resolved?.extends).toBeUndefined();
+    expect(getEntityManifest('child-v1')).toBe(resolved);
+  });
+
+  it('looks up an unregistered parent on relays, and works without it when missing', async () => {
+    const field = (id: string) => ({
+      id,
+      type: 'string',
+      uiPlugin: 'text',
+      mapTo: { kind: 30818, target: 'table' },
+    });
+    (fetchManifestByATag as Mock).mockReset();
+    (fetchManifestByATag as Mock).mockImplementation(async (ref: string) =>
+      ref === 'remote-base-v1'
+        ? { manifest: { ...manifest('remote-base-v1'), fields: [field('style')] } }
+        : undefined
+    );
+    registerEntityManifest({
+      ...manifest('remote-child-v1'),
+      extends: 'remote-base-v1',
+      fields: [field('name')],
+    });
+    expect(getEntityManifest('remote-child-v1')).toBeUndefined();
+    const resolved = await resolveEntityManifest('remote-child-v1');
+    expect(resolved?.fields.map((f) => f.id).sort()).toEqual(['name', 'style']);
+
+    registerEntityManifest({
+      ...manifest('orphan-v1'),
+      extends: 'missing-v1',
+      fields: [field('name')],
+    });
+    expect((await resolveEntityManifest('orphan-v1'))?.fields.map((f) => f.id)).toEqual(['name']);
+  });
 });

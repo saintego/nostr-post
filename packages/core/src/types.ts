@@ -81,6 +81,28 @@ export interface FieldMetadata {
   [key: string]: unknown;
 }
 
+/**
+ * One allowed value of an `enum` field, with display text. A plain string is
+ * an option whose value and label are the same.
+ */
+export interface EnumOption {
+  /** Stored value, e.g. a code from a vocabulary (`21A`) */
+  value: string;
+  /** Shown in selects and views (default: the value) */
+  label?: string;
+  /** What the option means: shown as a tooltip */
+  description?: string;
+  /** Heading the option is listed under, e.g. a style category */
+  group?: string;
+  /**
+   * The option's code in an external list (e.g. BJCP `21A`). Not published;
+   * kept so apps can map values to such lists.
+   */
+  code?: string;
+}
+
+export type FieldOption = string | EnumOption;
+
 export interface PostField {
   id: string;
   type: FieldType;
@@ -89,7 +111,8 @@ export interface PostField {
   /** How to apply multiple mappings when more than one active kind matches. Defaults to 'first-active'. */
   mapBehavior?: FieldMapBehavior;
   required?: boolean;
-  options?: string[];
+  /** Allowed values of an `enum` field */
+  options?: FieldOption[];
   metadata?: FieldMetadata;
   /** Default value to prefill in the composer. For hashtags: string[], for geo: geohash, etc. */
   defaultValue?: unknown;

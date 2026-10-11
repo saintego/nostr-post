@@ -1,5 +1,6 @@
+import { fieldOptionLabel } from '@nostr-post/core/enumOptions';
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
-import type { NostrPostManifest } from '@nostr-post/core/types';
+import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { fetchEvents } from '@nostr-post/signer';
 import { LitElement, html, nothing } from 'lit';
@@ -22,6 +23,14 @@ import { viewStyles } from './wiki-view-styles';
 
 /** Resolving the newest version needs every relay's versions, not the first answer */
 const ALL_RELAYS = { waitForAll: true, relayTimeoutMs: 5000 };
+
+/** A field value as text: lists joined, enum values as their option's label */
+const displayValue = (f: PostField, value: unknown): string => {
+  const items = Array.isArray(value) ? value : [value];
+  return items
+    .map((v) => (f.type === 'enum' && typeof v === 'string' ? fieldOptionLabel(f, v) : String(v)))
+    .join(', ');
+};
 
 @customElement('nostr-wiki-view')
 export class NostrWikiView extends LitElement {
@@ -264,9 +273,7 @@ export class NostrWikiView extends LitElement {
               const plugin = pluginRegistry.get(f.uiPlugin);
               const rendered = plugin?.renderView
                 ? plugin.renderView(value, f)
-                : Array.isArray(value)
-                  ? value.join(', ')
-                  : String(value);
+                : displayValue(f, value);
               return html`
                 <div class="wiki-field">
                   <dt title=${ifDefined(fieldDescription(f))}>${label}</dt>

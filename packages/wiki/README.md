@@ -219,6 +219,8 @@ Tables written that way by older versions are still read correctly.
 Pickers and venue fields refer to an entity manifest by a published `30078:` address, an inline
 object or a registered id: `resolveEntityManifest(ref)` fetches and remembers it,
 `getEntityManifest(ref)` returns a known one, `registerEntityManifest(manifest)` registers one.
+An entity manifest's `extends` parents are merged in: registered ids first, else fetched from relays
+(`getEntityManifest` returns undefined until `resolveEntityManifest` has looked them up).
 `@nostr-post/plugin-venue` uses a wiki entity as the hub for a venue's data, filled from
 OpenStreetMap when a review is published. See [MANIFEST.md](../../MANIFEST.md#referencing-entity-manifests) and
 [the venue hub](../../MANIFEST.md#venue-hub).

@@ -41,6 +41,10 @@
     "./nip50": {
       "types": "./dist/nip50.d.ts",
       "import": "./dist/nip50.js"
+    },
+    "./enumOptions": {
+      "types": "./dist/enumOptions.d.ts",
+      "import": "./dist/enumOptions.js"
     }
   },
   "scripts": {

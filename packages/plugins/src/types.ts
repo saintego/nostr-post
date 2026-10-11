@@ -5,10 +5,12 @@
  * that registers itself with the shared PluginRegistry.
  */
 
-import type { FieldMapBehavior, FieldType, NostrTarget } from '@nostr-post/core/types';
+import type { FieldMapBehavior, FieldOption, FieldType, NostrTarget } from '@nostr-post/core/types';
 
 export type {
+  EnumOption,
   FieldMapBehavior,
+  FieldOption,
   FieldType,
   NostrTarget,
 } from '@nostr-post/core/types';
@@ -25,7 +27,7 @@ export interface PostField {
   mapTo: NostrTarget | NostrTarget[];
   mapBehavior?: FieldMapBehavior;
   required?: boolean;
-  options?: string[];
+  options?: FieldOption[];
   metadata?: Record<string, unknown>;
   defaultValue?: unknown;
   visibility?: FieldVisibility;

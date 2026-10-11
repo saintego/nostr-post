@@ -1,4 +1,5 @@
 import { parse, renderDjot } from '@djot/djot';
+import { fieldOptionLabel, matchFieldOption } from '@nostr-post/core/enumOptions';
 import type {
   NostrPostManifest,
   NostrTarget,
@@ -133,6 +134,8 @@ function castValue(raw: string, field: PostField): unknown {
     }
     case 'boolean':
       return raw === 'true';
+    case 'enum':
+      return matchFieldOption(field, raw)?.value ?? raw;
     default:
       return raw;
   }
@@ -216,7 +219,12 @@ function addTagTarget(
  */
 function addTableTarget(parts: WikiEventParts, field: PostField, value: unknown): void {
   const items = Array.isArray(value) ? value.filter(isPresent) : [value];
-  for (const item of items) parts.tableRows.push([field.id, serializeForTable(item)]);
+  // Enum rows show the option's label; reading matches it back to the value.
+  const text = (item: unknown): string =>
+    field.type === 'enum' && typeof item === 'string'
+      ? fieldOptionLabel(field, item)
+      : serializeForTable(item);
+  for (const item of items) parts.tableRows.push([field.id, text(item)]);
 }
 
 function addField(parts: WikiEventParts, field: PostField, value: unknown): void {

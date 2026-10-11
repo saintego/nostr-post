@@ -5,6 +5,7 @@
  * All functions are immutable and side-effect free.
  */
 
+import { validateFieldOptions } from './enumOptions';
 import {
   getFieldTargets,
   getFieldsByKind as getFieldsByKindFromMappings,
@@ -121,18 +122,7 @@ export const validatePostField = (field: PostField): Result<void, ValidationErro
     }
   }
 
-  if (field.type === 'enum' && (!field.options || field.options.length === 0)) {
-    return {
-      success: false,
-      error: {
-        field: 'options',
-        message: 'Enum fields must have at least one option',
-        code: 'MISSING_ENUM_OPTIONS',
-      },
-    };
-  }
-
-  return { success: true, data: undefined };
+  return validateFieldOptions(field);
 };
 
 /**

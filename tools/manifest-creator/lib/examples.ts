@@ -1,6 +1,7 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
 import type { WikiManifest } from '@nostr-post/wiki';
+import bjcpStyleManifest from './manifests/beerStyleBjcp2021.json';
 
 export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest> = {
   simple: {
@@ -79,6 +80,10 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
     },
   },
 
+  // The BJCP style list as a base manifest (lib/manifests/beerStyleBjcp2021.json).
+  // The beer entity extends it by id; other apps by its address once it's published.
+  'beer-style-bjcp-2021': bjcpStyleManifest as NostrPostManifest,
+
   // ── NIP-54 Wiki Entity (kind:30818) ──────────────────────────────────────
 
   'wiki-brewery-entity': {
@@ -96,6 +101,48 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         required: true,
         mapTo: { kind: 30818, target: 'table' },
         metadata: { label: 'Brewery Name', placeholder: 'e.g. Russian River Brewing' },
+      },
+      {
+        id: 'type',
+        type: 'enum',
+        uiPlugin: 'select',
+        options: [
+          {
+            value: 'microbrewery',
+            label: 'Microbrewery',
+            description: 'Small brewery, most beer sold off-site',
+          },
+          {
+            value: 'brewpub',
+            label: 'Brewpub',
+            description: 'Restaurant-brewery, most beer sold on-site',
+          },
+          {
+            value: 'taproom-brewery',
+            label: 'Taproom brewery',
+            description: 'Most beer sold in its own taproom',
+          },
+          {
+            value: 'regional-brewery',
+            label: 'Regional brewery',
+            description: 'Larger independent brewery',
+          },
+          {
+            value: 'large-brewery',
+            label: 'Large brewery',
+            description: 'Industrial-scale brewery',
+          },
+          {
+            value: 'contract-brewery',
+            label: 'Contract / flying brewery',
+            description: "Brews its beer on other breweries' equipment",
+          },
+        ],
+        mapTo: { kind: 30818, target: 'tag', tagName: 't' },
+        metadata: {
+          label: 'Type',
+          description: 'Kind of brewery, after the Brewers Association market segments',
+        },
       },
       {
         id: 'country',
@@ -144,6 +191,8 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
   'wiki-beer-entity': {
     id: 'beer-entity-v1',
     version: '1.0.0',
+    // The style field comes from the BJCP base manifest
+    extends: 'beer-style-bjcp-2021',
     wikiConfig: {
       titleTemplate: '{title} (Beer)',
       dTagTemplate: '{title}-(beer)',
@@ -168,30 +217,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
           entityManifest: 'brewery-entity-v1',
           emitExtraTags: false,
         },
-      },
-      {
-        id: 'style',
-        type: 'enum',
-        uiPlugin: 'select',
-        options: [
-          'IPA',
-          'Double IPA',
-          'Triple IPA',
-          'Stout',
-          'Imperial Stout',
-          'Porter',
-          'Lager',
-          'Pilsner',
-          'Wheat',
-          'Sour',
-          'Saison',
-          'Barleywine',
-          'Pale Ale',
-          'Amber Ale',
-          'Brown Ale',
-        ],
-        mapTo: { kind: 30818, target: 'tag', tagName: 't' },
-        metadata: { label: 'Style' },
       },
       {
         id: 'abv',
