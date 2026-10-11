@@ -8,6 +8,7 @@
  * Architecture: Pure functional approach using data transformation pipelines.
  */
 
+import { isFieldOptionValue, optionValue } from './enumOptions';
 import { validateManifest } from './manifest';
 import {
   type ResolvedPostField,
@@ -166,12 +167,12 @@ const validateFieldType = (field: PostField, value: unknown): Result<void, Valid
       break;
 
     case 'enum':
-      if (typeof value !== 'string' || !field.options?.includes(value)) {
+      if (!isFieldOptionValue(field, value)) {
         return {
           success: false,
           error: {
             field: field.id,
-            message: `Field "${field.id}" must be one of: ${field.options?.join(', ')}`,
+            message: `Field "${field.id}" must be one of: ${field.options?.map(optionValue).join(', ')}`,
             code: 'INVALID_ENUM_VALUE',
           },
         };

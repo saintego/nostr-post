@@ -83,6 +83,8 @@ The bundle re-exports utilities for advanced usage:
 **Core**
 
 - `validateManifest`, `getFieldsByKind`, `getUsedKinds`, `findFieldById`, `getRequiredFields`
+- `fieldLabel(field)`, `fieldDescription(field)`: a field's label and description (see [MANIFEST.md](../../MANIFEST.md#field-metadata))
+- `fieldOptionLabel(field, value)`, `groupFieldOptions(field)`, `matchFieldOption(field, text)`: an enum field's option labels and groups, and the option a stored text stands for (see [MANIFEST.md](../../MANIFEST.md#enum-options))
 - `coordinateEvents`, `validateFormData`
 
 **Plugin Registry**
@@ -98,9 +100,33 @@ The bundle re-exports utilities for advanced usage:
 
 **Signing & Relays**
 
-- `signEvent`, `signAndPublish`, `publishToRelay`, `publishToRelays`
+- `signEvent`, `signAndPublish`, `publishToRelay`, `publishToRelays` (`signAndPublish` without
+  relays publishes to `getPublishRelays` of the signer's pubkey)
 - `getPublicKey`, `hasNostrSigner`, `fetchEvents`, `fetchEventsFromRelay`
 - `getUserRelays`, `getDefaultRelays`
+- `fetchUserRelays(pubkeys, relays?)`: the NIP-65 relays of one or more users plus `relays`
+  (default: `DEFAULT_RELAYS`); falls back to `relays` when no list is found
+- `getPublishRelays(pubkey, relays?)`: where to publish: the signer's write relays, the user's NIP-65 write relays and `relays` (default: `DEFAULT_RELAYS`)
+
+**Publishing a submitted post yourself** (composer without `auto-publish`)
+
+- `runBeforePublish(manifest, formData, pubkey)`: runs plugin publish hooks (e.g. the venue's wiki
+  page), returns tags for the post
+- `withTags(bundle, tags)`: adds them to every event of the submitted bundle
+
+**Wiki (NIP-54)**: see [packages/wiki](../wiki/README.md)
+
+- `WIKI_KIND`, `DEFAULT_WIKI_RELAYS`, `STANDARD_WIKI_MANIFEST`
+- `manifestToWikiEvent`, `wikiEventToManifestData`, `unmappedTableRows`, `buildWikiATag`,
+  `extractExternalIds`, `externalIdLink`, `entityLinks`, `manifestLinks`, `normalizeDTag`
+- `defaultResolver`, `collectEntityATags`, `fetchEntityVersions`, `checkEntityDTag`
+- `registerEntityManifest`, `getEntityManifest`, `resolveEntityManifest`: entity manifests by id,
+  inline, or by a published manifest's `30078:` address
+- `searchEntities`, `entityTypeAffixes`
+
+**Venues and the venue hub**
+
+- `searchNominatim`, `fetchOsmElement`, `findVenueEntity`, `syncVenueEntity`
 
 **Manifest helpers (preload & cache)**
 

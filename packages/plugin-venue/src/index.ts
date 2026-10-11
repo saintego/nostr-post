@@ -14,6 +14,19 @@ export {
   googleMapsPlaceUrl,
   googleMapsUrl,
   type VenueData,
+  type VenueAddress,
   type VenuePluginConfig,
   type NominatimResult,
 } from './core';
+
+export { fetchOsmElement, type OsmElement } from './osm';
+export {
+  OSM_COPYRIGHT_URL,
+  type EntitySyncAction,
+  entitySyncAction,
+  mergeOsmFields,
+  venueEntityTags,
+  venueIdentifiers,
+  venueToEntityData,
+} from './wikiEntity';
+export { findVenueEntity, planVenueEntity, syncVenueEntity } from './wikiSync';

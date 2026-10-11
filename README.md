@@ -89,7 +89,7 @@ This keeps relay I/O in one place and avoids duplicate network requests.
 
 ### 1. **Manifest-Driven Architecture**
 
-Define content structure once, deploy everywhere:
+Define content structure once, deploy everywhere (all keys: [MANIFEST.md](./MANIFEST.md)):
 
 ```typescript
 const manifest: NostrPostManifest = {
@@ -532,6 +532,7 @@ nostr-post/
 
 - **[Quick Start Guide](./QUICKSTART.md)** - Get started from installation to working examples
 - **[Usage Guide](./USAGE_GUIDE.md)** - Complete API reference for all packages
+- **[Manifest Reference](./MANIFEST.md)** - Every manifest, field and plugin `metadata` key
 - **[Examples](./EXAMPLES.md)** - Real-world usage examples and code samples
 - **[Development Guide](./DEVELOPMENT_GUIDE.md)** - Comprehensive guide for contributors
 - **[Architecture](./ARCHITECTURE.md)** - System design and technical architecture
@@ -567,6 +568,7 @@ pnpm format
 | -------------------------------------------------- | -------------------------------------------------------------------- |
 | **[QUICKSTART.md](./QUICKSTART.md)**               | Setup for Web Components, React, Next.js                             |
 | **[USAGE_GUIDE.md](./USAGE_GUIDE.md)**             | Complete API reference for all packages                              |
+| **[MANIFEST.md](./MANIFEST.md)**                   | Manifest reference: fields, plugin `metadata`, wiki entity manifests |
 | **[ARCHITECTURE.md](./ARCHITECTURE.md)**           | Design decisions, NIP support, patterns                              |
 | **[DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)** | Contributing, technical standards                                    |
 | **[EXAMPLES.md](./EXAMPLES.md)**                   | Real-world code examples                                             |

@@ -522,16 +522,6 @@ const articleManifest: NostrPostManifest = {
 - [x] Next.js 13+ App Router example
 - [x] Manifest Creator visual editor (9 example manifests)
 
-### Next Steps (Optional Enhancements)
-
-- [ ] Comprehensive unit test suite
-- [ ] Venue linking UI improvements (OSM ID deep links)
-- [ ] Additional plugins (polls, calendars, markets)
-- [ ] Performance optimizations
-- [ ] API documentation website
-- [ ] Advanced manifest features (conditions, dependencies)
-- [ ] Plugin examples and documentation
-
 ### Phase 3: Web Components ✅ (COMPLETED)
 
 - [x] Set up Lit-based Web Components infrastructure
@@ -548,14 +538,7 @@ const articleManifest: NostrPostManifest = {
 - [x] Example Next.js app
 - [x] Example React (Vite) app
 
-### Phase 5: Testing & Refinement (CURRENT)
-
-- [ ] Unit tests for core package
-- [ ] Integration tests
-- [ ] E2E tests for components
-- [ ] User testing and feedback
-- [ ] API stabilization
-- [ ] Performance optimization
+Open work is tracked in [ROADMAP.md](./ROADMAP.md).
 
 ## Key Design Decisions
 
@@ -575,30 +558,7 @@ const articleManifest: NostrPostManifest = {
 
 ## Next Steps
 
-1. **Add Testing Infrastructure (HIGH PRIORITY)**
-   - Set up Vitest for unit testing
-   - Write tests for validation functions in @nostr-post/core
-   - Test EventCoordinator edge cases
-   - Add integration tests for plugin rendering
-   - E2E tests for web components
-
-2. **User Testing & API Stabilization**
-   - Get feedback from real-world usage
-   - Identify pain points and confusing APIs
-   - Stabilize manifest schema
-   - Document breaking changes
-
-3. **Plugin System Enhancement**
-   - Test plugins in manifest-creator tool
-   - Add more plugins (date, tags, mentions)
-   - Improve plugin developer documentation
-   - Add plugin validation examples
-
-4. **Documentation Improvements**
-   - API reference for each package
-   - More usage examples
-   - Video tutorials
-   - Best practices guide
+See [ROADMAP.md](./ROADMAP.md).
 
 ---
 

@@ -1,0 +1,760 @@
+{
+  "id": "beer-style-bjcp-2021",
+  "version": "1.0.0",
+  "fields": [
+    {
+      "id": "style",
+      "type": "enum",
+      "uiPlugin": "select",
+      "mapTo": [
+        {
+          "kind": 1,
+          "target": "tag",
+          "tagName": "t"
+        },
+        {
+          "kind": 30818,
+          "target": "tag",
+          "tagName": "t"
+        }
+      ],
+      "metadata": {
+        "label": "Style",
+        "description": "The beer style, from the BJCP 2021 style guidelines (bjcp.org)"
+      },
+      "options": [
+        {
+          "value": "american-light-lager",
+          "label": "American Light Lager",
+          "group": "1. Standard American Beer",
+          "code": "1A"
+        },
+        {
+          "value": "american-lager",
+          "label": "American Lager",
+          "group": "1. Standard American Beer",
+          "code": "1B"
+        },
+        {
+          "value": "cream-ale",
+          "label": "Cream Ale",
+          "group": "1. Standard American Beer",
+          "code": "1C"
+        },
+        {
+          "value": "american-wheat-beer",
+          "label": "American Wheat Beer",
+          "group": "1. Standard American Beer",
+          "code": "1D"
+        },
+        {
+          "value": "international-pale-lager",
+          "label": "International Pale Lager",
+          "group": "2. International Lager",
+          "code": "2A"
+        },
+        {
+          "value": "international-amber-lager",
+          "label": "International Amber Lager",
+          "group": "2. International Lager",
+          "code": "2B"
+        },
+        {
+          "value": "international-dark-lager",
+          "label": "International Dark Lager",
+          "group": "2. International Lager",
+          "code": "2C"
+        },
+        {
+          "value": "czech-pale-lager",
+          "label": "Czech Pale Lager",
+          "group": "3. Czech Lager",
+          "code": "3A"
+        },
+        {
+          "value": "czech-premium-pale-lager",
+          "label": "Czech Premium Pale Lager",
+          "group": "3. Czech Lager",
+          "code": "3B"
+        },
+        {
+          "value": "czech-amber-lager",
+          "label": "Czech Amber Lager",
+          "group": "3. Czech Lager",
+          "code": "3C"
+        },
+        {
+          "value": "czech-dark-lager",
+          "label": "Czech Dark Lager",
+          "group": "3. Czech Lager",
+          "code": "3D"
+        },
+        {
+          "value": "munich-helles",
+          "label": "Munich Helles",
+          "group": "4. Pale Malty European Lager",
+          "code": "4A"
+        },
+        {
+          "value": "festbier",
+          "label": "Festbier",
+          "group": "4. Pale Malty European Lager",
+          "code": "4B"
+        },
+        {
+          "value": "helles-bock",
+          "label": "Helles Bock",
+          "group": "4. Pale Malty European Lager",
+          "code": "4C"
+        },
+        {
+          "value": "german-leichtbier",
+          "label": "German Leichtbier",
+          "group": "5. Pale Bitter European Beer",
+          "code": "5A"
+        },
+        {
+          "value": "kölsch",
+          "label": "Kölsch",
+          "group": "5. Pale Bitter European Beer",
+          "code": "5B"
+        },
+        {
+          "value": "german-helles-exportbier",
+          "label": "German Helles Exportbier",
+          "group": "5. Pale Bitter European Beer",
+          "code": "5C"
+        },
+        {
+          "value": "german-pils",
+          "label": "German Pils",
+          "group": "5. Pale Bitter European Beer",
+          "code": "5D"
+        },
+        {
+          "value": "märzen",
+          "label": "Märzen",
+          "group": "6. Amber Malty European Lager",
+          "code": "6A"
+        },
+        {
+          "value": "rauchbier",
+          "label": "Rauchbier",
+          "group": "6. Amber Malty European Lager",
+          "code": "6B"
+        },
+        {
+          "value": "dunkles-bock",
+          "label": "Dunkles Bock",
+          "group": "6. Amber Malty European Lager",
+          "code": "6C"
+        },
+        {
+          "value": "vienna-lager",
+          "label": "Vienna Lager",
+          "group": "7. Amber Bitter European Beer",
+          "code": "7A"
+        },
+        {
+          "value": "altbier",
+          "label": "Altbier",
+          "group": "7. Amber Bitter European Beer",
+          "code": "7B"
+        },
+        {
+          "value": "munich-dunkel",
+          "label": "Munich Dunkel",
+          "group": "8. Dark European Lager",
+          "code": "8A"
+        },
+        {
+          "value": "schwarzbier",
+          "label": "Schwarzbier",
+          "group": "8. Dark European Lager",
+          "code": "8B"
+        },
+        {
+          "value": "doppelbock",
+          "label": "Doppelbock",
+          "group": "9. Strong European Beer",
+          "code": "9A"
+        },
+        {
+          "value": "eisbock",
+          "label": "Eisbock",
+          "group": "9. Strong European Beer",
+          "code": "9B"
+        },
+        {
+          "value": "baltic-porter",
+          "label": "Baltic Porter",
+          "group": "9. Strong European Beer",
+          "code": "9C"
+        },
+        {
+          "value": "weissbier",
+          "label": "Weissbier",
+          "group": "10. German Wheat Beer",
+          "code": "10A"
+        },
+        {
+          "value": "dunkles-weissbier",
+          "label": "Dunkles Weissbier",
+          "group": "10. German Wheat Beer",
+          "code": "10B"
+        },
+        {
+          "value": "weizenbock",
+          "label": "Weizenbock",
+          "group": "10. German Wheat Beer",
+          "code": "10C"
+        },
+        {
+          "value": "ordinary-bitter",
+          "label": "Ordinary Bitter",
+          "group": "11. British Bitter",
+          "code": "11A"
+        },
+        {
+          "value": "best-bitter",
+          "label": "Best Bitter",
+          "group": "11. British Bitter",
+          "code": "11B"
+        },
+        {
+          "value": "strong-bitter",
+          "label": "Strong Bitter",
+          "group": "11. British Bitter",
+          "code": "11C"
+        },
+        {
+          "value": "british-golden-ale",
+          "label": "British Golden Ale",
+          "group": "12. Pale Commonwealth Beer",
+          "code": "12A"
+        },
+        {
+          "value": "australian-sparkling-ale",
+          "label": "Australian Sparkling Ale",
+          "group": "12. Pale Commonwealth Beer",
+          "code": "12B"
+        },
+        {
+          "value": "english-ipa",
+          "label": "English IPA",
+          "group": "12. Pale Commonwealth Beer",
+          "code": "12C"
+        },
+        {
+          "value": "dark-mild",
+          "label": "Dark Mild",
+          "group": "13. Brown British Beer",
+          "code": "13A"
+        },
+        {
+          "value": "british-brown-ale",
+          "label": "British Brown Ale",
+          "group": "13. Brown British Beer",
+          "code": "13B"
+        },
+        {
+          "value": "english-porter",
+          "label": "English Porter",
+          "group": "13. Brown British Beer",
+          "code": "13C"
+        },
+        {
+          "value": "scottish-light",
+          "label": "Scottish Light",
+          "group": "14. Scottish Ale",
+          "code": "14A"
+        },
+        {
+          "value": "scottish-heavy",
+          "label": "Scottish Heavy",
+          "group": "14. Scottish Ale",
+          "code": "14B"
+        },
+        {
+          "value": "scottish-export",
+          "label": "Scottish Export",
+          "group": "14. Scottish Ale",
+          "code": "14C"
+        },
+        {
+          "value": "irish-red-ale",
+          "label": "Irish Red Ale",
+          "group": "15. Irish Beer",
+          "code": "15A"
+        },
+        {
+          "value": "irish-stout",
+          "label": "Irish Stout",
+          "group": "15. Irish Beer",
+          "code": "15B"
+        },
+        {
+          "value": "irish-extra-stout",
+          "label": "Irish Extra Stout",
+          "group": "15. Irish Beer",
+          "code": "15C"
+        },
+        {
+          "value": "sweet-stout",
+          "label": "Sweet Stout",
+          "group": "16. Dark British Beer",
+          "code": "16A"
+        },
+        {
+          "value": "oatmeal-stout",
+          "label": "Oatmeal Stout",
+          "group": "16. Dark British Beer",
+          "code": "16B"
+        },
+        {
+          "value": "tropical-stout",
+          "label": "Tropical Stout",
+          "group": "16. Dark British Beer",
+          "code": "16C"
+        },
+        {
+          "value": "foreign-extra-stout",
+          "label": "Foreign Extra Stout",
+          "group": "16. Dark British Beer",
+          "code": "16D"
+        },
+        {
+          "value": "british-strong-ale",
+          "label": "British Strong Ale",
+          "group": "17. Strong British Ale",
+          "code": "17A"
+        },
+        {
+          "value": "old-ale",
+          "label": "Old Ale",
+          "group": "17. Strong British Ale",
+          "code": "17B"
+        },
+        {
+          "value": "wee-heavy",
+          "label": "Wee Heavy",
+          "group": "17. Strong British Ale",
+          "code": "17C"
+        },
+        {
+          "value": "english-barley-wine",
+          "label": "English Barley Wine",
+          "group": "17. Strong British Ale",
+          "code": "17D"
+        },
+        {
+          "value": "blonde-ale",
+          "label": "Blonde Ale",
+          "group": "18. Pale American Ale",
+          "code": "18A"
+        },
+        {
+          "value": "american-pale-ale",
+          "label": "American Pale Ale",
+          "group": "18. Pale American Ale",
+          "code": "18B"
+        },
+        {
+          "value": "american-amber-ale",
+          "label": "American Amber Ale",
+          "group": "19. Amber and Brown American Beer",
+          "code": "19A"
+        },
+        {
+          "value": "california-common",
+          "label": "California Common",
+          "group": "19. Amber and Brown American Beer",
+          "code": "19B"
+        },
+        {
+          "value": "american-brown-ale",
+          "label": "American Brown Ale",
+          "group": "19. Amber and Brown American Beer",
+          "code": "19C"
+        },
+        {
+          "value": "american-porter",
+          "label": "American Porter",
+          "group": "20. American Porter and Stout",
+          "code": "20A"
+        },
+        {
+          "value": "american-stout",
+          "label": "American Stout",
+          "group": "20. American Porter and Stout",
+          "code": "20B"
+        },
+        {
+          "value": "imperial-stout",
+          "label": "Imperial Stout",
+          "group": "20. American Porter and Stout",
+          "code": "20C"
+        },
+        {
+          "value": "american-ipa",
+          "label": "American IPA",
+          "group": "21. IPA",
+          "code": "21A"
+        },
+        {
+          "value": "specialty-ipa",
+          "label": "Specialty IPA",
+          "group": "21. IPA",
+          "code": "21B"
+        },
+        {
+          "value": "hazy-ipa",
+          "label": "Hazy IPA",
+          "group": "21. IPA",
+          "code": "21C"
+        },
+        {
+          "value": "double-ipa",
+          "label": "Double IPA",
+          "group": "22. Strong American Ale",
+          "code": "22A"
+        },
+        {
+          "value": "american-strong-ale",
+          "label": "American Strong Ale",
+          "group": "22. Strong American Ale",
+          "code": "22B"
+        },
+        {
+          "value": "american-barleywine",
+          "label": "American Barleywine",
+          "group": "22. Strong American Ale",
+          "code": "22C"
+        },
+        {
+          "value": "wheatwine",
+          "label": "Wheatwine",
+          "group": "22. Strong American Ale",
+          "code": "22D"
+        },
+        {
+          "value": "berliner-weisse",
+          "label": "Berliner Weisse",
+          "group": "23. European Sour Ale",
+          "code": "23A"
+        },
+        {
+          "value": "flanders-red-ale",
+          "label": "Flanders Red Ale",
+          "group": "23. European Sour Ale",
+          "code": "23B"
+        },
+        {
+          "value": "oud-bruin",
+          "label": "Oud Bruin",
+          "group": "23. European Sour Ale",
+          "code": "23C"
+        },
+        {
+          "value": "lambic",
+          "label": "Lambic",
+          "group": "23. European Sour Ale",
+          "code": "23D"
+        },
+        {
+          "value": "gueuze",
+          "label": "Gueuze",
+          "group": "23. European Sour Ale",
+          "code": "23E"
+        },
+        {
+          "value": "fruit-lambic",
+          "label": "Fruit Lambic",
+          "group": "23. European Sour Ale",
+          "code": "23F"
+        },
+        {
+          "value": "gose",
+          "label": "Gose",
+          "group": "23. European Sour Ale",
+          "code": "23G"
+        },
+        {
+          "value": "witbier",
+          "label": "Witbier",
+          "group": "24. Belgian Ale",
+          "code": "24A"
+        },
+        {
+          "value": "belgian-pale-ale",
+          "label": "Belgian Pale Ale",
+          "group": "24. Belgian Ale",
+          "code": "24B"
+        },
+        {
+          "value": "bière-de-garde",
+          "label": "Bière de Garde",
+          "group": "24. Belgian Ale",
+          "code": "24C"
+        },
+        {
+          "value": "belgian-blond-ale",
+          "label": "Belgian Blond Ale",
+          "group": "25. Strong Belgian Ale",
+          "code": "25A"
+        },
+        {
+          "value": "saison",
+          "label": "Saison",
+          "group": "25. Strong Belgian Ale",
+          "code": "25B"
+        },
+        {
+          "value": "belgian-golden-strong-ale",
+          "label": "Belgian Golden Strong Ale",
+          "group": "25. Strong Belgian Ale",
+          "code": "25C"
+        },
+        {
+          "value": "belgian-single",
+          "label": "Belgian Single",
+          "group": "26. Monastic Ale",
+          "code": "26A"
+        },
+        {
+          "value": "belgian-dubbel",
+          "label": "Belgian Dubbel",
+          "group": "26. Monastic Ale",
+          "code": "26B"
+        },
+        {
+          "value": "belgian-tripel",
+          "label": "Belgian Tripel",
+          "group": "26. Monastic Ale",
+          "code": "26C"
+        },
+        {
+          "value": "belgian-dark-strong-ale",
+          "label": "Belgian Dark Strong Ale",
+          "group": "26. Monastic Ale",
+          "code": "26D"
+        },
+        {
+          "value": "kellerbier",
+          "label": "Kellerbier",
+          "group": "27. Historical Beer",
+          "code": "27A"
+        },
+        {
+          "value": "kentucky-common",
+          "label": "Kentucky Common",
+          "group": "27. Historical Beer",
+          "code": "27A"
+        },
+        {
+          "value": "lichtenhainer",
+          "label": "Lichtenhainer",
+          "group": "27. Historical Beer",
+          "code": "27A"
+        },
+        {
+          "value": "london-brown-ale",
+          "label": "London Brown Ale",
+          "group": "27. Historical Beer",
+          "code": "27A"
+        },
+        {
+          "value": "piwo-grodziskie",
+          "label": "Piwo Grodziskie",
+          "group": "27. Historical Beer",
+          "code": "27A"
+        },
+        {
+          "value": "pre-prohibition-lager",
+          "label": "Pre-Prohibition Lager",
+          "group": "27. Historical Beer",
+          "code": "27A"
+        },
+        {
+          "value": "pre-prohibition-porter",
+          "label": "Pre-Prohibition Porter",
+          "group": "27. Historical Beer",
+          "code": "27A"
+        },
+        {
+          "value": "roggenbier",
+          "label": "Roggenbier",
+          "group": "27. Historical Beer",
+          "code": "27A"
+        },
+        {
+          "value": "sahti",
+          "label": "Sahti",
+          "group": "27. Historical Beer",
+          "code": "27A"
+        },
+        {
+          "value": "brett-beer",
+          "label": "Brett Beer",
+          "group": "28. American Wild Ale",
+          "code": "28A"
+        },
+        {
+          "value": "mixed-fermentation-sour-beer",
+          "label": "Mixed-Fermentation Sour Beer",
+          "group": "28. American Wild Ale",
+          "code": "28B"
+        },
+        {
+          "value": "wild-specialty-beer",
+          "label": "Wild Specialty Beer",
+          "group": "28. American Wild Ale",
+          "code": "28C"
+        },
+        {
+          "value": "straight-sour-beer",
+          "label": "Straight Sour Beer",
+          "group": "28. American Wild Ale",
+          "code": "28D"
+        },
+        {
+          "value": "fruit-beer",
+          "label": "Fruit Beer",
+          "group": "29. Fruit Beer",
+          "code": "29A"
+        },
+        {
+          "value": "fruit-and-spice-beer",
+          "label": "Fruit and Spice Beer",
+          "group": "29. Fruit Beer",
+          "code": "29B"
+        },
+        {
+          "value": "specialty-fruit-beer",
+          "label": "Specialty Fruit Beer",
+          "group": "29. Fruit Beer",
+          "code": "29C"
+        },
+        {
+          "value": "grape-ale",
+          "label": "Grape Ale",
+          "group": "29. Fruit Beer",
+          "code": "29D"
+        },
+        {
+          "value": "spice-herb-or-vegetable-beer",
+          "label": "Spice, Herb, or Vegetable Beer",
+          "group": "30. Spiced Beer",
+          "code": "30A"
+        },
+        {
+          "value": "autumn-seasonal-beer",
+          "label": "Autumn Seasonal Beer",
+          "group": "30. Spiced Beer",
+          "code": "30B"
+        },
+        {
+          "value": "winter-seasonal-beer",
+          "label": "Winter Seasonal Beer",
+          "group": "30. Spiced Beer",
+          "code": "30C"
+        },
+        {
+          "value": "specialty-spice-beer",
+          "label": "Specialty Spice Beer",
+          "group": "30. Spiced Beer",
+          "code": "30D"
+        },
+        {
+          "value": "alternative-grain-beer",
+          "label": "Alternative Grain Beer",
+          "group": "31. Alternative Fermentables Beer",
+          "code": "31A"
+        },
+        {
+          "value": "alternative-sugar-beer",
+          "label": "Alternative Sugar Beer",
+          "group": "31. Alternative Fermentables Beer",
+          "code": "31B"
+        },
+        {
+          "value": "classic-style-smoked-beer",
+          "label": "Classic Style Smoked Beer",
+          "group": "32. Smoked Beer",
+          "code": "32A"
+        },
+        {
+          "value": "specialty-smoked-beer",
+          "label": "Specialty Smoked Beer",
+          "group": "32. Smoked Beer",
+          "code": "32B"
+        },
+        {
+          "value": "wood-aged-beer",
+          "label": "Wood-Aged Beer",
+          "group": "33. Wood Beer",
+          "code": "33A"
+        },
+        {
+          "value": "specialty-wood-aged-beer",
+          "label": "Specialty Wood-Aged Beer",
+          "group": "33. Wood Beer",
+          "code": "33B"
+        },
+        {
+          "value": "commercial-specialty-beer",
+          "label": "Commercial Specialty Beer",
+          "group": "34. Specialty Beer",
+          "code": "34A"
+        },
+        {
+          "value": "mixed-style-beer",
+          "label": "Mixed-Style Beer",
+          "group": "34. Specialty Beer",
+          "code": "34B"
+        },
+        {
+          "value": "experimental-beer",
+          "label": "Experimental Beer",
+          "group": "34. Specialty Beer",
+          "code": "34C"
+        },
+        {
+          "value": "dorada-pampeana",
+          "label": "Dorada Pampeana",
+          "group": "X. Argentine Styles",
+          "code": "X1"
+        },
+        {
+          "value": "ipa-argenta",
+          "label": "IPA Argenta",
+          "group": "X. Argentine Styles",
+          "code": "X2"
+        },
+        {
+          "value": "italian-grape-ale",
+          "label": "Italian Grape Ale",
+          "group": "X. Italian Styles",
+          "code": "X3"
+        },
+        {
+          "value": "catharina-sour",
+          "label": "Catharina Sour",
+          "group": "X. Brazilian Styles",
+          "code": "X4"
+        },
+        {
+          "value": "new-zealand-pilsner",
+          "label": "New Zealand Pilsner",
+          "group": "X. New Zealand Styles",
+          "code": "X5"
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "name": "Beer style (BJCP 2021)",
+    "description": "Base manifest with a beer style field: the BJCP 2021 beer styles, stored as a hashtag of the style name (t tag), with the BJCP code as the option's code (not published). Extend it to add the field to posts (kind 1) or wiki entities (kind 30818). Styles from github.com/beerjson/bjcp-json, plus categories 27 and 33 from bjcp.org.",
+    "tags": ["beer", "bjcp", "vocabulary"]
+  }
+}

@@ -5,6 +5,7 @@
  * applying them to Nostr events.  No Lit or plugin-registry dependencies.
  */
 
+import { matchFieldOption } from './enumOptions';
 import { isStructuredContentKind } from './manifestMappings';
 import { getFieldsByKind } from './manifestMappings';
 import type { DisplayableEvent, NostrPostManifest, PostField } from './types';
@@ -55,7 +56,7 @@ const parseFieldValue = (
     case 'boolean':
       return parseBoolean(rawValue);
     case 'enum':
-      return field.options?.includes(rawValue) ? rawValue : undefined;
+      return matchFieldOption(field, rawValue)?.value;
     case 'string': {
       if (field.uiPlugin === 'hashtag' || field.uiPlugin === 'media' || existingTagCount > 1) {
         return rawValue

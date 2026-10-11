@@ -5,6 +5,7 @@
  * All functions are immutable and side-effect free.
  */
 
+import { validateFieldOptions } from './enumOptions';
 import {
   getFieldTargets,
   getFieldsByKind as getFieldsByKindFromMappings,
@@ -33,6 +34,17 @@ export const validateNostrTarget = (target: NostrTarget): Result<void, Validatio
         field: 'tagName',
         message: 'tagName is required when target is "tag"',
         code: 'MISSING_TAG_NAME',
+      },
+    };
+  }
+
+  if (target.target === 'table' && target.kind !== 30818) {
+    return {
+      success: false,
+      error: {
+        field: 'target',
+        message: 'target "table" is only valid for kind 30818 (NIP-54 wiki)',
+        code: 'INVALID_TARGET',
       },
     };
   }
@@ -96,18 +108,21 @@ export const validatePostField = (field: PostField): Result<void, ValidationErro
     }
   }
 
-  if (field.type === 'enum' && (!field.options || field.options.length === 0)) {
-    return {
-      success: false,
-      error: {
-        field: 'options',
-        message: 'Enum fields must have at least one option',
-        code: 'MISSING_ENUM_OPTIONS',
-      },
-    };
+  for (const key of ['label', 'placeholder', 'description'] as const) {
+    const value = field.metadata?.[key];
+    if (value !== undefined && typeof value !== 'string') {
+      return {
+        success: false,
+        error: {
+          field: `metadata.${key}`,
+          message: `Field metadata.${key} must be a string`,
+          code: 'INVALID_FIELD_METADATA',
+        },
+      };
+    }
   }
 
-  return { success: true, data: undefined };
+  return validateFieldOptions(field);
 };
 
 /**
@@ -333,6 +348,13 @@ const validateFieldRelationships = (
 /**
  * Gets all fields that map to a specific Nostr kind.
  */
+/** A field's label: `metadata.label`, else its id */
+export const fieldLabel = (field: PostField): string => field.metadata?.label || field.id;
+
+/** A field's description (`metadata.description`), if it has a non-empty one */
+export const fieldDescription = (field: PostField): string | undefined =>
+  field.metadata?.description?.trim() || undefined;
+
 export const getFieldsByKind = (manifest: NostrPostManifest, kind: number): PostField[] => {
   return getFieldsByKindFromMappings(manifest, kind);
 };

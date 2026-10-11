@@ -216,7 +216,7 @@ export default function CreateReview() {
         manifest={venueReviewManifest}
         relays={[
           "wss://relay.damus.io",
-          "wss://relay.nostr.band",
+          "wss://relay.primal.net",
           "wss://nostr.wine",
         ]}
         manifestRef={{
@@ -278,7 +278,7 @@ export default function ReviewPage({
     const loadEvent = async () => {
       try {
         const events = await fetchEvents(
-          ["wss://relay.damus.io", "wss://relay.nostr.band"],
+          ["wss://relay.damus.io", "wss://relay.primal.net"],
           {
             ids: [params.eventId],
             kinds: [30023],
@@ -306,7 +306,7 @@ export default function ReviewPage({
       <NostrPostView
         event={event}
         manifest={venueReviewManifest}
-        relays={["wss://relay.damus.io", "wss://relay.nostr.band"]}
+        relays={["wss://relay.damus.io", "wss://relay.primal.net"]}
       />
     </div>
   );
@@ -461,7 +461,7 @@ Add to Vercel Project Settings:
 
 ```bash
 # Optional: Custom relay endpoints
-NEXT_PUBLIC_RELAY_URLS=wss://relay.damus.io,wss://relay.nostr.band,wss://nostr.wine
+NEXT_PUBLIC_RELAY_URLS=wss://relay.damus.io,wss://relay.primal.net,wss://nostr.wine
 
 # Optional: Custom manifest server (if using private manifests)
 NEXT_PUBLIC_MANIFEST_SERVER=https://your-manifest-server.com
@@ -624,10 +624,8 @@ content: {
 - [x] Photos linked via NIP-98 (nostr.build)
 - [x] Geohash with NIP-52 prefix tags (relay filtering)
 - [x] OSM venue identity via NIP-73 tags
-- [ ] Search/filter reviews by venue
-- [ ] Show reviews on map
-- [ ] User profile + review history
-- [ ] Reputation/trust scoring
+
+Open items are tracked in [ROADMAP.md](./ROADMAP.md#venue-reviews-from-integrationmd).
 
 ---
 

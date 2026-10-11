@@ -16,6 +16,13 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      # Optional Web3Auth client ID for nostr-shard-signer (adds Google/Apple/X sign-in to the
+      # examples and manifest creator; without it they offer Nostr-only sign-in). Set it as a
+      # repository variable (not on the github-pages environment: this build job doesn't use it)
+      # and register it for https://saintego.github.io at https://saintego.github.io/nostr-shard-signer/portal/
+      VITE_WEB3AUTH_CLIENT_ID: ${{ vars.WEB3AUTH_CLIENT_ID }}
+      NEXT_PUBLIC_WEB3AUTH_CLIENT_ID: ${{ vars.WEB3AUTH_CLIENT_ID }}
     steps:
       - uses: actions/checkout@v4
 

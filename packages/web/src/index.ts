@@ -13,6 +13,9 @@ export { NostrPostElement } from './base-component';
 // Theme (single source of truth for colors and styles)
 export { colors, baseStyles } from './theme';
 
+// Publishing a submitted post yourself: run plugin hooks, add their tags
+export { type NostrPostSubmitDetail, runBeforePublish, withTags } from './composerSubmit';
+
 // Standard manifests
 export { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
 
@@ -28,6 +31,8 @@ export {
   hasNostrSigner,
   fetchEvents,
   fetchEventsFromRelay,
+  fetchUserRelays,
+  getPublishRelays,
   type SignedEvent,
   type Nip07Provider,
 } from './signer';

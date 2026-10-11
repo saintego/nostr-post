@@ -46,11 +46,11 @@ export interface NostrPostViewProps {
   linkedEvents?: SignedEvent[];
   /** Interaction events (e.g. kind 1 update comments) related to the primary event */
   interactionEvents?: SignedEvent[];
-  /** Show event kind badge */
+  /** Show the collapsed "All data" section (kind, author, ID, time, all tags, content) */
   showKind?: boolean;
-  /** Show tags */
+  /** Same as showKind */
   showTags?: boolean;
-  /** Show event ID */
+  /** @deprecated No effect: the event ID is shown in the "All data" section */
   showId?: boolean;
   /** Show Edit button for addressable events (kinds 30000-39999) */
   editable?: boolean;

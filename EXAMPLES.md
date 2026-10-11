@@ -222,8 +222,9 @@ Built-in plugins are lazy-loaded when a manifest uses them, so manifests using `
   manifest id or paste manifest JSON which will be stored locally and used by
   the composer). Run locally: ```bash npx serve examples/pwa-share -l 8080 #
   open http://localhost:8080/examples/pwa-share/ ``` The example also
-  demonstrates a simple `window.nostr` (NIP-07) login flow to connect the
-  composer to a signer provided by the user's browser extension.
+  demonstrates signing in with
+  [nostr-shard-signer](https://github.com/saintego/nostr-shard-signer), which
+  provides the `window.nostr` signer the composer uses.
   <head>
     <meta charset="UTF-8" />
     <title>Nostr Post Demo</title>
@@ -233,7 +234,7 @@ Built-in plugins are lazy-loaded when a manifest uses them, so manifests using `
     <nostr-post-composer></nostr-post-composer>
 
     <h1>View Posts</h1>
-    <nostr-post-feed kinds="1" limit="10"></nostr-post-feed>
+    <nostr-post-feed kinds="[1]" limit="10"></nostr-post-feed>
 
     <script type="module">
       import "@nostr-post/web";
@@ -265,7 +266,7 @@ reference. ```html
 
 <nostr-post-feed
   manifest-ref="30078:abcdef...:nostr-post:my-manifest-id"
-  kinds="1"
+  kinds="[1]"
   limit="10"
 ></nostr-post-feed>
 ````
@@ -329,13 +330,13 @@ When a `manifestRef` is provided the components will fetch the manifest (once, c
 <!-- Show posts from specific authors -->
 <nostr-post-feed
   authors='["pubkey1", "pubkey2"]'
-  kinds="1"
+  kinds="[1]"
   limit="20"
 ></nostr-post-feed>
 
 <!-- Show posts with specific hashtags -->
 <nostr-post-feed
-  kinds="1"
+  kinds="[1]"
   tags='{"t": ["nostr", "bitcoin"]}'
   limit="10"
 ></nostr-post-feed>
@@ -1073,7 +1074,7 @@ Location: `examples/basic/`
 
 Features:
 
-- Vanilla Web Components with nostr-login
+- Vanilla Web Components with nostr-shard-signer sign-in
 - Composer with live preview
 - Feed with search and filtering
 - Manifest creator tool

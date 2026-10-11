@@ -74,7 +74,7 @@ export interface NostrPostFeedProps {
   search?: string;
   /** Max events to fetch */
   limit?: number;
-  /** Custom relay URLs */
+  /** Relay URLs to read from. Default: the authors' NIP-65 relays (up to 10 authors) plus defaults */
   relays?: string[];
   /** Comma-separated tag filters, e.g. "#i:osm:node:123,#g:u09tvw" */
   filterTags?: string;
@@ -86,9 +86,9 @@ export interface NostrPostFeedProps {
   manifest?: import('@nostr-post/core/types').NostrPostManifest;
   /** Manifest used for standard kind 1 comment composer in the feed */
   commentManifest?: import('@nostr-post/core/types').NostrPostManifest;
-  /** Show event kind badge */
+  /** Show each post's collapsed "All data" section (kind, author, ID, time, all tags, content) */
   showKind?: boolean;
-  /** Show tags */
+  /** Same as showKind */
   showTags?: boolean;
   /** Enable standard kind 1 comments in the feed */
   commentsEnabled?: boolean;

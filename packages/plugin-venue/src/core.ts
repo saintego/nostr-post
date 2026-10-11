@@ -48,6 +48,30 @@ export interface VenueData {
   osmType?: 'node' | 'way' | 'relation';
   /** Google Places ID */
   googlePlaceId?: string;
+  /** Address parts from the search result (city is used for the wiki entity's name) */
+  address?: VenueAddress;
+  /**
+   * Create/update the venue's wiki entity when publishing (fields with
+   * `metadata.wikiEntity`). Unset means yes.
+   */
+  syncWiki?: boolean;
+  /**
+   * The new wiki page's slug as edited by the user next to the publish button
+   * (without the type suffix); unset means the slug generated from the template.
+   */
+  wikiSlug?: string;
+  /** The venue's wiki entity a post links to (from its `a` tag), when reading a post */
+  wikiEntity?: { pubkey: string; dTag: string };
+}
+
+export interface VenueAddress {
+  street?: string;
+  houseNumber?: string;
+  /** District, quarter or neighbourhood */
+  district?: string;
+  city?: string;
+  postcode?: string;
+  country?: string;
 }
 
 /**
@@ -63,6 +87,8 @@ export interface NominatimResult {
   licence: string;
   class: string;
   type: string;
+  /** Present with `addressdetails=1` */
+  address?: Record<string, string>;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -141,8 +167,19 @@ export const nominatimToVenue = (result: NominatimResult, precision = 6): VenueD
     name: result.display_name,
     osmId: String(result.osm_id),
     osmType: result.osm_type,
+    address: result.address ? nominatimAddress(result.address) : undefined,
   };
 };
+
+/** Address parts from Nominatim's `address` object (city may be a town or village) */
+const nominatimAddress = (a: Record<string, string>): VenueAddress => ({
+  street: a.road ?? a.pedestrian,
+  houseNumber: a.house_number,
+  district: a.suburb ?? a.quarter ?? a.neighbourhood ?? a.city_district,
+  city: a.city ?? a.town ?? a.village ?? a.municipality ?? a.hamlet,
+  postcode: a.postcode,
+  country: a.country,
+});
 
 /** BASE32 alphabet for geohash validation (same as plugin-geo). */
 const GEOHASH_BASE32 = '0123456789bcdefghjkmnpqrstuvwxyz';
@@ -244,6 +281,17 @@ export const venuePlugin: NostrUIPlugin = {
   },
 
   /**
+   * With `metadata.wikiEntity` (a wiki entity manifest id), create or update the
+   * venue's wiki entity from OSM before the post is published, and link to it.
+   * Loaded lazily so plain venue fields don't pull in the wiki code.
+   */
+  beforePublish: async (value, field) => {
+    if (!field.metadata?.wikiEntity || !value || typeof value !== 'object') return [];
+    const { syncVenueEntity } = await import('./wikiSync');
+    return syncVenueEntity(value as VenueData, field);
+  },
+
+  /**
    * Reconstruct VenueData from all event tags (for view rendering).
    * Reads "g", "i" (osm/gplace), and "location" tags.
    */
@@ -283,6 +331,11 @@ export const venuePlugin: NostrUIPlugin = {
     if (locationTag) {
       venue.name = locationTag[1];
     }
+
+    // The venue's wiki entity (`a` tag "30818:<pubkey>:<d-tag>")
+    const [, pubkey, ...dTag] =
+      tags.find((t) => t[0] === 'a' && t[1]?.startsWith('30818:'))?.[1]?.split(':') ?? [];
+    if (pubkey && dTag.length > 0) venue.wikiEntity = { pubkey, dTag: dTag.join(':') };
 
     return venue;
   },

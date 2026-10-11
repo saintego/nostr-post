@@ -11,12 +11,15 @@
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
+import { type EntityManifestRef, getEntityManifest, resolveEntityManifest } from '@nostr-post/wiki';
 import { LitElement, css, html, nothing } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { type VenueData, googleMapsPlaceUrl, osmUrl } from '../core';
+import { DEFAULT_VENUE_VIEW_MESSAGES, type VenueViewMessages } from './venueMessages';
 
-// Ensure <np-geo-view> is defined
+// Ensure <np-geo-view> and <nostr-wiki-view> are defined
 import '@nostr-post/plugin-geo/web';
+import '@nostr-post/wiki/web';
 
 @customElement('np-venue-view')
 export class NpVenueView extends LitElement {
@@ -33,6 +36,18 @@ export class NpVenueView extends LitElement {
       align-items: center;
       gap: 0.375rem;
       margin-bottom: 0.125rem;
+    }
+
+    .venue-wiki {
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .venue-wiki summary {
+      cursor: pointer;
+      color: #166534;
+      font-weight: 500;
+      margin-bottom: 0.375rem;
     }
 
     .venue-links {
@@ -69,6 +84,16 @@ export class NpVenueView extends LitElement {
   @property({ type: Object })
   field: PostField | null = null;
 
+  /** Overrides for the user-facing text */
+  @property({ attribute: false })
+  messages?: Partial<VenueViewMessages>;
+
+  @state() private wikiOpen = false;
+
+  private get m(): VenueViewMessages {
+    return { ...DEFAULT_VENUE_VIEW_MESSAGES, ...this.messages };
+  }
+
   render() {
     if (!this.value) {
       return html`<span>No location</span>`;
@@ -92,6 +117,33 @@ export class NpVenueView extends LitElement {
       <np-geo-view .value=${v.geohash} .field=${this.field}></np-geo-view>
 
       ${this.renderVenueLinks(v)}
+      ${this.renderWikiPage(v)}
+    `;
+  }
+
+  /** The venue's wiki page, loaded only when opened (feeds show many posts) */
+  private renderWikiPage(v: VenueData) {
+    if (!v.wikiEntity) return nothing;
+    const ref = this.field?.metadata?.wikiEntity as EntityManifestRef | undefined;
+    const known = getEntityManifest(ref);
+    // A published manifest's address: fetch it once; unknown manifests show the article text
+    if (!known && ref && this.wikiOpen) {
+      void resolveEntityManifest(ref).then((manifest) => manifest && this.requestUpdate());
+    }
+    return html`
+      <details
+        class="venue-wiki"
+        @toggle=${(e: Event) => {
+          this.wikiOpen = (e.target as HTMLDetailsElement).open;
+        }}
+      >
+        <summary>${this.m.wikiPage}</summary>
+        ${
+          this.wikiOpen
+            ? html`<nostr-wiki-view .manifest=${known} .entityId=${v.wikiEntity.dTag}></nostr-wiki-view>`
+            : nothing
+        }
+      </details>
     `;
   }
 
@@ -112,7 +164,7 @@ export class NpVenueView extends LitElement {
               href="${osmUrl(osmType, osmId)}"
               target="_blank"
               rel="noopener"
-              >View on OSM ↗</a
+              >${this.m.viewOnOsm}</a
             >`
             : nothing
         }
@@ -123,7 +175,7 @@ export class NpVenueView extends LitElement {
               href="${googleMapsPlaceUrl(googlePlaceId)}"
               target="_blank"
               rel="noopener"
-              >Google Maps ↗</a
+              >${this.m.googleMaps}</a
             >`
             : nothing
         }

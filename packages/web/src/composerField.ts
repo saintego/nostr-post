@@ -5,12 +5,14 @@
  * in its own file, separate from lifecycle, state, and event publishing.
  */
 
+import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import type { FieldActionContext, NostrUIPlugin } from '@nostr-post/plugins/types';
 import { type TemplateResult, html, nothing } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
+import { renderEnumInput } from './composerEnum';
 
 type NumberFieldConfig = {
   min?: number;
@@ -158,14 +160,7 @@ export function renderFieldInput(
       return html`<input type="checkbox" @change=${handleInput} .checked=${Boolean(value)} />`;
 
     case 'enum':
-      return html`
-        <select @change=${handleInput}>
-          <option value="">Select...</option>
-          ${field.options?.map(
-            (opt) => html`<option value=${opt} ?selected=${value === opt}>${opt}</option>`
-          )}
-        </select>
-      `;
+      return renderEnumInput(field, value, (v) => ctx.onFieldChange(field.id, v));
 
     default:
       return html`<input type="text" @input=${handleInput} .value=${String(value)} />`;
@@ -281,7 +276,7 @@ function renderFieldToolbar(
       )}
       ${expandableAttached.map((attachedField) => {
         const isExpanded = ctx.expandedFields.has(attachedField.id);
-        const label = (attachedField.metadata?.label as string) || attachedField.id;
+        const label = fieldLabel(attachedField);
         const icon = getPluginIcon(attachedField);
         return html`
           <button
@@ -324,7 +319,8 @@ export function renderField(
   const error = ctx.errors[field.id];
   const isRequired = field.required === true;
   const readonly = ctx.isReadonly(field);
-  const label = (field.metadata?.label as string) || field.id;
+  const label = fieldLabel(field);
+  const description = fieldDescription(field);
 
   const toolbar = readonly ? nothing : renderFieldToolbar(field, ctx);
 
@@ -334,6 +330,7 @@ export function renderField(
       style="${isHidden ? 'display: none;' : ''}"
     >
       <label class="${isRequired ? 'required' : ''}">${label}</label>
+      ${description ? html`<div class="field-description">${description}</div>` : nothing}
       ${toolbar}
       ${readonly ? renderFieldView(field, value) : renderFieldInput(field, value, ctx)}
       ${readonly ? nothing : renderAttachedExpandedFields(field, ctx)}
@@ -348,7 +345,7 @@ export function renderField(
  */
 export function renderExpandableField(field: PostField, ctx: FieldRenderContext): TemplateResult {
   const isExpanded = ctx.expandedFields.has(field.id);
-  const label = (field.metadata?.label as string) || field.id;
+  const label = fieldLabel(field);
   const icon = getPluginIcon(field);
 
   return html`

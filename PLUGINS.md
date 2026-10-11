@@ -331,9 +331,23 @@ interface NostrUIPlugin {
     field: PostField,
   ): Record<string, unknown>;
 
+  // Async, before the post's events are signed (fields with a value only). May publish
+  // events of its own (e.g. the venue's wiki entity); returned tags are added to every
+  // event of the post (e.g. an `a` tag). Throwing stops publishing and shows the error.
+  // Runs when the composer publishes itself (auto-publish); apps that publish on
+  // nostr-post-submit call runBeforePublish + withTags from @nostr-post/web.
+  beforePublish?(
+    value: unknown,
+    field: PostField,
+    ctx: { pubkey: string },
+  ): Promise<[string, ...string[]][]>;
+
   // Web component tag names (set by /web entrypoint)
   inputTagName?: string; // e.g. 'np-stars-input'
   viewTagName?: string; // e.g. 'np-stars-view'
+  // Shown next to the publish button when the composer publishes itself, to show and confirm
+  // what beforePublish will do (e.g. 'np-venue-wiki-publish'). Same contract as the input.
+  publishSummaryTagName?: string;
 
   // Web-only: toolbar action buttons rendered in the target field's toolbar when attachTo is set
   getFieldActions?(field: PostField): FieldAction[];
@@ -380,6 +394,9 @@ interface NostrUIPlugin {
 
 ## Existing Plugins
 
+Each plugin's manifest `metadata` keys are listed in [MANIFEST.md](./MANIFEST.md#plugin-metadata).
+When a plugin reads a new key, add it there.
+
 | Package                        | ID          | Type     | Description                                                                      |
 | ------------------------------ | ----------- | -------- | -------------------------------------------------------------------------------- |
 | `@nostr-post/plugin-stars`     | `stars`     | `number` | Interactive star rating (configurable max via `metadata.max`)                    |
@@ -389,6 +406,9 @@ interface NostrUIPlugin {
 | `@nostr-post/plugin-markdown`  | `markdown`  | `string` | Markdown editor with live preview (WYSIWYG mode supported)                       |
 | `@nostr-post/plugin-hashtag`   | `hashtag`   | `string` | Hashtag array input; auto-extracts from target field when `attachTo` is set      |
 | `@nostr-post/plugin-reference` | `reference` | `string` | URL/nostr reference list; auto-extracts from target field when `attachTo` is set |
+| `@nostr-post/plugin-identifier` | `identifier` | `string` | External identifier (NIP-73 `i` tag), e.g. an ISBN, with an optional fixed prefix |
+| `@nostr-post/plugin-list` | `list` | `string` | Pick or create lists |
+| `@nostr-post/plugin-wiki-entity` | `wiki-entity-picker` | `ref` | Search, pick and create wiki entities (NIP-54); links the post with an `a` tag |
 
 ## Custom Field Types
 

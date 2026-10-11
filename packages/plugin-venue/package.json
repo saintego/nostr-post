@@ -17,6 +17,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "clean": "rm -rf dist"
   },
   "keywords": [
@@ -32,8 +34,11 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@nostr-post/core": "workspace:*",
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/plugin-geo": "workspace:*",
+    "@nostr-post/signer": "workspace:*",
+    "@nostr-post/wiki": "workspace:*",
     "lit": "^3.2.1"
   },
   "devDependencies": {

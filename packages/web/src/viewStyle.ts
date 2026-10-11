@@ -159,6 +159,11 @@ export const viewStyle = css`
     font-size: 0.875rem;
   }
 
+  .linked-field-label[title] {
+    cursor: help;
+    text-decoration: underline dotted;
+  }
+
   .linked-field-label {
     font-weight: 500;
     color: var(--nl-text-secondary, #6b7280);
@@ -212,5 +217,32 @@ export const viewStyle = css`
     margin-top: 1rem;
     padding-top: 0.75rem;
     border-top: 1px solid var(--nl-border, #e5e7eb);
+  }
+  details.view-raw {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+  }
+  details.view-raw summary {
+    cursor: pointer;
+    color: var(--nl-text-secondary, #6b7280);
+    font-weight: 500;
+  }
+  details.view-raw dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.15rem 0.75rem;
+    margin: 0.5rem 0;
+    word-break: break-all;
+  }
+  details.view-raw dd { margin: 0; }
+  details.view-raw h4 { margin: 0.6rem 0 0.25rem; font-size: 0.75rem; }
+  details.view-raw pre {
+    margin: 0;
+    padding: 0.5rem;
+    max-height: 16rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    border-radius: 0.375rem;
+    background: var(--nl-card-bg, #f9fafb);
   }
 `;

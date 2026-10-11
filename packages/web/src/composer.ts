@@ -26,9 +26,13 @@ import { hasReplyTarget, renderReplyTargetPanel, updateReplyTargetValue } from '
 import { composerStyle } from './composerStyle';
 import { renderSubmitButton } from './composerSubmit';
 import {
+  type NostrPostSubmitDetail,
   type ValidationResult,
+  renderPublishSummaries,
+  runBeforePublish,
   signAndPublishBundle,
   validateAndCoordinate,
+  withTags,
 } from './composerSubmit';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
 import { type SignedEvent, fetchManifestByATag, getPublicKey } from './signer';
@@ -324,13 +328,16 @@ export class NostrPostComposer extends NostrPostElement {
       const { bundle, addressableDTag } = outcome;
 
       if (this.autoPublish) {
-        const signedEvents = await signAndPublishBundle(bundle, this.relays);
+        const signedEvents = await this._publish(manifest, bundle, pubkey);
         this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
         this.successMessage = `Published to ${signedEvents.length} event(s)!`;
       } else {
-        this.dispatchCustomEvent<{ bundle: EventBundle; dTag?: string }>('nostr-post-submit', {
+        // formData + manifest let the app run plugin hooks itself (runBeforePublish)
+        this.dispatchCustomEvent<NostrPostSubmitDetail>('nostr-post-submit', {
           bundle,
           dTag: addressableDTag,
+          formData: { ...this._formData },
+          manifest,
         });
         this.successMessage = 'Post created successfully!';
       }
@@ -341,6 +348,16 @@ export class NostrPostComposer extends NostrPostElement {
     } finally {
       this.isSubmitting = false;
     }
+  }
+
+  /** Let plugins publish related events first (e.g. a venue's wiki entity), then the post */
+  private async _publish(
+    manifest: NostrPostManifest,
+    bundle: EventBundle,
+    pubkey: string
+  ): Promise<SignedEvent[]> {
+    const hookTags = await runBeforePublish(manifest, this._formData, pubkey);
+    return signAndPublishBundle(withTags(bundle, hookTags), this.relays);
   }
 
   private updateReplyTarget(
@@ -403,6 +420,13 @@ export class NostrPostComposer extends NostrPostElement {
               : ''
           }
           ${renderFieldList(manifest, ctx, this.excludeFields, this.prefill)}
+          ${
+            this.autoPublish
+              ? renderPublishSummaries(manifest, this._formData, (id, val) =>
+                  this.handleFieldChange(id, val)
+                )
+              : ''
+          }
           ${renderSubmitButton(this.isSubmitting, this.isResolvingManifestRef)}
         </form>
       </div>

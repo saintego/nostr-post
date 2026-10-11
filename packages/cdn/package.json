@@ -21,7 +21,9 @@
     "@nostr-post/plugin-reference": "workspace:*",
     "@nostr-post/plugin-markdown": "workspace:*",
     "@nostr-post/plugin-hashtag": "workspace:*",
-    "@nostr-post/plugin-list": "workspace:*"
+    "@nostr-post/plugin-list": "workspace:*",
+    "@nostr-post/wiki": "workspace:*",
+    "@nostr-post/plugin-wiki-entity": "workspace:*"
   },
   "devDependencies": {
     "esbuild": "^0.24.0"

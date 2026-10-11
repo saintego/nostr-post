@@ -6,6 +6,8 @@ import { useEffect, useRef, useState } from 'react';
 import { ManifestEditor } from '../components/ManifestEditor';
 import { ManifestNostrPanel } from '../components/ManifestNostrPanel';
 import { PreviewPane } from '../components/PreviewPane';
+import { WikiPreviewPanel } from '../components/WikiPreviewPanel';
+import { registerEntityManifests } from '../lib/entityManifests';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
 
 const styles = {
@@ -36,15 +38,27 @@ const styles = {
   },
 } as const;
 
+/** A wiki entity manifest: has wikiConfig, or maps only to kind 30818 */
+function isWikiManifest(m: NostrPostManifest): boolean {
+  if ('wikiConfig' in m) return true;
+  const targets = m.fields.flatMap((f) => (f.mapTo ? [f.mapTo].flat() : []));
+  return targets.length > 0 && targets.every((t) => t.kind === 30818);
+}
+
 async function fetchParentManifests(
   refs: string[],
   signal: AbortSignal
 ): Promise<NostrPostManifest[]> {
+  // Example manifests are parents by their id (e.g. the BJCP style list); others come from relays
+  await registerEntityManifests();
+  const { getEntityManifest } = await import('@nostr-post/wiki');
   const { fetchManifestByATag } = await import('@nostr-post/signer');
   if (signal.aborted) return [];
-  const results = await Promise.all(refs.map((ref) => fetchManifestByATag(ref)));
+  const results = await Promise.all(
+    refs.map(async (ref) => getEntityManifest(ref) ?? (await fetchManifestByATag(ref))?.manifest)
+  );
   if (signal.aborted) return [];
-  return results.filter((p): p is NonNullable<typeof p> => p !== undefined).map((p) => p.manifest);
+  return results.filter((p): p is NostrPostManifest => p !== undefined);
 }
 
 function mergeWithParents(
@@ -140,11 +154,15 @@ export default function Home() {
               onManifestRef={setManifestRef}
             />
           </div>
-          <PreviewPane
-            manifest={resolvedManifest}
-            manifestRef={manifestRef}
-            isResolvingParents={isResolvingParents}
-          />
+          {isWikiManifest(resolvedManifest) ? (
+            <WikiPreviewPanel manifest={resolvedManifest} />
+          ) : (
+            <PreviewPane
+              manifest={resolvedManifest}
+              manifestRef={manifestRef}
+              isResolvingParents={isResolvingParents}
+            />
+          )}
         </div>
       </div>
     </>

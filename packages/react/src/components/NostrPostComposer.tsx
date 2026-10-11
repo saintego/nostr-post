@@ -5,7 +5,7 @@
  */
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import type { SignedEvent } from '@nostr-post/web';
+import type { NostrPostSubmitDetail, SignedEvent } from '@nostr-post/web';
 import '@nostr-post/web'; // Register web components
 import { useEffect, useRef } from 'react';
 
@@ -66,8 +66,11 @@ export interface NostrPostComposerProps {
   rootPubkey?: string;
   /** Called after successful publish */
   onPublished?: (events: SignedEvent[], dTag?: string) => void;
-  /** Called on submit (before signing) */
-  onSubmit?: (bundle: unknown, dTag?: string) => void;
+  /**
+   * Called on submit (before signing), without autoPublish. `detail` has the
+   * form data and manifest for runBeforePublish (plugin publish hooks).
+   */
+  onSubmit?: (bundle: unknown, dTag?: string, detail?: NostrPostSubmitDetail) => void;
   /** Called on error */
   onError?: (error: Error) => void;
   /** Custom class name */
@@ -159,8 +162,8 @@ export function NostrPostComposer({
     };
 
     const handleSubmit = (e: Event) => {
-      const customEvent = e as CustomEvent<{ bundle: unknown; dTag?: string }>;
-      onSubmit?.(customEvent.detail.bundle, customEvent.detail.dTag);
+      const { detail } = e as CustomEvent<NostrPostSubmitDetail>;
+      onSubmit?.(detail.bundle, detail.dTag, detail);
     };
 
     const handleError = (e: Event) => {
