@@ -63,9 +63,27 @@
 - [x] Templates can use a reference field's name: `{brewery}` renders the referenced entity's name without its type ("Russian River Brewing"), e.g. `{title}-{brewery}-(beer)` → `pliny-russian-river-brewing-beer`
 - [x] Controlled vocabularies, part 1: enum options with value, label, group, description and an unpublished `code`; one published value per field (readable values like `american-ipa` in `t`), infobox rows show the label; options editor in the manifest creator; BJCP 2021 beer styles (121, category 27 split into its beers) as the `beer-style-bjcp-2021` base manifest (imported once from beerjson/bjcp-json), which the beer entity extends; brewery type (Brewers Association segments)
 - [ ] Controlled vocabularies, part 2: brewery location from OpenStreetMap instead of free-text country and city. One venue-plugin field with `metadata.levels` (country, city, place):
-  - place: the venue hub (venue wiki page, `a` tag) plus the levels below
-  - city or country only (flying breweries, no taproom): no wiki page; `i` `osm:relation:…`, `i` `wikidata:Q…`, coarse `g` for a city
-  - every level: `i` `iso3166:CZ` (NIP-73) from Nominatim's `country_code`
+  - place: the venue hub (venue wiki page) referenced with a role, see "References with a role" below (a brewery can have several venues: taproom, brewery site)
+  - city or country only (flying breweries, no taproom): no wiki page; `i` `osm:relation:…`, `i` `wikidata:Q…` when OSM has it, coarse `g` for a city
+  - every level: `i` `iso3166:CZ` (NIP-73) from Nominatim's `country_code`, so "breweries in Czechia" is one `#i` query whichever level was picked
+  - cities and countries are not wiki entities: they're identities with existing authorities (ISO 3166, OSM, Wikidata), and community-made country pages would invite fake or disputed ones; disputed territories follow OSM (what Nominatim returns). A city page can be added later if people want to describe cities; with the same `i` tags it links up like the venue hub
+- [ ] References with a role (wiki entities): an entity can point to several entities of one type, each in a role. Needed for a beer made by more than one brewery (collaboration; brands vs. "brewed at" for contract and flying breweries), a brewery's venues (taproom, brewery site), and beer styles if they become wiki pages. Proposed, using only NIP-01 and NIP-54:
+  - every referenced entity is a plain `a` tag (`#a` queries find all beers a brewery was involved in); the wiki-entity picker gets `multiple: true`
+  - a field with a role also writes an infobox row of NIP-54 wikilinks (`Brewed at | [[pivovar-z-brewery]]`), which any wiki client shows as links; reading matches the wikilinks to the `a` tags
+  - a field without a role takes the `a` tags no role field claims, so existing entities still load
+  - not chosen: a 4th marker element on `a` (NIP-10 markers exist only for `e`, with fixed values), NIP-32 labels (they label the event or the referenced entity, not which `a` tag), custom tag names (other clients and `#a` queries miss them)
+  - no collaboration entity: a collaboration has no identity beyond the beer; a brewery's page can list its collaborations from the beers that reference it
+  - first use: beer example with `breweries` (brands; several for a collaboration) and `brewed_at`; view "Pivovar X × Brewery Y, brewed at Z"; title/d-tag templates use the first brewery
+- [ ] Beer review: optional `tasting_at` and `purchase_at` venues (each a venue field linked to the venue hub). The role must not be lost: a review with three plain `a` tags (beer, two venues) doesn't say where the beer was drunk or bought (the beer is recognisable only by its `-beer` d-tag suffix). A review is a post, not a wiki page, so the infobox roles above don't apply. Proposed:
+  - NIP-78 reviews: the role is the key in the JSON content (`{"tasting_at": "30818:…", "purchase_at": "30818:…"}`), plus plain `a` tags for `#a` queries
+  - kind 1 reviews: the role in the text as a NIP-27 mention, e.g. "Tasted at nostr:naddr1…", which clients render as a link to the venue page; plus plain `a` tags. Reading matches the mention after the role's text to the `a` tags
+  - open: whether role texts are translated (a review written in Czech), or the role is read from the field order/a fixed marker in the line
+- [ ] Related items on a wiki entity's page, defined by its manifest: e.g. a brewery shows its beers and their reviews, a beer its reviews, a venue its reviews and check-ins. Found the way the manifest creator's Reviews tab finds reviews (every version of the entity → all their `a` addresses → `#a` query, so references to any author's version count), but in `@nostr-post/wiki` instead of the app (`EntityReviews` is app-only today, and it drops all wiki events, so beers can't show). Proposed `wikiConfig.related`:
+  - possible to turn on/off by web/react component config
+  - each section: `label`, and what to list: wiki entities of a type (by d-tag suffix or entity manifest, e.g. `-beer`), or events of given kinds/manifest (reviews: kind 1 / 30078 linking the review manifest; check-ins)
+  - optional role (see "References with a role"): "Beers brewed here" vs. "Collaborations"
+  - newest version per wiki entity (`selectNewestEntity`), paging for long lists; relays may cap filter sizes, so split many `a` addresses into batches
+  - the manifest creator's Reviews tab becomes the first section
 - [x] Searchable select for long enum lists: more than 20 options (or `metadata.searchable`) get a search input with a `<datalist>` in the post and wiki composers
 - [x] Entity manifests registered by an app or given inline resolve `extends`: parents by registered id first, then from relays (by address or bare id)
 - [x] Link a BJCP style to its bjcp.org page: enum options carry unpublished extra keys (`code`, `category`), link templates read them as `{fieldId.key}`; local styles (X1…) have no bjcp.org page and get no link
