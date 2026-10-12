@@ -73,7 +73,9 @@ export class NpVenueWikiPublish extends LitElement {
   }
 
   private get _enabled(): boolean {
-    return !!this._manifest && !!this.value && venueIdentifiers(this.value).length > 0;
+    // Only an exact place gets a venue wiki page
+    const isPlace = !this.value?.level || this.value.level === 'place';
+    return !!this._manifest && !!this.value && isPlace && venueIdentifiers(this.value).length > 0;
   }
 
   /** The new page's slug: as edited by the user, else generated from the template */

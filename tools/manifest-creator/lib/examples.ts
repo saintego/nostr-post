@@ -145,22 +145,17 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         },
       },
       {
-        id: 'country',
-        type: 'string',
-        uiPlugin: 'text',
-        mapTo: { kind: 30818, target: 'table' },
+        id: 'location',
+        type: 'geo',
+        uiPlugin: 'venue',
+        mapTo: { kind: 30818, target: 'tag', tagName: 'g' },
         metadata: {
-          label: 'Country',
-          description: 'Where the brewery is based',
-          placeholder: 'United States',
+          label: 'Location',
+          description:
+            "Where the brewery is: its exact place, or only its city or country (e.g. when it brews on other breweries' equipment). Tagged with its country (iso3166) for searches",
+          levels: ['country', 'city', 'place'],
+          providers: ['osm'],
         },
-      },
-      {
-        id: 'city',
-        type: 'string',
-        uiPlugin: 'text',
-        mapTo: { kind: 30818, target: 'table' },
-        metadata: { label: 'City', placeholder: 'Santa Rosa, CA' },
       },
       {
         id: 'external_ids',

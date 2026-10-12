@@ -15,6 +15,13 @@
 
 import { decodeGeohash, encodeGeohash } from '@nostr-post/plugin-geo';
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
+import {
+  type VenueLevel,
+  geohashTags,
+  levelPrecision,
+  resultLevel,
+  searchFeatureType,
+} from './levels';
 
 // ── Types ───────────────────────────────────────────────────────────
 
@@ -27,6 +34,8 @@ export interface VenuePluginConfig {
   providers?: ('osm' | 'google')[];
   /** Google Maps Places API key. Required when 'google' is in providers. */
   googleApiKey?: string;
+  /** What the field can stand for: `['country', 'city', 'place']`; default exact places */
+  levels?: VenueLevel[];
 }
 
 /**
@@ -62,6 +71,12 @@ export interface VenueData {
   wikiSlug?: string;
   /** The venue's wiki entity a post links to (from its `a` tag), when reading a post */
   wikiEntity?: { pubkey: string; dTag: string };
+  /** Country, city or exact place (see levels.ts); unset means an exact place */
+  level?: VenueLevel;
+  /** ISO 3166-1 alpha-2 code of the country, e.g. `CZ` */
+  countryCode?: string;
+  /** Wikidata item of the place, e.g. `Q1085`, when OSM has one */
+  wikidata?: string;
 }
 
 export interface VenueAddress {
@@ -89,6 +104,10 @@ export interface NominatimResult {
   type: string;
   /** Present with `addressdetails=1` */
   address?: Record<string, string>;
+  /** What the result is: `country`, `city`, `town`, `amenity`, … */
+  addresstype?: string;
+  /** Present with `extratags=1`, e.g. `wikidata` */
+  extratags?: Record<string, string> | null;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────
@@ -116,19 +135,26 @@ export const googleMapsUrl = (lat: number, lon: number): string =>
  * Search OSM Nominatim for venues matching a query string.
  * Free API, no key required. Rate-limit: max 1 request/second.
  */
-export const searchNominatim = async (query: string): Promise<NominatimResult[]> => {
+export const searchNominatim = async (
+  query: string,
+  levels: VenueLevel[] = ['place']
+): Promise<NominatimResult[]> => {
   const url = new URL('https://nominatim.openstreetmap.org/search');
   url.searchParams.set('q', query);
   url.searchParams.set('format', 'json');
   url.searchParams.set('addressdetails', '1');
+  url.searchParams.set('extratags', '1');
   url.searchParams.set('limit', '8');
+  const featureType = searchFeatureType(levels);
+  if (featureType) url.searchParams.set('featureType', featureType);
 
   const resp = await fetch(url.toString(), {
     headers: { 'User-Agent': 'nostr-post/0.1' },
   });
 
   if (!resp.ok) throw new Error(`Nominatim search failed: ${resp.status}`);
-  return resp.json() as Promise<NominatimResult[]>;
+  const results = (await resp.json()) as NominatimResult[];
+  return results.filter((r) => levels.includes(resultLevel(r)));
 };
 
 /**
@@ -144,6 +170,7 @@ export const lookupNominatimByOsmId = async (
   url.searchParams.set('osm_ids', `${osmTypePrefix}${osmId}`);
   url.searchParams.set('format', 'json');
   url.searchParams.set('addressdetails', '1');
+  url.searchParams.set('extratags', '1');
 
   const resp = await fetch(url.toString(), {
     headers: { 'User-Agent': 'nostr-post/0.1' },
@@ -160,14 +187,20 @@ export const lookupNominatimByOsmId = async (
 export const nominatimToVenue = (result: NominatimResult, precision = 6): VenueData => {
   const lat = Number.parseFloat(result.lat);
   const lon = Number.parseFloat(result.lon);
+  const level = resultLevel(result);
+  // A country keeps a 2-character geohash for the map; it isn't published
+  const geohashLength = Math.max(levelPrecision(level, precision), 2);
   return {
-    geohash: encodeGeohash(lat, lon, precision),
+    geohash: encodeGeohash(lat, lon, geohashLength),
     lat,
     lon,
     name: result.display_name,
     osmId: String(result.osm_id),
     osmType: result.osm_type,
     address: result.address ? nominatimAddress(result.address) : undefined,
+    level,
+    countryCode: result.address?.country_code?.toUpperCase(),
+    wikidata: result.extratags?.wikidata,
   };
 };
 
@@ -191,6 +224,13 @@ const isValidGeohash = (value: unknown): value is string => {
     if (!GEOHASH_BASE32.includes(ch)) return false;
   }
   return true;
+};
+
+/** The level of a venue read from tags: no area is a country, a coarse OSM area a city */
+const publishedLevel = (venue: VenueData): VenueLevel => {
+  if (!venue.geohash) return 'country';
+  if (venue.osmType === 'relation' && venue.geohash.length <= 4) return 'city';
+  return 'place';
 };
 
 // ── Plugin definition ───────────────────────────────────────────────
@@ -240,7 +280,8 @@ export const venuePlugin: NostrUIPlugin = {
   serializeValue: (value: unknown): string => {
     if (!value || typeof value !== 'object') return '';
     const venue = value as VenueData;
-    return venue.geohash;
+    // A country has no published area
+    return venue.level === 'country' ? '' : venue.geohash;
   },
 
   /**
@@ -272,6 +313,13 @@ export const venuePlugin: NostrUIPlugin = {
       tags.push(['i', googlePlaceIdentifier(venue.googlePlaceId)]);
     }
 
+    // NIP-73: country (every level) and Wikidata identity
+    if (venue.countryCode) tags.push(['i', `iso3166:${venue.countryCode}`]);
+    if (venue.wikidata) tags.push(['i', `wikidata:${venue.wikidata}`]);
+
+    // Shorter geohash prefixes, for area queries; the full one is the primary `g` tag
+    if (venue.level !== 'country') tags.push(...geohashTags(venue.geohash).slice(1));
+
     // NIP-52: Human-readable location name
     if (venue.name) {
       tags.push(['location', venue.name]);
@@ -287,6 +335,8 @@ export const venuePlugin: NostrUIPlugin = {
    */
   beforePublish: async (value, field) => {
     if (!field.metadata?.wikiEntity || !value || typeof value !== 'object') return [];
+    // Only an exact place gets a venue wiki page
+    if ((value as VenueData).level && (value as VenueData).level !== 'place') return [];
     const { syncVenueEntity } = await import('./wikiSync');
     return syncVenueEntity(value as VenueData, field);
   },
@@ -305,9 +355,11 @@ export const venuePlugin: NostrUIPlugin = {
       }
     }
 
-    if (!geohash) return null;
+    // A country has no `g` tag: its identity is the iso3166/osm `i` tags
+    const hasIds = tags.some((t) => t[0] === 'i' && /^(osm|iso3166):/.test(t[1] ?? ''));
+    if (!geohash && !hasIds) return null;
 
-    const { lat, lon } = decodeGeohash(geohash);
+    const { lat, lon } = geohash ? decodeGeohash(geohash) : { lat: 0, lon: 0 };
     const venue: VenueData = { geohash, lat, lon };
 
     // Extract NIP-73 identifiers
@@ -323,6 +375,10 @@ export const venuePlugin: NostrUIPlugin = {
         }
       } else if (tag[1].startsWith('gplace:')) {
         venue.googlePlaceId = tag[1].slice('gplace:'.length);
+      } else if (tag[1].startsWith('iso3166:')) {
+        venue.countryCode = tag[1].slice('iso3166:'.length);
+      } else if (tag[1].startsWith('wikidata:')) {
+        venue.wikidata = tag[1].slice('wikidata:'.length);
       }
     }
 
@@ -337,6 +393,7 @@ export const venuePlugin: NostrUIPlugin = {
       tags.find((t) => t[0] === 'a' && t[1]?.startsWith('30818:'))?.[1]?.split(':') ?? [];
     if (pubkey && dTag.length > 0) venue.wikiEntity = { pubkey, dTag: dTag.join(':') };
 
+    venue.level = publishedLevel(venue);
     return venue;
   },
 };

@@ -27,7 +27,9 @@ import {
 
 // Ensure the geo input web component is registered
 import '@nostr-post/plugin-geo/web';
+import { type VenueLevel, resultLevel, venueLevels } from '../levels';
 import { venueInputStyles } from './inputStyles';
+import { DEFAULT_VENUE_INPUT_MESSAGES, type VenueInputMessages } from './venueMessages';
 
 @customElement('np-venue-input')
 export class NpVenueInput extends LitElement {
@@ -38,6 +40,18 @@ export class NpVenueInput extends LitElement {
 
   @property({ type: Object })
   field: PostField | null = null;
+
+  /** Overrides of the default English text */
+  @property({ attribute: false })
+  messages?: Partial<VenueInputMessages>;
+
+  private get m(): VenueInputMessages {
+    return { ...DEFAULT_VENUE_INPUT_MESSAGES, ...this.messages };
+  }
+
+  private get levels(): VenueLevel[] {
+    return venueLevels(this.config.levels);
+  }
 
   @state() private searchQuery = '';
   @state() private searchResults: NominatimResult[] = [];
@@ -140,7 +154,7 @@ export class NpVenueInput extends LitElement {
     this.isSearching = true;
     this.showResults = true;
     try {
-      this.searchResults = await searchNominatim(this.searchQuery);
+      this.searchResults = await searchNominatim(this.searchQuery, this.levels);
     } catch (err) {
       console.error('Nominatim search failed:', err);
       this.searchResults = [];
@@ -292,7 +306,7 @@ export class NpVenueInput extends LitElement {
         <input
           class="search-input"
           type="text"
-          placeholder="Search for a venue (OSM)…"
+          placeholder=${this.m.searchPlaceholder(this.levels)}
           .value=${this.searchQuery}
           @input=${this.onSearchInput}
           @keydown=${this.onSearchKeydown}
@@ -305,11 +319,11 @@ export class NpVenueInput extends LitElement {
           @click=${() => this.doSearch()}
           ?disabled=${this.isSearching}
         >
-          ${this.isSearching ? 'Searching…' : '🔍 Search'}
+          ${this.isSearching ? this.m.searching : this.m.search}
         </button>
       </div>
 
-      ${this.isSearching ? html`<div class="loading">Searching…</div>` : nothing}
+      ${this.isSearching ? html`<div class="loading">${this.m.searching}</div>` : nothing}
       ${
         this.showResults && this.searchResults.length > 0
           ? html`
@@ -319,7 +333,8 @@ export class NpVenueInput extends LitElement {
                   <div class="result-item" @click=${() => this.selectResult(r)}>
                     ${r.display_name}
                     <div class="result-type">
-                      ${r.class}/${r.type} · ${r.osm_type}:${r.osm_id}
+                      ${this.levels.length > 1 ? `${this.m.levelLabel[resultLevel(r)]} · ` : ''}${r.class}/${r.type} ·
+                      ${r.osm_type}:${r.osm_id}
                     </div>
                   </div>
                 `

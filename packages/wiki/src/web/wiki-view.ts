@@ -276,7 +276,7 @@ export class NostrWikiView extends LitElement {
               const plugin = pluginRegistry.get(f.uiPlugin);
               const rendered = plugin?.renderView
                 ? plugin.renderView(value, f)
-                : displayValue(f, value);
+                : plugin?.formatValue?.(value) || displayValue(f, value);
               return html`
                 <div class="wiki-field">
                   <dt title=${ifDefined(fieldDescription(f))}>${label}</dt>

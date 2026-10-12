@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { osm, venue, venueManifest } from './fixtures.test-helpers';
+import { geohashTags } from './levels';
 import {
   entitySyncAction,
-  geohashTags,
   mergeOsmFields,
   slugBody,
   syncedOsmVersion,

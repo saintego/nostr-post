@@ -19,6 +19,7 @@ export {
   type NominatimResult,
 } from './core';
 
+export { geohashTags, resultLevel, type VenueLevel, venueLevels } from './levels';
 export { fetchOsmElement, type OsmElement } from './osm';
 export {
   OSM_COPYRIGHT_URL,

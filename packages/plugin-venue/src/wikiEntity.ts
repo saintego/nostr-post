@@ -16,6 +16,7 @@ import {
   normalizeDTag,
 } from '@nostr-post/wiki';
 import type { VenueData } from './core';
+import { geohashTags } from './levels';
 import type { OsmElement } from './osm';
 
 export const OSM_COPYRIGHT_URL = 'https://www.openstreetmap.org/copyright';
@@ -103,16 +104,12 @@ export function venueIdentifiers(venue: VenueData): string[] {
   return ids;
 }
 
-/** `g` tags for every geohash prefix (≥ 2 chars), for area search on relays */
-export const geohashTags = (geohash: string): Tag[] =>
-  Array.from({ length: Math.max(geohash.length - 1, 0) }, (_, i) => [
-    'g',
-    geohash.slice(0, geohash.length - i),
-  ]);
-
 /** Hub tags for a venue entity: its identifiers, area, address and OSM attribution */
 export function venueEntityTags(venue: VenueData, osm: OsmElement | null): Tag[] {
   const tags: Tag[] = venueIdentifiers(venue).map((id): Tag => ['i', id]);
+  // Not identifiers of this venue (not used to find its page), but queryable: its country, Wikidata item
+  if (venue.countryCode) tags.push(['i', `iso3166:${venue.countryCode}`]);
+  if (venue.wikidata) tags.push(['i', `wikidata:${venue.wikidata}`]);
   tags.push(...geohashTags(venue.geohash));
   if (venue.name) tags.push(['location', venue.name]);
   if (osm) tags.push(osmSourceTag(osm));

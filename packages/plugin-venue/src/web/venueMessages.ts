@@ -1,3 +1,5 @@
+import type { VenueLevel } from '../levels';
+
 /**
  * User-facing text of the venue field's wiki-page status. Apps can override it
  * with the element's `messages` property (e.g. from a translation library).
@@ -46,4 +48,24 @@ export const DEFAULT_VENUE_VIEW_MESSAGES: VenueViewMessages = {
   viewOnOsm: 'View on OSM ↗',
   googleMaps: 'Google Maps ↗',
   wikiPage: 'Venue wiki page',
+};
+
+/** User-facing text of <np-venue-input> (overridable via its `messages` property) */
+export interface VenueInputMessages {
+  /** Search box placeholder for the levels the field offers */
+  searchPlaceholder: (levels: VenueLevel[]) => string;
+  search: string;
+  searching: string;
+  /** Badge on a search result */
+  levelLabel: Record<VenueLevel, string>;
+}
+
+export const DEFAULT_VENUE_INPUT_MESSAGES: VenueInputMessages = {
+  searchPlaceholder: (levels) =>
+    levels.length === 1 && levels[0] === 'place'
+      ? 'Search for a venue (OSM)…'
+      : `Search for a ${levels.map((l) => DEFAULT_VENUE_INPUT_MESSAGES.levelLabel[l]).join(', ')} (OSM)…`,
+  search: '🔍 Search',
+  searching: 'Searching…',
+  levelLabel: { country: 'country', city: 'city', place: 'place' },
 };

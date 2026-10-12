@@ -114,7 +114,12 @@ export class NpVenueView extends LitElement {
           : nothing
       }
 
-      <np-geo-view .value=${v.geohash} .field=${this.field}></np-geo-view>
+      ${
+        // A country has no published area to show
+        v.geohash
+          ? html`<np-geo-view .value=${v.geohash} .field=${this.field}></np-geo-view>`
+          : nothing
+      }
 
       ${this.renderVenueLinks(v)}
       ${this.renderWikiPage(v)}

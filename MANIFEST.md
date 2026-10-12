@@ -140,7 +140,7 @@ styles, mapped to `t` for posts and wiki entities; the beer entity extends it an
 | `reference`          | `string` | `urlDedupeMode` (`'normalized'` \| `'exact'` \| `'origin-path'`)                                                                                                                                                               |
 | `identifier`         | `string` | `prefix` (NIP-73 namespace, e.g. `isbn`)                                                                                                                                                                                       |
 | `geo`                | `geo`    | `precision` (geohash length, default 6), `defaultZoom`, `allowSearch`                                                                                                                                                          |
-| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub)                                                                                  |
+| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub)                                                                                  |
 | `list`               | `string` | `relays`, `allowCreate`, `allowDelete`, `defaultList`, `multiple` (default `true`)                                                                                                                                             |
 | `wiki-entity-picker` | `ref`    | `entityManifest`: the entity type ([reference](#referencing-entity-manifests)), which limits search to it and enables "+ Create"; `relays`; `minSearchLength` (2); `emitExtraTags` (`false`: don't copy the entity's `i` tags); `multiple` (pick several; the value is a list) |
 
@@ -232,6 +232,23 @@ An entity manifest can `extends` others like any manifest; parents are looked up
 first, then on relays.
 
 Without a manifest, `<nostr-wiki-view>` uses `STANDARD_WIKI_MANIFEST`, which shows the article text.
+
+### Location levels
+
+A `venue` field with `metadata.levels` can stand for a country, a city or an exact place, e.g. a
+brewery's location: its brewery site, or only its city or country when it has no place of its own.
+Search offers results of those levels (Nominatim's `addresstype`), and each gets:
+
+| Level   | Tags                                                                                     |
+| ------- | ---------------------------------------------------------------------------------------- |
+| place   | `i` `osm:node:…`, `g` geohash and its prefixes, and the venue hub (below)                |
+| city    | `i` `osm:relation:…`, `g` geohash of 4 characters and its prefixes                       |
+| country | `i` `osm:relation:…`, no `g`                                                             |
+| all     | `i` `iso3166:CZ` (NIP-73), `i` `wikidata:Q…` when OSM has one, `location` (the name)    |
+
+So "everything in Czechia" is one `#i: ["iso3166:CZ"]` query, whatever level was picked. Cities
+and countries get no wiki pages: their identity is ISO 3166, OSM and Wikidata, and disputed areas
+follow OpenStreetMap.
 
 ### Venue hub
 
