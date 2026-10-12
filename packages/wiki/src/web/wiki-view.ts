@@ -8,6 +8,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { entityLinks } from '../externalIds';
 import { fetchEntityVersions } from '../fetch';
+import { templateText } from '../identity';
 import { manifestLinks } from '../links';
 import {
   DEFAULT_WIKI_RELAYS,
@@ -24,11 +25,13 @@ import { viewStyles } from './wiki-view-styles';
 /** Resolving the newest version needs every relay's versions, not the first answer */
 const ALL_RELAYS = { waitForAll: true, relayTimeoutMs: 5000 };
 
-/** A field value as text: lists joined, enum values as their option's label */
+/** A field value as text: lists joined, enum values as their option's label, references as names */
 const displayValue = (f: PostField, value: unknown): string => {
   const items = Array.isArray(value) ? value : [value];
   return items
-    .map((v) => (f.type === 'enum' && typeof v === 'string' ? fieldOptionLabel(f, v) : String(v)))
+    .map((v) =>
+      f.type === 'enum' && typeof v === 'string' ? fieldOptionLabel(f, v) : templateText(v)
+    )
     .join(', ');
 };
 

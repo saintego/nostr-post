@@ -268,8 +268,11 @@ export const BEER_REVIEW_MANIFEST: NostrPostManifest = {
 
 ---
 
-The picker's `metadata` keys (`entityManifest`, `relays`, `minSearchLength`, `emitExtraTags`) are
-listed in [MANIFEST.md](../../MANIFEST.md#plugin-metadata). Without `entityManifest` the picker searches all wiki
+The picker's `metadata` keys (`entityManifest`, `relays`, `minSearchLength`, `emitExtraTags`,
+`multiple`) are listed in [MANIFEST.md](../../MANIFEST.md#plugin-metadata); fields that reference entities in
+roles (e.g. a beer's breweries and where it was brewed) in
+[References with a role](../../MANIFEST.md#references-with-a-role). `pickedEntities(value)` lists the
+picked entities of a single or `multiple` field. Without `entityManifest` the picker searches all wiki
 articles and can't create entities.
 
 ---

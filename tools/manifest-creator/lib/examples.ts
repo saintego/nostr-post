@@ -211,15 +211,38 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         metadata: { label: 'Beer Name', placeholder: 'e.g. Pliny the Elder' },
       },
       {
-        id: 'brewery',
+        id: 'breweries',
         type: 'ref',
         uiPlugin: 'wiki-entity-picker',
-        mapTo: { kind: 30818, target: 'tag', tagName: 'a' },
+        // Plain `a` tags (found by `#a` queries) plus an infobox row of wikilinks naming the role
+        mapTo: [
+          { kind: 30818, target: 'tag', tagName: 'a' },
+          { kind: 30818, target: 'table' },
+        ],
         metadata: {
-          label: 'Brewery',
-          description: 'The brewery that makes it: pick its wiki page or create one',
+          label: 'Breweries',
+          description:
+            'The breweries whose beer it is: one, or several for a collaboration. Pick their wiki pages or create them',
           entityManifest: 'brewery-entity-v1',
           emitExtraTags: false,
+          multiple: true,
+        },
+      },
+      {
+        id: 'brewed_at',
+        type: 'ref',
+        uiPlugin: 'wiki-entity-picker',
+        mapTo: [
+          { kind: 30818, target: 'tag', tagName: 'a' },
+          { kind: 30818, target: 'table' },
+        ],
+        metadata: {
+          label: 'Brewed at',
+          description:
+            "Where it was brewed, when that isn't one of its breweries (contract brewing, flying breweries)",
+          entityManifest: 'brewery-entity-v1',
+          emitExtraTags: false,
+          multiple: true,
         },
       },
       {

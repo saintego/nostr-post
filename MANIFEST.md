@@ -142,7 +142,7 @@ styles, mapped to `t` for posts and wiki entities; the beer entity extends it an
 | `geo`                | `geo`    | `precision` (geohash length, default 6), `defaultZoom`, `allowSearch`                                                                                                                                                          |
 | `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub)                                                                                  |
 | `list`               | `string` | `relays`, `allowCreate`, `allowDelete`, `defaultList`, `multiple` (default `true`)                                                                                                                                             |
-| `wiki-entity-picker` | `ref`    | `entityManifest`: the entity type ([reference](#referencing-entity-manifests)), which limits search to it and enables "+ Create"; `relays`; `minSearchLength` (2); `emitExtraTags` (`false`: don't copy the entity's `i` tags) |
+| `wiki-entity-picker` | `ref`    | `entityManifest`: the entity type ([reference](#referencing-entity-manifests)), which limits search to it and enables "+ Create"; `relays`; `minSearchLength` (2); `emitExtraTags` (`false`: don't copy the entity's `i` tags); `multiple` (pick several; the value is a list) |
 
 Deprecated: `hashtag.autoExtractFrom`, `media.urlAutoExtractFrom` and `reference.enrichFrom`
 name the source field for manifests without `attachTo`.
@@ -189,6 +189,35 @@ shown. They aren't stored on the event, so a site changing its URLs needs only a
 
 A link is left out when a placeholder has no value. The wiki view shows these next to the links
 from `i` tags (OpenStreetMap, Google Maps) and `r` URL tags.
+
+### References with a role
+
+An entity can point to other entities in roles, e.g. a beer's breweries and the brewery it was
+brewed at. Give each role its own `ref` field (`wiki-entity-picker`, usually `multiple`) mapped to
+an `a` tag and to the infobox:
+
+```typescript
+{
+  id: "brewed_at",
+  type: "ref",
+  uiPlugin: "wiki-entity-picker",
+  mapTo: [
+    { kind: 30818, target: "tag", tagName: "a" },
+    { kind: 30818, target: "table" },
+  ],
+  metadata: { label: "Brewed at", entityManifest: "brewery-entity-v1", multiple: true },
+}
+```
+
+- Every referenced entity is a plain `a` tag (`30818:<pubkey>:<d-tag>`), so `#a` queries find all
+  entities that reference it, in any role.
+- The infobox row lists the entities as NIP-54 wikilinks, `[Pivovar Z][pivovar-z-brewery]`, which
+  any wiki client shows as links. Reading takes each role's entities from its row and their
+  versions' pubkeys from the `a` tags.
+- A `ref` field mapped only to an `a` tag gets the `a` tags no row claims. An entity written
+  before its manifest had roles (plain `a` tags, no rows) reads into the first role field.
+- One entity can have several roles (a collaboration brewed at one of its breweries); its `a` tag
+  is written once.
 
 ### Referencing entity manifests
 

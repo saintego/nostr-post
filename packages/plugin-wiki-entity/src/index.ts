@@ -15,6 +15,7 @@ export {
   getEntityManifest,
   matchesEntityQuery,
   matchesEntityType,
+  pickedEntities,
   registerEntityManifest,
   wikiEntityPickerPlugin,
   type WikiEntityData,

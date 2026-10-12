@@ -50,7 +50,18 @@ export interface WikiEntityPickerConfig {
    * Defaults to `true` (extra tags are emitted).
    */
   emitExtraTags?: boolean;
+  /** Pick several entities (the value is an array), e.g. the breweries of a collaboration beer */
+  multiple?: boolean;
 }
+
+const isMultiple = (field: PostField): boolean =>
+  (field.metadata as WikiEntityPickerConfig | undefined)?.multiple === true;
+
+/** The picked entities as a list, whether the field holds one or several */
+export const pickedEntities = (value: unknown): WikiEntityData[] =>
+  (Array.isArray(value) ? value : [value]).filter(
+    (v): v is WikiEntityData => !!v && typeof v === 'object' && !Array.isArray(v)
+  );
 
 // The registry lives in @nostr-post/wiki so other plugins (e.g. venue) share it
 export { getEntityManifest, registerEntityManifest } from '@nostr-post/wiki';
@@ -137,12 +148,32 @@ function parseWikiAddress(raw: string): WikiEntityData | undefined {
   return { dTag, resolvedPubkey, externalIds: [] };
 }
 
+/** Why a picked entity is incomplete, as a validation failure */
+function entityProblem(
+  entity: Record<string, unknown>,
+  fieldId: string
+): Result<void, ValidationError> | undefined {
+  const fail = (message: string): Result<void, ValidationError> => ({
+    success: false,
+    error: { field: fieldId, message, code: 'INVALID_VALUE' },
+  });
+  if (typeof entity.dTag !== 'string' || entity.dTag.length === 0) {
+    return fail('Selected entity is missing a d-tag');
+  }
+  if (typeof entity.resolvedPubkey !== 'string' || entity.resolvedPubkey.length === 0) {
+    return fail('Selected entity is missing a resolved pubkey');
+  }
+  return undefined;
+}
+
 export const wikiEntityPickerPlugin: NostrUIPlugin = {
   id: 'wiki-entity-picker',
   type: 'ref',
 
   validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
-    if (value === undefined || value === null) {
+    const empty =
+      value === undefined || value === null || (Array.isArray(value) && value.length === 0);
+    if (empty) {
       if (field.required) {
         return {
           success: false,
@@ -156,7 +187,7 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
       return { success: true, data: undefined };
     }
 
-    if (typeof value !== 'object' || Array.isArray(value)) {
+    if (typeof value !== 'object' || (Array.isArray(value) && !isMultiple(field))) {
       return {
         success: false,
         error: {
@@ -167,29 +198,10 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
       };
     }
 
-    const entity = value as Record<string, unknown>;
-    if (typeof entity.dTag !== 'string' || entity.dTag.length === 0) {
-      return {
-        success: false,
-        error: {
-          field: field.id,
-          message: 'Selected entity is missing a d-tag',
-          code: 'INVALID_VALUE',
-        },
-      };
+    for (const entity of (Array.isArray(value) ? value : [value]) as Record<string, unknown>[]) {
+      const problem = entityProblem(entity, field.id);
+      if (problem) return problem;
     }
-
-    if (typeof entity.resolvedPubkey !== 'string' || entity.resolvedPubkey.length === 0) {
-      return {
-        success: false,
-        error: {
-          field: field.id,
-          message: 'Selected entity is missing a resolved pubkey',
-          code: 'INVALID_VALUE',
-        },
-      };
-    }
-
     return { success: true, data: undefined };
   },
 
@@ -220,13 +232,19 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
    * Unlike `deserializeValue` (single tag value only), this also restores the
    * `i` tags copied from the entity, so re-publishing an edit keeps them.
    */
-  resolveFromTags: (tags: string[][], field: PostField): WikiEntityData | undefined => {
+  resolveFromTags: (
+    tags: string[][],
+    field: PostField
+  ): WikiEntityData | WikiEntityData[] | undefined => {
     const targets = Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo];
     const tagName = targets.find((t) => t.target === 'tag' && t.tagName)?.tagName ?? 'a';
-    const address = tags.find((t) => t[0] === tagName && t[1]?.startsWith('30818:'))?.[1];
-    if (!address) return undefined;
-    const entity = parseWikiAddress(address);
-    if (!entity) return undefined;
+    const entities = tags
+      .filter((t) => t[0] === tagName && t[1]?.startsWith('30818:'))
+      .map((t) => parseWikiAddress(t[1] as string))
+      .filter((e): e is WikiEntityData => !!e);
+    if (entities.length === 0) return undefined;
+    if (isMultiple(field)) return entities;
+    const [entity] = entities as [WikiEntityData];
     const config = field.metadata as WikiEntityPickerConfig | undefined;
     if (config?.emitExtraTags !== false) {
       entity.externalIds = tags.filter((t) => t[0] === 'i' && t[1]).map((t) => t[1]);
@@ -244,12 +262,10 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
   extraTags: (value: unknown, field: PostField): [string, ...string[]][] => {
     const config = field.metadata as WikiEntityPickerConfig | undefined;
     if (config?.emitExtraTags === false) return [];
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return [];
-    }
-    const entity = value as WikiEntityData;
-    const ids = Array.isArray(entity.externalIds) ? entity.externalIds : [];
-    return ids.map((id): [string, string] => ['i', id]);
+    const ids = pickedEntities(value).flatMap((e) =>
+      Array.isArray(e.externalIds) ? e.externalIds : []
+    );
+    return [...new Set(ids)].map((id): [string, string] => ['i', id]);
   },
 };
 

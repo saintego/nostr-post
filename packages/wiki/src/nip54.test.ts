@@ -206,6 +206,109 @@ describe('enum fields', () => {
   });
 });
 
+describe('references with a role', () => {
+  const ref = (dTag: string, pubkey = 'pk1') => ({
+    dTag,
+    resolvedPubkey: pubkey,
+    externalIds: [],
+    displayName: `${dTag.replace(/-brewery$/, '').replace(/-/g, ' ')} (Brewery)`,
+  });
+  const refField = (id: string, label: string) => ({
+    id,
+    type: 'ref' as const,
+    uiPlugin: 'wiki-entity-picker',
+    mapTo: [
+      { kind: WIKI_KIND, target: 'tag' as const, tagName: 'a' },
+      { kind: WIKI_KIND, target: 'table' as const },
+    ],
+    metadata: { label, multiple: true },
+  });
+  const manifest: NostrPostManifest = {
+    id: 'beer',
+    version: '1.0.0',
+    fields: [
+      {
+        id: 'title',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: WIKI_KIND, target: 'tag', tagName: 'title' },
+      },
+      refField('breweries', 'Breweries'),
+      refField('brewed_at', 'Brewed at'),
+    ],
+  };
+  const asEvent = (e: ReturnType<typeof manifestToWikiEvent>) => ({
+    ...e,
+    id: 'e',
+    pubkey: 'author',
+    sig: 's',
+  });
+
+  it('writes plain a tags and wikilink rows, and reads each role back', () => {
+    const event = manifestToWikiEvent(manifest, {
+      title: 'Collab',
+      breweries: [ref('pivovar-x-brewery'), ref('brewery-y-brewery', 'pk2')],
+      brewed_at: [ref('pivovar-x-brewery')],
+    });
+    expect(event.tags.filter((t) => t[0] === 'a')).toEqual([
+      ['a', '30818:pk1:pivovar-x-brewery'],
+      ['a', '30818:pk2:brewery-y-brewery'],
+    ]);
+    expect(event.content).toContain(
+      '[pivovar x][pivovar-x-brewery], [brewery y][brewery-y-brewery]'
+    );
+    const data = wikiEventToManifestData(asEvent(event), manifest);
+    expect((data.breweries as { dTag: string }[]).map((r) => r.dTag)).toEqual([
+      'pivovar-x-brewery',
+      'brewery-y-brewery',
+    ]);
+    expect(data.brewed_at).toEqual([
+      {
+        dTag: 'pivovar-x-brewery',
+        resolvedPubkey: 'pk1',
+        externalIds: [],
+        displayName: 'pivovar x',
+      },
+    ]);
+  });
+
+  it('reads an entity written before roles (plain a tags) into the first role field', () => {
+    const old = {
+      ...manifestToWikiEvent(manifest, { title: 'Old' }),
+      tags: [
+        ['d', 'old-beer'],
+        ['a', '30818:pk1:brand-brewery'],
+      ],
+    };
+    const data = wikiEventToManifestData(asEvent(old), manifest);
+    expect(data.breweries).toBe('30818:pk1:brand-brewery');
+    expect(data.brewed_at).toBeUndefined();
+  });
+
+  it('gives a field without a role the a tags no role row claims (older entities)', () => {
+    const legacy: NostrPostManifest = {
+      ...manifest,
+      fields: [
+        ...manifest.fields.filter((f) => f.id !== 'breweries'),
+        {
+          id: 'brewery',
+          type: 'ref',
+          uiPlugin: 'ref-without-plugin',
+          mapTo: { kind: WIKI_KIND, target: 'tag', tagName: 'a' },
+        },
+      ],
+    };
+    const event = manifestToWikiEvent(legacy, {
+      title: 'Contract',
+      brewed_at: [ref('pivovar-z-brewery')],
+      brewery: ref('brand-brewery'),
+    });
+    const data = wikiEventToManifestData(asEvent(event), legacy);
+    expect(data.brewery).toBe('30818:pk1:brand-brewery');
+    expect((data.brewed_at as { dTag: string }[])[0]?.dTag).toBe('pivovar-z-brewery');
+  });
+});
+
 describe('wikiEventToManifestData', () => {
   const makeWikiEvent = (partial: Partial<ReturnType<typeof manifestToWikiEvent>>): WikiEvent => {
     const base = manifestToWikiEvent(beerManifest, beerFormData);

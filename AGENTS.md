@@ -92,6 +92,15 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
   extend the existing one.
 - Docs describe what exists. Planned work goes to ROADMAP.md.
 
+## Look ahead with ROADMAP.md
+
+- Before starting a change, read the ROADMAP.md items it touches or that build on the same code.
+- If an open item would need a different data model, API or file layout than the simplest version
+  of your change, say so before building: offer the future-ready version (what it prepares, what it
+  costs now) or the simple one, and let the user choose. Don't silently build either.
+- When the future-ready version costs little (a field name, a parameter, a module boundary), prepare
+  it and mention which item it prepares.
+
 ## Keep ROADMAP.md in sync
 
 ROADMAP.md is the single list of open work. Other docs (DEVELOPMENT_GUIDE.md, INTEGRATION.md,

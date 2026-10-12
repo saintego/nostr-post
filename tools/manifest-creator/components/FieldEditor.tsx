@@ -5,6 +5,7 @@ import type { NostrTarget, PostField } from '@nostr-post/core/types';
 import { AdditionalMappings } from './AdditionalMappings';
 import { EntityManifestInput, WIKI_MANIFEST_KEYS } from './EntityManifestInput';
 import { OptionsEditor } from './OptionsEditor';
+import { PickerSettings } from './PickerSettings';
 import { styles } from './fieldEditorStyles';
 import { formatKindLabel } from './kindLabels';
 
@@ -337,6 +338,8 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
             onChange={(v) => updateMetadata(wikiManifest.key, v || undefined)}
           />
         )}
+
+        <PickerSettings field={field} onMetadataChange={updateMetadata} />
 
         <div style={styles.formGroup}>
           <label style={styles.label} htmlFor="field-default">

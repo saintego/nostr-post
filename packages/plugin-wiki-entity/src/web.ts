@@ -33,6 +33,7 @@ import {
   entityTypeAffixes,
   entityTypeDTag,
   getEntityManifest,
+  pickedEntities,
   wikiEntityPickerPlugin,
 } from './core';
 import { type EntitySearchResult, searchEntities } from './search';
@@ -51,8 +52,9 @@ const DIALOG_EVENTS = [
 @customElement('wiki-entity-picker')
 export class WikiEntityPicker extends LitElement {
   static override styles = pickerStyles;
+  /** One entity, or a list with `metadata.multiple` */
   @property({ attribute: false })
-  value?: WikiEntityData;
+  value?: WikiEntityData | WikiEntityData[];
 
   @property({ attribute: false })
   field?: { id: string; required?: boolean; metadata?: Record<string, unknown> };
@@ -72,6 +74,17 @@ export class WikiEntityPicker extends LitElement {
 
   private get _config(): WikiEntityPickerConfig {
     return (this.field?.metadata as WikiEntityPickerConfig | undefined) ?? {};
+  }
+
+  private get _picked(): WikiEntityData[] {
+    return pickedEntities(this.value);
+  }
+
+  private _emit(value: WikiEntityData | WikiEntityData[] | undefined): void {
+    this.value = value;
+    this.dispatchEvent(
+      new CustomEvent('np-value-changed', { detail: { value }, bubbles: true, composed: true })
+    );
   }
 
   private get _minLen(): number {
@@ -154,28 +167,35 @@ export class WikiEntityPicker extends LitElement {
       displayName: titleTag ?? dTag,
     };
 
-    this.value = entityData;
     this._results = [];
     this._query = '';
-
-    this.dispatchEvent(
-      new CustomEvent('np-value-changed', {
-        detail: { value: entityData },
-        bubbles: true,
-        composed: true,
-      })
-    );
+    if (!this._config.multiple) {
+      this._emit(entityData);
+      return;
+    }
+    const others = this._picked.filter((e) => e.dTag !== entityData.dTag);
+    this._emit([...others, entityData]);
   }
 
-  private _clear(): void {
-    this.value = undefined;
-    this.dispatchEvent(
-      new CustomEvent('np-value-changed', {
-        detail: { value: undefined },
-        bubbles: true,
-        composed: true,
-      })
-    );
+  /** Removes one picked entity (a list) or the selection */
+  private _remove(dTag: string): void {
+    if (!this._config.multiple) {
+      this._emit(undefined);
+      return;
+    }
+    const rest = this._picked.filter((e) => e.dTag !== dTag);
+    this._emit(rest.length > 0 ? rest : undefined);
+  }
+
+  private _renderPicked(entity: WikiEntityData) {
+    return html`
+      <div class="selected">
+        <span class="selected-name">${entity.displayName ?? entity.dTag}</span>
+        <span class="selected-slug">${entity.dTag}</span>
+        ${this._previewButton(entity.dTag)}
+        <button type="button" class="clear-btn" @click=${() => this._remove(entity.dTag)} aria-label="Remove">×</button>
+      </div>
+    `;
   }
 
   /**
@@ -364,16 +384,10 @@ export class WikiEntityPicker extends LitElement {
   }
 
   override render() {
-    if (this.value) {
-      return html`
-        <div class="selected">
-          <span class="selected-name">${this.value.displayName ?? this.value.dTag}</span>
-          <span class="selected-slug">${this.value.dTag}</span>
-          ${this._previewButton(this.value.dTag)}
-          <button type="button" class="clear-btn" @click=${this._clear} aria-label="Clear selection">×</button>
-        </div>
-        ${this._renderPreview()}
-      `;
+    const picked = this._picked;
+    if (picked.length > 0 && !this._config.multiple) {
+      return html`<div class="picked">${this._renderPicked(picked[0] as WikiEntityData)}</div>
+        ${this._renderPreview()}`;
     }
 
     const showDropdown =
@@ -383,6 +397,7 @@ export class WikiEntityPicker extends LitElement {
 
     return html`
       <div class="picker">
+        ${picked.map((entity) => this._renderPicked(entity))}
         <input
           class="search-input"
           type="search"

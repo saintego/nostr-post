@@ -10,6 +10,18 @@ import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { interpolateTemplate } from './identity';
 import { normalizeDTag } from './normalizeDTag';
 import type { WikiEvent } from './resolver';
+import {
+  type WikiLink,
+  claimedDTags,
+  entityRefs,
+  isRefTagField,
+  isRoleField,
+  linkTarget,
+  refsFromLinks,
+  roleFieldValue,
+  roleRowText,
+  withoutClaimed,
+} from './roleRefs';
 import type { WikiManifest } from './types';
 
 export const WIKI_KIND = 30818;
@@ -54,6 +66,18 @@ function extractNodeText(node: AstNode): string {
   return children.map(extractNodeText).join('');
 }
 
+/** Wikilinks in a node: Djot reference links (`[text][target]`, `[target][]`) */
+function extractLinks(node: AstNode): WikiLink[] {
+  const reference = (node as AstNode & { reference?: unknown }).reference;
+  if (node.tag === 'link' && typeof reference === 'string') {
+    return [{ target: linkTarget(reference), text: extractNodeText(node).trim() }];
+  }
+  const children = node.children as AstNode[] | undefined;
+  return Array.isArray(children) ? children.flatMap(extractLinks) : [];
+}
+
+type TableRow = [key: string, value: string, links: WikiLink[]];
+
 /** A table row whose cells only hold dashes (a separator Djot didn't recognize) */
 function isDashRow(row: AstNode): boolean {
   const cells = (row as AstNode & { children?: AstNode[] }).children ?? [];
@@ -73,7 +97,7 @@ function isDashRow(row: AstNode): boolean {
   );
 }
 
-function extractTableFromAst(ast: AstDoc): { rows: Array<[string, string]>; tableIndex: number } {
+function extractTableFromAst(ast: AstDoc): { rows: TableRow[]; tableIndex: number } {
   const tableIndex = ast.children.findIndex((n) => n.tag === 'table');
   if (tableIndex === -1) return { rows: [], tableIndex: -1 };
   const table = ast.children[tableIndex] as AstNode & { children: AstNode[] };
@@ -85,12 +109,12 @@ function extractTableFromAst(ast: AstDoc): { rows: Array<[string, string]>; tabl
   // separator parses as a row of dashes; skip it and the header row before it.
   const separator = bodyRows.findIndex(isDashRow);
   const dataRows = separator === 1 ? bodyRows.slice(2) : bodyRows.filter((r) => !isDashRow(r));
-  const rows: Array<[string, string]> = [];
+  const rows: TableRow[] = [];
   for (const row of dataRows) {
     const cells = (row as AstNode & { children: AstNode[] }).children;
     const key = extractNodeText(cells[0]).trim();
     const value = extractNodeText(cells[1]).trim();
-    if (key) rows.push([key, value]);
+    if (key) rows.push([key, value, extractLinks(cells[1])]);
   }
   return { rows, tableIndex };
 }
@@ -199,8 +223,12 @@ function addTagTarget(
   // The title template is the sole source of the title tag when present.
   if (tagName === 'title' && parts.generatedTitle !== undefined) return;
   const plugin = pluginRegistry.get(field.uiPlugin);
-  const serialize = (v: unknown): string =>
-    plugin?.serializeValue ? plugin.serializeValue(v, field) : serializeForTable(v);
+  const serialize = (v: unknown): string => {
+    if (plugin?.serializeValue) return plugin.serializeValue(v, field);
+    // A referenced entity without its plugin loaded: its address
+    const [ref] = field.type === 'ref' ? entityRefs(v) : [];
+    return ref ? buildWikiATag(ref.resolvedPubkey, ref.dTag) : serializeForTable(v);
+  };
 
   const items = Array.isArray(value) ? value.filter(isPresent) : [value];
   for (const item of items) {
@@ -218,6 +246,12 @@ function addTagTarget(
  * Keyed by field.id (stable) so round-tripping survives label renames.
  */
 function addTableTarget(parts: WikiEventParts, field: PostField, value: unknown): void {
+  // References: one row of wikilinks (see roleRefs)
+  if (field.type === 'ref') {
+    const row = roleRowText(value);
+    if (row) parts.tableRows.push([field.id, row]);
+    return;
+  }
   const items = Array.isArray(value) ? value.filter(isPresent) : [value];
   // Enum rows show the option's label; reading matches it back to the value.
   const text = (item: unknown): string =>
@@ -245,6 +279,10 @@ function addField(parts: WikiEventParts, field: PostField, value: unknown): void
   if (plugin?.extraTags) parts.tags.push(...plugin.extraTags(value, field));
 }
 
+/** Tags without exact duplicates, e.g. one brewery referenced in two roles */
+const uniqueTags = (tags: Tag[]): Tag[] =>
+  tags.filter((t, i) => tags.findIndex((o) => o.join('\u0000') === t.join('\u0000')) === i);
+
 export function manifestToWikiEvent(
   manifest: NostrPostManifest | WikiManifest,
   formData: Record<string, unknown>,
@@ -265,7 +303,7 @@ export function manifestToWikiEvent(
   return {
     kind: WIKI_KIND,
     created_at: config.createdAt ?? Math.floor(Date.now() / 1000),
-    tags: [['d', dTag], ...parts.tags.filter((t) => t[0] !== 'd')],
+    tags: [['d', dTag], ...uniqueTags(parts.tags.filter((t) => t[0] !== 'd'))],
     content: [tablePart, prosePart].filter(Boolean).join('\n\n'),
     pubkey: config.pubkey ?? '',
   };
@@ -318,6 +356,7 @@ function parseWikiContent(
   tableKeys: Set<string>
 ): {
   tableByKey: Map<string, string[]>;
+  linksByKey: Map<string, WikiLink[]>;
   prose: string;
 } {
   const ast = parse(content) as unknown as AstDoc;
@@ -326,20 +365,22 @@ function parseWikiContent(
     extracted.tableIndex === 0 && extracted.rows.some(([key]) => tableKeys.has(key));
   // Without an infobox the content is all prose: keep it verbatim. Re-rendering
   // the AST escapes markup like [[wikilinks]], which editing would then publish.
-  if (!isInfobox) return { tableByKey: new Map(), prose: content.trim() };
+  if (!isInfobox) return { tableByKey: new Map(), linksByKey: new Map(), prose: content.trim() };
   const { rows, tableIndex } = extracted;
 
   const tableByKey = new Map<string, string[]>();
-  for (const [key, value] of rows) {
+  const linksByKey = new Map<string, WikiLink[]>();
+  for (const [key, value, links] of rows) {
     const existing = tableByKey.get(key);
     if (existing) existing.push(value);
     else tableByKey.set(key, [value]);
+    linksByKey.set(key, [...(linksByKey.get(key) ?? []), ...links]);
   }
 
   const proseChildren = tableIndex === -1 ? ast.children : ast.children.slice(tableIndex + 1);
   const prose =
     proseChildren.length > 0 ? renderDjot({ ...ast, children: proseChildren } as never).trim() : '';
-  return { tableByKey, prose };
+  return { tableByKey, linksByKey, prose };
 }
 
 interface WikiReadContext {
@@ -387,22 +428,43 @@ export function unmappedTableRows(
   );
 }
 
+/** A field's value from its targets; a later target's value wins */
+function readField(ctx: WikiReadContext, field: PostField): unknown {
+  let value: unknown;
+  for (const target of wikiTargets(field)) {
+    value = readTarget(ctx, field, target) ?? value;
+  }
+  return value;
+}
+
 export function wikiEventToManifestData(
   event: WikiEvent,
   manifest: NostrPostManifest
 ): Record<string, unknown> {
-  const { tableByKey, prose } = parseWikiContent(event.content, manifestTableKeys(manifest));
+  const { tableByKey, linksByKey, prose } = parseWikiContent(
+    event.content,
+    manifestTableKeys(manifest)
+  );
   const proseFieldId = prose
     ? manifest.fields.find((f) => wikiTargets(f).some((t) => t.target === 'content'))?.id
     : undefined;
   const ctx: WikiReadContext = { event, tableByKey, prose, proseFieldId };
 
+  // Role fields read their wikilinks; other reference fields skip the `a` tags those claim
+  const roleLinks = (f: PostField) => linksByKey.get(f.id) ?? [];
+  const roleFields = manifest.fields.filter(isRoleField);
+  const claimed = claimedDTags(roleFields.map(roleLinks));
+  const refCtx = { ...ctx, event: { ...event, tags: withoutClaimed(event.tags, claimed) } };
+
   const result: Record<string, unknown> = {};
   for (const field of manifest.fields) {
-    for (const target of wikiTargets(field)) {
-      const value = readTarget(ctx, field, target);
-      if (value !== undefined) result[field.id] = value;
-    }
+    // The first role field without a row: an entity written before roles (plain `a` tags)
+    const legacy = field === roleFields[0] && roleLinks(field).length === 0;
+    const value =
+      isRoleField(field) && !legacy
+        ? roleFieldValue(field, refsFromLinks(roleLinks(field), event.tags))
+        : readField(isRefTagField(field) ? refCtx : ctx, field);
+    if (value !== undefined) result[field.id] = value;
   }
 
   const dTag = getTag(event.tags, 'd');
