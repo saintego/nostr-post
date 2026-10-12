@@ -13,6 +13,7 @@ import {
   type NostrPostManifest,
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
+import { runBeforePublish } from '@nostr-post/plugins/publish';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { NostrPostElement, baseStyles } from './base-component';
@@ -29,7 +30,6 @@ import {
   type NostrPostSubmitDetail,
   type ValidationResult,
   renderPublishSummaries,
-  runBeforePublish,
   signAndPublishBundle,
   validateAndCoordinate,
   withTags,

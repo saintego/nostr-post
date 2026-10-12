@@ -152,9 +152,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         metadata: {
           label: 'Location',
           description:
-            "Where the brewery is: its exact place, or only its city or country (e.g. when it brews on other breweries' equipment). Tagged with its country (iso3166) for searches",
+            "Where the brewery is: its exact place, or only its city or country (e.g. when it brews on other breweries' equipment). Tagged with its country (iso3166) for searches; an exact place also gets its venue wiki page",
           levels: ['country', 'city', 'place'],
           providers: ['osm'],
+          // An exact place creates/links the venue's wiki page (venue hub); a city or country doesn't
+          wikiEntity: 'venue-entity-v1',
         },
       },
       {

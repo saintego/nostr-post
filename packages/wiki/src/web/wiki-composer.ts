@@ -1,7 +1,8 @@
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
+import { runBeforePublish } from '@nostr-post/plugins/publish';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { getPublishRelays, publishToRelays, signEvent } from '@nostr-post/signer';
+import { getPublicKey, getPublishRelays, publishToRelays, signEvent } from '@nostr-post/signer';
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
@@ -25,6 +26,7 @@ import { defaultResolver } from '../resolver';
 import type { WikiManifest } from '../types';
 import { validateWikiForm } from '../validate';
 import { renderEnumControl } from './enumControl';
+import { renderPublishSummaries, withHookTags } from './publishSummaries';
 import {
   DEFAULT_WIKI_COMPOSER_MESSAGES,
   type WikiComposerMessages,
@@ -244,6 +246,13 @@ export class NostrWikiComposer extends LitElement {
       const { unsignedEvent, dTag } = this._buildEvent(this.manifest);
 
       if (this.autoPublish) {
+        // Plugin hooks first, e.g. the venue field creating the venue's wiki page and linking it
+        const hookTags = await runBeforePublish(
+          this.manifest,
+          this._formData,
+          await getPublicKey()
+        );
+        unsignedEvent.tags = withHookTags(unsignedEvent.tags as [string, ...string[]][], hookTags);
         // Wiki relays (where entities are looked up) plus the author's own relays
         const signedEvent = await signEvent(unsignedEvent);
         const relays = await getPublishRelays(signedEvent.pubkey, this.relays);
@@ -258,8 +267,14 @@ export class NostrWikiComposer extends LitElement {
         this._published = true;
       } else {
         this.dispatchEvent(
+          // formData + manifest let the app run plugin hooks itself (runBeforePublish)
           new CustomEvent('nostr-wiki-submit', {
-            detail: { event: unsignedEvent, dTag },
+            detail: {
+              event: unsignedEvent,
+              dTag,
+              formData: { ...this._formData },
+              manifest: this.manifest,
+            },
             bubbles: true,
             composed: true,
           })
@@ -343,6 +358,10 @@ export class NostrWikiComposer extends LitElement {
         </div>
 
         ${this._error ? html`<p class="wiki-error" role="alert">${this._error}</p>` : nothing}
+
+        ${renderPublishSummaries(this.manifest, this._formData, (id, value) =>
+          this._onFieldChange(id, value)
+        )}
 
         <div class="wiki-composer-actions">
           <button type="submit" ?disabled=${this._publishing || !!this._dTagError()}>

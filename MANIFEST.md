@@ -253,10 +253,12 @@ follow OpenStreetMap.
 ### Venue hub
 
 A `venue` field with `metadata.wikiEntity` also creates the venue's wiki page from OpenStreetMap
-when a review is published, or updates it when OSM has a newer version of the place. The review
+when a review (or a wiki page, e.g. a brewery's location) is published, or updates it when OSM has
+a newer version of the place; only for an exact place, not a city or country. The review or page
 links to it with an `a` tag. The author sees what will happen, an editable slug and an opt-out
-checkbox next to the publish button. This runs when `<nostr-post-composer auto-publish>` publishes;
-apps that publish `nostr-post-submit` themselves call `runBeforePublish` (see the
+checkbox next to the publish button. This runs when `<nostr-post-composer auto-publish>` or
+`<nostr-wiki-composer auto-publish>` publishes; apps that publish `nostr-post-submit` or
+`nostr-wiki-submit` themselves call `runBeforePublish` (see the
 [composer docs](./USAGE_GUIDE.md#nostr-post-composer)).
 
 The venue manifest's fields declare their OSM source with `metadata.sources.osm`:

@@ -347,14 +347,16 @@ A form for creating or editing a wiki entity. Pre-fills from the resolved event 
 | `auto-publish` / `autoPublish` | `boolean`                       | Publish automatically using NIP-07 signer                     |
 | `messages`                     | `Partial<WikiComposerMessages>` | Override user-facing text, e.g. translations (property only)  |
 
-Publishing goes to `relays` plus the author's own relays (NIP-65). For a new entity the composer
+Publishing goes to `relays` plus the author's own relays (NIP-65). Plugins' publish summaries (e.g. the
+venue field's "Also create/update the venue's wiki page") show next to the publish button, and their
+`beforePublish` hooks run before the event is signed, as in `<nostr-post-composer>`. For a new entity the composer
 checks that the slug is free and asks for a distinguishing detail when it isn't.
 
 **Events emitted:**
 
 | Event                     | `detail`             | Description                                        |
 | ------------------------- | -------------------- | -------------------------------------------------- |
-| `nostr-wiki-submit`       | `{ event }`          | Unsigned event ready (when `autoPublish` is false) |
+| `nostr-wiki-submit`       | `{ event, dTag, formData, manifest }` | Unsigned event ready (when `autoPublish` is false); plugin publish hooks haven't run: call `runBeforePublish` and add its tags |
 | `nostr-wiki-published`    | `{ event }`          | Event signed and published                         |
 | `nostr-wiki-error`        | `{ error }`          | Error during sign/publish                          |
 | `nostr-wiki-field-change` | `{ fieldId, value }` | A field value changed                              |

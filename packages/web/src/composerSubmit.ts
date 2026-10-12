@@ -13,8 +13,8 @@ import {
   type NostrPostManifest,
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
+import { publishSummaries } from '@nostr-post/plugins/publish';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import type { NostrUIPlugin } from '@nostr-post/plugins/types';
 import { type TemplateResult, html } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { parseExtraTags } from './composerForm';
@@ -142,23 +142,6 @@ export const validateAndCoordinate = (
 // Plugin beforePublish hooks
 // ---------------------------------------------------------------------------
 
-/** Run the plugins' beforePublish hooks for fields with a value; returns their tags. */
-export const runBeforePublish = async (
-  manifest: NostrPostManifest,
-  formData: Record<string, unknown>,
-  pubkey: string,
-  getPlugin: (id: string) => NostrUIPlugin | undefined = (id) => pluginRegistry.get(id)
-): Promise<[string, ...string[]][]> => {
-  const tags: [string, ...string[]][] = [];
-  for (const field of manifest.fields) {
-    const value = formData[field.id];
-    const plugin = field.uiPlugin ? getPlugin(field.uiPlugin) : undefined;
-    if (value === undefined || value === null || value === '' || !plugin?.beforePublish) continue;
-    tags.push(...(await plugin.beforePublish(value, field, { pubkey })));
-  }
-  return tags;
-};
-
 /**
  * Plugins' publish summaries (publishSummaryTagName), shown next to the publish
  * button: what their beforePublish hooks will publish, for the user to confirm.
@@ -168,20 +151,13 @@ export const renderPublishSummaries = (
   formData: Record<string, unknown>,
   onFieldChange: (fieldId: string, value: unknown) => void
 ): TemplateResult[] =>
-  manifest.fields.flatMap((field) => {
-    const value = formData[field.id];
-    const tagName = field.uiPlugin
-      ? pluginRegistry.get(field.uiPlugin)?.publishSummaryTagName
-      : undefined;
-    if (!tagName || value === undefined || value === null || value === '') return [];
+  publishSummaries(manifest, formData).map(({ field, value, tagName }) => {
     const tag = unsafeStatic(tagName);
-    return [
-      staticHtml`<${tag}
-        .value=${value}
-        .field=${field}
-        @np-value-changed=${(e: CustomEvent) => onFieldChange(field.id, e.detail.value)}
-      ></${tag}>`,
-    ];
+    return staticHtml`<${tag}
+      .value=${value}
+      .field=${field}
+      @np-value-changed=${(e: CustomEvent) => onFieldChange(field.id, e.detail.value)}
+    ></${tag}>`;
   });
 
 /** Detail of the composer's `nostr-post-submit` event (when it doesn't publish itself) */

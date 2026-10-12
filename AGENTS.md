@@ -33,8 +33,10 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
 
 - Functional core: logic is pure functions over immutable data, returning `Result` values
   for expected failures instead of throwing. No classes holding mutable state.
-- Exception: Lit web components (`LitElement` subclasses) are classes by necessity. Keep them
-  thin and move logic into pure functions they call.
+- No classes, except custom elements: the Web Components standard only accepts a class
+  (`customElements.define`), so Lit components (`LitElement` subclasses) are classes. Keep them
+  thin: properties, state and `render()`; logic and larger template parts go into functions in
+  other modules (e.g. `packages/web/src/composerEnum.ts`).
 - Prefer `const` over `let` (soft rule). Use `let` when a value really changes, e.g. a counter,
   a loop accumulator or module state like a "registered once" flag. Don't contort code to avoid
   it: no IIFEs, nested ternaries or `reduce` gymnastics just to get a `const`.
