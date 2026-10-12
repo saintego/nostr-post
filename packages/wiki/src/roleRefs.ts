@@ -40,10 +40,6 @@ export const isRoleField = (field: PostField): boolean => {
   );
 };
 
-/** A `ref` field whose entities come from `a` tags */
-export const isRefTagField = (field: PostField): boolean =>
-  field.type === 'ref' && wikiTargets(field).some((t) => t.target === 'tag' && t.tagName === 'a');
-
 /** The referenced entities in a field value (one entity or a list) */
 export const entityRefs = (value: unknown): EntityRef[] =>
   (Array.isArray(value) ? value : [value]).filter(

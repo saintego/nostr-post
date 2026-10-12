@@ -160,6 +160,40 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         },
       },
       {
+        id: 'brewing_sites',
+        type: 'ref',
+        uiPlugin: 'wiki-entity-picker',
+        mapTo: [
+          { kind: 30818, target: 'tag', tagName: 'a' },
+          { kind: 30818, target: 'table' },
+        ],
+        metadata: {
+          label: 'Other brewing sites',
+          description:
+            'Further places where it brews, besides its location: pick their venue pages, or create them from OpenStreetMap',
+          entityManifest: 'venue-entity-v1',
+          emitExtraTags: false,
+          multiple: true,
+        },
+      },
+      {
+        id: 'taprooms',
+        type: 'ref',
+        uiPlugin: 'wiki-entity-picker',
+        mapTo: [
+          { kind: 30818, target: 'tag', tagName: 'a' },
+          { kind: 30818, target: 'table' },
+        ],
+        metadata: {
+          label: 'Taprooms',
+          description:
+            'Its taprooms and bars: pick their venue pages, or create them from OpenStreetMap',
+          entityManifest: 'venue-entity-v1',
+          emitExtraTags: false,
+          multiple: true,
+        },
+      },
+      {
         id: 'external_ids',
         type: 'string',
         uiPlugin: 'text',

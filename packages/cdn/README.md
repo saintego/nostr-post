@@ -122,6 +122,8 @@ The bundle re-exports utilities for advanced usage:
 - `defaultResolver`, `collectEntityATags`, `fetchEntityVersions`, `checkEntityDTag`
 - `registerEntityManifest`, `getEntityManifest`, `resolveEntityManifest`: entity manifests by id,
   inline, or by a published manifest's `30078:` address
+- `registerEntityCreator({ tagName, matches })`, `entityCreatorFor(manifest)`: a plugin's own "+ Create"
+  form in the entity picker for the types it can fill (the venue plugin creates venue pages from OSM)
 - `searchEntities`, `entityTypeAffixes`
 
 **Venues and the venue hub**

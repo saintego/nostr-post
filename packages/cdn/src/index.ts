@@ -106,6 +106,9 @@ export {
   registerEntityManifest,
   getEntityManifest,
   resolveEntityManifest,
+  // A plugin's "+ Create" form in the entity picker (e.g. venue pages from OpenStreetMap)
+  registerEntityCreator,
+  entityCreatorFor,
 } from '@nostr-post/wiki';
 
 // Wiki entity picker (search, create)

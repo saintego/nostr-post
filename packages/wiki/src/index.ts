@@ -5,6 +5,12 @@ export {
   registerEntityManifest,
   resolveEntityManifest,
 } from './registry';
+export {
+  type CreatedEntity,
+  type EntityCreator,
+  entityCreatorFor,
+  registerEntityCreator,
+} from './creators';
 export { type ExternalIdLink, entityLinks, externalIdLink } from './externalIds';
 export { linkFromTemplate, manifestLinks } from './links';
 

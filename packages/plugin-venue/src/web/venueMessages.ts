@@ -69,3 +69,29 @@ export const DEFAULT_VENUE_INPUT_MESSAGES: VenueInputMessages = {
   searching: 'Searching…',
   levelLabel: { country: 'country', city: 'city', place: 'place' },
 };
+
+/** User-facing text of <np-venue-entity-create> (overridable via its `messages` property) */
+export interface VenueCreateMessages {
+  intro: string;
+  searchPlaceholder: string;
+  search: string;
+  searching: string;
+  noResults: string;
+  /** Button: create the page, or link it when it exists */
+  create: string;
+  creating: string;
+  /** The hook linked nothing, e.g. the opt-out checkbox was unticked */
+  nothingLinked: string;
+}
+
+export const DEFAULT_VENUE_CREATE_MESSAGES: VenueCreateMessages = {
+  intro:
+    'Find the place on OpenStreetMap: its wiki page is created from it, or linked if it exists.',
+  searchPlaceholder: 'Search for a place (OSM)…',
+  search: '🔍 Search',
+  searching: 'Searching…',
+  noResults: 'No places found',
+  create: 'Create / link the wiki page',
+  creating: 'Publishing…',
+  nothingLinked: 'Nothing was linked: keep "Also create/update the wiki page" ticked',
+};

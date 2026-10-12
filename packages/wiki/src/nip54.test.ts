@@ -309,6 +309,40 @@ describe('references with a role', () => {
   });
 });
 
+describe('a tags other fields skip', () => {
+  it('a field reading a tags ignores those a role row claims (a brewery site vs. its taprooms)', () => {
+    const manifest: NostrPostManifest = {
+      id: 'brewery',
+      version: '1.0.0',
+      fields: [
+        {
+          id: 'site',
+          type: 'string',
+          uiPlugin: 'text',
+          mapTo: { kind: WIKI_KIND, target: 'tag', tagName: 'a' },
+        },
+        {
+          id: 'taprooms',
+          type: 'ref',
+          uiPlugin: 'wiki-entity-picker',
+          mapTo: [
+            { kind: WIKI_KIND, target: 'tag', tagName: 'a' },
+            { kind: WIKI_KIND, target: 'table' },
+          ],
+          metadata: { multiple: true },
+        },
+      ],
+    };
+    const event = manifestToWikiEvent(manifest, {
+      taprooms: [{ dTag: 'tap-venue', resolvedPubkey: 'pk', externalIds: [], displayName: 'Tap' }],
+    });
+    event.tags.push(['a', '30818:pk:site-venue']);
+    const data = wikiEventToManifestData({ ...event, id: 'e', pubkey: 'pk', sig: 's' }, manifest);
+    expect(data.site).toBe('30818:pk:site-venue');
+    expect((data.taprooms as { dTag: string }[]).map((r) => r.dTag)).toEqual(['tap-venue']);
+  });
+});
+
 describe('wikiEventToManifestData', () => {
   const makeWikiEvent = (partial: Partial<ReturnType<typeof manifestToWikiEvent>>): WikiEvent => {
     const base = manifestToWikiEvent(beerManifest, beerFormData);

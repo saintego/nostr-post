@@ -272,7 +272,13 @@ The picker's `metadata` keys (`entityManifest`, `relays`, `minSearchLength`, `em
 `multiple`) are listed in [MANIFEST.md](../../MANIFEST.md#plugin-metadata); fields that reference entities in
 roles (e.g. a beer's breweries and where it was brewed) in
 [References with a role](../../MANIFEST.md#references-with-a-role). `pickedEntities(value)` lists the
-picked entities of a single or `multiple` field. Without `entityManifest` the picker searches all wiki
+picked entities of a single or `multiple` field.
+
+"+ Create" opens a blank wiki composer for the entity type, unless a plugin registered its own form
+for that type with `registerEntityCreator({ tagName, matches })`: a custom element with `manifest`,
+`query` and `relays` properties that dispatches `wiki-entity-created` with `{ dTag, pubkey,
+displayName }` once the entity exists. `@nostr-post/plugin-venue/web` registers one for venue pages
+(entity manifests with `sources.osm` fields): search OpenStreetMap, then create or link the page. Without `entityManifest` the picker searches all wiki
 articles and can't create entities.
 
 ---

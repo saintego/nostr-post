@@ -14,7 +14,6 @@ import {
   type WikiLink,
   claimedDTags,
   entityRefs,
-  isRefTagField,
   isRoleField,
   linkTarget,
   refsFromLinks,
@@ -450,7 +449,7 @@ export function wikiEventToManifestData(
     : undefined;
   const ctx: WikiReadContext = { event, tableByKey, prose, proseFieldId };
 
-  // Role fields read their wikilinks; other reference fields skip the `a` tags those claim
+  // Role fields read their wikilinks; every other field (e.g. a venue's link) skips the `a` tags those claim
   const roleLinks = (f: PostField) => linksByKey.get(f.id) ?? [];
   const roleFields = manifest.fields.filter(isRoleField);
   const claimed = claimedDTags(roleFields.map(roleLinks));
@@ -463,7 +462,7 @@ export function wikiEventToManifestData(
     const value =
       isRoleField(field) && !legacy
         ? roleFieldValue(field, refsFromLinks(roleLinks(field), event.tags))
-        : readField(isRefTagField(field) ? refCtx : ctx, field);
+        : readField(refCtx, field);
     if (value !== undefined) result[field.id] = value;
   }
 

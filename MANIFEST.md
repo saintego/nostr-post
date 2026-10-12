@@ -218,6 +218,10 @@ an `a` tag and to the infobox:
   before its manifest had roles (plain `a` tags, no rows) reads into the first role field.
 - One entity can have several roles (a collaboration brewed at one of its breweries); its `a` tag
   is written once.
+- Other fields that write an `a` tag (e.g. a venue field linking its venue page) skip the `a` tags
+  role rows claim, so a brewery's own location and its taprooms don't mix.
+- A picker on venue pages (an entity manifest with `sources.osm` fields) creates missing ones from
+  OpenStreetMap: "+ Create" searches OSM and runs the [venue hub](#venue-hub).
 
 ### Referencing entity manifests
 

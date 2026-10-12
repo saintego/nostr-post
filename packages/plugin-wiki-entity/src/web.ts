@@ -15,13 +15,15 @@ import { pluginRegistry } from '@nostr-post/plugins/registry';
 import {
   DEFAULT_WIKI_RELAYS,
   defaultResolver,
+  entityCreatorFor,
   extractExternalIds,
   resolveEntityManifest,
 } from '@nostr-post/wiki';
-import type { WikiEvent } from '@nostr-post/wiki';
+import type { CreatedEntity, WikiEvent } from '@nostr-post/wiki';
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ref } from 'lit/directives/ref.js';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import '@nostr-post/wiki/web';
 import {
   type EntityTypeAffixes,
@@ -67,7 +69,12 @@ export class WikiEntityPicker extends LitElement {
   @state() private _searching = false;
   /** Entity being created in the dialog */
   /** Entity being created in the dialog */
-  @state() private _creating?: { manifest: NostrPostManifest; prefill: Record<string, unknown> };
+  @state() private _creating?: {
+    manifest: NostrPostManifest;
+    prefill: Record<string, unknown>;
+    /** A plugin's create form for this type (e.g. venues from OpenStreetMap) */
+    creatorTag?: string;
+  };
   private _debounceTimer?: ReturnType<typeof setTimeout>;
 
   private _searchId = 0;
@@ -214,7 +221,13 @@ export class WikiEntityPicker extends LitElement {
     );
     if (!proceed) return;
     const manifest = getEntityManifest(this._config.entityManifest);
-    if (manifest) this._creating = { manifest, prefill: entityPrefill(manifest, this._query) };
+    if (manifest) {
+      this._creating = {
+        manifest,
+        prefill: entityPrefill(manifest, this._query),
+        creatorTag: entityCreatorFor(manifest)?.tagName,
+      };
+    }
   }
 
   /** The d-tag "+ Create" will produce, when the type adds a prefix/suffix */
@@ -247,6 +260,14 @@ export class WikiEntityPicker extends LitElement {
         ${exists ? html`<span class="create-dtag">with a distinct slug</span>` : this._createDTagHint()}
       </button>
     `;
+  }
+
+  /** Select the entity a plugin's create form created or found */
+  private _onEntityCreated(e: CustomEvent<CreatedEntity>): void {
+    const { dTag, pubkey, displayName } = e.detail;
+    this._creating = undefined;
+    const tags = [['d', dTag], ...(displayName ? [['title', displayName]] : [])];
+    this._onSelect({ kind: 30818, pubkey, tags, content: '', created_at: 0, id: '', sig: '' });
   }
 
   /** Select the entity the dialog just published */
@@ -293,7 +314,14 @@ export class WikiEntityPicker extends LitElement {
     if (!creating) return nothing;
     return this._renderModal(
       `Create ${creating.manifest.metadata?.name ?? 'entity'}`,
-      html`
+      creating.creatorTag
+        ? staticHtml`<${unsafeStatic(creating.creatorTag)}
+            .manifest=${creating.manifest}
+            .query=${this._query}
+            .relays=${this._relays}
+            @wiki-entity-created=${(e: CustomEvent<CreatedEntity>) => this._onEntityCreated(e)}
+          ></${unsafeStatic(creating.creatorTag)}>`
+        : html`
         <nostr-wiki-composer
           auto-publish
           .manifest=${creating.manifest}
