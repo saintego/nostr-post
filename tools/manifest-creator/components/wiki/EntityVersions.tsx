@@ -2,7 +2,7 @@
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { entitySnippet } from '@nostr-post/plugin-wiki-entity';
-import { type WikiEvent, defaultResolver, fetchEntityVersions } from '@nostr-post/wiki';
+import { defaultResolver, fetchEntityVersions, type WikiEvent } from '@nostr-post/wiki';
 import { useEffect, useState } from 'react';
 import { WikiView } from './WikiElements';
 import { styles } from './wikiPanelStyles';

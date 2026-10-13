@@ -9,7 +9,7 @@
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
-import { LitElement, css, html, nothing } from 'lit';
+import { css, html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { type HashtagPluginConfig, normalizeTag } from '../core';
 

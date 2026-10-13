@@ -25,6 +25,7 @@ vi.mock('@nostr-post/signer', () => ({
     wikiEvent('bitcoin-brewery', 'Bitcoin (Brewery)'),
   ]),
 }));
+
 import './web';
 import type { WikiEntityPicker } from './web';
 

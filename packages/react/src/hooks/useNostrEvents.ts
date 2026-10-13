@@ -5,7 +5,7 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { DEFAULT_RELAYS, type SignedEvent, fetchEvents } from '../signer';
+import { DEFAULT_RELAYS, fetchEvents, type SignedEvent } from '../signer';
 
 export interface UseNostrEventsOptions {
   kinds?: number[];

@@ -15,11 +15,11 @@ import {
 } from '@nostr-post/core/types';
 import { publishSummaries } from '@nostr-post/plugins/publish';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { type TemplateResult, html } from 'lit';
+import { html, type TemplateResult } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { parseExtraTags } from './composerForm';
 import { applyReplyTargetToBundle } from './composerReply';
-import { type SignedEvent, getUserRelays, signAndPublish } from './signer';
+import { getUserRelays, type SignedEvent, signAndPublish } from './signer';
 
 // ---------------------------------------------------------------------------
 // Addressable-event helpers

@@ -12,26 +12,25 @@ import { type NostrPostManifest, STANDARD_KIND1_POST_MANIFEST } from '@nostr-pos
 import { runPublishHooks } from '@nostr-post/plugins/publish';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { NostrPostElement, baseStyles } from './base-component';
+import { baseStyles, NostrPostElement } from './base-component';
 import type { FieldRenderContext } from './composerField';
 import { renderFieldList } from './composerFieldList';
-import { buildInitialFormData, isFieldReadonly } from './composerForm';
-import { renderHiddenFieldErrors } from './composerForm';
+import { buildInitialFormData, isFieldReadonly, renderHiddenFieldErrors } from './composerForm';
 import { renderPublishFormatPicker } from './composerFormatPicker';
 import { renderComposerHeader } from './composerHeader';
 import { hasReplyTarget, renderReplyTargetPanel, updateReplyTargetValue } from './composerReply';
 import { composerStyle } from './composerStyle';
-import { renderSubmitButton } from './composerSubmit';
 import {
   type NostrPostSubmitDetail,
-  type ValidationResult,
   renderPublishSummaries,
+  renderSubmitButton,
   signAndPublishBundle,
+  type ValidationResult,
   validateAndCoordinate,
   withTags,
 } from './composerSubmit';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
-import { type SignedEvent, fetchManifestByATag, getPublicKey } from './signer';
+import { fetchManifestByATag, getPublicKey, type SignedEvent } from './signer';
 
 @customElement('nostr-post-composer')
 export class NostrPostComposer extends NostrPostElement {

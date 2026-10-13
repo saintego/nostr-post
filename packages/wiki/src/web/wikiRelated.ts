@@ -4,16 +4,16 @@
  * Wiki entities open their page on demand; posts show a short text.
  */
 
-import { LitElement, css, html, nothing } from 'lit';
+import { css, html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { DEFAULT_WIKI_RELAYS, WIKI_KIND } from '../nip54';
 import {
-  RELATED_STATS_LIMIT,
-  type WikiRelatedSection,
   fetchRelated,
+  RELATED_STATS_LIMIT,
   relatedImages,
   relatedSnippet,
   relatedStats,
+  type WikiRelatedSection,
 } from '../related';
 import type { WikiEvent } from '../resolver';
 import { DEFAULT_WIKI_RELATED_MESSAGES, type WikiRelatedMessages } from './relatedMessages';

@@ -13,7 +13,7 @@ import {
   optionValueForText,
 } from '@nostr-post/core/enumOptions';
 import type { PostField } from '@nostr-post/core/types';
-import { type TemplateResult, html } from 'lit';
+import { html, type TemplateResult } from 'lit';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { live } from 'lit/directives/live.js';
 

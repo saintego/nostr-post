@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 vi.mock('@nostr-post/signer', () => ({
   fetchManifestByATag: vi.fn(),

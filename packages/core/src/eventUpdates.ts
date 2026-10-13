@@ -6,8 +6,7 @@
  */
 
 import { matchFieldOption } from './enumOptions';
-import { isStructuredContentKind } from './manifestMappings';
-import { getFieldsByKind } from './manifestMappings';
+import { getFieldsByKind, isStructuredContentKind } from './manifestMappings';
 import type { DisplayableEvent, NostrPostManifest, PostField } from './types';
 
 export const UPDATE_COMMENT_PATTERN = /^update\s*:\s*([^:]+?)\s*:\s*([\s\S]+)$/i;

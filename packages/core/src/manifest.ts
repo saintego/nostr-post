@@ -7,8 +7,8 @@
 
 import { validateFieldOptions } from './enumOptions';
 import {
-  getFieldTargets,
   getFieldsByKind as getFieldsByKindFromMappings,
+  getFieldTargets,
   getUsedKinds as getUsedKindsFromMappings,
 } from './manifestMappings';
 import type {

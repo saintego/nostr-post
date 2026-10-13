@@ -1,13 +1,13 @@
 import type { NostrUIPlugin, PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
 import {
-  type WikiEntityData,
   createTarget,
   entitySnippet,
   entityTypeAffixes,
   entityTypeDTag,
   matchesEntityQuery,
   matchesEntityType,
+  type WikiEntityData,
   wikiEntityPickerPlugin,
 } from './core';
 

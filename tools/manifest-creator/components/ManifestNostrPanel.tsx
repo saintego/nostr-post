@@ -1,11 +1,11 @@
 'use client';
 
 import {
-  NIP78_KIND,
   buildManifestATag,
   eventToManifest,
   manifestDeleteEvent,
   manifestToEvent,
+  NIP78_KIND,
 } from '@nostr-post/core/nip78';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { NostrPostFeed } from '@nostr-post/react';

@@ -11,7 +11,6 @@ import { interpolateTemplate } from './identity';
 import { normalizeDTag } from './normalizeDTag';
 import type { WikiEvent } from './resolver';
 import {
-  type WikiLink,
   claimedDTags,
   entityRefs,
   isRoleField,
@@ -19,6 +18,7 @@ import {
   refsFromLinks,
   roleFieldValue,
   roleRowText,
+  type WikiLink,
   withoutClaimed,
 } from './roleRefs';
 import type { WikiManifest } from './types';

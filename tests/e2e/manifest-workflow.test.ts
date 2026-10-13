@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { coordinateEvents } from '../../packages/core/src/coordinator';
 import { buildManifestATag, eventToManifest, manifestToEvent } from '../../packages/core/src/nip78';
 import type { FormData, NostrPostManifest } from '../../packages/core/src/types';
-import { MockNostrRelay, generateMockKeypair, mockSignEvent } from '../helpers/mock-relay';
+import { generateMockKeypair, MockNostrRelay, mockSignEvent } from '../helpers/mock-relay';
 
 describe('E2E: Manifest Publishing and Retrieval', () => {
   let relay: MockNostrRelay;

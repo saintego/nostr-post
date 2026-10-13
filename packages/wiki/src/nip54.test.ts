@@ -2,14 +2,14 @@ import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  WIKI_KIND,
   manifestToWikiEvent,
   unmappedTableRows,
+  WIKI_KIND,
   wikiEventToManifestData,
 } from './nip54';
 import { normalizeDTag } from './normalizeDTag';
-import { countContributors, defaultResolver, groupByDTag, selectNewestEntity } from './resolver';
 import type { WikiEvent } from './resolver';
+import { countContributors, defaultResolver, groupByDTag, selectNewestEntity } from './resolver';
 import type { WikiManifest } from './types';
 
 const beerManifest: NostrPostManifest = {

@@ -16,7 +16,7 @@ import {
   normalizeDTag,
   resolveEntityManifest,
 } from '@nostr-post/wiki';
-import { LitElement, html, nothing } from 'lit';
+import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { VenueData } from '../core';
 import {

@@ -11,7 +11,7 @@ import {
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
 import { useCallback, useState } from 'react';
-import { type SignedEvent, getPublicKey, signAndPublish } from '../signer';
+import { getPublicKey, type SignedEvent, signAndPublish } from '../signer';
 
 export interface UseNostrPublishOptions {
   manifest?: NostrPostManifest;

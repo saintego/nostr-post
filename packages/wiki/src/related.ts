@@ -8,8 +8,8 @@
 import { parsePostRoles } from '@nostr-post/core/postRoles';
 import { fetchEvents } from '@nostr-post/signer';
 import { fetchEntityVersions } from './fetch';
-import { DEFAULT_WIKI_RELAYS, WIKI_KIND, infoboxRowLinks } from './nip54';
-import { type WikiEvent, collectEntityATags, defaultResolver, groupByDTag } from './resolver';
+import { DEFAULT_WIKI_RELAYS, infoboxRowLinks, WIKI_KIND } from './nip54';
+import { collectEntityATags, defaultResolver, groupByDTag, type WikiEvent } from './resolver';
 
 /** One section of related items (`wikiConfig.related`) */
 export interface WikiRelatedSection {

@@ -3,7 +3,7 @@ import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { runPublishHooks } from '@nostr-post/plugins/publish';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { getPublicKey, getPublishRelays, publishToRelays, signEvent } from '@nostr-post/signer';
-import { LitElement, html, nothing } from 'lit';
+import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
@@ -16,8 +16,8 @@ import {
 import { checkEntityDTag, fetchEntityVersions } from '../fetch';
 import {
   DEFAULT_WIKI_RELAYS,
-  WIKI_KIND,
   manifestToWikiEvent,
+  WIKI_KIND,
   wikiEventToManifestData,
 } from '../nip54';
 import { normalizeDTag } from '../normalizeDTag';
@@ -31,7 +31,7 @@ import {
   DEFAULT_WIKI_COMPOSER_MESSAGES,
   type WikiComposerMessages,
 } from './wiki-composer-messages';
-import { type SlugStatus, renderSlugCheck } from './wiki-composer-slug';
+import { renderSlugCheck, type SlugStatus } from './wiki-composer-slug';
 import { composerStyles } from './wiki-composer-styles';
 
 /** An empty number input clears the value instead of storing 0. */

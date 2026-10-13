@@ -6,23 +6,23 @@
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { fetchEvents, getPublishRelays, publishToRelays, signEvent } from '@nostr-post/signer';
 import {
-  DEFAULT_WIKI_RELAYS,
-  type DTagAvailability,
-  type EntityManifestRef,
-  WIKI_KIND,
-  type WikiEvent,
   buildWikiATag,
   checkEntityDTag,
+  DEFAULT_WIKI_RELAYS,
+  type DTagAvailability,
   defaultResolver,
+  type EntityManifestRef,
   entityTitleFor,
   fetchEntityVersions,
   manifestToWikiEvent,
   resolveEntityManifest,
   selectNewestEntity,
+  WIKI_KIND,
+  type WikiEvent,
   wikiEventToManifestData,
 } from '@nostr-post/wiki';
 import type { VenueData } from './core';
-import { type OsmElement, fetchOsmElement } from './osm';
+import { fetchOsmElement, type OsmElement } from './osm';
 import {
   type EntitySyncAction,
   entitySyncAction,

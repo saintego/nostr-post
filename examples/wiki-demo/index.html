@@ -265,18 +265,18 @@ const BEER_MANIFEST = {
     composer.manifest = BEER_MANIFEST;
 
     // ── Helper: load entity into view component ──────────────────────────────
-    window.loadEntity = function () {
+    window.loadEntity = () => {
       const id = document.getElementById('view-entity-id').value.trim();
       if (!id) return;
       view.entityId = id;
     };
-    window.setAndLoad = function (slug) {
+    window.setAndLoad = (slug) => {
       document.getElementById('view-entity-id').value = slug;
       view.entityId = slug;
     };
 
     // ── Helper: load entity into composer component ──────────────────────────
-    window.loadComposer = function () {
+    window.loadComposer = () => {
       const id = document.getElementById('compose-entity-id').value.trim();
       composer.entityId = id || undefined;
     };

@@ -1,7 +1,7 @@
 import type { PostField } from '@nostr-post/plugins/types';
-import { LitElement, css, html } from 'lit';
+import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { type ReferenceValue, normalizeExternalUrl } from '../core';
+import { normalizeExternalUrl, type ReferenceValue } from '../core';
 
 const EMPTY: ReferenceValue = { urls: [], p: [], q: [], a: [] };
 

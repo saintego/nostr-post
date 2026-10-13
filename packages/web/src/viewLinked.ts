@@ -8,10 +8,10 @@
 import { fieldOptionLabel } from '@nostr-post/core/enumOptions';
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import {
-  type ResolvedPostField,
-  getFieldTargets,
   getFieldsByKind,
+  getFieldTargets,
   isStructuredContentKind,
+  type ResolvedPostField,
 } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';

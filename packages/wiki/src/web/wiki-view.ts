@@ -3,7 +3,7 @@ import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { fetchEvents } from '@nostr-post/signer';
-import { LitElement, html, nothing } from 'lit';
+import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { entityLinks } from '../externalIds';
@@ -13,8 +13,8 @@ import { manifestLinks } from '../links';
 import {
   DEFAULT_WIKI_RELAYS,
   STANDARD_WIKI_MANIFEST,
-  WIKI_KIND,
   unmappedTableRows,
+  WIKI_KIND,
   wikiEventToManifestData,
 } from '../nip54';
 import type { WikiEvent, WikiResolverFunction } from '../resolver';

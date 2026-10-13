@@ -12,9 +12,9 @@
 
 import type { PostField } from '@nostr-post/plugins/types';
 import { type EntityManifestRef, getEntityManifest, resolveEntityManifest } from '@nostr-post/wiki';
-import { LitElement, css, html, nothing } from 'lit';
+import { css, html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { type VenueData, googleMapsPlaceUrl, osmUrl } from '../core';
+import { googleMapsPlaceUrl, osmUrl, type VenueData } from '../core';
 import { googleEmbedUrl } from '../googleEmbed';
 import { googleMapsCidUrl } from '../googleLink';
 import { loadVenueFromPage, needsPage } from '../venuePage';

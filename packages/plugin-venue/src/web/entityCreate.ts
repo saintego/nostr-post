@@ -9,9 +9,9 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import type { PostField } from '@nostr-post/plugins/types';
 import type { CreatedEntity } from '@nostr-post/wiki';
-import { LitElement, html, nothing } from 'lit';
+import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { type NominatimResult, type VenueData, nominatimToVenue, searchNominatim } from '../core';
+import { type NominatimResult, nominatimToVenue, searchNominatim, type VenueData } from '../core';
 import { venueInputStyles } from './inputStyles';
 import { DEFAULT_VENUE_CREATE_MESSAGES, type VenueCreateMessages } from './venueMessages';
 import './wikiPublish';

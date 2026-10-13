@@ -11,11 +11,11 @@
 import { isFieldOptionValue, optionValue } from './enumOptions';
 import { validateManifest } from './manifest';
 import {
-  type ResolvedPostField,
   getActiveKinds,
-  getFieldTargets,
   getFieldsByKind,
+  getFieldTargets,
   isStructuredContentKind,
+  type ResolvedPostField,
 } from './manifestMappings';
 import { plainTextContent, refAddresses, structuredContentValue } from './postRoles';
 import type {

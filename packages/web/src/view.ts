@@ -19,13 +19,13 @@ import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
-import { NostrPostElement, baseStyles } from './base-component';
+import { baseStyles, NostrPostElement } from './base-component';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
 import { fetchEvents, fetchManifestByATag, getPublicKey } from './signer';
 import {
-  type NostrProfile,
   authorDisplayName,
   fetchAuthorProfile,
+  type NostrProfile,
   truncatePubkey,
 } from './userProfile';
 import { type EditState, renderEditButton, renderInlineComposer } from './viewEdit';
@@ -41,6 +41,7 @@ import { applyUpdateCommentsToEvent, renderUpdateComments } from './viewUpdates'
 
 /** Event type that can be either unsigned or signed — re-exported from core for convenience */
 export type { DisplayableEvent } from '@nostr-post/core/types';
+
 type RegisteredPlugin = Exclude<ReturnType<typeof pluginRegistry.get>, undefined>;
 
 /**

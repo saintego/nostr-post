@@ -13,23 +13,23 @@
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
-import { LitElement, html, nothing } from 'lit';
+import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import {
-  type NominatimResult,
-  type VenueData,
-  type VenuePluginConfig,
   lookupNominatimByOsmId,
+  type NominatimResult,
   nominatimToVenue,
   osmUrl,
   searchNominatim,
+  type VenueData,
+  type VenuePluginConfig,
 } from '../core';
 
 // Ensure the geo input web component is registered
 import '@nostr-post/plugin-geo/web';
 import { type GoogleMapsLink, parseGoogleMapsUrl } from '../googleLink';
 import { googleLinkFocus, searchGoogleLink, venueAtPoint } from '../googleSearch';
-import { type VenueLevel, resultLevel, venueLevels } from '../levels';
+import { resultLevel, type VenueLevel, venueLevels } from '../levels';
 import { loadVenueFromPage, needsPage } from '../venuePage';
 import { venueInputStyles } from './inputStyles';
 import { DEFAULT_VENUE_INPUT_MESSAGES, type VenueInputMessages } from './venueMessages';

@@ -14,7 +14,7 @@ import {
 } from '@nostr-post/signer';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { NostrPostElement, baseStyles } from './base-component';
+import { baseStyles, NostrPostElement } from './base-component';
 import {
   handleCommentPublished as handleCommentPublishedDetail,
   isReplyComposerOpen,
@@ -23,15 +23,15 @@ import {
 import { buildFetchFilters, buildInteractionLoadKey, mergeUniqueEventsById } from './feedData';
 import { publishReaction, summarizeReactionsWithAuthors } from './feedReactions';
 import {
+  buildReplyTarget,
+  buildThreads,
   DEFAULT_COMMENT_MANIFEST,
   DEFAULT_REACTION_OPTIONS,
   type ReplyTarget,
-  buildReplyTarget,
-  buildThreads,
 } from './feedStandard';
 import { feedStyle } from './feedStyle';
 import type { SignedEvent } from './signer';
-import { type NostrProfile, displayNameForPubkey, loadProfilesForEvents } from './userProfile';
+import { displayNameForPubkey, loadProfilesForEvents, type NostrProfile } from './userProfile';
 import './composer';
 import './view';
 

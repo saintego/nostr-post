@@ -6,27 +6,27 @@
 
 // Re-export everything from shared signer
 export {
-  type SignedEvent,
-  type Nip07Provider,
-  type PublishResults,
-  type FetchFilter,
+  _manifestCache,
+  clearManifestCache,
   DEFAULT_RELAYS,
-  signEvent,
-  getPublicKey,
-  hasNostrSigner,
-  publishToRelay,
-  publishToRelays,
-  signAndPublish,
-  fetchEventsFromRelay,
+  type FetchFilter,
   fetchEvents,
-  fetchUserRelays,
-  getPublishRelays,
+  fetchEventsFromRelay,
   // Manifest helpers
   fetchManifestByATag,
   fetchManifestsByATags,
+  fetchUserRelays,
   getCachedManifest,
-  clearManifestCache,
-  _manifestCache,
+  getPublicKey,
+  getPublishRelays,
+  hasNostrSigner,
+  type Nip07Provider,
+  type PublishResults,
+  publishToRelay,
+  publishToRelays,
+  type SignedEvent,
+  signAndPublish,
+  signEvent,
 } from '@nostr-post/signer';
 
 /**

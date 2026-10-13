@@ -1,4 +1,4 @@
-import { type TemplateResult, html } from 'lit';
+import { html, type TemplateResult } from 'lit';
 
 /** The parts of an event the section shows; unsigned events have no id yet */
 interface RawEvent {

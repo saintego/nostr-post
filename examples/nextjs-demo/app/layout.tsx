@@ -6,11 +6,7 @@ export const metadata: Metadata = {
   description: 'Demo of nostr-post React components with Next.js App Router',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body style={{ fontFamily: 'system-ui, sans-serif', padding: '20px' }}>

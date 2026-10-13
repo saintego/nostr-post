@@ -5,10 +5,10 @@ import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { useRef } from 'react';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
 import { FieldEditor } from './FieldEditor';
+import { formatKindLabel, SUPPORTED_KINDS } from './kindLabels';
+import { styles } from './manifestEditorStyles';
 import { PublishFormatsEditor } from './PublishFormatsEditor';
 import { WikiConfigEditor } from './WikiConfigEditor';
-import { SUPPORTED_KINDS, formatKindLabel } from './kindLabels';
-import { styles } from './manifestEditorStyles';
 
 interface ManifestEditorProps {
   manifest: NostrPostManifest;

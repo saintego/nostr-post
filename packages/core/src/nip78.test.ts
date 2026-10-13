@@ -3,13 +3,13 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
-  MANIFEST_D_TAG_PREFIX,
-  NIP78_KIND,
   buildManifestATag,
   buildManifestDTag,
   eventToManifest,
+  MANIFEST_D_TAG_PREFIX,
   manifestDeleteEvent,
   manifestToEvent,
+  NIP78_KIND,
   parseManifestATag,
   parseManifestDTag,
 } from './nip78';

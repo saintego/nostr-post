@@ -7,7 +7,7 @@
 import { LitElement } from 'lit';
 
 // Re-export theme
-export { colors, baseStyles } from './theme';
+export { baseStyles, colors } from './theme';
 
 /**
  * Base class for all nostr-post Web Components

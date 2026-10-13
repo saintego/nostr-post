@@ -9,10 +9,10 @@
 import { decodeGeohash, encodeGeohash } from '@nostr-post/plugin-geo';
 import {
   type NominatimResult,
-  type VenueData,
   nominatimAddress,
   reverseNominatim,
   searchNominatim,
+  type VenueData,
 } from './core';
 import type { GoogleMapsLink } from './googleLink';
 import type { VenueLevel } from './levels';

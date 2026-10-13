@@ -3,10 +3,10 @@ import type { NostrPostManifest } from '@nostr-post/core/types';
 import { fetchEvents } from '@nostr-post/signer';
 import {
   DEFAULT_WIKI_RELAYS,
-  WIKI_KIND,
-  type WikiEvent,
   defaultResolver,
   groupByDTag,
+  WIKI_KIND,
+  type WikiEvent,
 } from '@nostr-post/wiki';
 import { entityTypeAffixes, entityTypeDTag, matchesEntityQuery, matchesEntityType } from './core';
 

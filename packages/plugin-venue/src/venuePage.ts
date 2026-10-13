@@ -8,9 +8,9 @@
 import type { PostField } from '@nostr-post/plugins/types';
 import {
   DEFAULT_WIKI_RELAYS,
-  type WikiEvent,
   defaultResolver,
   fetchEntityVersions,
+  type WikiEvent,
 } from '@nostr-post/wiki';
 import { type VenueData, venuePlugin } from './core';
 

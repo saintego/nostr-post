@@ -4,11 +4,11 @@ import { getFieldTargets, isStructuredContentKind } from '@nostr-post/core/manif
 import type { NostrTarget, PostField } from '@nostr-post/core/types';
 import { AdditionalMappings } from './AdditionalMappings';
 import { EntityManifestInput, WIKI_MANIFEST_KEYS } from './EntityManifestInput';
+import { styles } from './fieldEditorStyles';
+import { formatKindLabel } from './kindLabels';
 import { OptionsEditor } from './OptionsEditor';
 import { PickerSettings } from './PickerSettings';
 import { VenueSettings } from './VenueSettings';
-import { styles } from './fieldEditorStyles';
-import { formatKindLabel } from './kindLabels';
 
 interface FieldEditorProps {
   field: PostField;

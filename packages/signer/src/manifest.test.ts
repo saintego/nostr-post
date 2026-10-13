@@ -1,8 +1,7 @@
-import { buildManifestATag } from '@nostr-post/core/nip78';
-import { manifestToEvent } from '@nostr-post/core/nip78';
+import { buildManifestATag, manifestToEvent } from '@nostr-post/core/nip78';
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // The module under test
 import { clearManifestCache, fetchManifestByATag, getCachedManifest } from './manifest';

@@ -1,5 +1,5 @@
-import { fetchEvents } from './signer';
 import type { SignedEvent } from './signer';
+import { fetchEvents } from './signer';
 
 export type NostrProfile = {
   name?: string;

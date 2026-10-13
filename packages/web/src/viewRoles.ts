@@ -6,10 +6,9 @@
 
 import { fieldLabel } from '@nostr-post/core/manifest';
 import { readPostRoles } from '@nostr-post/core/postRoles';
-import type { DisplayableEvent, NostrPostManifest } from '@nostr-post/core/types';
-import type { PostField } from '@nostr-post/core/types';
+import type { DisplayableEvent, NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { type TemplateResult, html, nothing } from 'lit';
+import { html, nothing, type TemplateResult } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 
 /** The view element of a field's plugin, if it has one */

@@ -10,10 +10,10 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import {
   type EntityTypeAffixes,
-  type WikiEvent,
   entityDTagFor,
   entityTypeAffixes,
   normalizeDTag,
+  type WikiEvent,
 } from '@nostr-post/wiki';
 import type { VenueData } from './core';
 import { geohashTags } from './levels';

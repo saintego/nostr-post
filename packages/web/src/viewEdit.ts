@@ -11,8 +11,8 @@ import type {
   NostrPostManifest,
   UnsignedNostrEvent,
 } from '@nostr-post/core/types';
-import { html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
+import { html, nothing } from 'lit';
 import { getUserRelays, signAndPublish } from './signer';
 import { extractPrefillFromEvent, formatPrefillAsUpdateComment } from './viewUpdates';
 

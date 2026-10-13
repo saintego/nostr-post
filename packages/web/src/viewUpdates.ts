@@ -26,8 +26,8 @@ import { getFieldsByKind, isStructuredContentKind } from '@nostr-post/core/manif
 import { readPostRoles } from '@nostr-post/core/postRoles';
 import type { DisplayableEvent, NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
+import { html, nothing } from 'lit';
 
 /**
  * Render the collapsible update-comments section shown beneath an event.
