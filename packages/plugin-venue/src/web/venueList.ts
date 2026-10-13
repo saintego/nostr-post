@@ -5,7 +5,7 @@
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
-import { LitElement, html } from 'lit';
+import { LitElement, css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
 import type { VenueData } from '../core';
@@ -21,7 +21,24 @@ const shortName = (v: VenueData): string =>
 
 @customElement('np-venue-list')
 export class NpVenueList extends LitElement {
-  static override styles = venueInputStyles;
+  static override styles = [
+    venueInputStyles,
+    css`
+      /* One venue per row: its name, and × to remove it at the end */
+      .venue-entry {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.375rem;
+      }
+      .venue-entry .clear-btn {
+        align-self: center;
+        font-size: 1.125rem;
+        line-height: 1;
+        text-decoration: none;
+      }
+    `,
+  ];
 
   @property({ attribute: false }) value: VenueData[] = [];
   @property({ attribute: false }) field: PostField | null = null;
@@ -51,7 +68,7 @@ export class NpVenueList extends LitElement {
     return html`
       ${this.value.map(
         (venue, index) => html`
-          <div class="venue-card">
+          <div class="venue-card venue-entry">
             <span class="venue-name">📍 ${shortName(venue)}</span>
             <button
               type="button"
