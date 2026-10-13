@@ -42,12 +42,15 @@ export interface VenueViewMessages {
   googleMaps: string;
   /** Summary of the collapsible wiki page of the venue */
   wikiPage: string;
+  /** Summary of Google's place card (shown when the app set a Maps Embed key) */
+  googleCard: string;
 }
 
 export const DEFAULT_VENUE_VIEW_MESSAGES: VenueViewMessages = {
   viewOnOsm: 'View on OSM ↗',
   googleMaps: 'Google Maps ↗',
   wikiPage: 'Venue wiki page',
+  googleCard: 'On Google Maps',
 };
 
 /** User-facing text of <np-venue-input> (overridable via its `messages` property) */

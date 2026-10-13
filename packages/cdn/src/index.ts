@@ -126,4 +126,6 @@ export {
   fetchOsmElement,
   findVenueEntity,
   syncVenueEntity,
+  // The app's Google Maps Embed key for venues' place card
+  configureVenuePlugin,
 } from '@nostr-post/plugin-venue';

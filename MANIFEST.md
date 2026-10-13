@@ -316,6 +316,11 @@ The CID is kept as `["i", "gcid:<cid>"]` (our namespace, not NIP-73); the Google
 it, so a page created without OSM is filled from OSM once a post picks the OSM place with the same
 link. Short share links (`maps.app.goo.gl`) only Google can open: the author pastes the full link.
 
+With an app's Google Maps Embed API key (`configureVenuePlugin({ googleMapsEmbedKey })`, free and
+unlimited; not a manifest key, since manifests are public), venues with a Google link show Google's
+place card in the venue view: name, address, rating and review count, rendered by Google in an
+iframe that loads when opened. Nothing from it is read or stored.
+
 ### Location levels
 
 A `venue` field with `metadata.levels` can stand for a country, a city or an exact place, e.g. a

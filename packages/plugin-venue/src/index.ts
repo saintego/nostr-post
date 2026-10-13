@@ -20,6 +20,7 @@ export {
 } from './core';
 
 export { geohashTags, resultLevel, type VenueLevel, venueLevels } from './levels';
+export { configureVenuePlugin, googleEmbedUrl, type VenuePluginSettings } from './googleEmbed';
 export { fetchOsmElement, type OsmElement } from './osm';
 export {
   OSM_COPYRIGHT_URL,

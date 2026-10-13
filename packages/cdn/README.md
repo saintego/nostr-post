@@ -134,6 +134,9 @@ The bundle re-exports utilities for advanced usage:
 **Venues and the venue hub**
 
 - `searchNominatim`, `fetchOsmElement`, `findVenueEntity`, `syncVenueEntity`
+- `configureVenuePlugin({ googleMapsEmbedKey })`: the app's Google Maps Embed API key (free, restrict it to
+  your domain); venues with a Google link then show Google's place card (name, address, rating), loaded
+  when opened, nothing stored. Keep keys out of manifests: they're public on Nostr
 
 **Manifest helpers (preload & cache)**
 

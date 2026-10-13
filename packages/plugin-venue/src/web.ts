@@ -43,3 +43,6 @@ registerEntityCreator({
 export { NpVenueInput } from './web/input';
 export { NpVenueView } from './web/view';
 export { venuePlugin } from './core';
+
+// App-wide settings, e.g. the Google Maps Embed API key for the place card
+export { configureVenuePlugin, type VenuePluginSettings } from './googleEmbed';

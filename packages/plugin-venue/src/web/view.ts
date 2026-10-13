@@ -15,6 +15,7 @@ import { type EntityManifestRef, getEntityManifest, resolveEntityManifest } from
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { type VenueData, googleMapsPlaceUrl, osmUrl } from '../core';
+import { googleEmbedUrl } from '../googleEmbed';
 import { googleMapsCidUrl } from '../googleLink';
 import { loadVenueFromPage, needsPage } from '../venuePage';
 import { DEFAULT_VENUE_VIEW_MESSAGES, type VenueViewMessages } from './venueMessages';
@@ -50,6 +51,13 @@ export class NpVenueView extends LitElement {
       color: #166534;
       font-weight: 500;
       margin-bottom: 0.375rem;
+    }
+
+    .google-card {
+      width: 100%;
+      height: 18rem;
+      border: 0;
+      border-radius: 0.375rem;
     }
 
     .venue-links {
@@ -141,6 +149,28 @@ export class NpVenueView extends LitElement {
 
       ${this.renderVenueLinks(v)}
       ${this.renderWikiPage(v)}
+      ${this._renderGoogleCard(v)}
+    `;
+  }
+
+  /** Google's place card (Maps Embed API, the app's key); the iframe loads only when opened */
+  @state() private _googleOpen = false;
+
+  private _renderGoogleCard(v: VenueData) {
+    const url = googleEmbedUrl(v);
+    if (!url) return nothing;
+    return html`
+      <details class="venue-wiki" @toggle=${(e: Event) => {
+        this._googleOpen = (e.target as HTMLDetailsElement).open;
+      }}>
+        <summary>${this.m.googleCard}</summary>
+        ${
+          this._googleOpen
+            ? html`<iframe class="google-card" src=${url} title=${this.m.googleCard} loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>`
+            : nothing
+        }
+      </details>
     `;
   }
 
