@@ -28,7 +28,7 @@ import {
 // Ensure the geo input web component is registered
 import '@nostr-post/plugin-geo/web';
 import { type GoogleMapsLink, parseGoogleMapsUrl } from '../googleLink';
-import { googleLinkArea, searchGoogleLink, venueAtPoint } from '../googleSearch';
+import { googleLinkFocus, searchGoogleLink, venueAtPoint } from '../googleSearch';
 import { type VenueLevel, resultLevel, venueLevels } from '../levels';
 import { loadVenueFromPage, needsPage } from '../venuePage';
 import { venueInputStyles } from './inputStyles';
@@ -348,10 +348,11 @@ export class NpVenueInput extends LitElement {
     `;
   }
 
-  /** The map: the venue's point, or a pasted Google link's area for the author to click */
+  /** The map: the venue's point, or zoomed to a pasted Google link's point for the author to click */
   private _renderMap() {
     return html`<np-geo-input
-      .value=${this.value?.geohash ?? googleLinkArea(this._googleLink)}
+      .value=${this.value?.geohash ?? null}
+      .focusPoint=${googleLinkFocus(this._googleLink)}
       .field=${this.field}
       .hideSearch=${true}
       @np-value-changed=${this.onGeoValueChanged}

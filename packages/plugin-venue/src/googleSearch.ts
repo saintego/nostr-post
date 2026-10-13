@@ -27,11 +27,11 @@ export async function searchGoogleLink(
 }
 
 /**
- * Where the map opens for the author to set the place: the link's area as a
- * coarse geohash (~1 km), not its point; only the author's click is stored
+ * Where the map zooms for the author to set the place: the link's point,
+ * shown without a marker; only the author's click is stored
  */
-export const googleLinkArea = (link: GoogleMapsLink | undefined): string | null =>
-  link?.lat !== undefined && link.lon !== undefined ? encodeGeohash(link.lat, link.lon, 5) : null;
+export const googleLinkFocus = (link: GoogleMapsLink | undefined): string | null =>
+  link?.lat !== undefined && link.lon !== undefined ? encodeGeohash(link.lat, link.lon, 9) : null;
 
 /** A venue OSM doesn't have: the author's point, OSM's address there, the link's name and CID */
 export async function venueAtPoint(

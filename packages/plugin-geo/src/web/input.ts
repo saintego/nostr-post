@@ -14,9 +14,10 @@
 
 import type { PostField } from '@nostr-post/plugins/types';
 import L from 'leaflet';
-import { LitElement, css, html, nothing } from 'lit';
+import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { type GeoCoordinates, type GeoPluginConfig, decodeGeohash, encodeGeohash } from '../core';
+import { geoInputStyles } from './inputStyles';
 
 // Fix Leaflet default marker icons (broken by bundlers)
 // biome-ignore lint/performance/noDelete: Leaflet internals require delete
@@ -35,185 +36,7 @@ interface NominatimResult {
 
 @customElement('np-geo-input')
 export class NpGeoInput extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-    }
-
-    .container {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    /* Search row */
-    .search-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .search-input {
-      flex: 1;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    .search-input:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
-    }
-
-    .btn {
-      padding: 0.5rem 0.75rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.15s;
-    }
-
-    .btn-primary {
-      background: #6366f1;
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: #4f46e5;
-    }
-
-    .btn-primary:disabled {
-      background: #a5b4fc;
-      cursor: not-allowed;
-    }
-
-    .btn-secondary {
-      background: #f3f4f6;
-      color: #374151;
-      border: 1px solid #d1d5db;
-    }
-
-    .btn-secondary:hover {
-      background: #e5e7eb;
-    }
-
-    /* Search results dropdown */
-    .search-results {
-      position: relative;
-    }
-
-    .results-list {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: white;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      max-height: 200px;
-      overflow-y: auto;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
-
-    .result-item {
-      padding: 0.5rem 0.75rem;
-      cursor: pointer;
-      font-size: 0.8125rem;
-      border-bottom: 1px solid #f3f4f6;
-      line-height: 1.4;
-    }
-
-    .result-item:last-child {
-      border-bottom: none;
-    }
-
-    .result-item:hover {
-      background: #f0f0ff;
-    }
-
-    /* Map */
-    .map-wrapper {
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      overflow: hidden;
-      height: 300px;
-      position: relative;
-    }
-
-    .map-wrapper .map-inner {
-      height: 100%;
-      width: 100%;
-    }
-
-    /* Actions row */
-    .actions-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    /* Coordinate inputs */
-    .coords-row {
-      display: flex;
-      gap: 1rem;
-    }
-
-    .coord-field {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-    }
-
-    .coord-label {
-      font-size: 0.75rem;
-      font-weight: 600;
-      color: #6b7280;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .coord-input {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      font-family: monospace;
-      outline: none;
-      transition: border-color 0.15s;
-      width: 100%;
-      box-sizing: border-box;
-    }
-
-    .coord-input:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
-    }
-
-    .hint {
-      font-size: 0.75rem;
-      color: #9ca3af;
-      text-align: center;
-    }
-
-    .geohash-display {
-      font-family: monospace;
-      font-size: 0.875rem;
-      color: #374151;
-      background: #f3f4f6;
-      padding: 0.375rem 0.75rem;
-      border-radius: 6px;
-      text-align: center;
-      letter-spacing: 0.05em;
-    }
-  `;
+  static override styles = geoInputStyles;
 
   /** Geohash string (external value) */
   @property({ type: String })
@@ -221,6 +44,13 @@ export class NpGeoInput extends LitElement {
 
   @property({ type: Object })
   field: PostField | null = null;
+
+  /**
+   * A geohash to look at while there's no value: the map zooms to it without a
+   * marker, so the point is still the user's to set (e.g. a pasted link's place)
+   */
+  @property({ attribute: false })
+  focusPoint: string | null = null;
 
   /** When true, hides the built-in search bar (useful when wrapped by another component) */
   @property({ type: Boolean })
@@ -261,6 +91,10 @@ export class NpGeoInput extends LitElement {
     if (!this._mapInitialized) {
       this.initMap();
     }
+    if (changed.has('focusPoint') && this.map && this.focusPoint && !this.value) {
+      const { lat, lon } = decodeGeohash(this.focusPoint);
+      this.map.setView([lat, lon], 18);
+    }
     // If value changed externally, decode and update marker
     if (changed.has('value') && this.map && this.value) {
       this.coords = decodeGeohash(this.value);
@@ -278,9 +112,11 @@ export class NpGeoInput extends LitElement {
     if (this.value) {
       this.coords = decodeGeohash(this.value);
     }
-    const defaultLat = this.coords?.lat ?? 48.8566;
-    const defaultLon = this.coords?.lon ?? 2.3522;
-    const zoom = this.config.defaultZoom ?? (this.coords ? 13 : 3);
+    // No value: the focus point (street level, no marker), else a world view
+    const focus = !this.coords && this.focusPoint ? decodeGeohash(this.focusPoint) : null;
+    const defaultLat = this.coords?.lat ?? focus?.lat ?? 48.8566;
+    const defaultLon = this.coords?.lon ?? focus?.lon ?? 2.3522;
+    const zoom = focus ? 18 : (this.config.defaultZoom ?? (this.coords ? 13 : 3));
 
     this.map = L.map(mapEl, {
       attributionControl: true,
