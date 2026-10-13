@@ -140,7 +140,7 @@ styles, mapped to `t` for posts and wiki entities; the beer entity extends it an
 | `reference`          | `string` | `urlDedupeMode` (`'normalized'` \| `'exact'` \| `'origin-path'`)                                                                                                                                                               |
 | `identifier`         | `string` | `prefix` (NIP-73 namespace, e.g. `isbn`)                                                                                                                                                                                       |
 | `geo`                | `geo`    | `precision` (geohash length, default 6), `defaultZoom`, `allowSearch`                                                                                                                                                          |
-| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts))                                                                                  |
+| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts)); `multiple` (several venues, a list)                                                                                  |
 | `list`               | `string` | `relays`, `allowCreate`, `allowDelete`, `defaultList`, `multiple` (default `true`)                                                                                                                                             |
 | `wiki-entity-picker` | `ref`    | `entityManifest`: the entity type ([reference](#referencing-entity-manifests)), which limits search to it and enables "+ Create"; `relays`; `minSearchLength` (2); `emitExtraTags` (`false`: don't copy the entity's `i` tags); `multiple` (pick several; the value is a list) |
 
@@ -222,6 +222,10 @@ an `a` tag and to the infobox:
   role rows claim, so a brewery's own location and its taprooms don't mix.
 - A picker on venue pages (an entity manifest with `sources.osm` fields) creates missing ones from
   OpenStreetMap: "+ Create" searches OSM and runs the [venue hub](#venue-hub).
+- Venues in a role can also be a `venue` field with `linkOnly`, `multiple` and `wikiEntity` mapped to an
+  `a` tag and the infobox (the brewery's `taprooms`): the author searches OSM for each venue, the venue
+  hub creates or links their pages when publishing, and the row lists them. The wiki composer builds
+  the page again after its hooks, so the row names the linked pages.
 
 ### References with a role in posts
 

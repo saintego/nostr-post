@@ -1,6 +1,6 @@
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
-import { runBeforePublish } from '@nostr-post/plugins/publish';
+import { runPublishHooks } from '@nostr-post/plugins/publish';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { getPublicKey, getPublishRelays, publishToRelays, signEvent } from '@nostr-post/signer';
 import { LitElement, html, nothing } from 'lit';
@@ -214,14 +214,12 @@ export class NostrWikiComposer extends LitElement {
   }
 
   /** The event to publish and its d-tag: the edited entity's, a distinguished new one, or the template's */
-  private _buildEvent(manifest: NostrPostManifest) {
+  private _buildEvent(manifest: NostrPostManifest, formData = this._formData) {
     const titleFieldId = this._titleFieldId();
-    const titleValue = titleFieldId
-      ? (this._formData[titleFieldId] as string | undefined)
-      : undefined;
+    const titleValue = titleFieldId ? (formData[titleFieldId] as string | undefined) : undefined;
     const qualified = !!this._activeQualifier;
     const explicitDTag = this.entityId?.trim() || (qualified ? this._previewDTag : undefined);
-    const unsignedEvent = manifestToWikiEvent(manifest, this._formData, {
+    const unsignedEvent = manifestToWikiEvent(manifest, formData, {
       dTag: explicitDTag,
       title: qualified ? this._previewTitle : undefined,
     });
@@ -243,16 +241,17 @@ export class NostrWikiComposer extends LitElement {
     this._error = undefined;
 
     try {
-      const { unsignedEvent, dTag } = this._buildEvent(this.manifest);
+      let { unsignedEvent, dTag } = this._buildEvent(this.manifest);
 
       if (this.autoPublish) {
-        // Plugin hooks first, e.g. the venue field creating the venue's wiki page and linking it
-        const hookTags = await runBeforePublish(
-          this.manifest,
-          this._formData,
-          await getPublicKey()
+        // Plugin hooks first (e.g. venue fields creating their venue pages), then the page
+        // again with what they linked (role rows name the linked pages)
+        const hooks = await runPublishHooks(this.manifest, this._formData, await getPublicKey());
+        ({ unsignedEvent, dTag } = this._buildEvent(this.manifest, hooks.formData));
+        unsignedEvent.tags = withHookTags(
+          unsignedEvent.tags as [string, ...string[]][],
+          hooks.tags
         );
-        unsignedEvent.tags = withHookTags(unsignedEvent.tags as [string, ...string[]][], hookTags);
         // Wiki relays (where entities are looked up) plus the author's own relays
         const signedEvent = await signEvent(unsignedEvent);
         const relays = await getPublishRelays(signedEvent.pubkey, this.relays);

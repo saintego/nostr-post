@@ -107,7 +107,7 @@ export class NpVenueInput extends LitElement {
   override async updated(changedProperties: Map<string, unknown>) {
     super.updated(changedProperties);
 
-    if (changedProperties.has('value') && this.value) {
+    if (changedProperties.has('value') && this.value && !this.config.multiple) {
       const { osmType, osmId, geohash } = this.value;
       const currentOsmId = osmId ? `${osmType}:${osmId}` : null;
 
@@ -270,6 +270,10 @@ export class NpVenueInput extends LitElement {
   // ── Render ─────────────────────────────────────────────────────
 
   render() {
+    // Several venues (`metadata.multiple`): the list adds them through this input's search
+    if (this.config.multiple) {
+      return html`<np-venue-list .value=${this.value ?? []} .field=${this.field}></np-venue-list>`;
+    }
     const hasVenueMeta = this.value?.name || this.value?.osmId;
 
     return html`

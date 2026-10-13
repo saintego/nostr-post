@@ -85,3 +85,20 @@ describe('location levels', () => {
     expect(venuePlugin.extraTags?.(pub, field)).toContainEqual(['i', 'iso3166:CZ']);
   });
 });
+
+describe('venue validation', () => {
+  const field = {
+    id: 'v',
+    type: 'geo' as const,
+    uiPlugin: 'venue',
+    mapTo: { kind: 1, target: 'tag' as const, tagName: 'g' },
+  };
+  it('accepts an empty optional field and checks each venue of a list', () => {
+    expect(venuePlugin.validate?.(undefined, field).success).toBe(true);
+    expect(venuePlugin.validate?.([], field).success).toBe(true);
+    expect(venuePlugin.validate?.(undefined, { ...field, required: true }).success).toBe(false);
+    expect(
+      venuePlugin.validate?.([{ geohash: 'u2fk', lat: 0, lon: 0 }, { lat: 0 }], field).success
+    ).toBe(false);
+  });
+});

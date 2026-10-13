@@ -39,7 +39,8 @@ type Plan =
 export class NpVenueWikiPublish extends LitElement {
   static styles = wikiPublishStyles;
 
-  @property({ attribute: false }) value: VenueData | null = null;
+  /** One venue, or a list (`metadata.multiple`): then one panel per venue */
+  @property({ attribute: false }) value: VenueData | VenueData[] | null = null;
   @property({ attribute: false }) field: PostField | null = null;
   /** Overrides for the user-facing text */
   @property({ attribute: false }) messages?: Partial<VenueWikiMessages>;
@@ -54,6 +55,11 @@ export class NpVenueWikiPublish extends LitElement {
 
   private get _m(): VenueWikiMessages {
     return { ...DEFAULT_VENUE_WIKI_MESSAGES, ...this.messages };
+  }
+
+  /** The venue, when the value is one (a list renders a panel per venue) */
+  private get _venue(): VenueData | null {
+    return Array.isArray(this.value) ? null : this.value;
   }
 
   private get _manifest(): NostrPostManifest | undefined {
@@ -74,15 +80,15 @@ export class NpVenueWikiPublish extends LitElement {
 
   private get _enabled(): boolean {
     // Only an exact place gets a venue wiki page
-    const isPlace = !this.value?.level || this.value.level === 'place';
-    return !!this._manifest && !!this.value && isPlace && venueIdentifiers(this.value).length > 0;
+    const isPlace = !this._venue?.level || this._venue.level === 'place';
+    return !!this._manifest && !!this._venue && isPlace && venueIdentifiers(this._venue).length > 0;
   }
 
   /** The new page's slug: as edited by the user, else generated from the template */
   private get _dTag(): string | undefined {
     const manifest = this._manifest;
-    if (this._plan.kind !== 'create' || !manifest || !this.value) return undefined;
-    return venueDTag(manifest, this._plan.data, this.value.wikiSlug);
+    if (this._plan.kind !== 'create' || !manifest || !this._venue) return undefined;
+    return venueDTag(manifest, this._plan.data, this._venue.wikiSlug);
   }
 
   override disconnectedCallback(): void {
@@ -91,8 +97,9 @@ export class NpVenueWikiPublish extends LitElement {
   }
 
   override updated(): void {
+    if (Array.isArray(this.value)) return;
     this._resolveManifest();
-    const key = this._enabled && this.value ? venueIdentifiers(this.value).join(',') : '';
+    const key = this._enabled && this._venue ? venueIdentifiers(this._venue).join(',') : '';
     if (key && key !== this._plannedKey) {
       this._plannedKey = key;
       void this._loadPlan();
@@ -106,7 +113,7 @@ export class NpVenueWikiPublish extends LitElement {
 
   private async _loadPlan(): Promise<void> {
     const planId = ++this._planId;
-    const venue = this.value;
+    const venue = this._venue;
     const manifest = this._manifest;
     if (!venue || !manifest) return;
     this._plan = { kind: 'checking' };
@@ -139,10 +146,10 @@ export class NpVenueWikiPublish extends LitElement {
   }
 
   private _emit(change: Partial<VenueData>): void {
-    if (!this.value) return;
+    if (!this._venue) return;
     this.dispatchEvent(
       new CustomEvent('np-value-changed', {
-        detail: { value: { ...this.value, ...change } },
+        detail: { value: { ...this._venue, ...change } },
         bubbles: true,
         composed: true,
       })
@@ -162,7 +169,7 @@ export class NpVenueWikiPublish extends LitElement {
   private _renderSlug() {
     const dTag = this._dTag;
     const manifest = this._manifest;
-    if (!dTag || !manifest || !this.value) return nothing;
+    if (!dTag || !manifest || !this._venue) return nothing;
     const m = this._m;
     const affixes = entityTypeAffixes(manifest);
     const status = {
@@ -178,7 +185,7 @@ export class NpVenueWikiPublish extends LitElement {
           ${affixes.prefix ? html`<code>${affixes.prefix}</code>` : nothing}
           <input
             type="text"
-            .value=${this.value.wikiSlug ?? slugBody(dTag, affixes)}
+            .value=${this._venue.wikiSlug ?? slugBody(dTag, affixes)}
             @input=${(e: InputEvent) => this._emit({ wikiSlug: (e.target as HTMLInputElement).value })}
           />
           ${affixes.suffix ? html`<code>${affixes.suffix}</code>` : nothing}
@@ -191,10 +198,10 @@ export class NpVenueWikiPublish extends LitElement {
 
   /** Only when another venue uses the slug: details to append to it */
   private _renderSuggestions(body: string) {
-    if (!this.value) return nothing;
+    if (!this._venue) return nothing;
     return html`
       <div class="qualifier">
-        ${venueQualifierSuggestions(this.value).map(
+        ${venueQualifierSuggestions(this._venue).map(
           (text) =>
             html`<button type="button" @click=${() => this._emit({ wikiSlug: `${body}-${normalizeDTag(text)}` })}>
               + ${text}
@@ -204,10 +211,33 @@ export class NpVenueWikiPublish extends LitElement {
     `;
   }
 
+  /** A panel per venue of a list; each one's changes (opt-out, slug) go back into the list */
+  private _renderList(venues: VenueData[]) {
+    return venues.map(
+      (venue, index) => html`<np-venue-wiki-publish
+        .value=${venue}
+        .field=${this.field}
+        .messages=${this.messages}
+        @np-value-changed=${(e: CustomEvent) => {
+          e.stopPropagation();
+          const value = venues.map((v, i) => (i === index ? e.detail.value : v));
+          this.dispatchEvent(
+            new CustomEvent('np-value-changed', {
+              detail: { value },
+              bubbles: true,
+              composed: true,
+            })
+          );
+        }}
+      ></np-venue-wiki-publish>`
+    );
+  }
+
   override render() {
-    if (!this._enabled || !this.value) return nothing;
+    if (Array.isArray(this.value)) return this._renderList(this.value);
+    if (!this._enabled || !this._venue) return nothing;
     const m = this._m;
-    const checked = this.value.syncWiki !== false;
+    const checked = this._venue.syncWiki !== false;
     return html`
       <div class="wiki-publish">
         <label class="sync">

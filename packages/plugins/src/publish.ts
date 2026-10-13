@@ -18,6 +18,13 @@ const hasValue = (value: unknown): boolean => value !== undefined && value !== n
 
 type Tag = [string, ...string[]];
 
+/** Maps items one after another (hooks may publish; later ones see earlier results) */
+const sequential = async <T, R>(items: T[], fn: (item: T) => Promise<R>): Promise<R[]> => {
+  const results: R[] = [];
+  for (const item of items) results.push(await fn(item));
+  return results;
+};
+
 /** The wiki page (`30818:<pubkey>:<d-tag>`) a hook linked, from its `a` tag */
 const linkedPage = (tags: Tag[]): { pubkey: string; dTag: string } | undefined => {
   const match = tags.find((t) => t[0] === 'a')?.[1]?.match(/^30818:([^:]+):(.+)$/);
@@ -42,19 +49,23 @@ export const runPublishHooks = async (
   // The same value in two fields (e.g. one venue as "tasted at" and "purchased at") runs the
   // hook once: a second run could try to create the page the first one just published
   const done = new Map<string, Tag[]>();
+  /** Runs the hook for one value (once per identical value) and links it to its page */
+  const runFor = async (plugin: NostrUIPlugin, field: PostField, value: unknown) => {
+    const key = `${field.uiPlugin}\u0000${JSON.stringify(value)}`;
+    const added = done.get(key) ?? (await plugin.beforePublish?.(value, field, { pubkey })) ?? [];
+    done.set(key, added);
+    tags.push(...added);
+    const page = linkedPage(added);
+    return page && value && typeof value === 'object' ? { ...value, wikiEntity: page } : value;
+  };
   for (const field of manifest.fields) {
     const value = formData[field.id];
     const plugin = field.uiPlugin ? getPlugin(field.uiPlugin) : undefined;
     if (!hasValue(value) || !plugin?.beforePublish) continue;
-    const key = `${field.uiPlugin}\u0000${JSON.stringify(value)}`;
-    const added =
-      done.get(key) ?? (await plugin.beforePublish(value, field as PostField, { pubkey }));
-    done.set(key, added);
-    tags.push(...added);
-    const page = linkedPage(added);
-    if (page && typeof value === 'object' && !Array.isArray(value)) {
-      linked[field.id] = { ...value, wikiEntity: page };
-    }
+    // A list (e.g. several venues) runs the hook per item, each linked to its own page
+    linked[field.id] = Array.isArray(value)
+      ? await sequential(value, (item) => runFor(plugin, field as PostField, item))
+      : await runFor(plugin, field as PostField, value);
   }
   return { tags, formData: linked };
 };

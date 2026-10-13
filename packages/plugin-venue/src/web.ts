@@ -19,6 +19,7 @@ import './web/input';
 import './web/view';
 import './web/wikiPublish';
 import './web/entityCreate';
+import './web/venueList';
 
 // Register the plugin with its web component tag names
 pluginRegistry.register({

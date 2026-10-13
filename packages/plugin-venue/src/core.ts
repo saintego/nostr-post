@@ -42,6 +42,8 @@ export interface VenuePluginConfig {
    * beer was tasted, so several venues in one post don't mix. Needs `wikiEntity`.
    */
   linkOnly?: boolean;
+  /** Several venues (the value is a list), e.g. a brewery's taprooms; usually with `linkOnly` */
+  multiple?: boolean;
 }
 
 const isLinkOnly = (field?: PostField): boolean => field?.metadata?.linkOnly === true;
@@ -252,6 +254,21 @@ export const venuePlugin: NostrUIPlugin = {
   type: 'geo',
 
   validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
+    // An empty field is fine unless it's required
+    const empty =
+      value === undefined || value === null || (Array.isArray(value) && value.length === 0);
+    if (empty && !field.required) return { success: true, data: undefined };
+    // `metadata.multiple`: a list of venues, each checked
+    if (Array.isArray(value)) {
+      const invalid = value
+        .map((v) => venuePlugin.validate?.(v, field))
+        .find((r) => r && !r.success);
+      return invalid ?? { success: true, data: undefined };
+    }
+    // A link-only venue read back from a post or page: only its wiki page
+    if (isLinkOnly(field) && (value as VenueData | null)?.wikiEntity) {
+      return { success: true, data: undefined };
+    }
     if (!value || typeof value !== 'object') {
       return {
         success: false,
@@ -279,9 +296,13 @@ export const venuePlugin: NostrUIPlugin = {
   },
 
   formatValue: (value: unknown): string => {
+    if (Array.isArray(value)) return value.map((v) => venuePlugin.formatValue?.(v)).join(', ');
     if (!value || typeof value !== 'object') return 'Unknown venue';
     const venue = value as VenueData;
     if (venue.name) return `📍 ${venue.name}`;
+    // A link-only venue read back: its wiki page
+    if (venue.wikiEntity) return `📍 ${venue.wikiEntity.dTag}`;
+    if (typeof venue.lat !== 'number') return 'Unknown venue';
     return `📍 ${venue.lat.toFixed(5)}, ${venue.lon.toFixed(5)}`;
   },
 

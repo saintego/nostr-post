@@ -52,6 +52,15 @@ export function VenueSettings({ field, onMetadataChange }: VenueSettingsProps) {
         />
         Link only
       </label>
+      <label style={{ ...styles.label, display: 'flex', gap: '0.25rem' }}>
+        <input
+          style={styles.checkbox}
+          type="checkbox"
+          checked={field.metadata?.multiple === true}
+          onChange={(e) => onMetadataChange('multiple', e.target.checked || undefined)}
+        />
+        Several venues
+      </label>
       <div style={styles.helperText}>
         Only the venue page's link and its role (needs a wiki page manifest), no venue tags: for
         several venues in one post

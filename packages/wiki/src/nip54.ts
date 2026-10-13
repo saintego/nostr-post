@@ -246,7 +246,7 @@ function addTagTarget(
  */
 function addTableTarget(parts: WikiEventParts, field: PostField, value: unknown): void {
   // References: one row of wikilinks (see roleRefs)
-  if (field.type === 'ref') {
+  if (field.type === 'ref' || isRoleField(field)) {
     const row = roleRowText(value);
     if (row) parts.tableRows.push([field.id, row]);
     return;

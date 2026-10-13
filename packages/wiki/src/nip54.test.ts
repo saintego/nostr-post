@@ -262,7 +262,7 @@ describe('references with a role', () => {
       'pivovar-x-brewery',
       'brewery-y-brewery',
     ]);
-    expect(data.brewed_at).toEqual([
+    expect(data.brewed_at).toMatchObject([
       {
         dTag: 'pivovar-x-brewery',
         resolvedPubkey: 'pk1',

@@ -161,8 +161,10 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       },
       {
         id: 'brewing_sites',
-        type: 'ref',
-        uiPlugin: 'wiki-entity-picker',
+        type: 'geo',
+        uiPlugin: 'venue',
+        // Link only: each venue's page as an `a` tag and in an infobox row naming the role,
+        // no venue tags (the brewery's own location has those)
         mapTo: [
           { kind: 30818, target: 'tag', tagName: 'a' },
           { kind: 30818, target: 'table' },
@@ -170,16 +172,19 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         metadata: {
           label: 'Other brewing sites',
           description:
-            'Further places where it brews, besides its location: pick their venue pages, or create them from OpenStreetMap',
-          entityManifest: 'venue-entity-v1',
-          emitExtraTags: false,
+            'Further places where it brews, besides its location: search OpenStreetMap; their venue pages are created or linked',
+          providers: ['osm'],
+          linkOnly: true,
           multiple: true,
+          wikiEntity: 'venue-entity-v1',
         },
       },
       {
         id: 'taprooms',
-        type: 'ref',
-        uiPlugin: 'wiki-entity-picker',
+        type: 'geo',
+        uiPlugin: 'venue',
+        // Link only: each venue's page as an `a` tag and in an infobox row naming the role,
+        // no venue tags (the brewery's own location has those)
         mapTo: [
           { kind: 30818, target: 'tag', tagName: 'a' },
           { kind: 30818, target: 'table' },
@@ -187,10 +192,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         metadata: {
           label: 'Taprooms',
           description:
-            'Its taprooms and bars: pick their venue pages, or create them from OpenStreetMap',
-          entityManifest: 'venue-entity-v1',
-          emitExtraTags: false,
+            'Its taprooms and bars: search OpenStreetMap; their venue pages are created or linked',
+          providers: ['osm'],
+          linkOnly: true,
           multiple: true,
+          wikiEntity: 'venue-entity-v1',
         },
       },
       {

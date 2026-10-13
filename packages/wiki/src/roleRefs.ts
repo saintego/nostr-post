@@ -19,6 +19,9 @@ export interface EntityRef {
   resolvedPubkey: string;
   externalIds: string[];
   displayName?: string;
+  /** Read back from a row: the same page, as a link-only venue field holds it */
+  wikiEntity?: { pubkey: string; dTag: string };
+  name?: string;
 }
 
 /** A wikilink in an infobox cell: its target d-tag and its text */
@@ -30,9 +33,11 @@ export interface WikiLink {
 const wikiTargets = (field: PostField): NostrTarget[] =>
   [field.mapTo].flat().filter((t) => t.kind === WIKI_KIND);
 
-/** A `ref` field mapped to an `a` tag and to an infobox row: its row names the role */
+/**
+ * A field mapped to an `a` tag and to an infobox row: its row names the role.
+ * A `ref` field (picked entities) or a link-only venue field (venue pages).
+ */
 export const isRoleField = (field: PostField): boolean => {
-  if (field.type !== 'ref') return false;
   const targets = wikiTargets(field);
   return (
     targets.some((t) => t.target === 'tag' && t.tagName === 'a') &&
@@ -40,11 +45,23 @@ export const isRoleField = (field: PostField): boolean => {
   );
 };
 
-/** The referenced entities in a field value (one entity or a list) */
+type VenueLike = { name?: string; wikiEntity?: { pubkey?: string; dTag?: string } };
+
+/** A venue with its wiki page, as a referenced entity named by the place */
+const venueRef = (v: VenueLike): EntityRef[] => {
+  const page = v.wikiEntity;
+  if (typeof page?.dTag !== 'string' || typeof page.pubkey !== 'string') return [];
+  const displayName = v.name?.split(',')[0]?.trim() || undefined;
+  return [{ dTag: page.dTag, resolvedPubkey: page.pubkey, externalIds: [], displayName }];
+};
+
+/** The referenced entities in a field value: picked entities or venues with their pages, one or a list */
 export const entityRefs = (value: unknown): EntityRef[] =>
-  (Array.isArray(value) ? value : [value]).filter(
-    (v): v is EntityRef => !!v && typeof v === 'object' && typeof (v as EntityRef).dTag === 'string'
-  );
+  (Array.isArray(value) ? value : [value]).flatMap((v): EntityRef[] => {
+    if (!v || typeof v !== 'object') return [];
+    if (typeof (v as EntityRef).dTag === 'string') return [v as EntityRef];
+    return venueRef(v as VenueLike);
+  });
 
 const escapeLinkText = (text: string): string => text.replace(/[[\]\\]/g, (c) => `\\${c}`);
 
@@ -83,6 +100,9 @@ export function refsFromLinks(links: WikiLink[], tags: string[][]): EntityRef[] 
             resolvedPubkey: address.pubkey,
             externalIds: [],
             displayName: link.text,
+            // Also readable as a link-only venue (its wiki page)
+            wikiEntity: { pubkey: address.pubkey, dTag: link.target },
+            name: link.text,
           },
         ]
       : [];
