@@ -245,4 +245,14 @@ export const viewStyle = css`
     border-radius: 0.375rem;
     background: var(--nl-card-bg, #f9fafb);
   }
+
+  /* A referenced entity in a role (e.g. "Tasted at"), its wiki page opens on demand */
+  .post-role {
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+  }
+  .post-role summary {
+    cursor: pointer;
+    color: var(--nl-muted, #4b5563);
+  }
 `;

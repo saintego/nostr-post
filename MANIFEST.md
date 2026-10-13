@@ -223,6 +223,35 @@ an `a` tag and to the infobox:
 - A picker on venue pages (an entity manifest with `sources.osm` fields) creates missing ones from
   OpenStreetMap: "+ Create" searches OSM and runs the [venue hub](#venue-hub).
 
+### References with a role in posts
+
+Posts reference entities in roles too, e.g. a beer review's beer, where it was tasted and where it
+was bought. A `ref` field mapped to an `a` tag and to the content:
+
+```typescript
+{
+  id: "tasting_at",
+  type: "ref",
+  uiPlugin: "wiki-entity-picker",
+  mapTo: [
+    { kind: 1, target: "tag", tagName: "a" },
+    { kind: 1, target: "content" },
+    { kind: 30078, target: "tag", tagName: "a" },
+    { kind: 30078, target: "content", path: "tasting_at" },
+  ],
+  metadata: { label: "Tasted at", entityManifest: "venue-entity-v1" },
+}
+```
+
+- Kind 1 (plain text): after the text, a NIP-27 mention line per entity, `Tasted at: nostr:naddr1…`,
+  which other clients show as a link. Reading matches the line's label to the field (or, if the
+  label changed, the next role field in order); the view shows the text without these lines and a
+  row per role that opens the entity's page.
+- NIP-78 (JSON): the entity's address under the field's key, `{"tasting_at": "30818:…"}`.
+- Every entity is also a plain `a` tag; a reference field without a content mapping (the reviewed
+  beer) gets the `a` tags no role claims.
+- A field's mappings on the kind being published all apply (here the `a` tag and the content).
+
 ### Referencing entity manifests
 
 `entityManifest` (picker) and `wikiEntity` (venue) take an entity manifest reference:

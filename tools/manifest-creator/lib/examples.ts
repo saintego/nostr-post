@@ -378,6 +378,45 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         metadata: { label: 'Review', placeholder: 'Your tasting notes...' },
       },
       {
+        id: 'tasting_at',
+        type: 'ref',
+        uiPlugin: 'wiki-entity-picker',
+        // Kind 1: an `a` tag plus a mention line "Tasted at: nostr:naddr1…" (keeps the role);
+        // NIP-78: an `a` tag plus the address under this key in the content
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'a' },
+          { kind: 1, target: 'content' },
+          { kind: 30078, target: 'tag', tagName: 'a' },
+          { kind: 30078, target: 'content', path: 'tasting_at' },
+        ],
+        metadata: {
+          label: 'Tasted at',
+          description: "Where you had it: pick the venue's page, or create it from OpenStreetMap",
+          entityManifest: 'venue-entity-v1',
+          emitExtraTags: false,
+        },
+      },
+      {
+        id: 'purchase_at',
+        type: 'ref',
+        uiPlugin: 'wiki-entity-picker',
+        // Kind 1: an `a` tag plus a mention line "Purchased at: nostr:naddr1…" (keeps the role);
+        // NIP-78: an `a` tag plus the address under this key in the content
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'a' },
+          { kind: 1, target: 'content' },
+          { kind: 30078, target: 'tag', tagName: 'a' },
+          { kind: 30078, target: 'content', path: 'purchase_at' },
+        ],
+        metadata: {
+          label: 'Purchased at',
+          description:
+            "Where you bought it, if you did: pick the venue's page, or create it from OpenStreetMap",
+          entityManifest: 'venue-entity-v1',
+          emitExtraTags: false,
+        },
+      },
+      {
         id: 'tags',
         type: 'string',
         uiPlugin: 'hashtag',

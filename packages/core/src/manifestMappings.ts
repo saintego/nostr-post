@@ -93,12 +93,10 @@ export const getFieldsByKind = (
     );
     if (activeTargets.length === 0) continue;
 
-    const targetsForKind =
-      getFieldMapBehavior(field) === 'all-active'
-        ? activeTargets.filter((target) => target.kind === kind)
-        : activeTargets[0]?.kind === kind
-          ? [activeTargets[0]]
-          : [];
+    // first-active: the first active kind, with all its targets (e.g. an `a` tag and the content)
+    const writesKind =
+      getFieldMapBehavior(field) === 'all-active' || activeTargets[0]?.kind === kind;
+    const targetsForKind = writesKind ? activeTargets.filter((target) => target.kind === kind) : [];
 
     for (const target of targetsForKind) {
       resolved.push({

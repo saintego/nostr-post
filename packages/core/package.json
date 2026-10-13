@@ -42,6 +42,10 @@
       "types": "./dist/nip50.d.ts",
       "import": "./dist/nip50.js"
     },
+    "./postRoles": {
+      "types": "./dist/postRoles.d.ts",
+      "import": "./dist/postRoles.js"
+    },
     "./enumOptions": {
       "types": "./dist/enumOptions.d.ts",
       "import": "./dist/enumOptions.js"

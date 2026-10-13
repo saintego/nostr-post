@@ -35,6 +35,7 @@ import {
   renderManifestEventData,
 } from './viewLinked';
 import { DEFAULT_RAW_DATA_MESSAGES, type RawDataMessages, renderRawData } from './viewRawData';
+import { postRoleView } from './viewRoles';
 import { viewStyle } from './viewStyle';
 import { applyUpdateCommentsToEvent, renderUpdateComments } from './viewUpdates';
 
@@ -335,11 +336,9 @@ export class NostrPostView extends NostrPostElement {
       this.effectiveManifest,
       this.interactionEvents
     );
-    const kind = event.kind;
-    const created_at = event.created_at;
-    const tags = event.tags;
-    const content = event.content;
-    const pubkey = event.pubkey;
+    const { kind, created_at, tags, pubkey } = event;
+    // Role lines (`Tasted at: nostr:naddr1…`) show as rows, not in the text
+    const { text: content, rows: roleRows } = postRoleView(event, this.effectiveManifest);
     const showTechnicalMeta = Boolean(this.showKind || this.showTags);
     const manifestRenderedData = renderManifestEventData(event, this.effectiveManifest);
     const shouldUseManifestRendering =
@@ -380,7 +379,7 @@ export class NostrPostView extends NostrPostElement {
               : nothing
           }
           ${shouldUseManifestRendering ? manifestRenderedData : nothing}
-          ${shouldUseManifestRendering ? nothing : this.renderTagPlugins(tags)}
+          ${shouldUseManifestRendering ? nothing : this.renderTagPlugins(tags)} ${roleRows}
         </div>
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
