@@ -15,6 +15,7 @@ import { type EntityManifestRef, getEntityManifest, resolveEntityManifest } from
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { type VenueData, googleMapsPlaceUrl, osmUrl } from '../core';
+import { googleMapsCidUrl } from '../googleLink';
 import { loadVenueFromPage, needsPage } from '../venuePage';
 import { DEFAULT_VENUE_VIEW_MESSAGES, type VenueViewMessages } from './venueMessages';
 
@@ -172,10 +173,12 @@ export class NpVenueView extends LitElement {
   private renderVenueLinks(v: VenueData) {
     const osmType = v.osmType;
     const osmId = v.osmId;
-    const googlePlaceId = v.googlePlaceId;
+    // A Places ID, else the CID of a pasted Google Maps link
+    const googleUrl = v.googlePlaceId
+      ? googleMapsPlaceUrl(v.googlePlaceId)
+      : v.googleCid && googleMapsCidUrl(v.googleCid);
     const hasOsmLink = !!(osmType && osmId);
-    const hasGooglePlaceLink = !!googlePlaceId;
-    if (!hasOsmLink && !hasGooglePlaceLink) return nothing;
+    if (!hasOsmLink && !googleUrl) return nothing;
 
     return html`
       <div class="venue-links">
@@ -191,10 +194,10 @@ export class NpVenueView extends LitElement {
             : nothing
         }
         ${
-          hasGooglePlaceLink
+          googleUrl
             ? html`<a
               class="venue-link"
-              href="${googleMapsPlaceUrl(googlePlaceId)}"
+              href="${googleUrl}"
               target="_blank"
               rel="noopener"
               >${this.m.googleMaps}</a

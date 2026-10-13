@@ -58,6 +58,10 @@ export interface VenueInputMessages {
   searching: string;
   /** Badge on a search result */
   levelLabel: Record<VenueLevel, string>;
+  /** A short Google Maps share link: only Google could open it */
+  googleShortLink: string;
+  /** A pasted Google Maps link whose place isn't on OpenStreetMap */
+  googleNotOnOsm: (name: string | undefined) => string;
 }
 
 export const DEFAULT_VENUE_INPUT_MESSAGES: VenueInputMessages = {
@@ -68,6 +72,10 @@ export const DEFAULT_VENUE_INPUT_MESSAGES: VenueInputMessages = {
   search: '🔍 Search',
   searching: 'Searching…',
   levelLabel: { country: 'country', city: 'city', place: 'place' },
+  googleShortLink:
+    'Short links can only be opened by Google: open it, then paste the full link from the address bar.',
+  googleNotOnOsm: (name) =>
+    `${name ? `"${name}" isn't` : "This place isn't"} on OpenStreetMap yet: click its spot on the map to add it.`,
 };
 
 /** User-facing text of <np-venue-entity-create> (overridable via its `messages` property) */

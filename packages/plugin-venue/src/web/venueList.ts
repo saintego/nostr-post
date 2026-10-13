@@ -12,8 +12,11 @@ import type { VenueData } from '../core';
 import { venueInputStyles } from './inputStyles';
 
 /** A venue's identity, so the same place isn't listed twice */
-const venueKey = (v: VenueData): string =>
-  v.osmId ? `${v.osmType}:${v.osmId}` : (v.wikiEntity?.dTag ?? v.geohash);
+const venueKey = (v: VenueData): string => {
+  if (v.osmId) return `${v.osmType}:${v.osmId}`;
+  if (v.googleCid) return `gcid:${v.googleCid}`;
+  return v.wikiEntity?.dTag ?? v.geohash;
+};
 
 /** The place's own name, not OSM's full address */
 const shortName = (v: VenueData): string =>
@@ -50,11 +53,12 @@ export class NpVenueList extends LitElement {
     );
   }
 
-  /** A place picked in the search: add it (map clicks without a place are ignored) */
+  /** A place picked in the search, or a pasted Google place set on the map: add it */
   private _onPicked(e: CustomEvent): void {
     e.stopPropagation();
     const venue = e.detail.value as VenueData | null;
-    if (!venue?.osmId) return;
+    // A place from the search (OSM) or a pasted Google link set on the map; plain map clicks aren't
+    if (!venue?.osmId && !venue?.googleCid) return;
     const others = this.value.filter((v) => venueKey(v) !== venueKey(venue));
     this._emit([...others, venue]);
   }

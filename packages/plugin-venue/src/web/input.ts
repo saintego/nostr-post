@@ -27,6 +27,8 @@ import {
 
 // Ensure the geo input web component is registered
 import '@nostr-post/plugin-geo/web';
+import { type GoogleMapsLink, parseGoogleMapsUrl } from '../googleLink';
+import { googleLinkArea, searchGoogleLink, venueAtPoint } from '../googleSearch';
 import { type VenueLevel, resultLevel, venueLevels } from '../levels';
 import { loadVenueFromPage, needsPage } from '../venuePage';
 import { venueInputStyles } from './inputStyles';
@@ -64,6 +66,9 @@ export class NpVenueInput extends LitElement {
   @state() private showResults = false;
   @state() private isResolving = false;
   @state() private resolutionError: string | null = null;
+  /** A pasted Google Maps link: its CID goes with the picked place */
+  @state() private _googleLink?: GoogleMapsLink;
+  @state() private _googleNote?: string;
 
   private searchTimeout: ReturnType<typeof setTimeout> | null = null;
   private resolvedOsmId: string | null = null; // Track resolved OSM IDs to avoid re-resolving
@@ -164,6 +169,8 @@ export class NpVenueInput extends LitElement {
 
   private async doSearch() {
     if (this.searchQuery.length < 3) return;
+    const link = parseGoogleMapsUrl(this.searchQuery);
+    if (link) return this._searchGoogleLink(link);
     this.isSearching = true;
     this.showResults = true;
     try {
@@ -174,6 +181,20 @@ export class NpVenueInput extends LitElement {
     } finally {
       this.isSearching = false;
     }
+  }
+
+  /** A pasted Google Maps link: the same place on OSM, else a note to set it on the map */
+  private async _searchGoogleLink(link: GoogleMapsLink) {
+    this._googleLink = link.short ? undefined : link;
+    this.showResults = true;
+    this.isSearching = true;
+    this.searchResults = link.short
+      ? []
+      : await searchGoogleLink(link, this.levels).catch(() => []);
+    this.isSearching = false;
+    if (link.short) this._googleNote = this.m.googleShortLink;
+    else
+      this._googleNote = this.searchResults.length ? undefined : this.m.googleNotOnOsm(link.name);
   }
 
   private onSearchKeydown(e: KeyboardEvent) {
@@ -188,7 +209,9 @@ export class NpVenueInput extends LitElement {
   private selectResult(result: NominatimResult) {
     this.resolvedOsmId = null; // Reset resolution tracking since we have complete data
     const venue = nominatimToVenue(result, this.precision);
-    this.emitValue(venue);
+    this.emitValue({ ...venue, googleCid: this._googleLink?.cid });
+    this._googleLink = undefined;
+    this._googleNote = undefined;
     this.searchQuery = '';
     this.showResults = false;
     this.searchResults = [];
@@ -224,6 +247,14 @@ export class NpVenueInput extends LitElement {
 
     // Map click → new geohash without venue metadata
     this.resolvedOsmId = null;
+    const link = this._googleLink;
+    if (link) {
+      // A pasted Google place OSM doesn't have: the author's point, OSM's address there
+      this._googleLink = undefined;
+      this._googleNote = undefined;
+      void venueAtPoint(link, geohash, this.precision).then((venue) => this.emitValue(venue));
+      return;
+    }
     this.emitValue({ geohash, lat: 0, lon: 0 });
   }
 
@@ -287,7 +318,11 @@ export class NpVenueInput extends LitElement {
     if (this.config.multiple) {
       return html`<np-venue-list .value=${this.value ?? []} .field=${this.field}></np-venue-list>`;
     }
-    if (this.searchOnly) return html`<div class="container">${this.renderVenueSearch()}</div>`;
+    if (this.searchOnly) {
+      // A pasted Google place OSM doesn't have is set on the map, also in a list
+      const map = this._googleLink && this._googleNote ? this._renderMap() : nothing;
+      return html`<div class="container">${this.renderVenueSearch()} ${map}</div>`;
+    }
     const hasVenueMeta = this.value?.name || this.value?.osmId;
 
     return html`
@@ -308,14 +343,19 @@ export class NpVenueInput extends LitElement {
         
         ${hasVenueMeta ? this.renderVenueCard() : nothing}
 
-        <np-geo-input
-          .value=${this.value?.geohash ?? null}
-          .field=${this.field}
-          .hideSearch=${true}
-          @np-value-changed=${this.onGeoValueChanged}
-        ></np-geo-input>
+        ${this._renderMap()}
       </div>
     `;
+  }
+
+  /** The map: the venue's point, or a pasted Google link's area for the author to click */
+  private _renderMap() {
+    return html`<np-geo-input
+      .value=${this.value?.geohash ?? googleLinkArea(this._googleLink)}
+      .field=${this.field}
+      .hideSearch=${true}
+      @np-value-changed=${this.onGeoValueChanged}
+    ></np-geo-input>`;
   }
 
   private renderVenueSearch() {
@@ -342,6 +382,7 @@ export class NpVenueInput extends LitElement {
       </div>
 
       ${this.isSearching ? html`<div class="loading">${this.m.searching}</div>` : nothing}
+      ${this._googleNote ? html`<div class="loading">${this._googleNote}</div>` : nothing}
       ${
         this.showResults && this.searchResults.length > 0
           ? html`

@@ -302,6 +302,20 @@ first, then on relays.
 
 Without a manifest, `<nostr-wiki-view>` uses `STANDARD_WIKI_MANIFEST`, which shows the article text.
 
+### Google Maps links
+
+Authors can paste a Google Maps link into a venue field's search. The link is read from its text
+alone (no request to Google, whose terms don't allow taking data from its pages): its name, its
+point and its CID. The same place is then searched on OpenStreetMap by that name around that
+point. When OSM doesn't have it, the author clicks the place on the map (it opens on the link's
+area), and the venue gets the author's point, OSM's address there and the link's name; its venue
+page is created from that.
+
+The CID is kept as `["i", "gcid:<cid>"]` (our namespace, not NIP-73); the Google Maps link
+(`https://maps.google.com/?cid=…`) is worked out from it when shown. Venue pages are also found by
+it, so a page created without OSM is filled from OSM once a post picks the OSM place with the same
+link. Short share links (`maps.app.goo.gl`) only Google can open: the author pastes the full link.
+
 ### Location levels
 
 A `venue` field with `metadata.levels` can stand for a country, a city or an exact place, e.g. a

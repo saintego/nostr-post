@@ -5,11 +5,14 @@ export interface ExternalIdLink {
   provider: string;
 }
 
-/** Link for an external ID of a known kind (`osm:node:123`, `gplace:…`, URLs); undefined otherwise */
+/** Link for an external ID of a known kind (`osm:node:123`, `gplace:…`, `gcid:…`, URLs); undefined otherwise */
 export function externalIdLink(id: string): ExternalIdLink | undefined {
   const osm = id.match(/^osm:(node|way|relation):(\d+)$/);
   if (osm)
     return { url: `https://www.openstreetmap.org/${osm[1]}/${osm[2]}`, provider: 'OpenStreetMap' };
+  // A Google place by its CID (from a pasted Google Maps link)
+  const cid = id.match(/^gcid:(\d+)$/)?.[1];
+  if (cid) return { url: `https://maps.google.com/?cid=${cid}`, provider: 'Google Maps' };
   if (id.startsWith('gplace:')) {
     const placeId = encodeURIComponent(id.slice('gplace:'.length));
     return {

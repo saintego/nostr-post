@@ -101,6 +101,7 @@ export function venueIdentifiers(venue: VenueData): string[] {
   const ids: string[] = [];
   if (venue.osmType && venue.osmId) ids.push(`osm:${venue.osmType}:${venue.osmId}`);
   if (venue.googlePlaceId) ids.push(`gplace:${venue.googlePlaceId}`);
+  if (venue.googleCid) ids.push(`gcid:${venue.googleCid}`);
   return ids;
 }
 

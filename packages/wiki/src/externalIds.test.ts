@@ -12,6 +12,10 @@ describe('externalIdLink', () => {
   });
 
   it('has no link for unknown kinds', () => {
+    expect(externalIdLink('gcid:3138549126411111111')).toEqual({
+      url: 'https://maps.google.com/?cid=3138549126411111111',
+      provider: 'Google Maps',
+    });
     expect(externalIdLink('untappd:beer:4892')).toBeUndefined();
   });
 });

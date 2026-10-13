@@ -15,6 +15,7 @@
 
 import { decodeGeohash, encodeGeohash } from '@nostr-post/plugin-geo';
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
+import { googleCidIdentifier } from './googleLink';
 import {
   type VenueLevel,
   geohashTags,
@@ -71,6 +72,8 @@ export interface VenueData {
   osmType?: 'node' | 'way' | 'relation';
   /** Google Places ID */
   googlePlaceId?: string;
+  /** Google's CID of the place, from a pasted Google Maps link (`i gcid:<cid>`) */
+  googleCid?: string;
   /** Address parts from the search result (city is used for the wiki entity's name) */
   address?: VenueAddress;
   /**
@@ -151,7 +154,9 @@ export const googleMapsUrl = (lat: number, lon: number): string =>
  */
 export const searchNominatim = async (
   query: string,
-  levels: VenueLevel[] = ['place']
+  levels: VenueLevel[] = ['place'],
+  /** Only results in a small box around this point (e.g. from a pasted Google Maps link) */
+  near?: { lat: number; lon: number }
 ): Promise<NominatimResult[]> => {
   const url = new URL('https://nominatim.openstreetmap.org/search');
   url.searchParams.set('q', query);
@@ -161,6 +166,14 @@ export const searchNominatim = async (
   url.searchParams.set('limit', '8');
   const featureType = searchFeatureType(levels);
   if (featureType) url.searchParams.set('featureType', featureType);
+  if (near) {
+    const d = 0.003; // ~300 m
+    url.searchParams.set(
+      'viewbox',
+      `${near.lon - d},${near.lat + d},${near.lon + d},${near.lat - d}`
+    );
+    url.searchParams.set('bounded', '1');
+  }
 
   const resp = await fetch(url.toString(), {
     headers: { 'User-Agent': 'nostr-post/0.1' },
@@ -218,8 +231,23 @@ export const nominatimToVenue = (result: NominatimResult, precision = 6): VenueD
   };
 };
 
+/** The OSM address at a point (Nominatim reverse lookup), e.g. for a venue OSM doesn't have */
+export const reverseNominatim = async (
+  lat: number,
+  lon: number
+): Promise<NominatimResult | null> => {
+  const url = new URL('https://nominatim.openstreetmap.org/reverse');
+  url.searchParams.set('lat', String(lat));
+  url.searchParams.set('lon', String(lon));
+  url.searchParams.set('format', 'json');
+  url.searchParams.set('addressdetails', '1');
+  url.searchParams.set('zoom', '18');
+  const resp = await fetch(url.toString(), { headers: { 'User-Agent': 'nostr-post/0.1' } });
+  return resp.ok ? ((await resp.json()) as NominatimResult) : null;
+};
+
 /** Address parts from Nominatim's `address` object (city may be a town or village) */
-const nominatimAddress = (a: Record<string, string>): VenueAddress => ({
+export const nominatimAddress = (a: Record<string, string>): VenueAddress => ({
   street: a.road ?? a.pedestrian,
   houseNumber: a.house_number,
   district: a.suburb ?? a.quarter ?? a.neighbourhood ?? a.city_district,
@@ -346,6 +374,8 @@ export const venuePlugin: NostrUIPlugin = {
     if (venue.googlePlaceId) {
       tags.push(['i', googlePlaceIdentifier(venue.googlePlaceId)]);
     }
+    // A pasted Google Maps link: its CID (the link is worked out from it when shown)
+    if (venue.googleCid) tags.push(['i', googleCidIdentifier(venue.googleCid)]);
 
     // NIP-73: country (every level) and Wikidata identity
     if (venue.countryCode) tags.push(['i', `iso3166:${venue.countryCode}`]);
@@ -409,6 +439,8 @@ export const venuePlugin: NostrUIPlugin = {
         }
       } else if (tag[1].startsWith('gplace:')) {
         venue.googlePlaceId = tag[1].slice('gplace:'.length);
+      } else if (tag[1].startsWith('gcid:')) {
+        venue.googleCid = tag[1].slice('gcid:'.length);
       } else if (tag[1].startsWith('iso3166:')) {
         venue.countryCode = tag[1].slice('iso3166:'.length);
       } else if (tag[1].startsWith('wikidata:')) {
