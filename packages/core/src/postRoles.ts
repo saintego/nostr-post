@@ -136,22 +136,42 @@ export function decodeNaddr(naddr: string): string | undefined {
 
 const targetsOf = (field: PostField) => [field.mapTo].flat();
 
-/** A `ref` field mapped to an `a` tag and to the content of a plain-text kind */
+/**
+ * A field mapped to an `a` tag and to the content of a plain-text kind: a `ref`
+ * field (picked entities) or a link-only venue field (its venue page)
+ */
 export const isPostRoleField = (field: PostField, kind: number): boolean =>
-  field.type === 'ref' &&
   !isStructuredContentKind(kind) &&
   targetsOf(field).some((t) => t.kind === kind && t.target === 'tag' && t.tagName === 'a') &&
   targetsOf(field).some((t) => t.kind === kind && t.target === 'content');
 
-/** The addresses in a reference value: an entity (`{ dTag, resolvedPubkey }`), an address, or a list */
+type RefLike = {
+  dTag?: unknown;
+  resolvedPubkey?: unknown;
+  /** A venue's wiki page, set when the venue hub created or found it */
+  wikiEntity?: { pubkey?: unknown; dTag?: unknown };
+};
+
+/** The address of one referenced entity, if the value names one */
+const refAddress = (v: unknown): string | undefined => {
+  if (typeof v === 'string') return v.startsWith('30818:') ? v : undefined;
+  const ref = v as RefLike | null;
+  if (ref && typeof ref.dTag === 'string' && typeof ref.resolvedPubkey === 'string') {
+    return `30818:${ref.resolvedPubkey}:${ref.dTag}`;
+  }
+  const page = ref?.wikiEntity;
+  if (page && typeof page.dTag === 'string' && typeof page.pubkey === 'string') {
+    return `30818:${page.pubkey}:${page.dTag}`;
+  }
+  return undefined;
+};
+
+/**
+ * The addresses in a reference value: an entity (`{ dTag, resolvedPubkey }`),
+ * a venue with its wiki page (`{ wikiEntity: { pubkey, dTag } }`), an address, or a list
+ */
 export function refAddresses(value: unknown): string[] {
-  return (Array.isArray(value) ? value : [value]).flatMap((v): string[] => {
-    if (typeof v === 'string') return v.startsWith('30818:') ? [v] : [];
-    const ref = v as { dTag?: unknown; resolvedPubkey?: unknown } | null;
-    return ref && typeof ref.dTag === 'string' && typeof ref.resolvedPubkey === 'string'
-      ? [`30818:${ref.resolvedPubkey}:${ref.dTag}`]
-      : [];
-  });
+  return (Array.isArray(value) ? value : [value]).flatMap((v) => refAddress(v) ?? []);
 }
 
 /** The mention lines of a role field's value: `<label>: nostr:naddr1…` */
@@ -190,7 +210,9 @@ export function parsePostRoles(
 
 /** Plain-text content (kind 1): the text fields, then the role fields' mention lines */
 export function plainTextContent(fields: PostField[], formData: Record<string, unknown>): string {
-  const isRole = (field: PostField) => field.type === 'ref';
+  // Text fields hold strings; references and venues hold objects, written as mention lines
+  const isRole = (field: PostField) =>
+    field.type === 'ref' || typeof formData[field.id] === 'object';
   const text = fields
     .filter((field) => !isRole(field))
     .map((field) => formData[field.id])
@@ -201,12 +223,21 @@ export function plainTextContent(fields: PostField[], formData: Record<string, u
 
 /** A value in structured (JSON) content: a referenced entity is stored as its address */
 export const structuredContentValue = (field: PostField, value: unknown): unknown =>
-  field.type === 'ref' ? (refAddresses(value)[0] ?? value) : value;
+  field.type === 'ref' || field.metadata?.linkOnly === true
+    ? (refAddresses(value)[0] ?? value)
+    : value;
 
 /** A picked entity rebuilt from its address, as the wiki-entity picker stores it */
 const entityFromAddress = (address: string) => {
-  const [, pubkey = '', ...dTag] = address.split(':');
-  return { dTag: dTag.join(':'), resolvedPubkey: pubkey, externalIds: [] as string[] };
+  const [, pubkey = '', ...rest] = address.split(':');
+  const dTag = rest.join(':');
+  // Both shapes: a picked entity, and a venue's wiki page
+  return {
+    dTag,
+    resolvedPubkey: pubkey,
+    externalIds: [] as string[],
+    wikiEntity: { pubkey, dTag },
+  };
 };
 
 /**

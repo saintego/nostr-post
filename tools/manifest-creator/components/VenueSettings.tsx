@@ -14,7 +14,7 @@ const LEVELS = [
   { id: 'place', label: 'Exact place' },
 ] as const;
 
-/** What a venue field can stand for (`metadata.levels`); renders nothing for other plugins. */
+/** A venue field's levels and link-only mode; renders nothing for other plugins. */
 export function VenueSettings({ field, onMetadataChange }: VenueSettingsProps) {
   if (field.uiPlugin !== 'venue') return null;
   const current = Array.isArray(field.metadata?.levels)
@@ -43,6 +43,19 @@ export function VenueSettings({ field, onMetadataChange }: VenueSettingsProps) {
         ))}
       </div>
       <div style={styles.helperText}>Only an exact place gets a venue wiki page</div>
+      <label style={{ ...styles.label, display: 'flex', gap: '0.25rem' }}>
+        <input
+          style={styles.checkbox}
+          type="checkbox"
+          checked={field.metadata?.linkOnly === true}
+          onChange={(e) => onMetadataChange('linkOnly', e.target.checked || undefined)}
+        />
+        Link only
+      </label>
+      <div style={styles.helperText}>
+        Only the venue page's link and its role (needs a wiki page manifest), no venue tags: for
+        several venues in one post
+      </div>
     </div>
   );
 }

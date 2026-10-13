@@ -336,7 +336,9 @@ interface NostrUIPlugin {
   // event of the post (e.g. an `a` tag). Throwing stops publishing and shows the error.
   // Runs when a composer publishes itself (<nostr-post-composer> or <nostr-wiki-composer>
   // with auto-publish); apps that publish on nostr-post-submit / nostr-wiki-submit call
-  // runBeforePublish (@nostr-post/plugins/publish, also exported by @nostr-post/web).
+  // runBeforePublish (@nostr-post/plugins/publish, also exported by @nostr-post/web), or
+  // runPublishHooks, which also returns the form data with each field's linked wiki page
+  // (`wikiEntity`, from the hook's `a` tag) to build the post again before signing.
   beforePublish?(
     value: unknown,
     field: PostField,

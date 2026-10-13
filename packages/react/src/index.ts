@@ -41,6 +41,7 @@ export {
   STANDARD_KIND1_POST_MANIFEST,
   type NostrPostSubmitDetail,
   runBeforePublish,
+  runPublishHooks,
   withTags,
 } from '@nostr-post/web';
 

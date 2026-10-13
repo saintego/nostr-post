@@ -110,6 +110,8 @@ The bundle re-exports utilities for advanced usage:
 
 **Publishing a submitted post yourself** (composer without `auto-publish`)
 
+- `runPublishHooks(manifest, formData, pubkey)`: like `runBeforePublish`, plus the form data with each
+  field's linked wiki page, to build the post again before signing (a role's mention line needs it)
 - `runBeforePublish(manifest, formData, pubkey)`: runs plugin publish hooks (e.g. the venue's wiki
   page), returns tags for the post
 - `withTags(bundle, tags)`: adds them to every event of the submitted bundle

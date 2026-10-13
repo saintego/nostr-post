@@ -8,12 +8,8 @@ import {
   getDefaultPublishFormat,
   getSelectablePublishFormats,
 } from '@nostr-post/core/manifestMappings';
-import {
-  type EventBundle,
-  type NostrPostManifest,
-  STANDARD_KIND1_POST_MANIFEST,
-} from '@nostr-post/core/types';
-import { runBeforePublish } from '@nostr-post/plugins/publish';
+import { type NostrPostManifest, STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
+import { runPublishHooks } from '@nostr-post/plugins/publish';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { NostrPostElement, baseStyles } from './base-component';
@@ -304,21 +300,7 @@ export class NostrPostComposer extends NostrPostElement {
     this.isSubmitting = true;
 
     try {
-      const outcome = validateAndCoordinate(
-        manifest,
-        this._formData as Parameters<typeof validateAndCoordinate>[1],
-        {
-          pubkey,
-          selectedFormatId: this.selectedPublishFormatId,
-          manifestRef: this.manifestRef,
-          dTag: this.dTag,
-          extraTags: this.extraTags,
-          replyToEventId: this.replyToEventId,
-          replyToPubkey: this.replyToPubkey,
-          rootEventId: this.rootEventId,
-          rootPubkey: this.rootPubkey,
-        }
-      );
+      const outcome = this._coordinate(manifest, this._formData, pubkey);
 
       if ('validationError' in outcome) {
         this.applyValidationError(outcome.validationError);
@@ -328,7 +310,7 @@ export class NostrPostComposer extends NostrPostElement {
       const { bundle, addressableDTag } = outcome;
 
       if (this.autoPublish) {
-        const signedEvents = await this._publish(manifest, bundle, pubkey);
+        const signedEvents = await this._publish(manifest, pubkey);
         this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
         this.successMessage = `Published to ${signedEvents.length} event(s)!`;
       } else {
@@ -350,14 +332,37 @@ export class NostrPostComposer extends NostrPostElement {
     }
   }
 
-  /** Let plugins publish related events first (e.g. a venue's wiki entity), then the post */
-  private async _publish(
+  private _coordinate(
     manifest: NostrPostManifest,
-    bundle: EventBundle,
+    formData: Record<string, unknown>,
     pubkey: string
-  ): Promise<SignedEvent[]> {
-    const hookTags = await runBeforePublish(manifest, this._formData, pubkey);
-    return signAndPublishBundle(withTags(bundle, hookTags), this.relays);
+  ) {
+    return validateAndCoordinate(
+      manifest,
+      formData as Parameters<typeof validateAndCoordinate>[1],
+      {
+        pubkey,
+        selectedFormatId: this.selectedPublishFormatId,
+        manifestRef: this.manifestRef,
+        dTag: this.dTag,
+        extraTags: this.extraTags,
+        replyToEventId: this.replyToEventId,
+        replyToPubkey: this.replyToPubkey,
+        rootEventId: this.rootEventId,
+        rootPubkey: this.rootPubkey,
+      }
+    );
+  }
+
+  /**
+   * Let plugins publish related events first (e.g. a venue's wiki page), then
+   * build the post again with what they linked (e.g. a role's mention line) and publish it
+   */
+  private async _publish(manifest: NostrPostManifest, pubkey: string): Promise<SignedEvent[]> {
+    const hooks = await runPublishHooks(manifest, this._formData, pubkey);
+    const outcome = this._coordinate(manifest, hooks.formData, pubkey);
+    if ('validationError' in outcome) throw new Error('The post is invalid after publish hooks');
+    return signAndPublishBundle(withTags(outcome.bundle, hooks.tags), this.relays);
   }
 
   private updateReplyTarget(

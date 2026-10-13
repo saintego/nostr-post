@@ -379,10 +379,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       },
       {
         id: 'tasting_at',
-        type: 'ref',
-        uiPlugin: 'wiki-entity-picker',
-        // Kind 1: an `a` tag plus a mention line "Tasted at: nostr:naddr1…" (keeps the role);
-        // NIP-78: an `a` tag plus the address under this key in the content
+        type: 'geo',
+        uiPlugin: 'venue',
+        // Link only: the venue's page as an `a` tag plus the role (kind 1: a mention line
+        // "Tasted at: nostr:naddr1…"; NIP-78: the address under this key), no venue tags,
+        // so the two venues don't mix
         mapTo: [
           { kind: 1, target: 'tag', tagName: 'a' },
           { kind: 1, target: 'content' },
@@ -391,17 +392,20 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         ],
         metadata: {
           label: 'Tasted at',
-          description: "Where you had it: pick the venue's page, or create it from OpenStreetMap",
-          entityManifest: 'venue-entity-v1',
-          emitExtraTags: false,
+          description:
+            'Where you had it: search OpenStreetMap; its venue page is created or linked',
+          providers: ['osm'],
+          linkOnly: true,
+          wikiEntity: 'venue-entity-v1',
         },
       },
       {
         id: 'purchase_at',
-        type: 'ref',
-        uiPlugin: 'wiki-entity-picker',
-        // Kind 1: an `a` tag plus a mention line "Purchased at: nostr:naddr1…" (keeps the role);
-        // NIP-78: an `a` tag plus the address under this key in the content
+        type: 'geo',
+        uiPlugin: 'venue',
+        // Link only: the venue's page as an `a` tag plus the role (kind 1: a mention line
+        // "Purchased at: nostr:naddr1…"; NIP-78: the address under this key), no venue tags,
+        // so the two venues don't mix
         mapTo: [
           { kind: 1, target: 'tag', tagName: 'a' },
           { kind: 1, target: 'content' },
@@ -411,9 +415,10 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         metadata: {
           label: 'Purchased at',
           description:
-            "Where you bought it, if you did: pick the venue's page, or create it from OpenStreetMap",
-          entityManifest: 'venue-entity-v1',
-          emitExtraTags: false,
+            'Where you bought it, if you did: search OpenStreetMap; its venue page is created or linked',
+          providers: ['osm'],
+          linkOnly: true,
+          wikiEntity: 'venue-entity-v1',
         },
       },
       {

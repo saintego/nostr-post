@@ -169,13 +169,18 @@ export interface NostrPostSubmitDetail {
 }
 
 /** Add tags to every event of a bundle */
-export const withTags = (bundle: EventBundle, tags: [string, ...string[]][]): EventBundle =>
-  tags.length === 0
-    ? bundle
-    : {
-        ...bundle,
-        events: bundle.events.map((event) => ({ ...event, tags: [...event.tags, ...tags] })),
-      };
+/** Tags added to every event of the bundle, skipping ones an event already has */
+export const withTags = (bundle: EventBundle, tags: [string, ...string[]][]): EventBundle => {
+  if (tags.length === 0) return bundle;
+  const key = (t: string[]) => t.join('\u0000');
+  return {
+    ...bundle,
+    events: bundle.events.map((event) => {
+      const existing = new Set(event.tags.map(key));
+      return { ...event, tags: [...event.tags, ...tags.filter((t) => !existing.has(key(t)))] };
+    }),
+  };
+};
 
 // ---------------------------------------------------------------------------
 // Sign-and-publish bundle

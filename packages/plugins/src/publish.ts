@@ -16,26 +16,50 @@ const defaultGetPlugin: GetPlugin = (id) => pluginRegistry.get(id);
 
 const hasValue = (value: unknown): boolean => value !== undefined && value !== null && value !== '';
 
+type Tag = [string, ...string[]];
+
+/** The wiki page (`30818:<pubkey>:<d-tag>`) a hook linked, from its `a` tag */
+const linkedPage = (tags: Tag[]): { pubkey: string; dTag: string } | undefined => {
+  const match = tags.find((t) => t[0] === 'a')?.[1]?.match(/^30818:([^:]+):(.+)$/);
+  return match ? { pubkey: match[1] as string, dTag: match[2] as string } : undefined;
+};
+
 /**
  * Runs the `beforePublish` hooks of the fields that have a value (e.g. the
- * venue field creating the venue's wiki page) and returns the tags they add.
+ * venue field creating the venue's wiki page) and returns the tags they add,
+ * plus the form data with each linked page set on its field (`wikiEntity`), so
+ * the post can be built again with the link in its role (e.g. a mention line).
  * A hook that fails rejects, so nothing is published.
  */
+export const runPublishHooks = async (
+  manifest: NostrPostManifest,
+  formData: Record<string, unknown>,
+  pubkey: string,
+  getPlugin: GetPlugin = defaultGetPlugin
+): Promise<{ tags: Tag[]; formData: Record<string, unknown> }> => {
+  const tags: Tag[] = [];
+  const linked: Record<string, unknown> = { ...formData };
+  for (const field of manifest.fields) {
+    const value = formData[field.id];
+    const plugin = field.uiPlugin ? getPlugin(field.uiPlugin) : undefined;
+    if (!hasValue(value) || !plugin?.beforePublish) continue;
+    const added = await plugin.beforePublish(value, field as PostField, { pubkey });
+    tags.push(...added);
+    const page = linkedPage(added);
+    if (page && typeof value === 'object' && !Array.isArray(value)) {
+      linked[field.id] = { ...value, wikiEntity: page };
+    }
+  }
+  return { tags, formData: linked };
+};
+
+/** Like runPublishHooks, only the tags the hooks add */
 export const runBeforePublish = async (
   manifest: NostrPostManifest,
   formData: Record<string, unknown>,
   pubkey: string,
   getPlugin: GetPlugin = defaultGetPlugin
-): Promise<[string, ...string[]][]> => {
-  const tags: [string, ...string[]][] = [];
-  for (const field of manifest.fields) {
-    const value = formData[field.id];
-    const plugin = field.uiPlugin ? getPlugin(field.uiPlugin) : undefined;
-    if (!hasValue(value) || !plugin?.beforePublish) continue;
-    tags.push(...(await plugin.beforePublish(value, field as PostField, { pubkey })));
-  }
-  return tags;
-};
+): Promise<Tag[]> => (await runPublishHooks(manifest, formData, pubkey, getPlugin)).tags;
 
 /** A field whose plugin shows a summary next to the publish button */
 export interface PublishSummary {

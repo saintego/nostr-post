@@ -36,7 +36,19 @@ export interface VenuePluginConfig {
   googleApiKey?: string;
   /** What the field can stand for: `['country', 'city', 'place']`; default exact places */
   levels?: VenueLevel[];
+  /**
+   * Only link the venue's wiki page (`a` tag, plus its role), without the
+   * venue's own tags (`i`, `g`, `location`): for venues in a role, e.g. where a
+   * beer was tasted, so several venues in one post don't mix. Needs `wikiEntity`.
+   */
+  linkOnly?: boolean;
 }
+
+const isLinkOnly = (field?: PostField): boolean => field?.metadata?.linkOnly === true;
+
+/** The venue's wiki page address, once the venue hub created or found it */
+const pageAddress = (venue: VenueData): string =>
+  venue.wikiEntity ? `30818:${venue.wikiEntity.pubkey}:${venue.wikiEntity.dTag}` : '';
 
 /**
  * Structured venue data passed between input ↔ core ↔ view.
@@ -277,9 +289,10 @@ export const venuePlugin: NostrUIPlugin = {
    * Serialize venue data to a geohash string for the primary "g" tag.
    * The extra tags (i, location) are handled by extraTags().
    */
-  serializeValue: (value: unknown): string => {
+  serializeValue: (value: unknown, field?: PostField): string => {
     if (!value || typeof value !== 'object') return '';
     const venue = value as VenueData;
+    if (isLinkOnly(field)) return pageAddress(venue);
     // A country has no published area
     return venue.level === 'country' ? '' : venue.geohash;
   },
@@ -298,8 +311,8 @@ export const venuePlugin: NostrUIPlugin = {
    * Produce extra tags beyond the primary "g" geohash tag.
    * Called by the coordinator during event creation.
    */
-  extraTags: (value: unknown, _field: PostField): [string, ...string[]][] => {
-    if (!value || typeof value !== 'object') return [];
+  extraTags: (value: unknown, field: PostField): [string, ...string[]][] => {
+    if (!value || typeof value !== 'object' || isLinkOnly(field)) return [];
     const venue = value as VenueData;
     const tags: [string, ...string[]][] = [];
 

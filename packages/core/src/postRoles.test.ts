@@ -124,11 +124,34 @@ describe('role fields in posts', () => {
       [tasted, bought]
     );
     expect(read.text).toBe('Great beer.');
-    expect(read.values.tasting_at).toEqual({
+    expect(read.values.tasting_at).toMatchObject({
       dTag: 'u-fleků-prague-venue',
       resolvedPubkey: pk,
-      externalIds: [],
+      wikiEntity: { pubkey: pk, dTag: 'u-fleků-prague-venue' },
     });
     expect(read.tags).toEqual([['a', beer]]);
+  });
+
+  it('a link-only venue field writes its page as a mention line, also when not a ref field', () => {
+    const venueField: PostField = {
+      id: 'tasting_at',
+      type: 'geo',
+      uiPlugin: 'venue',
+      mapTo: [
+        { kind: 1, target: 'tag', tagName: 'a' },
+        { kind: 1, target: 'content' },
+      ],
+      metadata: { label: 'Tasted at', linkOnly: true },
+    };
+    expect(isPostRoleField(venueField, 1)).toBe(true);
+    const value = {
+      geohash: 'u2fkb',
+      lat: 50,
+      lon: 14,
+      wikiEntity: { pubkey: pk, dTag: 'u-fleků-prague-venue' },
+    };
+    expect(roleLines(venueField, value)[0]).toMatch(/^Tasted at: nostr:naddr1/);
+    // Before the venue hub ran there's no page yet: no line
+    expect(roleLines(venueField, { geohash: 'u2fkb', lat: 50, lon: 14 })).toEqual([]);
   });
 });

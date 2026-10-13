@@ -20,13 +20,13 @@ const openPage = (e: Event, dTag: string) => {
   details.appendChild(view);
 };
 
-/** The post's text without role lines, and a row per referenced entity */
+/** The post's text without role lines, a row per referenced entity, and the remaining tags */
 export function postRoleView(
   event: DisplayableEvent,
   manifest: NostrPostManifest | undefined
-): { text: string; rows: TemplateResult | typeof nothing } {
-  if (!manifest) return { text: event.content, rows: nothing };
-  const { text, values } = readPostRoles(event, manifest.fields);
+): { text: string; rows: TemplateResult | typeof nothing; tags: string[][] } {
+  if (!manifest) return { text: event.content, rows: nothing, tags: event.tags };
+  const { text, values, tags } = readPostRoles(event, manifest.fields);
   const rows = manifest.fields.flatMap((field) =>
     [values[field.id] ?? []].flat().map(
       (entity) => html`
@@ -36,5 +36,6 @@ export function postRoleView(
       `
     )
   );
-  return { text, rows: rows.length > 0 ? html`${rows}` : nothing };
+  // Tags without the roles' `a` tags, for the other fields (e.g. the reviewed beer)
+  return { text, rows: rows.length > 0 ? html`${rows}` : nothing, tags };
 }

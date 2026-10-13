@@ -140,7 +140,7 @@ styles, mapped to `t` for posts and wiki entities; the beer entity extends it an
 | `reference`          | `string` | `urlDedupeMode` (`'normalized'` \| `'exact'` \| `'origin-path'`)                                                                                                                                                               |
 | `identifier`         | `string` | `prefix` (NIP-73 namespace, e.g. `isbn`)                                                                                                                                                                                       |
 | `geo`                | `geo`    | `precision` (geohash length, default 6), `defaultZoom`, `allowSearch`                                                                                                                                                          |
-| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub)                                                                                  |
+| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts))                                                                                  |
 | `list`               | `string` | `relays`, `allowCreate`, `allowDelete`, `defaultList`, `multiple` (default `true`)                                                                                                                                             |
 | `wiki-entity-picker` | `ref`    | `entityManifest`: the entity type ([reference](#referencing-entity-manifests)), which limits search to it and enables "+ Create"; `relays`; `minSearchLength` (2); `emitExtraTags` (`false`: don't copy the entity's `i` tags); `multiple` (pick several; the value is a list) |
 
@@ -251,6 +251,11 @@ was bought. A `ref` field mapped to an `a` tag and to the content:
 - Every entity is also a plain `a` tag; a reference field without a content mapping (the reviewed
   beer) gets the `a` tags no role claims.
 - A field's mappings on the kind being published all apply (here the `a` tag and the content).
+- Venues in a role use a `venue` field with `linkOnly: true` and `wikiEntity` instead of a picker:
+  the author searches OpenStreetMap, the [venue hub](#venue-hub) creates or links the venue's page
+  when publishing, and the post gets only the page's `a` tag and the role, no `i`/`g`/`location`
+  tags, so several venues (tasted at, purchased at) don't mix. The composer builds the post again
+  after the hooks ran, with the linked page in its role (`runPublishHooks`).
 
 ### Referencing entity manifests
 
