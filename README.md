@@ -488,7 +488,7 @@ Core logic works in any JavaScript environment. UI layers available for Web Comp
 
 ### Prerequisites
 
-- Node.js >= 20
+- Node.js >= 22.12
 - pnpm >= 9
 
 ### Setup

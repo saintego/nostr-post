@@ -18,7 +18,7 @@ interface NostrWikiComposerElement extends HTMLElement {
   prefill?: Record<string, unknown>;
 }
 
-declare global {
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'nostr-wiki-view': DetailedHTMLProps<

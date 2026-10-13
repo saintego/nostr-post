@@ -19,16 +19,22 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "keywords": ["nostr", "plugin", "reference", "url", "link"],
+  "keywords": [
+    "nostr",
+    "plugin",
+    "reference",
+    "url",
+    "link"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/plugin-media": "workspace:*",
-    "lit": "^3.2.1",
-    "nostr-tools": "^2.7.2"
+    "lit": "^3.3.3",
+    "nostr-tools": "^2.25.2"
   },
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^6.0.3"
   }
 }

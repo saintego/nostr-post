@@ -9,7 +9,7 @@ interface NostrWikiViewElement extends HTMLElement {
   relays?: string[];
 }
 
-declare global {
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'nostr-wiki-view': React.DetailedHTMLProps<

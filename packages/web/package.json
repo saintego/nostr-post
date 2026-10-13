@@ -23,7 +23,13 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "keywords": ["nostr", "web-components", "lit", "custom-elements", "ui"],
+  "keywords": [
+    "nostr",
+    "web-components",
+    "lit",
+    "custom-elements",
+    "ui"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -39,9 +45,9 @@
     "@nostr-post/plugin-venue": "workspace:*",
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/signer": "workspace:*",
-    "lit": "^3.2.1"
+    "lit": "^3.3.3"
   },
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^6.0.3"
   }
 }

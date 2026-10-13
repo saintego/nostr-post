@@ -14,13 +14,12 @@
 
 import type { PostField } from '@nostr-post/plugins/types';
 import L from 'leaflet';
-import { LitElement, html, nothing } from 'lit';
+import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { type GeoCoordinates, type GeoPluginConfig, decodeGeohash, encodeGeohash } from '../core';
+import { decodeGeohash, encodeGeohash, type GeoCoordinates, type GeoPluginConfig } from '../core';
 import { geoInputStyles } from './inputStyles';
 
 // Fix Leaflet default marker icons (broken by bundlers)
-// biome-ignore lint/performance/noDelete: Leaflet internals require delete
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',

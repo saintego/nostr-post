@@ -27,13 +27,18 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "keywords": ["nostr", "plugins", "ui", "framework-agnostic"],
+  "keywords": [
+    "nostr",
+    "plugins",
+    "ui",
+    "framework-agnostic"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@nostr-post/core": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^6.0.3"
   }
 }

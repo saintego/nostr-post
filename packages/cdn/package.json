@@ -26,6 +26,6 @@
     "@nostr-post/plugin-wiki-entity": "workspace:*"
   },
   "devDependencies": {
-    "esbuild": "^0.24.0"
+    "esbuild": "^0.28.2"
   }
 }

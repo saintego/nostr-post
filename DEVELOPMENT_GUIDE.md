@@ -346,7 +346,7 @@ pnpm add -D typescript
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^6.0.3"
   }
 }
 ```

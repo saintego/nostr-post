@@ -10,7 +10,7 @@ interface NostrWikiComposerElement extends HTMLElement {
   autoPublish?: boolean;
 }
 
-declare global {
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'nostr-wiki-composer': React.DetailedHTMLProps<

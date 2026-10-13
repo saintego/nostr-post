@@ -18,9 +18,15 @@
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist",
-    "test": "vitest run"
+    "test": "vitest run --dir src"
   },
-  "keywords": ["nostr", "plugin", "wiki", "nip54", "entity"],
+  "keywords": [
+    "nostr",
+    "plugin",
+    "wiki",
+    "nip54",
+    "entity"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
@@ -28,10 +34,10 @@
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/signer": "workspace:*",
     "@nostr-post/wiki": "workspace:*",
-    "lit": "^3.2.1"
+    "lit": "^3.3.3"
   },
   "devDependencies": {
-    "typescript": "^5.6.3",
-    "vitest": "^2.0.0"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.4"
   }
 }

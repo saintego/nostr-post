@@ -19,14 +19,19 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "keywords": ["nostr", "plugin", "stars", "rating"],
+  "keywords": [
+    "nostr",
+    "plugin",
+    "stars",
+    "rating"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@nostr-post/plugins": "workspace:*",
-    "lit": "^3.2.1"
+    "lit": "^3.3.3"
   },
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^6.0.3"
   }
 }

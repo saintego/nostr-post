@@ -35,7 +35,7 @@ interface NostrPostFeedElement extends HTMLElement {
 }
 
 // Declare the custom element for TypeScript/JSX
-declare global {
+declare module 'react' {
   namespace JSX {
     interface IntrinsicElements {
       'nostr-post-feed': React.DetailedHTMLProps<
