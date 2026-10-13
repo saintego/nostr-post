@@ -39,11 +39,17 @@ export const runPublishHooks = async (
 ): Promise<{ tags: Tag[]; formData: Record<string, unknown> }> => {
   const tags: Tag[] = [];
   const linked: Record<string, unknown> = { ...formData };
+  // The same value in two fields (e.g. one venue as "tasted at" and "purchased at") runs the
+  // hook once: a second run could try to create the page the first one just published
+  const done = new Map<string, Tag[]>();
   for (const field of manifest.fields) {
     const value = formData[field.id];
     const plugin = field.uiPlugin ? getPlugin(field.uiPlugin) : undefined;
     if (!hasValue(value) || !plugin?.beforePublish) continue;
-    const added = await plugin.beforePublish(value, field as PostField, { pubkey });
+    const key = `${field.uiPlugin}\u0000${JSON.stringify(value)}`;
+    const added =
+      done.get(key) ?? (await plugin.beforePublish(value, field as PostField, { pubkey }));
+    done.set(key, added);
     tags.push(...added);
     const page = linkedPage(added);
     if (page && typeof value === 'object' && !Array.isArray(value)) {
