@@ -72,6 +72,27 @@ describe('syncVenueEntity', () => {
     ]);
   });
 
+  it('links the page at a taken slug when it is this venue (e.g. just created by another field)', async () => {
+    (checkEntityDTag as Mock).mockResolvedValue('taken');
+    (fetchEntityVersions as Mock).mockImplementation(async (dTag: string) =>
+      dTag === 'café-louvre-prague-venue'
+        ? [
+            {
+              ...existing(5),
+              pubkey: 'me',
+              tags: [
+                ['d', dTag],
+                ['i', 'osm:node:123'],
+              ],
+            },
+          ]
+        : []
+    );
+    const tags = await syncVenueEntity(venue, field);
+    expect(tags).toEqual([['a', '30818:me:café-louvre-prague-venue']]);
+    expect(signEvent).not.toHaveBeenCalled();
+  });
+
   it('refuses a slug another venue has, instead of picking a qualifier', async () => {
     (checkEntityDTag as Mock).mockResolvedValue('taken');
     await expect(syncVenueEntity(venue, field)).rejects.toThrow(

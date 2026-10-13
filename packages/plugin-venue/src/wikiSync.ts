@@ -80,15 +80,30 @@ export async function slugAvailability(dTag: string, relays: string[]): Promise<
  * be changed later). Refuses a slug another venue definitely has; one that
  * can't be verified is used, since the venue wasn't found by its IDs either.
  */
+/**
+ * The newest version of the page at `dTag` if it's this venue's page (same OSM
+ * or Google ID): e.g. published moments ago by another field of the same post,
+ * before relays answer the ID lookup
+ */
+async function samePlaceAt(dTag: string, venue: VenueData, relays: string[]) {
+  const ids = new Set(venueIdentifiers(venue));
+  const versions = await fetchEntityVersions(dTag, relays);
+  const ours = versions.filter((v) => v.tags.some((t) => t[0] === 'i' && ids.has(t[1] ?? '')));
+  return defaultResolver(ours) ?? undefined;
+}
+
+/** A new page's slug and title, or the page already there for this venue */
 async function newEntityIdentity(
   manifest: NostrPostManifest,
   data: Record<string, unknown>,
   venue: VenueData,
   relays: string[]
-): Promise<{ dTag: string; title?: string }> {
+): Promise<{ dTag: string; title?: string; existing?: WikiEvent }> {
   const dTag = venueDTag(manifest, data, venue.wikiSlug);
   if (!dTag) throw new Error('The venue has no name for its wiki page slug');
   if ((await slugAvailability(dTag, relays)) === 'taken') {
+    const existing = await samePlaceAt(dTag, venue, relays);
+    if (existing) return { dTag, existing };
     throw new Error(
       `Another venue's wiki page already uses "${dTag}". Change the slug next to the publish button.`
     );
@@ -119,13 +134,15 @@ export async function syncVenueEntity(venue: VenueData, field: PostField): Promi
   }
 
   const fromOsm = venueToEntityData(venue, osm, manifest);
+  const identity =
+    action.kind === 'create'
+      ? await newEntityIdentity(manifest, fromOsm, venue, relays)
+      : undefined;
+  // Its page appeared meanwhile (e.g. another field of this post created it): link it
+  if (identity?.existing) return [['a', buildWikiATag(identity.existing.pubkey, identity.dTag)]];
   const { data, dTag, title, keepTags } =
     action.kind === 'create'
-      ? {
-          data: fromOsm,
-          keepTags: [],
-          ...(await newEntityIdentity(manifest, fromOsm, venue, relays)),
-        }
+      ? { data: fromOsm, keepTags: [], dTag: identity?.dTag ?? '', title: identity?.title }
       : {
           data: mergeOsmFields(wikiEventToManifestData(action.base, manifest), fromOsm, manifest),
           dTag: dTagOf(action.base),
