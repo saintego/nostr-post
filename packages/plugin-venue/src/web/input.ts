@@ -28,6 +28,7 @@ import {
 // Ensure the geo input web component is registered
 import '@nostr-post/plugin-geo/web';
 import { type VenueLevel, resultLevel, venueLevels } from '../levels';
+import { loadVenueFromPage, needsPage } from '../venuePage';
 import { venueInputStyles } from './inputStyles';
 import { DEFAULT_VENUE_INPUT_MESSAGES, type VenueInputMessages } from './venueMessages';
 
@@ -110,6 +111,14 @@ export class NpVenueInput extends LitElement {
    */
   override async updated(changedProperties: Map<string, unknown>) {
     super.updated(changedProperties);
+
+    // Editing a link-only venue: only its page is known; load the place from it
+    if (changedProperties.has('value') && needsPage(this.value) && this.field) {
+      const linked = this.value;
+      const loaded = await loadVenueFromPage(linked, this.field);
+      if (this.value === linked && loaded.geohash) this.emitValue(loaded);
+      return;
+    }
 
     if (changedProperties.has('value') && this.value && !this.config.multiple) {
       const { osmType, osmId, geohash } = this.value;

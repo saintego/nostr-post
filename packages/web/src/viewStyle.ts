@@ -251,6 +251,10 @@ export const viewStyle = css`
     margin-top: 0.5rem;
     font-size: 0.875rem;
   }
+  .post-role-label {
+    color: var(--nl-muted, #4b5563);
+    margin-bottom: 0.25rem;
+  }
   .post-role summary {
     cursor: pointer;
     color: var(--nl-muted, #4b5563);

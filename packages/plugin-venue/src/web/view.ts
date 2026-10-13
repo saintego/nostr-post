@@ -15,6 +15,7 @@ import { type EntityManifestRef, getEntityManifest, resolveEntityManifest } from
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { type VenueData, googleMapsPlaceUrl, osmUrl } from '../core';
+import { loadVenueFromPage, needsPage } from '../venuePage';
 import { DEFAULT_VENUE_VIEW_MESSAGES, type VenueViewMessages } from './venueMessages';
 
 // Ensure <np-geo-view> and <nostr-wiki-view> are defined
@@ -94,6 +95,21 @@ export class NpVenueView extends LitElement {
     return { ...DEFAULT_VENUE_VIEW_MESSAGES, ...this.messages };
   }
 
+  /** The place of a link-only venue, loaded from its venue page */
+  @state() private _fromPage?: VenueData;
+  private _loadingFor?: unknown;
+
+  override willUpdate(changed: Map<string, unknown>): void {
+    if (!changed.has('value')) return;
+    this._fromPage = undefined;
+    const value = this.value;
+    if (!needsPage(value) || !this.field || value === this._loadingFor) return;
+    this._loadingFor = value;
+    void loadVenueFromPage(value, this.field).then((loaded) => {
+      if (this.value === value && loaded.geohash) this._fromPage = loaded;
+    });
+  }
+
   render() {
     if (!this.value) {
       return html`<span>No location</span>`;
@@ -104,7 +120,8 @@ export class NpVenueView extends LitElement {
       return html`<np-geo-view .value=${this.value} .field=${this.field}></np-geo-view>`;
     }
 
-    const v = this.value as VenueData;
+    // A link-only venue: its place comes from its page, once loaded
+    const v = this._fromPage ?? (this.value as VenueData);
 
     return html`
       ${v.name ? html`<div class="venue-name">📍 ${v.name}</div>` : nothing}
