@@ -131,6 +131,7 @@
 - [ ] Pin `next` in nextjs-demo and manifest-creator (`"latest"` re-resolves on every lockfile change)
 - [ ] Rename kebab-case source files to camelCase (AGENTS.md "File names"): `packages/wiki/src/web/wiki-composer*.ts` and `wiki-view*.ts`, `packages/web/src/base-component.ts`, `packages/plugin-venue/src/fixtures.test-helpers.ts`, `tools/manifest-creator/tests/e2e/*-*.test.ts`; update imports and the docs that name them (e.g. AGENTS.md's messages-object example)
 - [ ] Replace the `PluginRegistry` class (`packages/plugins/src/registry.ts`, the only class that isn't a custom element) with a module-level map and functions; update plugins, CDN exports and READMEs
+- [ ] Prefix private members of custom elements with `_` (AGENTS.md "Style"): the venue input, the post composer and view, and others without it; best together with thinning them
 - [ ] Thin the largest web components (AGENTS.md "Style": state and render only): `wiki-composer` (446 lines), `wiki-entity-picker` (444), `nostr-post-composer` (435); move logic and template parts into function modules
 - [ ] Bring oversized files under the 500-line limit: plugin-markdown input, web view/feed, plugin-geo input, core coordinator (done: manifest-creator ManifestEditor and FieldEditor, wiki-composer, plugin-venue input)
 - [ ] Venue linking UI improvements (OSM ID deep links)

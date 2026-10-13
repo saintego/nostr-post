@@ -41,6 +41,10 @@ export class NpVenueInput extends LitElement {
   @property({ type: Object })
   field: PostField | null = null;
 
+  /** Only the OSM search, no map or coordinates (the venue list adds venues with it) */
+  @property({ attribute: false })
+  searchOnly = false;
+
   /** Overrides of the default English text */
   @property({ attribute: false })
   messages?: Partial<VenueInputMessages>;
@@ -274,6 +278,7 @@ export class NpVenueInput extends LitElement {
     if (this.config.multiple) {
       return html`<np-venue-list .value=${this.value ?? []} .field=${this.field}></np-venue-list>`;
     }
+    if (this.searchOnly) return html`<div class="container">${this.renderVenueSearch()}</div>`;
     const hasVenueMeta = this.value?.name || this.value?.osmId;
 
     return html`

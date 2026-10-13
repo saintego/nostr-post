@@ -37,6 +37,9 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
   (`customElements.define`), so Lit components (`LitElement` subclasses) are classes. Keep them
   thin: properties, state and `render()`; logic and larger template parts go into functions in
   other modules (e.g. `packages/web/src/composerEnum.ts`).
+- Private members of custom elements (methods, `@state()` fields) start with `_`: Lit's convention,
+  and it marks them internal at runtime too, where TypeScript's `private` is gone (components are
+  public classes in the CDN bundle). Plain function modules don't need the prefix.
 - Prefer `const` over `let` (soft rule). Use `let` when a value really changes, e.g. a counter,
   a loop accumulator or module state like a "registered once" flag. Don't contort code to avoid
   it: no IIFEs, nested ternaries or `reduce` gymnastics just to get a `const`.

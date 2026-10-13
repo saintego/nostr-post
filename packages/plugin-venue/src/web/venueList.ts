@@ -84,6 +84,7 @@ export class NpVenueList extends LitElement {
       <np-venue-input
         .value=${live(null)}
         .field=${single}
+        .searchOnly=${true}
         @np-value-changed=${(e: CustomEvent) => this._onPicked(e)}
       ></np-venue-input>
     `;
