@@ -18,6 +18,7 @@ declare global {
       > & {
         'entity-id'?: string;
         'entity-i-id'?: string;
+        'hide-related'?: boolean;
       };
     }
   }
@@ -29,6 +30,8 @@ export interface WikiViewProps {
   manifest?: NostrPostManifest;
   resolver?: WikiResolverFunction;
   relays?: string[];
+  /** Don't list the manifest's related items (`wikiConfig.related`) */
+  hideRelated?: boolean;
   className?: string;
 }
 
@@ -38,6 +41,7 @@ export function WikiView({
   manifest,
   resolver,
   relays,
+  hideRelated,
   className,
 }: WikiViewProps) {
   const ref = useRef<NostrWikiViewElement>(null);
@@ -51,6 +55,12 @@ export function WikiView({
   }, [manifest, resolver, relays]);
 
   return (
-    <nostr-wiki-view ref={ref} className={className} entity-id={entityId} entity-i-id={entityIId} />
+    <nostr-wiki-view
+      ref={ref}
+      className={className}
+      entity-id={entityId}
+      entity-i-id={entityIId}
+      hide-related={hideRelated || undefined}
+    />
   );
 }

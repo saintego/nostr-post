@@ -19,8 +19,10 @@ import {
 } from '../nip54';
 import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { countContributors, defaultResolver, selectNewestEntity } from '../resolver';
+import type { WikiManifest } from '../types';
 import { DEFAULT_WIKI_VIEW_MESSAGES, type WikiViewMessages } from './wiki-view-messages';
 import { viewStyles } from './wiki-view-styles';
+import './wikiRelated';
 
 /** Resolving the newest version needs every relay's versions, not the first answer */
 const ALL_RELAYS = { waitForAll: true, relayTimeoutMs: 5000 };
@@ -60,6 +62,10 @@ export class NostrWikiView extends LitElement {
   /** Overrides for the view's user-facing text (e.g. translations) */
   @property({ attribute: false })
   messages?: Partial<WikiViewMessages>;
+
+  /** Don't list the related items the manifest defines (`wikiConfig.related`) */
+  @property({ type: Boolean, attribute: 'hide-related' })
+  hideRelated = false;
 
   @state() private _loading = false;
   @state() private _error?: string;
@@ -293,10 +299,23 @@ export class NostrWikiView extends LitElement {
 
         ${this._renderLinks(this._winningEvent)}
         ${this._renderSources(this._winningEvent)}
+        ${this._renderRelated()}
         ${this._renderAllData(this._winningEvent)}
         ${this.event ? nothing : this._renderVersionList()}
       </div>
     `;
+  }
+
+  /** The manifest's related items (e.g. a brewery's beers), unless hidden */
+  private _renderRelated() {
+    const sections = (this._manifest as WikiManifest).wikiConfig?.related;
+    const dTag = this._winningEvent?.tags.find((t) => t[0] === 'd')?.[1];
+    if (this.hideRelated || !sections?.length || !dTag) return nothing;
+    return html`<nostr-wiki-related
+      .entityId=${dTag}
+      .sections=${sections}
+      .relays=${this.relays}
+    ></nostr-wiki-related>`;
   }
 
   private _renderVersionList() {

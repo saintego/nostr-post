@@ -109,6 +109,10 @@ export {
   // A plugin's "+ Create" form in the entity picker (e.g. venue pages from OpenStreetMap)
   registerEntityCreator,
   entityCreatorFor,
+  // Related items on an entity's page (wikiConfig.related)
+  fetchRelated,
+  filterRelated,
+  relatedSnippet,
 } from '@nostr-post/wiki';
 
 // Wiki entity picker (search, create)

@@ -162,6 +162,30 @@ wikiConfig: {
 }
 ```
 
+### Related items
+
+`wikiConfig.related` lists items on the entity's page, e.g. a brewery's beers or a beer's reviews: events
+whose `a` tags point at any version of the entity (every author's version has its own address).
+
+```typescript
+related: [
+  { label: "Beers", kinds: [30818], dTagSuffix: "-beer", role: "breweries" },
+  { label: "Reviews", kinds: [1, 30078], manifest: "beer-review-v1" },
+]
+```
+
+| Key          | Description                                                                                        |
+| ------------ | -------------------------------------------------------------------------------------------------- |
+| `label`      | The section's heading                                                                              |
+| `kinds`      | Event kinds to list: `30818` for wiki entities, e.g. `1`/`30078` for reviews                        |
+| `dTagSuffix` | Wiki entities of one type, by the suffix of their d-tags (`-beer`)                                  |
+| `role`       | Only wiki entities whose [role row](#references-with-a-role) (this field id) links this entity     |
+| `manifest`   | Only events linking this manifest (its id)                                                         |
+| `limit`      | Items shown at first (20); "Show more" asks for more                                               |
+
+Wiki entities are listed in their newest version and open their page on demand; posts show a short
+text. `<nostr-wiki-view>` shows the sections unless it has `hide-related`.
+
 ### Title and d-tag templates
 
 Entity slugs share one namespace with every wiki article, so a beer called "Bitcoin" would collide

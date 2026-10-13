@@ -13,6 +13,8 @@ import type { NostrPostManifest } from '@nostr-post/core/types';
  * Static text (prefixes, suffixes, parenthesised qualifiers) is preserved and
  * normalized alongside field values into the final d-tag.
  */
+import type { WikiRelatedSection } from './related';
+
 export interface WikiConfig {
   /**
    * Template for the `["title", ...]` tag.
@@ -44,6 +46,11 @@ export interface WikiConfig {
    * links from its `i` tags. Derived when shown, never stored on the event.
    */
   links?: WikiLinkTemplate[];
+  /**
+   * Related items listed on the entity's page, e.g. a brewery's beers or a
+   * beer's reviews: events whose `a` tags point at any version of the entity
+   */
+  related?: WikiRelatedSection[];
 }
 
 /**

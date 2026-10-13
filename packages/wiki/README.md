@@ -268,6 +268,11 @@ export const BEER_REVIEW_MANIFEST: NostrPostManifest = {
 
 ---
 
+`<nostr-wiki-view>` lists the related items its manifest defines (`wikiConfig.related`, see
+[MANIFEST.md](../../MANIFEST.md#related-items)), e.g. a brewery's beers, unless it has `hide-related`
+(React: `hideRelated`). `<nostr-wiki-related entity-id .sections>` shows them on their own;
+`fetchRelated(dTag, section)` returns them.
+
 The picker's `metadata` keys (`entityManifest`, `relays`, `minSearchLength`, `emitExtraTags`,
 `multiple`) are listed in [MANIFEST.md](../../MANIFEST.md#plugin-metadata); fields that reference entities in
 roles (e.g. a beer's breweries and where it was brewed) in

@@ -6,6 +6,12 @@ export {
   resolveEntityManifest,
 } from './registry';
 export {
+  type WikiRelatedSection,
+  fetchRelated,
+  filterRelated,
+  relatedSnippet,
+} from './related';
+export {
   type CreatedEntity,
   type EntityCreator,
   entityCreatorFor,

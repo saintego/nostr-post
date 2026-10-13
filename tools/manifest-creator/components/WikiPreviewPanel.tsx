@@ -7,7 +7,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { registerEntityManifests } from '../lib/entityManifests';
 import { EntityBrowser } from './wiki/EntityBrowser';
 import { EntityEditor } from './wiki/EntityEditor';
-import { EntityReviews } from './wiki/EntityReviews';
 import { EntityVersions } from './wiki/EntityVersions';
 import { WikiView } from './wiki/WikiElements';
 import { styles } from './wiki/wikiPanelStyles';
@@ -16,13 +15,12 @@ interface WikiPreviewPanelProps {
   manifest: NostrPostManifest;
 }
 
-type Tab = 'view' | 'edit' | 'versions' | 'reviews';
+type Tab = 'view' | 'edit' | 'versions';
 
 const TAB_LABELS: Record<Tab, string> = {
   view: '🔍 View',
   edit: '✏️ Edit',
   versions: '🕘 Versions',
-  reviews: '🔗 Reviews',
 };
 
 /** What the panel works on: an existing entity, or a new one being written */
@@ -76,8 +74,7 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
     setTab('view');
   }, []);
 
-  const tabs: Tab[] =
-    target?.kind === 'entity' ? ['view', 'edit', 'versions', 'reviews'] : ['edit'];
+  const tabs: Tab[] = target?.kind === 'entity' ? ['view', 'edit', 'versions'] : ['edit'];
   const activeTab = tabs.includes(tab) ? tab : 'edit';
   const dTag = target?.kind === 'entity' ? target.dTag : undefined;
 
@@ -141,8 +138,6 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
               {activeTab === 'versions' && dTag && (
                 <EntityVersions manifest={manifest} dTag={dTag} onEditFrom={editFrom} />
               )}
-
-              {activeTab === 'reviews' && dTag && <EntityReviews dTag={dTag} />}
             </div>
           )}
         </>

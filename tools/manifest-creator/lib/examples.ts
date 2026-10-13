@@ -92,6 +92,11 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
     wikiConfig: {
       titleTemplate: '{name} (Brewery)',
       dTagTemplate: '{name}-(brewery)',
+      // Listed on the brewery's page: beers naming it in their roles
+      related: [
+        { label: 'Beers', kinds: [30818], dTagSuffix: '-beer', role: 'breweries' },
+        { label: 'Brewed here for others', kinds: [30818], dTagSuffix: '-beer', role: 'brewed_at' },
+      ],
     },
     fields: [
       {
@@ -237,6 +242,8 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       links: [
         { label: 'BJCP', url: 'https://www.bjcp.org/style/2021/{style.category}/{style.code}/' },
       ],
+      // Listed on the beer's page: reviews linking it (any author's version)
+      related: [{ label: 'Reviews', kinds: [1, 30078], manifest: 'beer-review-v1' }],
     },
     fields: [
       {
@@ -491,6 +498,12 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
           url: 'https://btcmap.org/merchant/{i:osm}',
           when: { field: 'bitcoin', equals: 'yes' },
         },
+      ],
+      // Listed on the venue's page
+      related: [
+        { label: 'Reviews', kinds: [1, 30078], manifest: 'venue-review-v1' },
+        { label: 'Beer reviews', kinds: [1, 30078], manifest: 'beer-review-v1' },
+        { label: 'Taproom of', kinds: [30818], dTagSuffix: '-brewery', role: 'taprooms' },
       ],
     },
     fields: [

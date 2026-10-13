@@ -471,6 +471,12 @@ export function wikiEventToManifestData(
   return result;
 }
 
+/** The wikilink targets in an entity's infobox row (e.g. a role row: the beers' `brewed_at`) */
+export function infoboxRowLinks(content: string, key: string): string[] {
+  const { rows } = extractTableFromAst(parse(content) as unknown as AstDoc);
+  return rows.filter(([k]) => k === key).flatMap(([, , links]) => links.map((l) => l.target));
+}
+
 export function buildWikiATag(pubkey: string, dTag: string): string {
   return `${WIKI_KIND}:${pubkey}:${dTag}`;
 }
