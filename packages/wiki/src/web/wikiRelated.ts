@@ -7,7 +7,14 @@
 import { LitElement, css, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { DEFAULT_WIKI_RELAYS, WIKI_KIND } from '../nip54';
-import { type WikiRelatedSection, fetchRelated, relatedSnippet } from '../related';
+import {
+  RELATED_STATS_LIMIT,
+  type WikiRelatedSection,
+  fetchRelated,
+  relatedImages,
+  relatedSnippet,
+  relatedStats,
+} from '../related';
 import type { WikiEvent } from '../resolver';
 import { DEFAULT_WIKI_RELATED_MESSAGES, type WikiRelatedMessages } from './relatedMessages';
 
@@ -34,6 +41,9 @@ export class NostrWikiRelated extends LitElement {
     summary { cursor: pointer; }
     .status { color: var(--nl-muted, #6b7280); font-size: 0.8125rem; }
     button { margin-top: 0.375rem; font-size: 0.8125rem; cursor: pointer; }
+    .stats { font-size: 0.875rem; margin-bottom: 0.375rem; }
+    .gallery { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-bottom: 0.5rem; }
+    .gallery img { width: 5rem; height: 5rem; object-fit: cover; border-radius: 0.375rem; }
   `;
 
   /** The entity's d-tag */
@@ -65,9 +75,11 @@ export class NostrWikiRelated extends LitElement {
     const section = this.sections[index];
     const dTag = this.entityId;
     if (!section || !dTag) return;
-    const items = await fetchRelated(dTag, section, this.relays, this._limits[index]).catch(
-      () => []
-    );
+    // Stats and a gallery cover more posts than the list shows
+    const listed = this._limits[index] ?? 20;
+    const wanted =
+      section.stats || section.gallery ? Math.max(listed, RELATED_STATS_LIMIT) : listed;
+    const items = await fetchRelated(dTag, section, this.relays, wanted).catch(() => []);
     if (dTag !== this.entityId) return;
     const next = [...this._items];
     next[index] = items;
@@ -76,7 +88,24 @@ export class NostrWikiRelated extends LitElement {
 
   private _showMore(index: number): void {
     this._limits = this._limits.map((l, i) => (i === index ? l * 2 : l));
-    void this._load(index);
+    // Already read when the section has stats (up to RELATED_STATS_LIMIT)
+    if ((this._items[index]?.length ?? 0) < (this._limits[index] ?? 0)) void this._load(index);
+  }
+
+  /** "12 in total · ★ 4.3 / 5" and the images of the section's posts */
+  private _renderSummary(section: WikiRelatedSection, items: WikiEvent[]) {
+    const stats = section.stats && relatedStats(items, section.stats.tag);
+    const images = section.gallery ? relatedImages(items) : [];
+    return html`
+      ${stats ? html`<div class="stats">${this._m.stats(stats.count, stats.average, section.stats?.max)}</div>` : nothing}
+      ${
+        images.length > 0
+          ? html`<div class="gallery">
+              ${images.map((url) => html`<a href=${url} target="_blank" rel="noopener"><img src=${url} alt="" loading="lazy" referrerpolicy="no-referrer" /></a>`)}
+            </div>`
+          : nothing
+      }
+    `;
   }
 
   private _renderItem(e: WikiEvent) {
@@ -100,10 +129,11 @@ export class NostrWikiRelated extends LitElement {
       const items = this._items[i];
       const limit = this._limits[i] ?? 20;
       return html`<section>
-        <h3>${section.label}${items ? ` (${items.length})` : ''}</h3>
+        <h3>${section.label}</h3>
         ${items === undefined ? html`<div class="status">${m.loading}</div>` : nothing}
         ${items?.length === 0 ? html`<div class="status">${m.empty}</div>` : nothing}
-        ${items?.map((e) => this._renderItem(e))}
+        ${items?.length ? this._renderSummary(section, items) : nothing}
+        ${items?.slice(0, limit).map((e) => this._renderItem(e))}
         ${items && items.length >= limit ? html`<button type="button" @click=${() => this._showMore(i)}>${m.showMore}</button>` : nothing}
       </section>`;
     });

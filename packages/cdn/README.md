@@ -124,7 +124,8 @@ The bundle re-exports utilities for advanced usage:
 - `defaultResolver`, `collectEntityATags`, `fetchEntityVersions`, `checkEntityDTag`
 - `registerEntityManifest`, `getEntityManifest`, `resolveEntityManifest`: entity manifests by id,
   inline, or by a published manifest's `30078:` address
-- `fetchRelated(dTag, section)`, `filterRelated(events, section, dTag)`, `relatedSnippet(event)`: an entity's
+- `fetchRelated(dTag, section)`, `filterRelated(events, section, dTag)`, `relatedSnippet(event)`,
+  `relatedStats(events, tag)`, `relatedImages(events)`: an entity's
   related items (`wikiConfig.related`, e.g. a brewery's beers), as `<nostr-wiki-related>` lists them
 - `registerEntityCreator({ tagName, matches })`, `entityCreatorFor(manifest)`: a plugin's own "+ Create"
   form in the entity picker for the types it can fill (the venue plugin creates venue pages from OSM)

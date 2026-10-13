@@ -182,9 +182,12 @@ related: [
 | `role`       | Only wiki entities whose [role row](#references-with-a-role) (this field id) links this entity     |
 | `manifest`   | Only events linking this manifest (its id)                                                         |
 | `limit`      | Items shown at first (20); "Show more" asks for more                                               |
+| `stats`      | `{ tag, max }`: how many posts and the average of that tag ("12 in total · ★ 4.3 / 5")              |
+| `gallery`    | `true`: the images of the section's posts (`r` URLs of image files, `imeta` images)                |
 
 Wiki entities are listed in their newest version and open their page on demand; posts show a short
-text. `<nostr-wiki-view>` shows the sections unless it has `hide-related`.
+text. A section with `stats` or `gallery` reads up to 500 posts for them, computed when shown and
+never stored, and still lists `limit`. `<nostr-wiki-view>` shows the sections unless it has `hide-related`.
 
 ### Title and d-tag templates
 

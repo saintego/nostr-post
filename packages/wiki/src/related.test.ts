@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterRelated, relatedSnippet } from './related';
+import { filterRelated, relatedImages, relatedSnippet, relatedStats } from './related';
 import type { WikiEvent } from './resolver';
 
 const event = (over: Partial<WikiEvent>): WikiEvent => ({
@@ -73,5 +73,36 @@ describe('related items', () => {
     expect(relatedSnippet(event({ kind: 30078, content: '{"rating":5,"review":"Hoppy"}' }))).toBe(
       'Hoppy'
     );
+  });
+
+  it('stats: post count and the average of a numeric tag among posts that have it', () => {
+    const posts = [
+      event({ kind: 1, tags: [['rating', '5']] }),
+      event({ kind: 1, tags: [['rating', '4']] }),
+      event({ kind: 1, tags: [] }),
+    ];
+    expect(relatedStats(posts, 'rating')).toEqual({ count: 3, rated: 2, average: 4.5 });
+    expect(relatedStats([], 'rating')).toEqual({ count: 0, rated: 0, average: undefined });
+  });
+
+  it('gallery: image r tags and imeta images, once each', () => {
+    const posts = [
+      event({
+        kind: 1,
+        tags: [
+          ['r', 'https://x.org/a.jpg'],
+          ['r', 'https://x.org/page'],
+          ['r', 'https://x.org/a.jpg'],
+        ],
+      }),
+      event({
+        kind: 1,
+        tags: [
+          ['imeta', 'url https://cdn.org/b', 'm image/webp'],
+          ['imeta', 'url https://cdn.org/c.mp4', 'm video/mp4'],
+        ],
+      }),
+    ];
+    expect(relatedImages(posts)).toEqual(['https://x.org/a.jpg', 'https://cdn.org/b']);
   });
 });

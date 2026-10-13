@@ -6,6 +6,8 @@ export interface WikiRelatedMessages {
   showMore: string;
   /** Author and date of a listed post */
   byline: (author: string, date: string) => string;
+  /** A section's numbers: posts, and the average of its stats tag (e.g. the rating) */
+  stats: (count: number, average: number | undefined, max: number | undefined) => string;
 }
 
 export const DEFAULT_WIKI_RELATED_MESSAGES: WikiRelatedMessages = {
@@ -13,4 +15,8 @@ export const DEFAULT_WIKI_RELATED_MESSAGES: WikiRelatedMessages = {
   empty: 'Nothing yet',
   showMore: 'Show more',
   byline: (author, date) => `${author} · ${date}`,
+  stats: (count, average, max) =>
+    average === undefined
+      ? `${count} in total`
+      : `${count} in total · ★ ${average.toFixed(1)}${max ? ` / ${max}` : ''}`,
 };

@@ -28,7 +28,17 @@ export interface WikiRelatedSection {
   manifest?: string;
   /** Items shown at first (default 20); "Show more" asks for more */
   limit?: number;
+  /**
+   * Numbers over the section's posts, e.g. `{ tag: 'rating', max: 5 }`: how many
+   * there are and the average of that tag; computed when shown, never stored
+   */
+  stats?: { tag: string; max?: number };
+  /** Show the images of the section's posts (`r` / `imeta` tags), e.g. review photos */
+  gallery?: boolean;
 }
+
+/** How many posts a section with stats or a gallery reads, while listing only `limit` */
+export const RELATED_STATS_LIMIT = 500;
 
 /** Relays may cap how many values one filter takes: ask in batches */
 const BATCH = 50;
@@ -104,4 +114,43 @@ export function relatedSnippet(event: WikiEvent, maxLength = 200): string {
   }
   const line = text.replace(/\s+/g, ' ').trim();
   return line.length > maxLength ? `${line.slice(0, maxLength - 1)}…` : line;
+}
+
+/** The number of posts and the average of a numeric tag (e.g. `rating`) among those that have it */
+export function relatedStats(
+  events: WikiEvent[],
+  tag: string
+): { count: number; rated: number; average?: number } {
+  const values = events
+    .map((e) => Number(e.tags.find((t) => t[0] === tag)?.[1]))
+    .filter((n) => Number.isFinite(n));
+  const sum = values.reduce((a, b) => a + b, 0);
+  return {
+    count: events.length,
+    rated: values.length,
+    average: values.length > 0 ? sum / values.length : undefined,
+  };
+}
+
+const IMAGE_URL = /\.(jpe?g|png|gif|webp|avif)(\?|#|$)/i;
+
+/** An `imeta` tag's url when its media type is an image (NIP-92) */
+const imetaImage = (tag: string[]): string | undefined => {
+  const fields = Object.fromEntries(
+    tag.slice(1).map((part) => [part.split(' ')[0], part.slice(part.indexOf(' ') + 1)])
+  );
+  const url = fields.url;
+  if (!url) return undefined;
+  return fields.m?.startsWith('image/') || IMAGE_URL.test(url) ? url : undefined;
+};
+
+/** The images of the posts (`imeta` with an image type, or `r` URLs of image files), newest post first */
+export function relatedImages(events: WikiEvent[], max = 12): string[] {
+  const urls = events.flatMap((e) =>
+    e.tags.flatMap((t) => {
+      if (t[0] === 'imeta') return imetaImage(t) ?? [];
+      return t[0] === 'r' && t[1] && IMAGE_URL.test(t[1]) ? [t[1]] : [];
+    })
+  );
+  return [...new Set(urls)].slice(0, max);
 }

@@ -86,8 +86,8 @@
 - [ ] Publish `venue-entity-v1` as a NIP-78 manifest and reference it by address in the examples (now registered from the manifest creator's examples)
 - [x] Show all data: posts and wiki pages show the clean manifest-based format, with a collapsed full view of everything (all tags; wiki table rows the manifest doesn't know, e.g. fields added in a newer manifest version), instead of always listing raw tags
 - [ ] Venue hub: Google Places as a second source (`gplace:` `i` tag, `sources.google` fields, rating snapshot "4.2 from 50 reviews, as of <date>"), ideally by just sharing gmap link without api keys
-- [ ] Venue hub: computed Nostr review stats in the venue view (count + average from reviews referencing the entity; computed live, not stored)
-- [ ] Venue hub: photo gallery aggregated from those reviews' media
+- [x] Related sections: review stats, `stats: { tag: 'rating', max: 5 }` → "12 reviews · ★ 4.3" above the list (count + average of that tag over the section's posts; computed when shown, not stored; fetched up to ~500 for the numbers, the list stays at `limit`). For any entity type: a venue's or a beer's reviews
+- [x] Related sections: photo gallery, `gallery: true` → the images (`r`/`imeta` tags) of the section's posts, e.g. a venue's or a beer's review photos
 - [ ] Venue hub: area search ("venues near me") via the entity's `g` prefix tags
 - [x] Venue hub: create a venue entity from an OSM search directly in the wiki picker: plugins register their own "+ Create" form (`registerEntityCreator`); the venue plugin's searches OSM and runs the venue hub
 - [x] Venue hub: add btc payment availability from btcmap data. BTC Map's data are OSM tags (`currency:XBT`, `payment:lightning`, `payment:onchain`, `payment:lightning_contactless`, `check_date:currency:XBT`), so `venue-entity-v1` maps them to infobox rows via `sources.osm`. The BTC Map link isn't stored: entity manifests can declare derived links (`wikiConfig.links`, e.g. `https://btcmap.org/merchant/{i:osm}` when `bitcoin` is "yes"), shown in the wiki view's Links row (which also shows `r` URLs). Existing entities get the rows on their next OSM-triggered update

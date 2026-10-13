@@ -243,7 +243,15 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         { label: 'BJCP', url: 'https://www.bjcp.org/style/2021/{style.category}/{style.code}/' },
       ],
       // Listed on the beer's page: reviews linking it (any author's version)
-      related: [{ label: 'Reviews', kinds: [1, 30078], manifest: 'beer-review-v1' }],
+      related: [
+        {
+          label: 'Reviews',
+          kinds: [1, 30078],
+          manifest: 'beer-review-v1',
+          stats: { tag: 'rating', max: 5 },
+          gallery: true,
+        },
+      ],
     },
     fields: [
       {
@@ -501,8 +509,14 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       ],
       // Listed on the venue's page
       related: [
-        { label: 'Reviews', kinds: [1, 30078], manifest: 'venue-review-v1' },
-        { label: 'Beer reviews', kinds: [1, 30078], manifest: 'beer-review-v1' },
+        {
+          label: 'Reviews',
+          kinds: [1, 30078],
+          manifest: 'venue-review-v1',
+          stats: { tag: 'rating', max: 5 },
+          gallery: true,
+        },
+        { label: 'Beer reviews', kinds: [1, 30078], manifest: 'beer-review-v1', gallery: true },
         { label: 'Taproom of', kinds: [30818], dTagSuffix: '-brewery', role: 'taprooms' },
       ],
     },

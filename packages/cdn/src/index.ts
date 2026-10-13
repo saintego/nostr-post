@@ -112,7 +112,9 @@ export {
   // Related items on an entity's page (wikiConfig.related)
   fetchRelated,
   filterRelated,
+  relatedImages,
   relatedSnippet,
+  relatedStats,
 } from '@nostr-post/wiki';
 
 // Wiki entity picker (search, create)

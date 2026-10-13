@@ -6,10 +6,13 @@ export {
   resolveEntityManifest,
 } from './registry';
 export {
+  RELATED_STATS_LIMIT,
   type WikiRelatedSection,
   fetchRelated,
   filterRelated,
+  relatedImages,
   relatedSnippet,
+  relatedStats,
 } from './related';
 export {
   type CreatedEntity,
