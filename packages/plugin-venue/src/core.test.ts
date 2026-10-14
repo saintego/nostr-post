@@ -27,7 +27,11 @@ describe('venuePlugin.resolveFromTags', () => {
 
   it('reads the level from the geohash length and the field levels, for any OSM type', () => {
     const level = (tags: string[][], metadata?: Record<string, unknown>) =>
-      (venuePlugin.resolveFromTags?.(tags, { id: 'venue', metadata } as never) as VenueData).level;
+      (
+        venuePlugin.resolveFromTags?.(tags, { id: 'venue', metadata } as never) as
+          | VenueData
+          | undefined
+      )?.level;
     const levels = { levels: ['city', 'place'] };
     // A town OSM models as a node, published at city precision
     expect(
