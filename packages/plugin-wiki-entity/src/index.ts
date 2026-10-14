@@ -22,4 +22,8 @@ export {
   type WikiEntityPickerConfig,
 } from './core';
 
+export {
+  DEFAULT_WIKI_ENTITY_PICKER_MESSAGES,
+  type WikiEntityPickerMessages,
+} from './pickerMessages';
 export { type EntitySearchResult, searchEntities } from './search';

@@ -22,6 +22,7 @@ import {
   levelPrecision,
   resultLevel,
   searchFeatureType,
+  venueLevels,
 } from './levels';
 
 // ── Types ───────────────────────────────────────────────────────────
@@ -268,11 +269,22 @@ const isValidGeohash = (value: unknown): value is string => {
   return true;
 };
 
-/** The level of a venue read from tags: no area is a country, a coarse OSM area a city */
-const publishedLevel = (venue: VenueData): VenueLevel => {
+/**
+ * The level of a venue read from tags: no area is a country; a geohash coarser
+ * than the field's places (cities are published at most 4 characters long) a
+ * city, for any OSM element type (towns are often nodes)
+ */
+const publishedLevel = (venue: VenueData, field: PostField): VenueLevel => {
   if (!venue.geohash) return 'country';
-  if (venue.osmType === 'relation' && venue.geohash.length <= 4) return 'city';
-  return 'place';
+  const config = (field?.metadata ?? {}) as VenuePluginConfig;
+  const levels = venueLevels(config.levels);
+  if (!levels.includes('city')) return 'place';
+  if (!levels.includes('place')) return 'city';
+  const placeLength = levelPrecision('place', config.precision ?? 6);
+  const cityLength = levelPrecision('city', placeLength);
+  return venue.geohash.length <= cityLength && venue.geohash.length < placeLength
+    ? 'city'
+    : 'place';
 };
 
 // ── Plugin definition ───────────────────────────────────────────────
@@ -410,7 +422,7 @@ export const venuePlugin: NostrUIPlugin = {
    * Reads "g", "i" (osm/gplace), and "location" tags.
    */
   // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: parser handles multiple interoperable tag formats
-  resolveFromTags: (tags: string[][], _field: PostField): unknown => {
+  resolveFromTags: (tags: string[][], field: PostField): unknown => {
     // Find the most precise geohash (longest "g" tag value)
     let geohash = '';
     for (const tag of tags) {
@@ -459,7 +471,7 @@ export const venuePlugin: NostrUIPlugin = {
       tags.find((t) => t[0] === 'a' && t[1]?.startsWith('30818:'))?.[1]?.split(':') ?? [];
     if (pubkey && dTag.length > 0) venue.wikiEntity = { pubkey, dTag: dTag.join(':') };
 
-    venue.level = publishedLevel(venue);
+    venue.level = publishedLevel(venue, field);
     return venue;
   },
 };

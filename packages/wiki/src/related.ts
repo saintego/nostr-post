@@ -83,6 +83,10 @@ export async function fetchRelated(
   limit = section.limit ?? 20
 ): Promise<WikiEvent[]> {
   const addresses = collectEntityATags(await fetchEntityVersions(dTag, relays));
+  // filterRelated drops events client-side (other types, the entity's own versions,
+  // other manifests): ask relays for more, so the cut-off doesn't hide matching items
+  const filtered = section.kinds.includes(WIKI_KIND) || !!section.manifest;
+  const relayLimit = filtered ? Math.max(limit, RELATED_STATS_LIMIT) : limit;
   const batches = Array.from({ length: Math.ceil(addresses.length / BATCH) }, (_, i) =>
     addresses.slice(i * BATCH, (i + 1) * BATCH)
   );
@@ -90,7 +94,7 @@ export async function fetchRelated(
     batches.map(
       (batch) =>
         fetchEvents(
-          { kinds: section.kinds, '#a': batch, limit } as never,
+          { kinds: section.kinds, '#a': batch, limit: relayLimit } as never,
           relays
         ) as unknown as Promise<WikiEvent[]>
     )
@@ -121,8 +125,11 @@ export function relatedStats(
   events: WikiEvent[],
   tag: string
 ): { count: number; rated: number; average?: number } {
+  // An empty value isn't a rating (Number('') would count it as 0)
   const values = events
-    .map((e) => Number(e.tags.find((t) => t[0] === tag)?.[1]))
+    .map((e) => e.tags.find((t) => t[0] === tag)?.[1]?.trim())
+    .filter((v): v is string => !!v)
+    .map(Number)
     .filter((n) => Number.isFinite(n));
   const sum = values.reduce((a, b) => a + b, 0);
   return {

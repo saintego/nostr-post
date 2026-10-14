@@ -85,6 +85,15 @@ describe('related items', () => {
     expect(relatedStats([], 'rating')).toEqual({ count: 0, rated: 0, average: undefined });
   });
 
+  it('stats: an empty tag value is no rating, not a 0', () => {
+    const posts = [
+      event({ kind: 1, tags: [['rating', '5']] }),
+      event({ kind: 1, tags: [['rating', '']] }),
+      event({ kind: 1, tags: [['rating', ' ']] }),
+    ];
+    expect(relatedStats(posts, 'rating')).toEqual({ count: 3, rated: 1, average: 5 });
+  });
+
   it('gallery: image r tags and imeta images, once each', () => {
     const posts = [
       event({

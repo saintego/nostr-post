@@ -44,13 +44,15 @@ function fetchRelayList(pubkey: string, relays: string[]): Promise<SignedEvent[]
   const key = `${pubkey}|${relays.join(',')}`;
   let cached = listCache.get(key);
   if (!cached) {
+    // fetchEvents resolves [] when relays fail or time out: only a found list is kept
+    const forget = (): SignedEvent[] => {
+      listCache.delete(key);
+      return [];
+    };
     cached = fetchEvents({ authors: [pubkey], kinds: [10002] }, [
       ...relays,
       ...RELAY_LIST_INDEXERS,
-    ]).catch(() => {
-      listCache.delete(key);
-      return [];
-    });
+    ]).then((events) => (events.length > 0 ? events : forget()), forget);
     listCache.set(key, cached);
   }
   return cached;
@@ -59,7 +61,7 @@ function fetchRelayList(pubkey: string, relays: string[]): Promise<SignedEvent[]
 /**
  * The NIP-65 relays of `pubkeys` plus `relays`, so feeds find events published
  * only to the authors' own relays. Falls back to `relays` if no list is found.
- * Lookups are cached per pubkey.
+ * Found lists are cached per pubkey; a lookup that found none is tried again next time.
  */
 export async function fetchUserRelays(
   pubkeys: string | string[],

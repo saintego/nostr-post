@@ -5,6 +5,7 @@ import {
   encodeNaddr,
   isPostRoleField,
   parsePostRoles,
+  plainTextContent,
   readPostRoles,
   roleLines,
 } from './postRoles';
@@ -153,5 +154,30 @@ describe('role fields in posts', () => {
     expect(roleLines(venueField, value)[0]).toMatch(/^Tasted at: nostr:naddr1/);
     // Before the venue hub ran there's no page yet: no line
     expect(roleLines(venueField, { geohash: 'u2fkb', lat: 50, lon: 14 })).toEqual([]);
+  });
+});
+
+describe('plainTextContent', () => {
+  const textField = (id: string): PostField => ({
+    id,
+    type: 'string',
+    uiPlugin: 'text',
+    mapTo: { kind: 1, target: 'content' },
+  });
+
+  it('writes lists of values as text and skips null, role fields as mention lines', () => {
+    const content = plainTextContent(
+      [textField('review'), textField('tags'), textField('note'), tasted],
+      {
+        review: 'Great beer.',
+        tags: ['hoppy', 'pale'],
+        note: null,
+        tasting_at: { dTag: 'u-fleků-prague-venue', resolvedPubkey: pk },
+      }
+    );
+    const [review, tags, line, ...rest] = content.split('\n');
+    expect([review, tags, rest]).toEqual(['Great beer.', 'hoppy, pale', []]);
+    expect(line).toMatch(/^Tasted at: nostr:naddr1/);
+    expect(plainTextContent([textField('tags')], { tags: [] })).toBe('');
   });
 });

@@ -8,6 +8,7 @@
  */
 
 import type { NostrTarget, PostField } from '@nostr-post/core/types';
+import { escapeInline } from './djotText';
 import { templateText } from './identity';
 import { normalizeDTag } from './normalizeDTag';
 
@@ -63,12 +64,10 @@ export const entityRefs = (value: unknown): EntityRef[] =>
     return venueRef(v as VenueLike);
   });
 
-const escapeLinkText = (text: string): string => text.replace(/[[\]\\]/g, (c) => `\\${c}`);
-
 /** An infobox cell of wikilinks to the referenced entities: `[Pivovar Z][pivovar-z-brewery]` */
 export function roleRowText(value: unknown): string {
   return entityRefs(value)
-    .map((ref) => `[${escapeLinkText(templateText(ref) || ref.dTag)}][${ref.dTag}]`)
+    .map((ref) => `[${escapeInline(templateText(ref) || ref.dTag)}][${ref.dTag}]`)
     .join(', ');
 }
 

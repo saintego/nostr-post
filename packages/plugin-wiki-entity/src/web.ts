@@ -38,6 +38,10 @@ import {
   pickedEntities,
   wikiEntityPickerPlugin,
 } from './core';
+import {
+  DEFAULT_WIKI_ENTITY_PICKER_MESSAGES,
+  type WikiEntityPickerMessages,
+} from './pickerMessages';
 import { type EntitySearchResult, searchEntities } from './search';
 import { pickerStyles } from './webStyles';
 
@@ -61,13 +65,16 @@ export class WikiEntityPicker extends LitElement {
   @property({ attribute: false })
   field?: { id: string; required?: boolean; metadata?: Record<string, unknown> };
 
+  /** Overrides for the picker's user-facing text (e.g. translations) */
+  @property({ attribute: false })
+  messages?: Partial<WikiEntityPickerMessages>;
+
   @state() private _query = '';
   /** Resolved version of each matching entity and how many versions were found */
   @state() private _results: EntitySearchResult[] = [];
   /** d-tag of the entity shown in the preview overlay */
   @state() private _previewDTag?: string;
   @state() private _searching = false;
-  /** Entity being created in the dialog */
   /** Entity being created in the dialog */
   @state() private _creating?: {
     manifest: NostrPostManifest;
@@ -78,6 +85,10 @@ export class WikiEntityPicker extends LitElement {
   private _debounceTimer?: ReturnType<typeof setTimeout>;
 
   private _searchId = 0;
+
+  private get _m(): WikiEntityPickerMessages {
+    return { ...DEFAULT_WIKI_ENTITY_PICKER_MESSAGES, ...this.messages };
+  }
 
   private get _config(): WikiEntityPickerConfig {
     return (this.field?.metadata as WikiEntityPickerConfig | undefined) ?? {};
@@ -200,7 +211,7 @@ export class WikiEntityPicker extends LitElement {
         <span class="selected-name">${entity.displayName ?? entity.dTag}</span>
         <span class="selected-slug">${entity.dTag}</span>
         ${this._previewButton(entity.dTag)}
-        <button type="button" class="clear-btn" @click=${() => this._remove(entity.dTag)} aria-label="Remove">×</button>
+        <button type="button" class="clear-btn" @click=${() => this._remove(entity.dTag)} aria-label=${this._m.remove}>×</button>
       </div>
     `;
   }
@@ -248,16 +259,17 @@ export class WikiEntityPicker extends LitElement {
       this._results.map((r) => r.event.tags.find((t) => t[0] === 'd')?.[1] ?? ''),
       this._affixes
     );
+    const m = this._m;
     return html`
       ${
         this._results.length === 0
-          ? html`<div class="status-row">No entities found for "${this._query}"</div>`
+          ? html`<div class="status-row">${m.noResults(this._query)}</div>`
           : nothing
       }
-      ${exists ? html`<div class="status-row">"${dTag}" already exists (above).</div>` : nothing}
+      ${exists ? html`<div class="status-row">${m.alreadyExists(dTag)}</div>` : nothing}
       <button class="create-btn" type="button" @click=${this._onCreateRequest}>
-        + Create ${exists ? 'another ' : ''}"${this._query}"
-        ${exists ? html`<span class="create-dtag">with a distinct slug</span>` : this._createDTagHint()}
+        ${exists ? m.createAnother(this._query) : m.create(this._query)}
+        ${exists ? html`<span class="create-dtag">${m.distinctSlug}</span>` : this._createDTagHint()}
       </button>
     `;
   }
@@ -301,7 +313,7 @@ export class WikiEntityPicker extends LitElement {
         >
           <div class="modal-header">
             <span>${title}</span>
-            <button type="button" class="clear-btn" aria-label="Close" @click=${onClose}>×</button>
+            <button type="button" class="clear-btn" aria-label=${this._m.close} @click=${onClose}>×</button>
           </div>
           <div class="modal-body">${body}</div>
         </div>
@@ -313,7 +325,7 @@ export class WikiEntityPicker extends LitElement {
     const creating = this._creating;
     if (!creating) return nothing;
     return this._renderModal(
-      `Create ${creating.manifest.metadata?.name ?? 'entity'}`,
+      this._m.createDialogTitle(creating.manifest.metadata?.name),
       creating.creatorTag
         ? staticHtml`<${unsafeStatic(creating.creatorTag)}
             .manifest=${creating.manifest}
@@ -367,8 +379,8 @@ export class WikiEntityPicker extends LitElement {
       <button
         type="button"
         class="preview-btn"
-        title="Preview"
-        aria-label="Preview ${dTag}"
+        title=${this._m.preview}
+        aria-label=${this._m.previewLabel(dTag)}
         @click=${open}
         @keydown=${(e: KeyboardEvent) => e.stopPropagation()}
       >👁</button>
@@ -398,7 +410,7 @@ export class WikiEntityPicker extends LitElement {
             <span class="result-title">${title}</span>
             <span class="result-meta">
               ${new Date(event.created_at * 1000).toLocaleDateString()} ·
-              ${versions} version${versions === 1 ? '' : 's'}
+              ${this._m.versions(versions)}
             </span>
           </div>
           <div class="result-line">
@@ -429,17 +441,17 @@ export class WikiEntityPicker extends LitElement {
         <input
           class="search-input"
           type="search"
-          placeholder="Search entities…"
+          placeholder=${this._m.searchPlaceholder}
           .value=${this._query}
           @input=${this._onInput}
-          aria-label="Search for an entity"
+          aria-label=${this._m.searchLabel}
           autocomplete="off"
         />
         ${
           showDropdown
             ? html`
               <div class="dropdown" role="listbox">
-                ${this._searching ? html`<div class="status-row">Searching…</div>` : nothing}
+                ${this._searching ? html`<div class="status-row">${this._m.searching}</div>` : nothing}
                 ${this._results.map((result) => this._renderResult(result))}
                 ${
                   !this._searching && this._query.length >= this._minLen

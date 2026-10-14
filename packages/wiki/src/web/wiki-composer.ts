@@ -255,7 +255,9 @@ export class NostrWikiComposer extends LitElement {
         // Wiki relays (where entities are looked up) plus the author's own relays
         const signedEvent = await signEvent(unsignedEvent);
         const relays = await getPublishRelays(signedEvent.pubkey, this.relays);
-        const results = { signedEvent, publishResults: await publishToRelays(signedEvent, relays) };
+        const publishResults = await publishToRelays(signedEvent, relays);
+        if (publishResults.success === 0) throw new Error(this._m.publishFailed);
+        const results = { signedEvent, publishResults };
         this.dispatchEvent(
           new CustomEvent('nostr-wiki-published', {
             detail: { event: unsignedEvent, results, dTag },

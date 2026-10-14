@@ -402,6 +402,43 @@ describe('wikiEventToManifestData', () => {
     expect(data.description).toBe(content);
   });
 
+  it('round-trips infobox text with Djot markup characters literally', () => {
+    const manifest: NostrPostManifest = {
+      ...beerManifest,
+      fields: [
+        ...beerManifest.fields,
+        {
+          id: 'brewer_note',
+          type: 'string',
+          uiPlugin: 'text',
+          mapTo: { kind: WIKI_KIND, target: 'table' },
+        },
+      ],
+    };
+    const note = `O'Brien -- "dry" x... snake_case_name *star* \`code\` :smile: {x} [y] a~b~ ^s^ <u> \\ a|b`;
+    const event = manifestToWikiEvent(manifest, { ...beerFormData, brewer_note: note });
+    const data = wikiEventToManifestData({ ...event, id: 'e', sig: 's' }, manifest);
+    expect(data.brewer_note).toBe(note);
+  });
+
+  it('reads unescaped infobox cells (other clients) back to their source text', () => {
+    const content = `| Field | Value |\n|---|---|\n| abv | 8 |\n| brewer_note | O'Brien -- "dry" snake_case_name *x* \`v\` |`;
+    const manifest: NostrPostManifest = {
+      ...beerManifest,
+      fields: [
+        ...beerManifest.fields,
+        {
+          id: 'brewer_note',
+          type: 'string',
+          uiPlugin: 'text',
+          mapTo: { kind: WIKI_KIND, target: 'table' },
+        },
+      ],
+    };
+    const data = wikiEventToManifestData(makeWikiEvent({ content }), manifest);
+    expect(data.brewer_note).toBe(`O'Brien -- "dry" snake_case_name *x* \`v\``);
+  });
+
   it('keeps text before a table as prose', () => {
     const content = 'Intro paragraph.\n\n| abv | 8 |\n|---|---|';
     const data = wikiEventToManifestData(makeWikiEvent({ content }), beerManifest);

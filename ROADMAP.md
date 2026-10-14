@@ -9,7 +9,7 @@
 - [x] manifest creator or feed should show the latest version of a user's manifest after updates, even when some relays still return older versions. Filter out stale manifests, and consider using our feed components for the user-manifest list so the logic and UI stay consistent.
 - [x] A manifest can inherit from another manifest
 - [x] add kind:30818 for objects that are used for review (beer, product, map venue detail)
-- [ ] add multi-language support (i18n) for built-in plugins UI components(maybe Lingui.js style). Started: `<nostr-wiki-composer>` takes its text from an overridable messages object (`WikiComposerMessages`); still inline: other web components (picker, view, composer/feed in @nostr-post/web), validation messages (`validateWikiForm`), manifest-creator UI
+- [ ] add multi-language support (i18n) for built-in plugins UI components(maybe Lingui.js style). Started: `<nostr-wiki-composer>` and `<wiki-entity-picker>` take their text from overridable messages objects (`WikiComposerMessages`, `WikiEntityPickerMessages`); still inline: other web components (view, composer/feed in @nostr-post/web), validation messages (`validateWikiForm`), manifest-creator UI
 - [ ] add multi-language support (i18n) for manifest via NIP-78 or kind:30818, d = "{manifestId}:i18n:{locale}", we would need to address version in translations (labels, placeholders and field descriptions)
 - [ ] add style customization options for web components (CSS custom properties, theming)
 - [ ] Dark mode in the manifest creator (follow `prefers-color-scheme`, with a toggle); the web components' colors need CSS custom properties for it (see theming above)

@@ -75,6 +75,14 @@ describe('fetchUserRelays', () => {
     expect(fetchEvents).toHaveBeenCalledTimes(1);
   });
 
+  it('looks up again after a lookup that found no list (relays down or slow)', async () => {
+    (fetchEvents as Mock).mockResolvedValueOnce([]);
+    expect(await fetchUserRelays('pk')).toEqual(['wss://default.example']);
+    (fetchEvents as Mock).mockResolvedValueOnce([relayList(1, [['r', 'wss://mine.example']])]);
+    expect(await fetchUserRelays('pk')).toEqual(['wss://mine.example', 'wss://default.example']);
+    expect(fetchEvents).toHaveBeenCalledTimes(2);
+  });
+
   it('falls back to the given relays on error', async () => {
     (fetchEvents as Mock).mockRejectedValue(new Error('offline'));
     expect(await fetchUserRelays('pk')).toEqual(['wss://default.example']);

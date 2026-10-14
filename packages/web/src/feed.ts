@@ -6,15 +6,11 @@
 
 import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import {
-  type FetchFilter,
-  fetchEvents,
-  fetchManifestByATag,
-  fetchUserRelays,
-} from '@nostr-post/signer';
+import { type FetchFilter, fetchEvents, fetchManifestByATag } from '@nostr-post/signer';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { baseStyles, NostrPostElement } from './base-component';
+import { renderEventActions, renderReactionSummary } from './feedActions';
 import {
   handleCommentPublished as handleCommentPublishedDetail,
   isReplyComposerOpen,
@@ -22,6 +18,7 @@ import {
 } from './feedComments';
 import { buildFetchFilters, buildInteractionLoadKey, mergeUniqueEventsById } from './feedData';
 import { publishReaction, summarizeReactionsWithAuthors } from './feedReactions';
+import { fetchFeedEvents } from './feedRelays';
 import {
   buildReplyTarget,
   buildThreads,
@@ -34,9 +31,6 @@ import type { SignedEvent } from './signer';
 import { displayNameForPubkey, loadProfilesForEvents, type NostrProfile } from './userProfile';
 import './composer';
 import './view';
-
-/** Above this many authors, the feed skips per-author relay list lookups */
-const MAX_AUTHOR_RELAY_LOOKUPS = 10;
 
 @customElement('nostr-post-feed')
 export class NostrPostFeed extends NostrPostElement {
@@ -219,15 +213,6 @@ export class NostrPostFeed extends NostrPostElement {
     return this.relays ?? this.authorRelays;
   }
 
-  /** Look up the authors' relay lists, unless `relays` is set or there are too many authors */
-  private async resolveAuthorRelays(): Promise<string[] | undefined> {
-    const authors = this.authors ?? [];
-    if (this.relays || authors.length === 0 || authors.length > MAX_AUTHOR_RELAY_LOOKUPS) {
-      return undefined;
-    }
-    return fetchUserRelays(authors);
-  }
-
   private scheduleInteractionsAndProfiles(events: SignedEvent[]) {
     const nextKey = buildInteractionLoadKey(events);
     if (!nextKey || nextKey === this.interactionLoadKey) return;
@@ -248,13 +233,12 @@ export class NostrPostFeed extends NostrPostElement {
           : [1];
 
     try {
-      this.authorRelays = await this.resolveAuthorRelays();
       const onUpdate = (arr: SignedEvent[]) => {
         this.events = arr;
         this.isLoading = false;
         this.scheduleInteractionsAndProfiles(arr);
       };
-      const events = await fetchEvents(
+      const { events, readRelays } = await fetchFeedEvents(
         buildFetchFilters({
           filters: this.filters,
           ids: this.ids,
@@ -267,11 +251,11 @@ export class NostrPostFeed extends NostrPostElement {
           filterTags: this.filterTags,
           tagFilters: this.tagFilters,
         }),
-        this.readRelays,
-        { onUpdate }
+        { relays: this.relays, authors: this.authors, onUpdate }
       );
 
       // Ensure final deduped list
+      this.authorRelays = readRelays;
       this.events = events;
       this.isLoading = false;
 
@@ -388,39 +372,15 @@ export class NostrPostFeed extends NostrPostElement {
   }
 
   private renderEventActions(event: SignedEvent, rootEvent?: SignedEvent) {
-    return html`
-      <div class="event-actions">
-        ${
-          this.commentsEnabled
-            ? html`
-              <button
-                class="action-button"
-                type="button"
-                @click=${() => this.openReplyComposer(event, rootEvent)}
-              >
-                Comment
-              </button>
-            `
-            : ''
-        }
-        ${
-          this.reactionsEnabled
-            ? this.reactionOptions?.map(
-                (reaction) => html`
-                <button
-                  class="reaction-button"
-                  type="button"
-                  ?disabled=${this.reactionPendingKey === `${event.id}:${reaction}`}
-                  @click=${() => this.publishReaction(event, reaction)}
-                >
-                  ${reaction}
-                </button>
-              `
-              )
-            : ''
-        }
-      </div>
-    `;
+    return renderEventActions({
+      commentsEnabled: this.commentsEnabled,
+      reactionsEnabled: this.reactionsEnabled,
+      reactionOptions: this.reactionOptions,
+      pendingKey: this.reactionPendingKey,
+      eventId: event.id,
+      onComment: () => this.openReplyComposer(event, rootEvent),
+      onReact: (reaction) => this.publishReaction(event, reaction),
+    });
   }
 
   public async refresh(): Promise<void> {
@@ -476,26 +436,7 @@ export class NostrPostFeed extends NostrPostElement {
                 .showKind=${this.showKind}
                 .showTags=${this.showTags}
               ></nostr-post-view>
-              ${
-                reactionSummaryWithAuthors.length > 0
-                  ? html`
-                    <div class="reaction-summary">
-                      ${reactionSummaryWithAuthors.map(
-                        ({ reaction, count, authors }) => html`
-                          <span class="reaction-chip" title=${authors.join(', ')}>
-                            ${reaction} ${count}
-                            ${
-                              authors.length > 0
-                                ? html`<span class="reaction-authors"> ${authors.join(', ')}</span>`
-                                : ''
-                            }
-                          </span>
-                        `
-                      )}
-                    </div>
-                  `
-                  : ''
-              }
+              ${renderReactionSummary(reactionSummaryWithAuthors)}
               ${this.renderEventActions(thread.root, thread.root)}
               ${
                 isReplyComposerVisible

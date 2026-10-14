@@ -37,6 +37,15 @@ describe('Google Maps links', () => {
     expect(parseGoogleMapsUrl('https://www.google.com/search?q=beer')).toBeUndefined();
   });
 
+  it('reads a link with a malformed percent escape instead of throwing', () => {
+    expect(parseGoogleMapsUrl('https://www.google.com/maps/place/Caf%E9/@50.1,14.2,17z')).toEqual({
+      name: 'Caf%E9',
+      lat: 50.1,
+      lon: 14.2,
+      cid: undefined,
+    });
+  });
+
   it('a venue keeps the CID as an i tag, reads it back, and is identified by it', () => {
     const field = {
       id: 'v',

@@ -57,7 +57,7 @@ export function parseGoogleMapsUrl(text: string): GoogleMapsLink | undefined {
   }
   if (!isGoogleMapsHost(host, url.pathname)) return undefined;
 
-  const path = decodeURIComponent(url.pathname);
+  const path = decodePart(url.pathname);
   const named = url.pathname.match(/\/maps\/(?:place|search)\/([^/@]+)/)?.[1];
   const cid = url.searchParams.get('cid') ?? cidFromFeature(path);
   return {

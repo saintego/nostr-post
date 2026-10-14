@@ -411,7 +411,7 @@ When a plugin reads a new key, add it there.
 | `@nostr-post/plugin-reference` | `reference` | `string` | URL/nostr reference list; auto-extracts from target field when `attachTo` is set |
 | `@nostr-post/plugin-identifier` | `identifier` | `string` | External identifier (NIP-73 `i` tag), e.g. an ISBN, with an optional fixed prefix |
 | `@nostr-post/plugin-list` | `list` | `string` | Pick or create lists |
-| `@nostr-post/plugin-wiki-entity` | `wiki-entity-picker` | `ref` | Search, pick and create wiki entities (NIP-54); links the post with an `a` tag |
+| `@nostr-post/plugin-wiki-entity` | `wiki-entity-picker` | `ref` | Search, pick and create wiki entities (NIP-54); links the post with an `a` tag. Its text is overridable through the `messages` property (`WikiEntityPickerMessages`, defaults in `DEFAULT_WIKI_ENTITY_PICKER_MESSAGES`) |
 
 ## Custom Field Types
 

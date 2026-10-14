@@ -18,6 +18,8 @@ export interface WikiComposerMessages {
   searchPlaceholder: string;
   publish: string;
   publishing: string;
+  /** Shown with `auto-publish` when no relay accepted the event */
+  publishFailed: string;
   checkingSlug: string;
   slugFree: (dTag: string) => string;
   /** Shown when a new entity's d-tag belongs to another entity */
@@ -43,6 +45,7 @@ export const DEFAULT_WIKI_COMPOSER_MESSAGES: WikiComposerMessages = {
   searchPlaceholder: 'Type to search…',
   publish: 'Publish',
   publishing: 'Publishing…',
+  publishFailed: 'No relay accepted the entity. Check your connection and try again.',
   checkingSlug: 'Checking whether the slug is free…',
   slugFree: (dTag) => `✓ "${dTag}" is free`,
   slugTaken: (dTag) =>

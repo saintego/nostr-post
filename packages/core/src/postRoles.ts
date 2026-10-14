@@ -210,13 +210,19 @@ export function parsePostRoles(
 
 /** Plain-text content (kind 1): the text fields, then the role fields' mention lines */
 export function plainTextContent(fields: PostField[], formData: Record<string, unknown>): string {
-  // Text fields hold strings; references and venues hold objects, written as mention lines
-  const isRole = (field: PostField) =>
-    field.type === 'ref' || typeof formData[field.id] === 'object';
+  // References and venues hold objects (or lists of them), written as mention lines;
+  // every other value is text, a list of values (e.g. tags) joined
+  const isObject = (v: unknown): boolean => typeof v === 'object' && v !== null;
+  const isEmptyList = (v: unknown): boolean => Array.isArray(v) && v.length === 0;
+  const isRole = (field: PostField) => {
+    const value = formData[field.id];
+    return field.type === 'ref' || (Array.isArray(value) ? value.some(isObject) : isObject(value));
+  };
   const text = fields
     .filter((field) => !isRole(field))
     .map((field) => formData[field.id])
-    .filter((value) => value !== undefined);
+    .filter((value) => value !== undefined && value !== null && !isEmptyList(value))
+    .map((value) => (Array.isArray(value) ? value.join(', ') : value));
   const lines = fields.filter(isRole).flatMap((field) => roleLines(field, formData[field.id]));
   return [...text, ...lines].join('\n');
 }

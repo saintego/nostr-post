@@ -7,6 +7,7 @@ import type {
   UnsignedNostrEvent,
 } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
+import { type AstNode, escapeInline, nodeText } from './djotText';
 import { interpolateTemplate } from './identity';
 import { normalizeDTag } from './normalizeDTag';
 import type { WikiEvent } from './resolver';
@@ -49,7 +50,6 @@ export const STANDARD_WIKI_MANIFEST: NostrPostManifest = {
   ],
 };
 
-type AstNode = { tag: string; [key: string]: unknown };
 type AstDoc = {
   tag: 'doc';
   children: AstNode[];
@@ -57,19 +57,11 @@ type AstDoc = {
   footnotes: Record<string, unknown>;
 };
 
-function extractNodeText(node: AstNode): string {
-  if (node.tag === 'str' && typeof node.text === 'string') return node.text;
-  if (node.tag === 'soft_break') return ' ';
-  const children = node.children as AstNode[] | undefined;
-  if (!Array.isArray(children)) return '';
-  return children.map(extractNodeText).join('');
-}
-
 /** Wikilinks in a node: Djot reference links (`[text][target]`, `[target][]`) */
 function extractLinks(node: AstNode): WikiLink[] {
   const reference = (node as AstNode & { reference?: unknown }).reference;
   if (node.tag === 'link' && typeof reference === 'string') {
-    return [{ target: linkTarget(reference), text: extractNodeText(node).trim() }];
+    return [{ target: linkTarget(reference), text: nodeText(node).trim() }];
   }
   const children = node.children as AstNode[] | undefined;
   return Array.isArray(children) ? children.flatMap(extractLinks) : [];
@@ -111,14 +103,15 @@ function extractTableFromAst(ast: AstDoc): { rows: TableRow[]; tableIndex: numbe
   const rows: TableRow[] = [];
   for (const row of dataRows) {
     const cells = (row as AstNode & { children: AstNode[] }).children;
-    const key = extractNodeText(cells[0]).trim();
-    const value = extractNodeText(cells[1]).trim();
+    const key = nodeText(cells[0]).trim();
+    const value = nodeText(cells[1]).trim();
     if (key) rows.push([key, value, extractLinks(cells[1])]);
   }
   return { rows, tableIndex };
 }
 
 // Djot table rows are single-line: collapse line breaks and escape the cell delimiter.
+// Plain values are escapeInline'd before (role rows hold wikilink markup).
 const escapeCell = (v: string): string => v.replace(/\r?\n+/g, ' ').replace(/\|/g, '\\|');
 
 function serializeForTable(value: unknown): string {
@@ -130,7 +123,10 @@ function serializeForTable(value: unknown): string {
 
 function buildDjotTable(rows: Array<[string, string]>): string {
   if (rows.length === 0) return '';
-  const escaped = rows.map(([k, v]): [string, string] => [escapeCell(k), escapeCell(v)]);
+  const escaped = rows.map(([k, v]): [string, string] => [
+    escapeCell(escapeInline(k)),
+    escapeCell(v),
+  ]);
   const col1 = Math.max(5, ...escaped.map(([k]) => k.length));
   const col2 = Math.max(5, ...escaped.map(([, v]) => v.length));
   const pad = (s: string, n: number) => s.padEnd(n);
@@ -254,9 +250,11 @@ function addTableTarget(parts: WikiEventParts, field: PostField, value: unknown)
   const items = Array.isArray(value) ? value.filter(isPresent) : [value];
   // Enum rows show the option's label; reading matches it back to the value.
   const text = (item: unknown): string =>
-    field.type === 'enum' && typeof item === 'string'
-      ? fieldOptionLabel(field, item)
-      : serializeForTable(item);
+    escapeInline(
+      field.type === 'enum' && typeof item === 'string'
+        ? fieldOptionLabel(field, item)
+        : serializeForTable(item)
+    );
   for (const item of items) parts.tableRows.push([field.id, text(item)]);
 }
 
