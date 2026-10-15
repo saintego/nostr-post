@@ -1,3 +1,4 @@
+import { dryRunEventsForReads } from './dryRun';
 import type { FetchFilter, SignedEvent } from './index';
 /** Default relays to publish to */
 export const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
@@ -25,7 +26,8 @@ function matchesTagFilter(event: SignedEvent, key: string, values: unknown): boo
 
 /**
  * Fetch events from a single relay. Events that don't match any of the
- * filters are dropped (see matchesFilter).
+ * filters are dropped (see matchesFilter). In dry-run mode, logged events
+ * matching the filters are returned too.
  */
 export function fetchEventsFromRelay(
   relayUrl: string,
@@ -64,6 +66,13 @@ export function fetchEventsFromRelay(
         // ignore listener errors
       }
     };
+
+    const dryRunEvents = dryRunEventsForReads();
+    if (dryRunEvents.length > 0) {
+      queueMicrotask(() => {
+        for (const ev of dryRunEvents) acceptEvent(ev);
+      });
+    }
 
     ws.onmessage = (msg) => {
       try {

@@ -34,6 +34,13 @@ export {
   fetchEventsFromRelay,
   fetchUserRelays,
   getPublishRelays,
+  setDryRun,
+  isDryRun,
+  getDryRunEntries,
+  clearDryRunEntries,
+  DRY_RUN_CHANGE_EVENT,
+  type DryRunEntry,
+  type DryRunChangeDetail,
   type SignedEvent,
   type Nip07Provider,
 } from './signer';

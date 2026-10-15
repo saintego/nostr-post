@@ -117,6 +117,7 @@
 - [ ] Fix the 2 failing E2E tests in `tests/e2e/plugin-integration.test.ts` (geohash `#g` lookup, hashtag auto-extraction)
 - [ ] `plugin-list` has no tests, so `pnpm test` (which stops at the first failing package) fails there
 - [ ] Test plugins in the manifest-creator tool
+- [ ] Use the signer's dry-run mode (`setDryRun`, `getDryRunEntries`) in E2E and `web` tests to assert published bundles without real relays
 - [ ] User testing: get feedback from real-world usage, identify pain points and confusing APIs
 - [ ] API stabilization: stabilize the manifest schema, document breaking changes
 - [ ] Performance optimizations

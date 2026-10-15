@@ -1,6 +1,7 @@
 import { parseManifestATag } from '@nostr-post/core/nip78';
 import type { NostrTag } from '@nostr-post/core/types';
 import type { SignedEvent } from '@nostr-post/react';
+import { getDryRunEntries } from '@nostr-post/signer';
 
 export interface ReplyTarget {
   replyToEventId?: string;
@@ -22,9 +23,14 @@ export const loadCachedEvents = (): SignedEvent[] => {
   }
 };
 
+/** Caches published events; test-mode events (dry-run log) are left out */
 export const cacheEvents = (events: SignedEvent[]) => {
+  const testIds = new Set(getDryRunEntries().map((entry) => entry.event.id));
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(events.filter((event) => !testIds.has(event.id)))
+    );
   } catch {
     // Ignore storage errors
   }

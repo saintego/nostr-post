@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ManifestEditor } from '../components/ManifestEditor';
 import { ManifestNostrPanel } from '../components/ManifestNostrPanel';
 import { PreviewPane } from '../components/PreviewPane';
+import { TestModeLog, TestModeToggle } from '../components/TestModePanel';
 import { WikiPreviewPanel } from '../components/WikiPreviewPanel';
 import { registerEntityManifests } from '../lib/entityManifests';
 import { EXAMPLE_MANIFESTS } from '../lib/examples';
@@ -25,6 +26,13 @@ const styles = {
   subtitle: {
     color: '#6b7280',
     margin: 0,
+  },
+  headerRow: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: '1rem',
+    flexWrap: 'wrap',
   },
   container: {
     maxWidth: '1400px',
@@ -140,8 +148,14 @@ export default function Home() {
   return (
     <>
       <header style={styles.header}>
-        <h1 style={styles.title}>🎨 Manifest Creator</h1>
-        <p style={styles.subtitle}>Visual tool for creating and testing nostr-post manifests</p>
+        <div style={styles.headerRow}>
+          <div>
+            <h1 style={styles.title}>🎨 Manifest Creator</h1>
+            <p style={styles.subtitle}>Visual tool for creating and testing nostr-post manifests</p>
+          </div>
+          <TestModeToggle />
+        </div>
+        <TestModeLog />
       </header>
 
       <div style={styles.container}>
