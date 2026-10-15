@@ -26,14 +26,17 @@ export function EntityEditor({
   onUseNewest,
   onPublished,
 }: EntityEditorProps) {
-  const [pendingEvent, setPendingEvent] = useState<unknown>(null);
+  const [shownEvent, setShownEvent] = useState<{ title: string; event: unknown } | null>(null);
 
   const handleSubmit = useCallback((detail: WikiComposerDetail) => {
-    setPendingEvent(detail.event);
+    setShownEvent({ title: 'Unsigned event', event: detail.event });
   }, []);
   const handlePublished = useCallback(
     (detail: WikiComposerDetail) => {
-      setPendingEvent(detail.event);
+      setShownEvent({
+        title: 'Published event',
+        event: detail.results?.signedEvent ?? detail.event,
+      });
       if (detail.dTag) onPublished(detail.dTag);
     },
     [onPublished]
@@ -55,14 +58,15 @@ export function EntityEditor({
         entityId={dTag}
         baseEvent={baseEvent}
         prefill={prefill}
+        autoPublish
         onSubmit={handleSubmit}
         onPublished={handlePublished}
       />
-      {pendingEvent ? (
+      {shownEvent ? (
         <div>
-          <p style={styles.sectionTitle}>Unsigned event</p>
+          <p style={styles.sectionTitle}>{shownEvent.title}</p>
           <div style={styles.eventCard}>
-            <pre style={styles.eventJson}>{JSON.stringify(pendingEvent, null, 2)}</pre>
+            <pre style={styles.eventJson}>{JSON.stringify(shownEvent.event, null, 2)}</pre>
           </div>
         </div>
       ) : null}

@@ -2,7 +2,14 @@ import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { runPublishHooks } from '@nostr-post/plugins/publish';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { getPublicKey, getPublishRelays, publishToRelays, signEvent } from '@nostr-post/signer';
+import {
+  getPublicKey,
+  getPublishRelays,
+  publishToRelays,
+  SIGNING_EVENT,
+  type SigningDetail,
+  signEvent,
+} from '@nostr-post/signer';
 import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
@@ -71,6 +78,8 @@ export class NostrWikiComposer extends LitElement {
 
   @state() private _loading = false;
   @state() private _publishing = false;
+  /** The signer is working on a signature (e.g. waiting for the user to approve) */
+  @state() private _signing = false;
   @state() private _error?: string;
   @state() private _formData: Record<string, unknown> = {};
   @state() private _baseEvent?: WikiEvent;
@@ -114,8 +123,18 @@ export class NostrWikiComposer extends LitElement {
     return entityDTagFor(this.manifest, this._formData, this._activeQualifier);
   }
 
+  private readonly _onSigning = (e: CustomEvent<SigningDetail>) => {
+    this._signing = e.detail.pending > 0;
+  };
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    window.addEventListener(SIGNING_EVENT, this._onSigning);
+  }
+
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    window.removeEventListener(SIGNING_EVENT, this._onSigning);
     clearTimeout(this._checkTimer);
   }
 
@@ -368,6 +387,11 @@ export class NostrWikiComposer extends LitElement {
           <button type="submit" ?disabled=${this._publishing || !!this._dTagError()}>
             ${this._publishing ? m.publishing : m.publish}
           </button>
+          ${
+            this._publishing && this._signing
+              ? html`<span class="wiki-signing">${m.waitingForSigner}</span>`
+              : nothing
+          }
         </div>
       </form>
     `;

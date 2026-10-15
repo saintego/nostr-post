@@ -361,14 +361,16 @@ A form for creating or editing a wiki entity. Pre-fills from the resolved event 
 Publishing goes to `relays` plus the author's own relays (NIP-65). Plugins' publish summaries (e.g. the
 venue field's "Also create/update the venue's wiki page") show next to the publish button, and their
 `beforePublish` hooks run before the event is signed, as in `<nostr-post-composer>`. For a new entity the composer
-checks that the slug is free and asks for a distinguishing detail when it isn't.
+checks that the slug is free and asks for a distinguishing detail when it isn't. While the signer has
+a pending request (e.g. an approval in a remote signer like Amber), "Waiting for your signer to approve…"
+shows next to the button (`SIGNING_EVENT` from `@nostr-post/signer`; text: `waitingForSigner`).
 
 **Events emitted:**
 
 | Event                     | `detail`             | Description                                        |
 | ------------------------- | -------------------- | -------------------------------------------------- |
 | `nostr-wiki-submit`       | `{ event, dTag, formData, manifest }` | Unsigned event ready (when `autoPublish` is false); plugin publish hooks haven't run: call `runBeforePublish` and add its tags |
-| `nostr-wiki-published`    | `{ event }`          | Event signed and published                         |
+| `nostr-wiki-published`    | `{ event, results, dTag }` | Event signed and published; `event` is the unsigned event, `results` `{ signedEvent, publishResults }` |
 | `nostr-wiki-error`        | `{ error }`          | Error during sign/publish                          |
 | `nostr-wiki-field-change` | `{ fieldId, value }` | A field value changed                              |
 
