@@ -132,7 +132,7 @@ export function ManifestEditor({ manifest, resolvedManifest, onChange }: Manifes
           const json = JSON.parse(e.target?.result as string);
           fieldEditorKeysRef.current = (json.fields ?? []).map(() => crypto.randomUUID());
           onChange(json);
-        } catch (err) {
+        } catch {
           alert('Failed to parse JSON');
         }
       };

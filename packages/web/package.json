@@ -21,6 +21,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
+    "test:watch": "vitest --dir src",
     "clean": "rm -rf dist"
   },
   "keywords": [

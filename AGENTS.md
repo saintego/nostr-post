@@ -116,3 +116,9 @@ READMEs) link to it instead of keeping their own TODO lists.
 - When you find new work (a bug you didn't fix, a follow-up, a TODO comment you add),
   add it to the fitting ROADMAP.md section rather than to another doc.
 - Don't delete finished items; checked items record what's done.
+
+## Commits
+
+- Don't commit (or push) without the user's approval. Finish the change, show what changed and
+  how it was checked, and ask before running `git commit`. Approval covers that one commit, not
+  later ones.

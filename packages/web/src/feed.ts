@@ -188,7 +188,7 @@ export class NostrPostFeed extends NostrPostElement {
       if (stored) {
         this.manifest = stored.manifest;
       }
-    } catch (err) {
+    } catch {
       // ignore
     }
   }

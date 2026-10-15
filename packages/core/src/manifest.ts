@@ -266,18 +266,11 @@ const validateManifestFields = (manifest: NostrPostManifest, errors: ValidationE
   }
 };
 
-/**
- * Validates relationships between fields and other manifest properties.
- */
-const validateFieldRelationships = (
-  manifest: NostrPostManifest,
-  errors: ValidationError[]
-): void => {
-  if (!Array.isArray(manifest.fields)) return;
-  const fieldIds = new Set<string>();
+/** Publish formats: unique ids, at most one default, only kinds some field maps to */
+const validatePublishFormats = (manifest: NostrPostManifest, errors: ValidationError[]): void => {
+  const formats = manifest.publishFormats ?? [];
   const formatIds = new Set<string>();
-  let defaultFormatCount = 0;
-  for (const [index, format] of (manifest.publishFormats ?? []).entries()) {
+  for (const [index, format] of formats.entries()) {
     if (formatIds.has(format.id)) {
       errors.push({
         field: `publishFormats.${index}.id`,
@@ -286,10 +279,9 @@ const validateFieldRelationships = (
       });
     }
     formatIds.add(format.id);
-    if (format.default) defaultFormatCount += 1;
   }
 
-  if (defaultFormatCount > 1) {
+  if (formats.filter((format) => format.default).length > 1) {
     errors.push({
       field: 'publishFormats',
       message: 'Only one publish format can be the default',
@@ -297,7 +289,22 @@ const validateFieldRelationships = (
     });
   }
 
-  for (const field of manifest.fields || []) {
+  const usedKinds = new Set(getUsedKindsFromMappings(manifest));
+  for (const [index, format] of formats.entries()) {
+    for (const kind of format.kinds.filter((k) => !usedKinds.has(k))) {
+      errors.push({
+        field: `publishFormats.${index}.kinds`,
+        message: `Publish format ${format.id} includes kind ${kind} that is not used in any field mapping`,
+        code: 'UNUSED_PUBLISH_FORMAT_KIND',
+      });
+    }
+  }
+};
+
+/** Field ids are unique; returns them */
+const validateFieldIds = (fields: PostField[], errors: ValidationError[]): Set<string> => {
+  const fieldIds = new Set<string>();
+  for (const field of fields) {
     if (fieldIds.has(field.id)) {
       errors.push({
         field: `fields.${field.id}`,
@@ -307,20 +314,24 @@ const validateFieldRelationships = (
     }
     fieldIds.add(field.id);
   }
+  return fieldIds;
+};
 
-  for (const field of manifest.fields || []) {
+/** `attachTo` names another existing field */
+const validateAttachTargets = (
+  fields: PostField[],
+  fieldIds: Set<string>,
+  errors: ValidationError[]
+): void => {
+  for (const field of fields) {
     if (!field.attachTo) continue;
-
     if (field.attachTo === field.id) {
       errors.push({
         field: `fields.${field.id}.attachTo`,
         message: `Field ${field.id} cannot attach to itself`,
         code: 'INVALID_ATTACH_TARGET',
       });
-      continue;
-    }
-
-    if (!fieldIds.has(field.attachTo)) {
+    } else if (!fieldIds.has(field.attachTo)) {
       errors.push({
         field: `fields.${field.id}.attachTo`,
         message: `Field ${field.id} attaches to missing field ${field.attachTo}`,
@@ -328,21 +339,19 @@ const validateFieldRelationships = (
       });
     }
   }
+};
 
-  // Verify all publishFormats kinds are actually used in field mappings
-  const usedKinds = new Set(getUsedKindsFromMappings(manifest));
-
-  for (const [index, format] of (manifest.publishFormats ?? []).entries()) {
-    for (const kind of format.kinds) {
-      if (!usedKinds.has(kind)) {
-        errors.push({
-          field: `publishFormats.${index}.kinds`,
-          message: `Publish format ${format.id} includes kind ${kind} that is not used in any field mapping`,
-          code: 'UNUSED_PUBLISH_FORMAT_KIND',
-        });
-      }
-    }
-  }
+/**
+ * Validates relationships between fields and other manifest properties.
+ */
+const validateFieldRelationships = (
+  manifest: NostrPostManifest,
+  errors: ValidationError[]
+): void => {
+  if (!Array.isArray(manifest.fields)) return;
+  const fieldIds = validateFieldIds(manifest.fields, errors);
+  validateAttachTargets(manifest.fields, fieldIds, errors);
+  validatePublishFormats(manifest, errors);
 };
 
 /**
@@ -383,6 +392,33 @@ export const getRequiredFields = (manifest: NostrPostManifest): PostField[] => {
   return manifest.fields.filter((field) => field.required === true);
 };
 
+/** Parent items in order with child items of the same id merged in, then child-only items */
+const mergeById = <T extends { id: string }>(
+  parentItems: readonly T[],
+  childItems: readonly T[],
+  merge: (parentItem: T, childItem: T) => T
+): T[] => {
+  const childById = new Map(childItems.map((item) => [item.id, item]));
+  const parentIds = new Set(parentItems.map((item) => item.id));
+  return [
+    ...parentItems.map((item) => {
+      const childItem = childById.get(item.id);
+      return childItem ? merge(item, childItem) : item;
+    }),
+    ...childItems.filter((item) => !parentIds.has(item.id)),
+  ];
+};
+
+/** A child field over a parent field, with `metadata` shallow-merged */
+const mergeField = (parentField: PostField, childField: PostField): PostField => ({
+  ...parentField,
+  ...childField,
+  metadata:
+    parentField.metadata || childField.metadata
+      ? { ...parentField.metadata, ...childField.metadata }
+      : undefined,
+});
+
 /**
  * Resolves manifest inheritance by merging a child manifest onto a parent.
  *
@@ -403,47 +439,12 @@ export const resolveManifest = (
   child: NostrPostManifest,
   parent: NostrPostManifest
 ): NostrPostManifest => {
-  // Fields: parent base + child overrides + child-only appended
-  const parentFieldMap = new Map(parent.fields.map((f) => [f.id, f]));
-  const childFieldMap = new Map(child.fields.map((f) => [f.id, f]));
-  const mergedFields: PostField[] = [];
-
-  for (const parentField of parent.fields) {
-    const childField = childFieldMap.get(parentField.id);
-    if (childField) {
-      mergedFields.push({
-        ...parentField,
-        ...childField,
-        metadata:
-          parentField.metadata || childField.metadata
-            ? { ...parentField.metadata, ...childField.metadata }
-            : undefined,
-      });
-    } else {
-      mergedFields.push(parentField);
-    }
-  }
-  for (const childField of child.fields) {
-    if (!parentFieldMap.has(childField.id)) {
-      mergedFields.push(childField);
-    }
-  }
-
-  // publishFormats: parent base + child overrides + child-only appended
-  const parentFormats = parent.publishFormats ?? [];
-  const childFormats = child.publishFormats ?? [];
-  const parentFormatIds = new Set(parentFormats.map((f) => f.id));
-  const childFormatMap = new Map(childFormats.map((f) => [f.id, f]));
-  const mergedFormats: PublishFormat[] = [];
-  for (const parentFormat of parentFormats) {
-    const childFormat = childFormatMap.get(parentFormat.id);
-    mergedFormats.push(childFormat ? { ...parentFormat, ...childFormat } : parentFormat);
-  }
-  for (const childFormat of childFormats) {
-    if (!parentFormatIds.has(childFormat.id)) {
-      mergedFormats.push(childFormat);
-    }
-  }
+  const mergedFields = mergeById(parent.fields, child.fields, mergeField);
+  const mergedFormats = mergeById<PublishFormat>(
+    parent.publishFormats ?? [],
+    child.publishFormats ?? [],
+    (parentFormat, childFormat) => ({ ...parentFormat, ...childFormat })
+  );
 
   // Drop `extends` from both parent and child so it doesn't propagate to the resolved manifest
   const { extends: _parentExtendsRef, ...parentRest } = parent;

@@ -18,6 +18,8 @@ export interface WikiComposerMessages {
   searchPlaceholder: string;
   publish: string;
   publishing: string;
+  /** While the signer works on a signature, e.g. waits for the user to approve it */
+  waitingForSigner: string;
   /** Shown with `auto-publish` when no relay accepted the event */
   publishFailed: string;
   checkingSlug: string;
@@ -45,6 +47,7 @@ export const DEFAULT_WIKI_COMPOSER_MESSAGES: WikiComposerMessages = {
   searchPlaceholder: 'Type to search…',
   publish: 'Publish',
   publishing: 'Publishing…',
+  waitingForSigner: 'Waiting for your signer to approve…',
   publishFailed: 'No relay accepted the entity. Check your connection and try again.',
   checkingSlug: 'Checking whether the slug is free…',
   slugFree: (dTag) => `✓ "${dTag}" is free`,

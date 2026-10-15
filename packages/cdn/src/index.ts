@@ -67,18 +67,26 @@ export {
   hasNostrSigner,
   fetchEvents,
   fetchEventsFromRelay,
+  fetchProfile,
+  fetchProfiles,
   fetchUserRelays,
+  getCachedProfile,
+  INDEXER_RELAYS,
   getPublishRelays,
   fetchManifestByATag,
   fetchManifestsByATags,
   getCachedManifest,
   clearManifestCache,
   setDryRun,
+  SIGNING_EVENT,
+  type SigningDetail,
   isDryRun,
   getDryRunEntries,
   clearDryRunEntries,
   DRY_RUN_CHANGE_EVENT,
   type DryRunEntry,
+  type NostrProfile,
+  type ProfileOptions,
   type DryRunChangeDetail,
 } from '@nostr-post/signer';
 
@@ -90,6 +98,9 @@ export {
 
 // Publishing a submitted post yourself (composer without auto-publish): plugin hooks
 export { runBeforePublish, runPublishHooks, withTags } from '@nostr-post/web';
+
+// Composer text (submit button, steps, errors) for overriding via its `messages` property
+export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from '@nostr-post/web';
 
 // Wiki (NIP-54 kind:30818)
 export {

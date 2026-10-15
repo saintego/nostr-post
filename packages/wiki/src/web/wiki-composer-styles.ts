@@ -115,6 +115,14 @@ export const composerStyles = css`
     background: var(--nl-card-bg, #f9fafb);
     display: flex;
     justify-content: flex-end;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .wiki-signing {
+    order: -1;
+    font-size: 0.875rem;
+    color: var(--nl-text-secondary, #6b7280);
   }
 
   button[type="submit"] {

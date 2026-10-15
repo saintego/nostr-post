@@ -4,33 +4,37 @@
  * Supports automatic signing and publishing via NIP-07
  */
 
-import {
-  getDefaultPublishFormat,
-  getSelectablePublishFormats,
-} from '@nostr-post/core/manifestMappings';
+import { getSelectablePublishFormats } from '@nostr-post/core/manifestMappings';
 import { type NostrPostManifest, STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
-import { runPublishHooks } from '@nostr-post/plugins/publish';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { baseStyles, NostrPostElement } from './base-component';
 import type { FieldRenderContext } from './composerField';
 import { renderFieldList } from './composerFieldList';
 import { buildInitialFormData, isFieldReadonly, renderHiddenFieldErrors } from './composerForm';
-import { renderPublishFormatPicker } from './composerFormatPicker';
+import { initialPublishFormatId, renderPublishFormatPicker } from './composerFormatPicker';
 import { renderComposerHeader } from './composerHeader';
+import { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from './composerMessages';
 import { hasReplyTarget, renderReplyTargetPanel, updateReplyTargetValue } from './composerReply';
 import { composerStyle } from './composerStyle';
 import {
+  invalidFieldLabels,
   type NostrPostSubmitDetail,
+  publishWithHooks,
   renderPublishSummaries,
-  renderSubmitButton,
-  signAndPublishBundle,
+  renderSubmitArea,
   type ValidationResult,
   validateAndCoordinate,
-  withTags,
 } from './composerSubmit';
+
 import { ensurePluginsForManifest } from './pluginAutoLoad';
-import { fetchManifestByATag, getPublicKey, type SignedEvent } from './signer';
+import {
+  fetchManifestByATag,
+  getPublicKey,
+  SIGNING_EVENT,
+  type SignedEvent,
+  type SigningDetail,
+} from './signer';
 
 @customElement('nostr-post-composer')
 export class NostrPostComposer extends NostrPostElement {
@@ -38,6 +42,10 @@ export class NostrPostComposer extends NostrPostElement {
 
   @property({ type: Object })
   manifest?: NostrPostManifest;
+
+  /** Overrides for the submit area's text (e.g. translations) */
+  @property({ attribute: false })
+  messages?: Partial<ComposerMessages>;
 
   @property({ type: String })
   pubkey?: string;
@@ -128,6 +136,26 @@ export class NostrPostComposer extends NostrPostElement {
   @state()
   private successMessage!: string;
 
+  /** What the running submit is doing, shown next to the button */
+  @state()
+  private _submitStep?: string;
+
+  /** The signer is working on a signature (e.g. waiting for the user to approve) */
+  @state()
+  private _signing = false;
+
+  private readonly _onSigning = (e: CustomEvent<SigningDetail>) => {
+    this._signing = e.detail.pending > 0;
+  };
+
+  /** Why the last submit failed, shown below the button */
+  @state()
+  private _submitError?: string;
+
+  private get _m(): ComposerMessages {
+    return { ...DEFAULT_COMPOSER_MESSAGES, ...this.messages };
+  }
+
   @state()
   private _expandedFields: Set<string> = new Set();
 
@@ -146,27 +174,7 @@ export class NostrPostComposer extends NostrPostElement {
   }
 
   private getInitialSelectedPublishFormatId(manifest: NostrPostManifest): string {
-    const allFormats = manifest.publishFormats ?? [];
-    // If a defaultFormatId is supplied and exists in the manifest, use it
-    if (this.defaultFormatId && allFormats.some((f) => f.id === this.defaultFormatId)) {
-      return this.defaultFormatId;
-    }
-
-    const defaultFormat = getDefaultPublishFormat(manifest);
-    if (this.hidePublishFormatSelector) {
-      return defaultFormat?.id ?? '';
-    }
-
-    const selectableFormats = getSelectablePublishFormats(manifest);
-    if (selectableFormats.length === 0) {
-      return defaultFormat?.id ?? '';
-    }
-
-    if (defaultFormat && selectableFormats.some((format) => format.id === defaultFormat.id)) {
-      return defaultFormat.id;
-    }
-
-    return selectableFormats[0]?.id ?? '';
+    return initialPublishFormatId(manifest, this.defaultFormatId, this.hidePublishFormatSelector);
   }
 
   updated(changed: Map<string, unknown>) {
@@ -196,7 +204,13 @@ export class NostrPostComposer extends NostrPostElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    window.addEventListener(SIGNING_EVENT, this._onSigning);
     void this.ensureManifestPlugins();
+  }
+
+  disconnectedCallback(): void {
+    window.removeEventListener(SIGNING_EVENT, this._onSigning);
+    super.disconnectedCallback();
   }
 
   private async _resolveManifestRef(): Promise<boolean> {
@@ -219,7 +233,7 @@ export class NostrPostComposer extends NostrPostElement {
         return true;
       }
       return false;
-    } catch (err) {
+    } catch {
       return false;
     } finally {
       this.isResolvingManifestRef = false;
@@ -267,34 +281,52 @@ export class NostrPostComposer extends NostrPostElement {
     this.dispatchFormChange();
   }
 
+  /** Shown below the submit button, and dispatched as `nostr-post-error` */
+  protected override showError(message: string): void {
+    this._submitError = message;
+    super.showError(message);
+  }
+
   private applyValidationError(error: ValidationResult) {
     if (!error) return;
     if (error.type === 'manifest') {
       this.showError(error.message);
     } else {
       this.errors = error.errors;
+      void this.updateComplete.then(() =>
+        this.shadowRoot?.querySelector('.field-error')?.scrollIntoView({ block: 'center' })
+      );
     }
+  }
+
+  /** The manifest (resolving `manifestRef` if needed) and pubkey to submit with; shows why not */
+  private async _submitContext(): Promise<
+    { manifest: NostrPostManifest; pubkey: string } | undefined
+  > {
+    if (!this.manifest && this.manifestRef) {
+      const resolved = await this._resolveManifestRef();
+      if (!resolved || !this.manifest) {
+        this.showError('Failed to resolve manifestRef. Unable to submit post.');
+        return undefined;
+      }
+    }
+    const pubkey = this.pubkey ?? (this.autoPublish ? await getPublicKey() : undefined);
+    if (!pubkey) {
+      this.showError('No pubkey provided. Please login first.');
+      return undefined;
+    }
+    return { manifest: this.manifest || STANDARD_KIND1_POST_MANIFEST, pubkey };
   }
 
   private async handleSubmit(e: Event): Promise<void> {
     e.preventDefault();
     this.successMessage = '';
+    this._submitError = undefined;
     this.errors = {};
 
-    if (!this.manifest && this.manifestRef) {
-      const resolved = await this._resolveManifestRef();
-      if (!resolved || !this.manifest) {
-        this.showError('Failed to resolve manifestRef. Unable to submit post.');
-        return;
-      }
-    }
-
-    const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
-    const pubkey = this.pubkey ?? (this.autoPublish ? await getPublicKey() : undefined);
-    if (!pubkey) {
-      this.showError('No pubkey provided. Please login first.');
-      return;
-    }
+    const context = await this._submitContext();
+    if (!context) return;
+    const { manifest, pubkey } = context;
 
     this.isSubmitting = true;
 
@@ -325,9 +357,10 @@ export class NostrPostComposer extends NostrPostElement {
 
       this._formData = {};
     } catch (error) {
-      this.showError(error instanceof Error ? error.message : 'Unknown error occurred');
+      this.showError(error instanceof Error ? error.message : this._m.unknownError);
     } finally {
       this.isSubmitting = false;
+      this._submitStep = undefined;
     }
   }
 
@@ -353,15 +386,20 @@ export class NostrPostComposer extends NostrPostElement {
     );
   }
 
-  /**
-   * Let plugins publish related events first (e.g. a venue's wiki page), then
-   * build the post again with what they linked (e.g. a role's mention line) and publish it
-   */
-  private async _publish(manifest: NostrPostManifest, pubkey: string): Promise<SignedEvent[]> {
-    const hooks = await runPublishHooks(manifest, this._formData, pubkey);
-    const outcome = this._coordinate(manifest, hooks.formData, pubkey);
-    if ('validationError' in outcome) throw new Error('The post is invalid after publish hooks');
-    return signAndPublishBundle(withTags(outcome.bundle, hooks.tags), this.relays);
+  /** Plugins' related events first (e.g. a venue's wiki page), then the post */
+  private _publish(manifest: NostrPostManifest, pubkey: string): Promise<SignedEvent[]> {
+    return publishWithHooks({
+      manifest,
+      formData: this._formData,
+      pubkey,
+      relays: this.relays,
+      coordinate: (formData) => this._coordinate(manifest, formData, pubkey),
+      messages: this._m,
+      onStep: (step) => {
+        this._submitStep = step;
+      },
+      isSigning: () => this._signing,
+    });
   }
 
   private updateReplyTarget(
@@ -431,7 +469,14 @@ export class NostrPostComposer extends NostrPostElement {
                 )
               : ''
           }
-          ${renderSubmitButton(this.isSubmitting, this.isResolvingManifestRef)}
+          ${renderSubmitArea({
+            isSubmitting: this.isSubmitting,
+            isResolvingManifestRef: this.isResolvingManifestRef,
+            step: this._signing ? this._m.stepSigning : this._submitStep,
+            error: this._submitError,
+            invalidFields: invalidFieldLabels(manifest, this.errors),
+            messages: this._m,
+          })}
         </form>
       </div>
     `;

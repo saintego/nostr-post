@@ -16,6 +16,7 @@ interface NostrWikiComposerElement extends HTMLElement {
   entityId?: string;
   baseEvent?: WikiEvent;
   prefill?: Record<string, unknown>;
+  autoPublish?: boolean;
 }
 
 declare module 'react' {
@@ -56,8 +57,11 @@ export function WikiView({ manifest, entityId, event }: WikiViewProps) {
 
 /** detail of nostr-wiki-submit / nostr-wiki-published */
 export interface WikiComposerDetail {
+  /** The unsigned event */
   event: unknown;
   dTag?: string;
+  /** nostr-wiki-published only: the signed event and where it went */
+  results?: { signedEvent: unknown };
 }
 
 interface WikiComposerProps {
@@ -65,6 +69,8 @@ interface WikiComposerProps {
   entityId?: string;
   baseEvent?: WikiEvent;
   prefill?: Record<string, unknown>;
+  /** Sign and publish (NIP-07) instead of only handing over the unsigned event */
+  autoPublish?: boolean;
   onSubmit?: (detail: WikiComposerDetail) => void;
   onPublished?: (detail: WikiComposerDetail) => void;
 }
@@ -75,6 +81,7 @@ export function WikiComposer({
   entityId,
   baseEvent,
   prefill,
+  autoPublish,
   onSubmit,
   onPublished,
 }: WikiComposerProps) {
@@ -86,7 +93,8 @@ export function WikiComposer({
     el.prefill = prefill;
     el.baseEvent = baseEvent;
     el.entityId = entityId;
-  }, [manifest, entityId, baseEvent, prefill]);
+    el.autoPublish = autoPublish;
+  }, [manifest, entityId, baseEvent, prefill, autoPublish]);
 
   useEffect(() => {
     const el = ref.current;

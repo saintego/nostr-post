@@ -351,11 +351,25 @@ Default behavior when no `manifest` is provided:
 
 This means text, media (`r` tags), and hashtags (`t` tags) render out of the box for standard kind 1 posts.
 
+`<nostr-post-view>` shows a note's text the way other Nostr clients do: links, images and videos
+(by file extension or the event's `imeta` tags), `#hashtags` and `nostr:` references in place;
+`nostr:npub…` / `nostr:nprofile…` mentions show the person's name once their profile loads.
+Tag values the text already shows (`r` URLs, `t` hashtags) aren't repeated below it.
+`nostr-link-base` (default `https://njump.me/`) sets where `nostr:` references link to.
+
 `<nostr-post-composer>` extended reply context API:
 
 - `reply-to-event-id`, `reply-to-pubkey`, `root-event-id`, `root-pubkey`
 - `show-reply-target` to show current reply target
 - `editable-reply-target` to allow editing reply target directly in the composer
+
+`<nostr-post-composer>` submit feedback: next to the submit button it shows the running step
+(publishing linked pages such as a venue's wiki page, then signing and publishing the post, and
+"waiting for your signer to approve" while a signature is pending), the
+fields that failed validation (the first one is scrolled into view) and why a submit failed (also
+dispatched as `nostr-post-error`). Publish hooks that take longer than 90 s fail the submit. The text
+comes from `messages` (`ComposerMessages`, defaults in `DEFAULT_COMPOSER_MESSAGES`), which apps can
+override, e.g. for translations.
 
 `<nostr-post-view>` metadata visibility defaults:
 

@@ -84,6 +84,44 @@ export const viewStyle = css`
     color: #f3f4f6;
   }
 
+  .note-link,
+  .note-hashtag {
+    color: var(--nl-primary, #6366f1);
+    text-decoration: none;
+    word-break: break-all;
+  }
+
+  .note-link:hover {
+    text-decoration: underline;
+  }
+
+  .note-media {
+    display: block;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0.5rem 0;
+  }
+
+  .note-media img,
+  video.note-media {
+    display: block;
+    max-width: 100%;
+    max-height: 28rem;
+    border-radius: 8px;
+  }
+
+  .note-code {
+    background: #f3f4f6;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+  }
+
+  .note-heading {
+    margin: 1rem 0 0.5rem 0;
+    font-size: 1.1rem;
+  }
+
   .view-tags {
     margin-top: 0.5rem;
     padding-top: 0.5rem;

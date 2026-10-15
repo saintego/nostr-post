@@ -1,11 +1,11 @@
-import type { SignedEvent } from './signer';
-import { fetchEvents } from './signer';
+/**
+ * Author names for <nostr-post-view> and <nostr-post-feed>. Profiles are loaded and
+ * cached by the signer (`fetchProfile`, `fetchProfiles`); this module only formats them.
+ */
 
-export type NostrProfile = {
-  name?: string;
-  display_name?: string;
-  picture?: string;
-};
+import { fetchProfiles, type NostrProfile, type SignedEvent } from './signer';
+
+export type { NostrProfile } from './signer';
 
 export const truncatePubkey = (
   pubkey: string,
@@ -39,72 +39,16 @@ export const displayNameForPubkey = (
   );
 };
 
+/** Adds the profiles of `events`' authors to `profileMap` (a new object) */
 export const loadProfilesForEvents = async (
   events: SignedEvent[],
   profileMap: Record<string, NostrProfile>,
   relays?: string[]
 ): Promise<Record<string, NostrProfile>> => {
-  const pubkeys = Array.from(new Set(events.map((event) => event.pubkey))).filter(Boolean);
-  if (pubkeys.length === 0) return profileMap;
-
-  const missing = pubkeys.filter((pubkey) => !profileMap[pubkey]);
+  const missing = [...new Set(events.map((event) => event.pubkey))].filter(
+    (pubkey) => pubkey && !profileMap[pubkey]
+  );
   if (missing.length === 0) return profileMap;
-
-  try {
-    const profileEvents = await fetchEvents(
-      {
-        kinds: [0],
-        authors: missing,
-        limit: missing.length,
-      },
-      relays,
-      { waitForAll: true }
-    );
-
-    const nextProfiles = { ...profileMap };
-    for (const profileEvent of profileEvents) {
-      try {
-        const parsed = JSON.parse(profileEvent.content) as NostrProfile;
-        nextProfiles[profileEvent.pubkey] = parsed;
-      } catch {
-        // Ignore malformed metadata profiles.
-      }
-    }
-
-    return nextProfiles;
-  } catch (error) {
-    console.warn('Failed to load author profiles:', error);
-    return profileMap;
-  }
-};
-
-export const fetchAuthorProfile = async ({
-  pubkey,
-  cache,
-}: {
-  pubkey: string;
-  cache: Map<string, NostrProfile>;
-}): Promise<NostrProfile | undefined> => {
-  const cached = cache.get(pubkey);
-  if (cached) return cached;
-
-  try {
-    const profileEvents = await fetchEvents(
-      {
-        kinds: [0],
-        authors: [pubkey],
-        limit: 1,
-      },
-      undefined,
-      { waitForAll: true }
-    );
-    const profileEvent = profileEvents[0];
-    if (!profileEvent?.content) return undefined;
-
-    const parsed = JSON.parse(profileEvent.content) as NostrProfile;
-    cache.set(pubkey, parsed);
-    return parsed;
-  } catch {
-    return undefined;
-  }
+  const found = await fetchProfiles(missing, { relays });
+  return found.size > 0 ? { ...profileMap, ...Object.fromEntries(found) } : profileMap;
 };

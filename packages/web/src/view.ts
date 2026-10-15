@@ -6,28 +6,31 @@
  * secondary events (e.g. kind 30078 NIP-78 structured data) shown as one post.
  */
 
-import { getFieldsByKind, getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
+import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import { parseManifestATag } from '@nostr-post/core/nip78';
+import {
+  mentionedPubkeys,
+  mentionRelayHints,
+  tokenizeNoteContent,
+} from '@nostr-post/core/noteContent';
 import {
   type DisplayableEvent,
   type NostrPostManifest,
-  type PostField,
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
-import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { baseStyles, NostrPostElement } from './base-component';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
-import { fetchEvents, fetchManifestByATag, getPublicKey } from './signer';
 import {
-  authorDisplayName,
-  fetchAuthorProfile,
-  type NostrProfile,
-  truncatePubkey,
-} from './userProfile';
+  fetchEvents,
+  fetchManifestByATag,
+  fetchProfile,
+  fetchProfiles,
+  getPublicKey,
+} from './signer';
+import { authorDisplayName, type NostrProfile, truncatePubkey } from './userProfile';
+import { DEFAULT_NOSTR_LINK_BASE, renderNoteContent } from './viewContent';
 import { type EditState, renderEditButton, renderInlineComposer } from './viewEdit';
 import {
   hasStructuredContentMappings,
@@ -37,12 +40,11 @@ import {
 import { DEFAULT_RAW_DATA_MESSAGES, type RawDataMessages, renderRawData } from './viewRawData';
 import { postRoleView } from './viewRoles';
 import { viewStyle } from './viewStyle';
+import { renderTagPlugins } from './viewTagPlugins';
 import { applyUpdateCommentsToEvent, renderUpdateComments } from './viewUpdates';
 
 /** Event type that can be either unsigned or signed — re-exported from core for convenience */
 export type { DisplayableEvent } from '@nostr-post/core/types';
-
-type RegisteredPlugin = Exclude<ReturnType<typeof pluginRegistry.get>, undefined>;
 
 /**
  * View Web Component for displaying Nostr events
@@ -107,6 +109,10 @@ export class NostrPostView extends NostrPostElement {
   @property({ attribute: false })
   messages?: Partial<RawDataMessages>;
 
+  /** Base URL that `nostr:` references in the text link to; the NIP-19 entity is appended */
+  @property({ attribute: 'nostr-link-base' })
+  nostrLinkBase = DEFAULT_NOSTR_LINK_BASE;
+
   /** Field IDs to exclude from the rendered view */
   @property({ type: Array, attribute: 'exclude-fields' })
   excludeFields?: string[];
@@ -131,11 +137,12 @@ export class NostrPostView extends NostrPostElement {
   /** Static cache of fetched linked events by primary event id */
   private static _linkedEventsCache = new Map<string, DisplayableEvent[]>();
 
-  /** Static cache of fetched author profiles by pubkey */
-  private static _profileCache = new Map<string, NostrProfile>();
-
   @state()
   private _authorProfile?: NostrProfile;
+
+  /** Profiles of pubkeys mentioned in the text (`nostr:npub…`) */
+  @state()
+  private _mentionProfiles = new Map<string, NostrProfile>();
 
   constructor() {
     super();
@@ -171,6 +178,7 @@ export class NostrPostView extends NostrPostElement {
         this._tryFetchLinkedEvents();
       }
       this._tryFetchAuthorProfile();
+      void this._fetchMentionProfiles();
     }
   }
 
@@ -191,10 +199,17 @@ export class NostrPostView extends NostrPostElement {
     if (this._lastFetchedProfilePubkey === pubkey) return;
     this._lastFetchedProfilePubkey = pubkey;
 
-    this._authorProfile = await fetchAuthorProfile({
-      pubkey,
-      cache: NostrPostView._profileCache,
-    });
+    const profile = await fetchProfile(pubkey);
+    if (this.event?.pubkey === pubkey) this._authorProfile = profile;
+  }
+
+  private async _fetchMentionProfiles() {
+    const event = this.event;
+    const tokens = event ? tokenizeNoteContent(event.content) : [];
+    const pubkeys = mentionedPubkeys(tokens);
+    if (pubkeys.length === 0) return;
+    const profiles = await fetchProfiles(pubkeys, { hints: mentionRelayHints(tokens) });
+    if (this.event === event) this._mentionProfiles = profiles;
   }
 
   /**
@@ -344,6 +359,7 @@ export class NostrPostView extends NostrPostElement {
     const manifestRenderedData = renderManifestEventData(event, this.effectiveManifest);
     const shouldUseManifestRendering =
       hasStructuredContentMappings(event, this.effectiveManifest) && Boolean(manifestRenderedData);
+    const tokens = tokenizeNoteContent(content, tags);
 
     return html`
       <div class="view">
@@ -376,11 +392,24 @@ export class NostrPostView extends NostrPostElement {
         <div class="view-content">
           ${
             content && !shouldUseManifestRendering
-              ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>`
+              ? renderNoteContent(tokens, {
+                  nostrLinkBase: this.nostrLinkBase,
+                  profiles: this._mentionProfiles,
+                })
               : nothing
           }
           ${shouldUseManifestRendering ? manifestRenderedData : nothing}
-          ${shouldUseManifestRendering ? nothing : this.renderTagPlugins(tags)} ${roleRows}
+          ${
+            shouldUseManifestRendering
+              ? nothing
+              : renderTagPlugins({
+                  kind,
+                  manifest: this.effectiveManifest,
+                  tags,
+                  tokens,
+                  excludeFields: this.excludeFields,
+                })
+          } ${roleRows}
         </div>
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
@@ -390,134 +419,6 @@ export class NostrPostView extends NostrPostElement {
         ${renderInlineComposer(event, this.editState)}
       </div>
     `;
-  }
-
-  /**
-   * Build a map from tag name -> manifest field for plugin lookup.
-   */
-  private getTagFieldMap(): Map<string, PostField[]> {
-    const map = new Map<string, PostField[]>();
-    const m = this.effectiveManifest;
-    const kind = this.event?.kind;
-    if (m && kind !== undefined) {
-      for (const field of getFieldsByKind(m, kind, [kind])) {
-        if (!Array.isArray(field.mapTo) && field.mapTo.target === 'tag' && field.mapTo.tagName) {
-          const fields = map.get(field.mapTo.tagName) ?? [];
-          fields.push(field);
-          map.set(field.mapTo.tagName, fields);
-        }
-      }
-    }
-    return map;
-  }
-
-  private groupTagValues(
-    tags: string[][],
-    tagFieldMap: Map<string, PostField[]>
-  ): Map<string, string[]> {
-    const tagGroups = new Map<string, string[]>();
-    for (const [tagName, rawValue] of tags) {
-      if (!rawValue || !tagFieldMap.has(tagName)) continue;
-      const existing = tagGroups.get(tagName) ?? [];
-      existing.push(rawValue);
-      tagGroups.set(tagName, existing);
-    }
-    return tagGroups;
-  }
-
-  private shouldSkipTagField(field: PostField): boolean {
-    return field.visibility?.view === 'hidden' || this.excludeFields?.includes(field.id) === true;
-  }
-
-  private deserializeTagValue(
-    plugin: RegisteredPlugin,
-    field: PostField,
-    rawValue: string
-  ): unknown {
-    if (plugin.deserializeValue) {
-      return plugin.deserializeValue(rawValue, field);
-    }
-    if (field.type === 'number') {
-      return Number(rawValue);
-    }
-    return rawValue;
-  }
-
-  private resolveTagPluginValue(
-    plugin: RegisteredPlugin,
-    field: PostField,
-    values: string[],
-    tags: string[][]
-  ): unknown {
-    if (plugin.resolveFromTags) {
-      return plugin.resolveFromTags(tags, field);
-    }
-    if (field.uiPlugin === 'geo') {
-      return values.reduce((a, b) => (a.length >= b.length ? a : b));
-    }
-    if (values.length > 1 || field.uiPlugin === 'hashtag' || field.uiPlugin === 'media') {
-      return values;
-    }
-    return this.deserializeTagValue(plugin, field, values[0]);
-  }
-
-  /**
-   * Render tag values using registered plugin view components.
-   * Aggregates multi-value tags (hashtags, media) into arrays.
-   * Falls back gracefully when no plugin or no viewTagName is registered.
-   */
-  private renderTagPlugins(tags: string[][]) {
-    const tagFieldMap = this.getTagFieldMap();
-    if (tagFieldMap.size === 0) return '';
-
-    const tagGroups = this.groupTagValues(tags, tagFieldMap);
-
-    const results = [];
-    for (const [tagName, values] of tagGroups) {
-      const fields = tagFieldMap.get(tagName) ?? [];
-      for (const field of fields) {
-        if (this.shouldSkipTagField(field)) continue;
-
-        const plugin = pluginRegistry.get(field.uiPlugin);
-        if (!plugin?.viewTagName) continue;
-
-        const value = this.resolveTagPluginValue(plugin, field, values, tags);
-
-        const viewTag = unsafeStatic(plugin.viewTagName);
-        results.push(staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`);
-      }
-    }
-    return results;
-  }
-
-  private formatMarkdown(text: string): string {
-    if (!text) return '';
-    let html = text;
-    // Bold
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    // Italic
-    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    // Code
-    html = html.replace(
-      /`([^`]+)`/g,
-      '<code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px; font-family: monospace;">$1</code>'
-    );
-    // Headings
-    html = html.replace(
-      /^### (.*?)$/gm,
-      '<h4 style="margin: 1rem 0 0.5rem 0; font-size: 1rem;">$1</h4>'
-    );
-    html = html.replace(
-      /^## (.*?)$/gm,
-      '<h3 style="margin: 1rem 0 0.5rem 0; font-size: 1.1rem;">$1</h3>'
-    );
-    html = html.replace(
-      /^# (.*?)$/gm,
-      '<h2 style="margin: 1rem 0 0.5rem 0; font-size: 1.25rem;">$1</h2>'
-    );
-    // Line breaks
-    html = html.replace(/\n/g, '<br>');
-    return html;
   }
 }
 

@@ -1,4 +1,4 @@
-self.addEventListener('install', (e) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 self.addEventListener('activate', (e) => {
@@ -11,7 +11,7 @@ self.addEventListener('fetch', (event) => {
     if (url.pathname.endsWith('/share-target') && event.request.method === 'POST') {
       event.respondWith(handleShareTarget(event));
     }
-  } catch (err) {
+  } catch {
     // ignore
   }
 });
@@ -27,7 +27,7 @@ async function handleShareTarget(event) {
     const files = fd.getAll('files') || [];
     const filesInfo = [];
     for (const f of files) {
-      if (f && f.name) {
+      if (f?.name) {
         filesInfo.push({ name: f.name, type: f.type, file: f });
       }
     }

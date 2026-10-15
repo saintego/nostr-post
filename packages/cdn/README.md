@@ -113,6 +113,20 @@ The bundle re-exports utilities for advanced usage:
 - `fetchUserRelays(pubkeys, relays?)`: the NIP-65 relays of one or more users plus `relays`
   (default: `DEFAULT_RELAYS`); falls back to `relays` when no list is found
 - `getPublishRelays(pubkey, relays?)`: where to publish: the signer's write relays, the user's NIP-65 write relays and `relays` (default: `DEFAULT_RELAYS`)
+- `SIGNING_EVENT` (`'nostr-post:signing'`): `window` gets it when `signEvent` starts or stops waiting
+  for the signer (detail `{ pending, kind? }`, `pending` 0 when done), e.g. to show "waiting for
+  approval"; the composer uses it
+- `fetchProfile(pubkey, { relays?, hints? })`, `fetchProfiles(pubkeys, { relays?, hints? })`: user
+  profiles (newest kind 0) from `relays` (default: `DEFAULT_RELAYS`), the `INDEXER_RELAYS`
+  (`wss://purplepag.es`) and up to 4 `hints` (e.g. an `nprofile`'s relays). Shared cache:
+  lookups in one tick go out as one request, a pubkey being fetched isn't asked for twice, and
+  one that wasn't found is tried again next time. `getCachedProfile(pubkey)` reads the cache.
+  The view and feed use them for author and mention names
+
+**Composer text**
+
+- `DEFAULT_COMPOSER_MESSAGES`: the composer's submit-area text (button, running step, errors); set
+  `composer.messages = { submit: '…' }` to override any of it
 
 **Publishing a submitted post yourself** (composer without `auto-publish`)
 

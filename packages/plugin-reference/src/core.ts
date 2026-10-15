@@ -70,7 +70,7 @@ export const normalizeExternalUrl = (rawUrl: string): string => {
         .join('&')
     : '';
 
-  return `${scheme}:${authority}${path || '/'}${cleanQuery ? '?' + cleanQuery : ''}`;
+  return `${scheme}:${authority}${path || '/'}${cleanQuery ? `?${cleanQuery}` : ''}`;
 };
 
 const urlDedupeKey = (

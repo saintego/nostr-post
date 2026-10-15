@@ -4,6 +4,7 @@ import { isStructuredContentKind } from '@nostr-post/core/manifestMappings';
 import type { NostrTarget, PostField } from '@nostr-post/core/types';
 import { styles } from './fieldEditorStyles';
 import { formatKindLabel } from './kindLabels';
+import { useListKeys } from './useListKeys';
 
 interface AdditionalMappingsProps {
   field: PostField;
@@ -25,6 +26,11 @@ export function AdditionalMappings({
   onUpdateTarget,
 }: AdditionalMappingsProps) {
   const additionalMappingsHeadingId = `${field.id}-additional-mappings`;
+  const mappingKeys = useListKeys(Math.max(targets.length - 1, 0));
+  const removeMapping = (mappingIndex: number) => {
+    mappingKeys.removeKey(mappingIndex - 1);
+    onRemoveMapping(mappingIndex);
+  };
 
   return (
     <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -46,7 +52,7 @@ export function AdditionalMappings({
         <div style={styles.helperText}>Only the primary mapping is configured.</div>
       ) : (
         targets.slice(1).map((target, index) => (
-          <div key={`${field.id}-mapping-${index + 1}`} style={styles.mappingCard}>
+          <div key={mappingKeys.keys[index]} style={styles.mappingCard}>
             {(() => {
               const mappingIndex = index + 1;
               const kindInputId = `${field.id}-mapping-kind-${mappingIndex}`;
@@ -70,7 +76,7 @@ export function AdditionalMappings({
                     <button
                       type="button"
                       style={{ ...styles.smallButton, background: '#dc2626' }}
-                      onClick={() => onRemoveMapping(index + 1)}
+                      onClick={() => removeMapping(index + 1)}
                     >
                       Remove
                     </button>
