@@ -98,6 +98,14 @@ export function WikiLinksEditor({ links, fieldIds, onChange }: WikiLinksEditorPr
             onChange={(e) => setCondition(index, link, link.when?.field ?? '', e.target.value)}
             placeholder="value, e.g. yes"
           />
+          <input
+            style={inputStyle}
+            type="text"
+            aria-label={`Link ${index + 1} id`}
+            value={link.id ?? ''}
+            onChange={(e) => update(index, { ...link, id: e.target.value || undefined })}
+            placeholder="Id for extending manifests, e.g. btc-map"
+          />
         </div>
       ))}
     </div>

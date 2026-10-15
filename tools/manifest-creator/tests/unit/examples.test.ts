@@ -1,6 +1,15 @@
+import { resolveManifest } from '@nostr-post/core/manifest';
 import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
+import type { NostrPostManifest } from '@nostr-post/core/types';
 import { describe, expect, it } from 'vitest';
 import { EXAMPLE_MANIFESTS } from '../../lib/examples';
+
+/** An example with its `extends` parent (another example, by id) merged in, as apps see it */
+const resolved = (manifest: NostrPostManifest): NostrPostManifest => {
+  const parentId = typeof manifest.extends === 'string' ? manifest.extends : undefined;
+  const parent = Object.values(EXAMPLE_MANIFESTS).find((m) => m.id === parentId);
+  return parent ? resolveManifest(manifest, resolved(parent)) : manifest;
+};
 
 describe('EXAMPLE_MANIFESTS', () => {
   describe('simple manifest', () => {
@@ -96,14 +105,13 @@ describe('EXAMPLE_MANIFESTS', () => {
 
     it('should have at least one publish kind', () => {
       for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
-        expect(getManifestAvailableKinds(manifest).length).toBeGreaterThan(0);
+        expect(getManifestAvailableKinds(resolved(manifest)).length).toBeGreaterThan(0);
       }
     });
 
     it('should have at least one field', () => {
       for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
-        expect(manifest.fields).toBeDefined();
-        expect(manifest.fields.length).toBeGreaterThan(0);
+        expect(resolved(manifest).fields.length).toBeGreaterThan(0);
       }
     });
 
@@ -131,5 +139,26 @@ describe('EXAMPLE_MANIFESTS', () => {
         expect(target.kind).toBe(30818);
       }
     });
+  });
+});
+
+describe('beer venue manifest', () => {
+  it('inherits the venue page and adds the beer sections', () => {
+    const beerVenue = EXAMPLE_MANIFESTS['wiki-beer-venue-entity'] as NostrPostManifest;
+    const config = (
+      resolved(beerVenue) as unknown as {
+        wikiConfig: { dTagTemplate: string; related: { label: string }[] };
+      }
+    ).wikiConfig;
+    expect(config.dTagTemplate).toBe('{name}-{city}-(venue)');
+    expect(config.related.map((section) => section.label)).toEqual([
+      'Reviews',
+      'Beer reviews',
+      'Taproom of',
+    ]);
+    const venue = EXAMPLE_MANIFESTS['wiki-venue-entity'] as unknown as {
+      wikiConfig: { related: { label: string }[] };
+    };
+    expect(venue.wikiConfig.related.map((section) => section.label)).toEqual(['Reviews']);
   });
 });

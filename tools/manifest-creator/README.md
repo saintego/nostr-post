@@ -21,6 +21,8 @@ A visual tool for creating and testing nostr-post manifests.
 - 🔎 Wiki panel for entity manifests: find an entity, view it, edit it (from the newest or any
   older version) and publish it with your signer (or into the test log in test mode), browse its
   versions and find its reviews
+- 🗂️ Wiki related sections editor (`wikiConfig.related`): what an entity's page lists, e.g. its
+  reviews by manifest or wiki entities of another type in a role
 
 ## Usage
 

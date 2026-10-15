@@ -1,6 +1,7 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import type { WikiManifest } from '@nostr-post/wiki';
 import { WikiLinksEditor } from './WikiLinksEditor';
+import { WikiRelatedEditor } from './WikiRelatedEditor';
 
 const styles = {
   section: { marginBottom: '1.5rem' },
@@ -23,7 +24,7 @@ interface WikiConfigEditorProps {
   onChange: (manifest: NostrPostManifest) => void;
 }
 
-/** Title and d-tag templates and derived links of a NIP-54 wiki manifest (shown only for wiki manifests). */
+/** Title and d-tag templates, derived links and related sections of a NIP-54 wiki manifest (shown only for wiki manifests). */
 export function WikiConfigEditor({ manifest, fieldIds, onChange }: WikiConfigEditorProps) {
   if (!('wikiConfig' in manifest)) return null;
   const config = (manifest as WikiManifest).wikiConfig ?? {};
@@ -65,6 +66,15 @@ export function WikiConfigEditor({ manifest, fieldIds, onChange }: WikiConfigEdi
           onChange({
             ...manifest,
             wikiConfig: { ...config, links: links.length > 0 ? links : undefined },
+          } as never)
+        }
+      />
+      <WikiRelatedEditor
+        related={config.related ?? []}
+        onChange={(related) =>
+          onChange({
+            ...manifest,
+            wikiConfig: { ...config, related: related.length > 0 ? related : undefined },
           } as never)
         }
       />

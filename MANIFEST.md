@@ -176,6 +176,7 @@ related: [
 
 | Key          | Description                                                                                        |
 | ------------ | -------------------------------------------------------------------------------------------------- |
+| `id`         | Optional stable key: a manifest extending this one replaces the section with the same `id` (else the same `label`), e.g. to translate it |
 | `label`      | The section's heading                                                                              |
 | `kinds`      | Event kinds to list: `30818` for wiki entities, e.g. `1`/`30078` for reviews                        |
 | `dTagSuffix` | Wiki entities of one type, by the suffix of their d-tags (`-beer`)                                  |
@@ -188,6 +189,22 @@ related: [
 Wiki entities are listed in their newest version and open their page on demand; posts show a short
 text. A section with `stats` or `gallery` reads up to 500 posts for them, computed when shown and
 never stored, and still lists `limit`. `<nostr-wiki-view>` shows the sections unless it has `hide-related`.
+
+Keep sections to the entity type itself; domain sections belong in a manifest that `extends` it, which
+only lists what it adds (sections and links merge by `id`, else `label`, see
+[inheritance](./ARCHITECTURE.md#manifest-inheritance)). Like any extending manifest it can add fields
+too, and create pages: they stay pages of the same type as long as it keeps the parent's title and
+d-tag templates, and a viewer using the parent shows the added fields among "all data". An app can
+also define an extension in its code, unpublished, just to view pages its way.
+
+The same works for translations: a manifest extending another with the same field ids and section or
+link ids, and only translated labels, shows the pages in another language:
+
+```typescript
+{ id: "venue-entity-v1-cs", extends: "venue-entity-v1",
+  fields: [{ id: "name", metadata: { label: "Název" } }],
+  wikiConfig: { related: [{ id: "reviews", label: "Recenze", kinds: [1, 30078], manifest: "venue-review-v1" }] } }
+```
 
 ### Title and d-tag templates
 
@@ -210,6 +227,7 @@ shown. They aren't stored on the event, so a site changing its URLs needs only a
 
 | Key     | Description                                                                                                                           |
 | ------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`    | Optional stable key: a manifest extending this one replaces the link with the same `id` (else the same `label`)                        |
 | `label` | Link text, e.g. the site's name                                                                                                       |
 | `url`   | `{i:<namespace>}`: the entity's `i` tag value without the prefix (`{i:osm}` → `node:123`); `{fieldId}`: a field's value; `{fieldId.key}`: a key of the option selected in an enum field (`{style.code}`). Values are URL-encoded |
 | `when`  | Optional: `{ field, equals }`, shown only when that field's value matches (case-insensitive)                                          |

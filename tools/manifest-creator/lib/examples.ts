@@ -94,8 +94,14 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       dTagTemplate: '{name}-(brewery)',
       // Listed on the brewery's page: beers naming it in their roles
       related: [
-        { label: 'Beers', kinds: [30818], dTagSuffix: '-beer', role: 'breweries' },
-        { label: 'Brewed here for others', kinds: [30818], dTagSuffix: '-beer', role: 'brewed_at' },
+        { id: 'beers', label: 'Beers', kinds: [30818], dTagSuffix: '-beer', role: 'breweries' },
+        {
+          id: 'brewed-here',
+          label: 'Brewed here for others',
+          kinds: [30818],
+          dTagSuffix: '-beer',
+          role: 'brewed_at',
+        },
       ],
     },
     fields: [
@@ -240,11 +246,16 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       dTagTemplate: '{title}-(beer)',
       // The style's page in the BJCP guidelines; local styles (X1…) have none and get no link
       links: [
-        { label: 'BJCP', url: 'https://www.bjcp.org/style/2021/{style.category}/{style.code}/' },
+        {
+          id: 'bjcp',
+          label: 'BJCP',
+          url: 'https://www.bjcp.org/style/2021/{style.category}/{style.code}/',
+        },
       ],
       // Listed on the beer's page: reviews linking it (any author's version)
       related: [
         {
+          id: 'reviews',
           label: 'Reviews',
           kinds: [1, 30078],
           manifest: 'beer-review-v1',
@@ -502,6 +513,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       // Derived when shown, not stored: BTC Map lists the places OSM marks as accepting bitcoin
       links: [
         {
+          id: 'btc-map',
           label: 'BTC Map',
           url: 'https://btcmap.org/merchant/{i:osm}',
           when: { field: 'bitcoin', equals: 'yes' },
@@ -510,14 +522,13 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       // Listed on the venue's page
       related: [
         {
+          id: 'reviews',
           label: 'Reviews',
           kinds: [1, 30078],
           manifest: 'venue-review-v1',
           stats: { tag: 'rating', max: 5 },
           gallery: true,
         },
-        { label: 'Beer reviews', kinds: [1, 30078], manifest: 'beer-review-v1', gallery: true },
-        { label: 'Taproom of', kinds: [30818], dTagSuffix: '-brewery', role: 'taprooms' },
       ],
     },
     fields: [
@@ -673,6 +684,37 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
     },
   },
 
+  'wiki-beer-venue-entity': {
+    id: 'beer-venue-entity-v1',
+    version: '1.0.0',
+    // Venue pages seen from the beer world: inherits everything (same pages: same title and
+    // d-tag templates) and adds the beer sections (wikiConfig.related merges by id)
+    extends: 'venue-entity-v1',
+    metadata: {
+      name: 'Beer venue',
+      description:
+        'A venue page with beer reviews tasted or bought there and the breweries it is a taproom of',
+    },
+    wikiConfig: {
+      related: [
+        {
+          id: 'beer-reviews',
+          label: 'Beer reviews',
+          kinds: [1, 30078],
+          manifest: 'beer-review-v1',
+          gallery: true,
+        },
+        {
+          id: 'taproom-of',
+          label: 'Taproom of',
+          kinds: [30818],
+          dTagSuffix: '-brewery',
+          role: 'taprooms',
+        },
+      ],
+    },
+    fields: [],
+  },
   'venue-review': {
     id: 'venue-review-v1',
     version: '1.0.0',

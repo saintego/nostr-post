@@ -24,6 +24,8 @@ vi.mock('@nostr-post/signer', () => ({
     wikiEvent('bitcoin-beer', 'Bitcoin (Beer)', 'pk2'),
     wikiEvent('bitcoin-brewery', 'Bitcoin (Brewery)'),
   ]),
+  // The wiki composer listens for it to show "Waiting for your signer…"
+  SIGNING_EVENT: 'nostr-post:signing',
 }));
 
 import './web';

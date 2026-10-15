@@ -13,6 +13,11 @@ import { collectEntityATags, defaultResolver, groupByDTag, type WikiEvent } from
 
 /** One section of related items (`wikiConfig.related`) */
 export interface WikiRelatedSection {
+  /**
+   * Stable key for `extends`: a child manifest's section with the same id replaces this one,
+   * e.g. to translate its label. Without it, sections merge by `label`
+   */
+  id?: string;
   /** Heading, e.g. "Beers" or "Reviews" */
   label: string;
   /** Event kinds to list: 30818 for wiki entities, e.g. 1 / 30078 for reviews */

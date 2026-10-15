@@ -970,6 +970,84 @@ describe('resolveManifest', () => {
     const result = validateManifest(resolved);
     expect(result.success).toBe(true);
   });
+
+  it('merges config objects like wikiConfig per key, and labelled lists by label', () => {
+    const venue = {
+      id: 'venue',
+      version: '1',
+      fields: [],
+      wikiConfig: {
+        titleTemplate: '{name} ({city})',
+        dTagTemplate: '{name}-{city}-(venue)',
+        links: [{ label: 'BTC Map', url: 'https://btcmap.org/merchant/{i:osm}' }],
+        related: [{ label: 'Reviews', kinds: [1], manifest: 'venue-review' }],
+      },
+    } as unknown as NostrPostManifest;
+    const beerVenue = {
+      id: 'beer-venue',
+      version: '1',
+      extends: 'venue',
+      fields: [],
+      wikiConfig: {
+        related: [
+          { label: 'Reviews', kinds: [1, 30078], manifest: 'venue-review' },
+          { label: 'Beer reviews', kinds: [1], manifest: 'beer-review' },
+        ],
+      },
+    } as unknown as NostrPostManifest;
+    const resolved = resolveManifest(beerVenue, venue) as unknown as { wikiConfig: unknown };
+    expect(resolved.wikiConfig).toEqual({
+      titleTemplate: '{name} ({city})',
+      dTagTemplate: '{name}-{city}-(venue)',
+      links: [{ label: 'BTC Map', url: 'https://btcmap.org/merchant/{i:osm}' }],
+      related: [
+        { label: 'Reviews', kinds: [1, 30078], manifest: 'venue-review' },
+        { label: 'Beer reviews', kinds: [1], manifest: 'beer-review' },
+      ],
+    });
+  });
+
+  it('merges entries with an id by id, so a child can translate their labels', () => {
+    const base = {
+      id: 'venue',
+      version: '1',
+      fields: [],
+      wikiConfig: {
+        related: [
+          { id: 'reviews', label: 'Reviews', kinds: [1] },
+          { id: 'photos', label: 'Photos', kinds: [1], gallery: true },
+        ],
+      },
+    } as unknown as NostrPostManifest;
+    const czech = {
+      id: 'venue-cs',
+      version: '1',
+      fields: [],
+      wikiConfig: { related: [{ id: 'reviews', label: 'Recenze', kinds: [1] }] },
+    } as unknown as NostrPostManifest;
+    const resolved = resolveManifest(czech, base) as unknown as {
+      wikiConfig: { related: { id: string; label: string }[] };
+    };
+    expect(resolved.wikiConfig.related.map((s) => [s.id, s.label])).toEqual([
+      ['reviews', 'Recenze'],
+      ['photos', 'Photos'],
+    ]);
+  });
+
+  it("keeps the parent's config when the child has none, and the child's alone", () => {
+    const withConfig = { id: 'p', version: '1', fields: [], wikiConfig: { titleTemplate: 'T' } };
+    const plain = { id: 'c', version: '1', fields: [] };
+    const fromParent = resolveManifest(
+      plain as NostrPostManifest,
+      withConfig as unknown as NostrPostManifest
+    ) as unknown as { wikiConfig: unknown };
+    expect(fromParent.wikiConfig).toEqual({ titleTemplate: 'T' });
+    const fromChild = resolveManifest(
+      withConfig as unknown as NostrPostManifest,
+      plain as NostrPostManifest
+    ) as unknown as { wikiConfig: unknown };
+    expect(fromChild.wikiConfig).toEqual({ titleTemplate: 'T' });
+  });
 });
 
 describe('field label and description', () => {

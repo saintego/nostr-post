@@ -58,6 +58,11 @@ export interface WikiConfig {
  * `{ label: 'BTC Map', url: 'https://btcmap.org/merchant/{i:osm}', when: { field: 'bitcoin', equals: 'yes' } }`
  */
 export interface WikiLinkTemplate {
+  /**
+   * Stable key for `extends`: a child manifest's link with the same id replaces this one,
+   * e.g. to translate its label. Without it, links merge by `label`
+   */
+  id?: string;
   /** Link text, e.g. the site's name */
   label: string;
   /**

@@ -303,6 +303,7 @@ This avoids the awkward chain `coffee-review extends cafe-visit` (which would im
 | `publishFormats` | Same override-then-append as fields                                                                                                                     |
 | `metadata`       | Shallow-merged; child wins on conflicts                                                                                                                 |
 | `linkManifest`   | Child takes priority; falls back to parent                                                                                                              |
+| Other objects    | Keys whose values are objects in both, e.g. `wikiConfig`, merge per key; a list of labelled entries (`links`, `related`) keeps the parent's, a child entry with the same `id` (else `label`) replacing its parent's, then appends the child's new ones; with ids, a child can translate labels; any other value is the child's |
 | `extends`        | Consumed and **not** forwarded to the resolved manifest                                                                                                 |
 
 For array `extends`, sibling parents are merged in the same left-to-right fashion before the child is applied.
