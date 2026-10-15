@@ -5,6 +5,7 @@
  */
 
 import type { UnsignedNostrEvent } from '@nostr-post/core/types';
+import { isDryRun, logDryRunEvent } from './dryRun';
 import { DEFAULT_RELAYS } from './fetch';
 import { getPublishRelays } from './relays';
 
@@ -57,9 +58,13 @@ export function hasNostrSigner(): boolean {
 }
 
 /**
- * Publish a signed event to a single relay
+ * Publish a signed event to a single relay. In dry-run mode it is only logged.
  */
 export function publishToRelay(event: SignedEvent, relayUrl: string): Promise<boolean> {
+  if (isDryRun()) {
+    logDryRunEvent(event, [relayUrl]);
+    return Promise.resolve(true);
+  }
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(relayUrl);
     const timeout = setTimeout(() => {
@@ -106,12 +111,22 @@ export interface PublishResults {
 }
 
 /**
- * Publish a signed event to multiple relays
+ * Publish a signed event to multiple relays. In dry-run mode it is only logged,
+ * and every relay reports success.
  */
 export async function publishToRelays(
   event: SignedEvent,
   relays: string[] = DEFAULT_RELAYS
 ): Promise<PublishResults> {
+  if (isDryRun()) {
+    logDryRunEvent(event, relays);
+    const targets = relays.length > 0 ? relays : ['dry-run'];
+    return {
+      success: targets.length,
+      failed: 0,
+      results: targets.map((relay) => ({ relay, ok: true })),
+    };
+  }
   const results = await Promise.allSettled(
     relays.map(async (relay) => {
       try {
@@ -172,6 +187,16 @@ export interface FetchFilter {
  * Fetch events from a single relay
  */
 export { fetchEventsFromRelay, fetchEvents, matchesFilter, DEFAULT_RELAYS } from './fetch';
+
+export {
+  type DryRunChangeDetail,
+  type DryRunEntry,
+  DRY_RUN_CHANGE_EVENT,
+  clearDryRunEntries,
+  getDryRunEntries,
+  isDryRun,
+  setDryRun,
+} from './dryRun';
 
 export {
   fetchManifestByATag,

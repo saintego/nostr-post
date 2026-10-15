@@ -58,4 +58,11 @@ export {
   getPublishRelays,
   hasNostrSigner,
   DEFAULT_RELAYS,
+  setDryRun,
+  isDryRun,
+  getDryRunEntries,
+  clearDryRunEntries,
+  DRY_RUN_CHANGE_EVENT,
+  type DryRunEntry,
+  type DryRunChangeDetail,
 } from './signer';

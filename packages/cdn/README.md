@@ -104,6 +104,12 @@ The bundle re-exports utilities for advanced usage:
   relays publishes to `getPublishRelays` of the signer's pubkey)
 - `getPublicKey`, `hasNostrSigner`, `fetchEvents`, `fetchEventsFromRelay`
 - `getUserRelays`, `getDefaultRelays`
+- `setDryRun(on)`, `isDryRun()`: test mode. Events are still signed, but publishing only logs them
+  (every relay reports success), and reads (`fetchEvents`, feeds, pickers) also return logged
+  events that match. `getDryRunEntries()` lists `{ event, relays }` newest first,
+  `clearDryRunEntries()` empties the log; `window` fires `DRY_RUN_CHANGE_EVENT`
+  (`'nostr-post:dry-run'`, detail `{ enabled, entries }`) on every change. Blossom media uploads
+  are not affected.
 - `fetchUserRelays(pubkeys, relays?)`: the NIP-65 relays of one or more users plus `relays`
   (default: `DEFAULT_RELAYS`); falls back to `relays` when no list is found
 - `getPublishRelays(pubkey, relays?)`: where to publish: the signer's write relays, the user's NIP-65 write relays and `relays` (default: `DEFAULT_RELAYS`)

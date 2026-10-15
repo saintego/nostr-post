@@ -73,6 +73,13 @@ export {
   fetchManifestsByATags,
   getCachedManifest,
   clearManifestCache,
+  setDryRun,
+  isDryRun,
+  getDryRunEntries,
+  clearDryRunEntries,
+  DRY_RUN_CHANGE_EVENT,
+  type DryRunEntry,
+  type DryRunChangeDetail,
 } from '@nostr-post/signer';
 
 // Relay helpers (defined in web/signer, re-exported from web)
