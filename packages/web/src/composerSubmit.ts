@@ -13,7 +13,7 @@ import {
   type NostrPostManifest,
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
-import { publishSummaries } from '@nostr-post/plugins/publish';
+import { publishSummaries, runPublishHooks } from '@nostr-post/plugins/publish';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html, type TemplateResult } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
@@ -234,6 +234,48 @@ export const withTimeout = <T>(promise: Promise<T>, ms: number, message: string)
       }
     );
   });
+
+/** Publish hooks (e.g. a venue's wiki page) taking longer than this fail the submit */
+export const PUBLISH_HOOKS_TIMEOUT_MS = 90_000;
+
+export interface PublishWithHooksInput {
+  manifest: NostrPostManifest;
+  formData: Record<string, unknown>;
+  pubkey: string;
+  relays: string[] | undefined;
+  /** Builds the post from form data (the composer's validateAndCoordinate) */
+  coordinate: (formData: Record<string, unknown>) => ReturnType<typeof validateAndCoordinate>;
+  messages: ComposerMessages;
+  /** Called with the step that starts (messages.stepHooks, messages.stepPublish) */
+  onStep: (step: string) => void;
+  /** Whether the signer still has an unanswered request */
+  isSigning: () => boolean;
+}
+
+/**
+ * Let plugins publish related events first (e.g. a venue's wiki page, within
+ * PUBLISH_HOOKS_TIMEOUT_MS), then build the post again with what they linked (e.g. a
+ * role's mention line) and publish it
+ */
+export const publishWithHooks = async (input: PublishWithHooksInput): Promise<SignedEvent[]> => {
+  const m = input.messages;
+  input.onStep(m.stepHooks);
+  const hooks = await withTimeout(
+    runPublishHooks(input.manifest, input.formData, input.pubkey),
+    PUBLISH_HOOKS_TIMEOUT_MS,
+    m.hooksTimeout
+  ).catch((error: unknown) => {
+    // Timed out while the signer still had a request: say that's what it waited for
+    if (input.isSigning() && error instanceof Error && error.message === m.hooksTimeout) {
+      throw new Error(m.signerTimeout);
+    }
+    throw error;
+  });
+  const outcome = input.coordinate(hooks.formData);
+  if ('validationError' in outcome) throw new Error('The post is invalid after publish hooks');
+  input.onStep(m.stepPublish);
+  return signAndPublishBundle(withTags(outcome.bundle, hooks.tags), input.relays);
+};
 
 /** Labels of the fields with a validation error, in manifest order */
 export const invalidFieldLabels = (

@@ -63,6 +63,8 @@ export {
   hasNostrSigner,
   DEFAULT_RELAYS,
   setDryRun,
+  SIGNING_EVENT,
+  type SigningDetail,
   isDryRun,
   getDryRunEntries,
   clearDryRunEntries,

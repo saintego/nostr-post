@@ -77,4 +77,43 @@ describe('composer submit area', async () => {
     expect(text(c)).toContain('Create Post');
     vi.useRealTimers();
   });
+
+  it('says it waits for the signer, and blames the signer when that times out', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout'] });
+    const { signEvent } = await import('@nostr-post/signer');
+    window.nostr = {
+      getPublicKey: async () => 'a'.repeat(64),
+      signEvent: () => new Promise(() => {}),
+    } as unknown as typeof window.nostr;
+    pluginRegistry.register({
+      id: 'signs',
+      type: 'string',
+      beforePublish: async () => {
+        await signEvent({ kind: 30818, created_at: 0, tags: [], content: '' });
+        return [];
+      },
+    } as never);
+    const c = document.createElement('nostr-post-composer') as HTMLElement &
+      Record<string, unknown>;
+    c.manifest = {
+      id: 's',
+      version: '1',
+      fields: [
+        { id: 'x', type: 'string', uiPlugin: 'signs', mapTo: { kind: 1, target: 'content' } },
+      ],
+    };
+    c.autoPublish = true;
+    c.pubkey = 'a'.repeat(64);
+    c.prefill = { x: 'v' };
+    document.body.appendChild(c);
+    await (c as unknown as { updateComplete: Promise<void> }).updateComplete;
+    c.shadowRoot?.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }));
+    await vi.advanceTimersByTimeAsync(10);
+    await (c as unknown as { updateComplete: Promise<void> }).updateComplete;
+    expect(text(c)).toContain('Waiting for your signer to approve…');
+    await vi.advanceTimersByTimeAsync(91_000);
+    await (c as unknown as { updateComplete: Promise<void> }).updateComplete;
+    expect(text(c)).toContain("Your signer didn't answer the signing request");
+    vi.useRealTimers();
+  });
 });

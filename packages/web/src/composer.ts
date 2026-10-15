@@ -4,19 +4,15 @@
  * Supports automatic signing and publishing via NIP-07
  */
 
-import {
-  getDefaultPublishFormat,
-  getSelectablePublishFormats,
-} from '@nostr-post/core/manifestMappings';
+import { getSelectablePublishFormats } from '@nostr-post/core/manifestMappings';
 import { type NostrPostManifest, STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
-import { runPublishHooks } from '@nostr-post/plugins/publish';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { baseStyles, NostrPostElement } from './base-component';
 import type { FieldRenderContext } from './composerField';
 import { renderFieldList } from './composerFieldList';
 import { buildInitialFormData, isFieldReadonly, renderHiddenFieldErrors } from './composerForm';
-import { renderPublishFormatPicker } from './composerFormatPicker';
+import { initialPublishFormatId, renderPublishFormatPicker } from './composerFormatPicker';
 import { renderComposerHeader } from './composerHeader';
 import { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from './composerMessages';
 import { hasReplyTarget, renderReplyTargetPanel, updateReplyTargetValue } from './composerReply';
@@ -24,20 +20,21 @@ import { composerStyle } from './composerStyle';
 import {
   invalidFieldLabels,
   type NostrPostSubmitDetail,
+  publishWithHooks,
   renderPublishSummaries,
   renderSubmitArea,
-  signAndPublishBundle,
   type ValidationResult,
   validateAndCoordinate,
-  withTags,
-  withTimeout,
 } from './composerSubmit';
 
-/** Publish hooks (e.g. a venue's wiki page) taking longer than this fail the submit */
-const PUBLISH_HOOKS_TIMEOUT_MS = 90_000;
-
 import { ensurePluginsForManifest } from './pluginAutoLoad';
-import { fetchManifestByATag, getPublicKey, type SignedEvent } from './signer';
+import {
+  fetchManifestByATag,
+  getPublicKey,
+  SIGNING_EVENT,
+  type SignedEvent,
+  type SigningDetail,
+} from './signer';
 
 @customElement('nostr-post-composer')
 export class NostrPostComposer extends NostrPostElement {
@@ -143,6 +140,14 @@ export class NostrPostComposer extends NostrPostElement {
   @state()
   private _submitStep?: string;
 
+  /** The signer is working on a signature (e.g. waiting for the user to approve) */
+  @state()
+  private _signing = false;
+
+  private readonly _onSigning = (e: CustomEvent<SigningDetail>) => {
+    this._signing = e.detail.pending > 0;
+  };
+
   /** Why the last submit failed, shown below the button */
   @state()
   private _submitError?: string;
@@ -169,27 +174,7 @@ export class NostrPostComposer extends NostrPostElement {
   }
 
   private getInitialSelectedPublishFormatId(manifest: NostrPostManifest): string {
-    const allFormats = manifest.publishFormats ?? [];
-    // If a defaultFormatId is supplied and exists in the manifest, use it
-    if (this.defaultFormatId && allFormats.some((f) => f.id === this.defaultFormatId)) {
-      return this.defaultFormatId;
-    }
-
-    const defaultFormat = getDefaultPublishFormat(manifest);
-    if (this.hidePublishFormatSelector) {
-      return defaultFormat?.id ?? '';
-    }
-
-    const selectableFormats = getSelectablePublishFormats(manifest);
-    if (selectableFormats.length === 0) {
-      return defaultFormat?.id ?? '';
-    }
-
-    if (defaultFormat && selectableFormats.some((format) => format.id === defaultFormat.id)) {
-      return defaultFormat.id;
-    }
-
-    return selectableFormats[0]?.id ?? '';
+    return initialPublishFormatId(manifest, this.defaultFormatId, this.hidePublishFormatSelector);
   }
 
   updated(changed: Map<string, unknown>) {
@@ -219,7 +204,13 @@ export class NostrPostComposer extends NostrPostElement {
 
   connectedCallback(): void {
     super.connectedCallback();
+    window.addEventListener(SIGNING_EVENT, this._onSigning);
     void this.ensureManifestPlugins();
+  }
+
+  disconnectedCallback(): void {
+    window.removeEventListener(SIGNING_EVENT, this._onSigning);
+    super.disconnectedCallback();
   }
 
   private async _resolveManifestRef(): Promise<boolean> {
@@ -395,21 +386,20 @@ export class NostrPostComposer extends NostrPostElement {
     );
   }
 
-  /**
-   * Let plugins publish related events first (e.g. a venue's wiki page), then
-   * build the post again with what they linked (e.g. a role's mention line) and publish it
-   */
-  private async _publish(manifest: NostrPostManifest, pubkey: string): Promise<SignedEvent[]> {
-    this._submitStep = this._m.stepHooks;
-    const hooks = await withTimeout(
-      runPublishHooks(manifest, this._formData, pubkey),
-      PUBLISH_HOOKS_TIMEOUT_MS,
-      this._m.hooksTimeout
-    );
-    const outcome = this._coordinate(manifest, hooks.formData, pubkey);
-    if ('validationError' in outcome) throw new Error('The post is invalid after publish hooks');
-    this._submitStep = this._m.stepPublish;
-    return signAndPublishBundle(withTags(outcome.bundle, hooks.tags), this.relays);
+  /** Plugins' related events first (e.g. a venue's wiki page), then the post */
+  private _publish(manifest: NostrPostManifest, pubkey: string): Promise<SignedEvent[]> {
+    return publishWithHooks({
+      manifest,
+      formData: this._formData,
+      pubkey,
+      relays: this.relays,
+      coordinate: (formData) => this._coordinate(manifest, formData, pubkey),
+      messages: this._m,
+      onStep: (step) => {
+        this._submitStep = step;
+      },
+      isSigning: () => this._signing,
+    });
   }
 
   private updateReplyTarget(
@@ -482,7 +472,7 @@ export class NostrPostComposer extends NostrPostElement {
           ${renderSubmitArea({
             isSubmitting: this.isSubmitting,
             isResolvingManifestRef: this.isResolvingManifestRef,
-            step: this._submitStep,
+            step: this._signing ? this._m.stepSigning : this._submitStep,
             error: this._submitError,
             invalidFields: invalidFieldLabels(manifest, this.errors),
             messages: this._m,

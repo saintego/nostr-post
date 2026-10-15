@@ -28,8 +28,34 @@ declare global {
   }
 }
 
+/** Window event fired when signEvent starts or stops waiting for the signer */
+export const SIGNING_EVENT = 'nostr-post:signing';
+
+export interface SigningDetail {
+  /** Signatures the signer hasn't returned yet; 0 when it's done */
+  pending: number;
+  /** Kind of the event that started waiting */
+  kind?: number;
+}
+
+declare global {
+  interface WindowEventMap {
+    'nostr-post:signing': CustomEvent<SigningDetail>;
+  }
+}
+
+let pendingSignatures = 0;
+
+const notifySigning = (kind?: number): void => {
+  if (typeof window === 'undefined' || typeof window.dispatchEvent !== 'function') return;
+  window.dispatchEvent(
+    new CustomEvent<SigningDetail>(SIGNING_EVENT, { detail: { pending: pendingSignatures, kind } })
+  );
+};
+
 /**
- * Sign an event using NIP-07 (window.nostr)
+ * Sign an event using NIP-07 (window.nostr). While the signer works (e.g. waits for
+ * the user to approve), `window` gets SIGNING_EVENT, so UIs can say what they wait for.
  */
 export async function signEvent(event: UnsignedNostrEvent): Promise<SignedEvent> {
   if (!window.nostr) {
@@ -37,7 +63,14 @@ export async function signEvent(event: UnsignedNostrEvent): Promise<SignedEvent>
       'No Nostr signer available. Please install a browser extension like Alby or use nostr-login.'
     );
   }
-  return window.nostr.signEvent(event);
+  pendingSignatures += 1;
+  notifySigning(event.kind);
+  try {
+    return await window.nostr.signEvent(event);
+  } finally {
+    pendingSignatures -= 1;
+    notifySigning();
+  }
 }
 
 /**

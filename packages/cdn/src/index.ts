@@ -78,6 +78,8 @@ export {
   getCachedManifest,
   clearManifestCache,
   setDryRun,
+  SIGNING_EVENT,
+  type SigningDetail,
   isDryRun,
   getDryRunEntries,
   clearDryRunEntries,

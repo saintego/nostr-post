@@ -364,7 +364,8 @@ Tag values the text already shows (`r` URLs, `t` hashtags) aren't repeated below
 - `editable-reply-target` to allow editing reply target directly in the composer
 
 `<nostr-post-composer>` submit feedback: next to the submit button it shows the running step
-(publishing linked pages such as a venue's wiki page, then signing and publishing the post), the
+(publishing linked pages such as a venue's wiki page, then signing and publishing the post, and
+"waiting for your signer to approve" while a signature is pending), the
 fields that failed validation (the first one is scrolled into view) and why a submit failed (also
 dispatched as `nostr-post-error`). Publish hooks that take longer than 90 s fail the submit. The text
 comes from `messages` (`ComposerMessages`, defaults in `DEFAULT_COMPOSER_MESSAGES`), which apps can
