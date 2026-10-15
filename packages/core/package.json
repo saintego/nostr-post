@@ -49,6 +49,10 @@
     "./enumOptions": {
       "types": "./dist/enumOptions.d.ts",
       "import": "./dist/enumOptions.js"
+    },
+    "./noteContent": {
+      "types": "./dist/noteContent.d.ts",
+      "import": "./dist/noteContent.js"
     }
   },
   "scripts": {

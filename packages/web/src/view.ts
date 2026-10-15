@@ -8,6 +8,7 @@
 
 import { getFieldsByKind, getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import { parseManifestATag } from '@nostr-post/core/nip78';
+import { isShownInNote, type NoteToken, tokenizeNoteContent } from '@nostr-post/core/noteContent';
 import {
   type DisplayableEvent,
   type NostrPostManifest,
@@ -17,7 +18,6 @@ import {
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { baseStyles, NostrPostElement } from './base-component';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
@@ -28,6 +28,7 @@ import {
   type NostrProfile,
   truncatePubkey,
 } from './userProfile';
+import { DEFAULT_NOSTR_LINK_BASE, renderNoteContent } from './viewContent';
 import { type EditState, renderEditButton, renderInlineComposer } from './viewEdit';
 import {
   hasStructuredContentMappings,
@@ -106,6 +107,10 @@ export class NostrPostView extends NostrPostElement {
   /** Overrides for the "All data" section's text (e.g. translations) */
   @property({ attribute: false })
   messages?: Partial<RawDataMessages>;
+
+  /** Base URL that `nostr:` references in the text link to; the NIP-19 entity is appended */
+  @property({ attribute: 'nostr-link-base' })
+  nostrLinkBase = DEFAULT_NOSTR_LINK_BASE;
 
   /** Field IDs to exclude from the rendered view */
   @property({ type: Array, attribute: 'exclude-fields' })
@@ -344,6 +349,7 @@ export class NostrPostView extends NostrPostElement {
     const manifestRenderedData = renderManifestEventData(event, this.effectiveManifest);
     const shouldUseManifestRendering =
       hasStructuredContentMappings(event, this.effectiveManifest) && Boolean(manifestRenderedData);
+    const tokens = tokenizeNoteContent(content, tags);
 
     return html`
       <div class="view">
@@ -376,11 +382,11 @@ export class NostrPostView extends NostrPostElement {
         <div class="view-content">
           ${
             content && !shouldUseManifestRendering
-              ? html`<div>${unsafeHTML(this.formatMarkdown(content))}</div>`
+              ? renderNoteContent(tokens, this.nostrLinkBase)
               : nothing
           }
           ${shouldUseManifestRendering ? manifestRenderedData : nothing}
-          ${shouldUseManifestRendering ? nothing : this.renderTagPlugins(tags)} ${roleRows}
+          ${shouldUseManifestRendering ? nothing : this.renderTagPlugins(tags, tokens)} ${roleRows}
         </div>
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
@@ -411,13 +417,15 @@ export class NostrPostView extends NostrPostElement {
     return map;
   }
 
+  /** Groups tag values by tag name, leaving out values the note text already shows */
   private groupTagValues(
     tags: string[][],
-    tagFieldMap: Map<string, PostField[]>
+    tagFieldMap: Map<string, PostField[]>,
+    tokens: readonly NoteToken[]
   ): Map<string, string[]> {
     const tagGroups = new Map<string, string[]>();
     for (const [tagName, rawValue] of tags) {
-      if (!rawValue || !tagFieldMap.has(tagName)) continue;
+      if (!rawValue || !tagFieldMap.has(tagName) || isShownInNote(tokens, rawValue)) continue;
       const existing = tagGroups.get(tagName) ?? [];
       existing.push(rawValue);
       tagGroups.set(tagName, existing);
@@ -466,11 +474,11 @@ export class NostrPostView extends NostrPostElement {
    * Aggregates multi-value tags (hashtags, media) into arrays.
    * Falls back gracefully when no plugin or no viewTagName is registered.
    */
-  private renderTagPlugins(tags: string[][]) {
+  private renderTagPlugins(tags: string[][], tokens: readonly NoteToken[]) {
     const tagFieldMap = this.getTagFieldMap();
     if (tagFieldMap.size === 0) return '';
 
-    const tagGroups = this.groupTagValues(tags, tagFieldMap);
+    const tagGroups = this.groupTagValues(tags, tagFieldMap, tokens);
 
     const results = [];
     for (const [tagName, values] of tagGroups) {
@@ -488,36 +496,6 @@ export class NostrPostView extends NostrPostElement {
       }
     }
     return results;
-  }
-
-  private formatMarkdown(text: string): string {
-    if (!text) return '';
-    let html = text;
-    // Bold
-    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    // Italic
-    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    // Code
-    html = html.replace(
-      /`([^`]+)`/g,
-      '<code style="background: #f3f4f6; padding: 2px 4px; border-radius: 3px; font-family: monospace;">$1</code>'
-    );
-    // Headings
-    html = html.replace(
-      /^### (.*?)$/gm,
-      '<h4 style="margin: 1rem 0 0.5rem 0; font-size: 1rem;">$1</h4>'
-    );
-    html = html.replace(
-      /^## (.*?)$/gm,
-      '<h3 style="margin: 1rem 0 0.5rem 0; font-size: 1.1rem;">$1</h3>'
-    );
-    html = html.replace(
-      /^# (.*?)$/gm,
-      '<h2 style="margin: 1rem 0 0.5rem 0; font-size: 1.25rem;">$1</h2>'
-    );
-    // Line breaks
-    html = html.replace(/\n/g, '<br>');
-    return html;
   }
 }
 

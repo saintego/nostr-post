@@ -18,6 +18,8 @@
 - [ ] User mention support: mention autocomplete, user tagging
 - [ ] Show user names on posts and comments reliably (`packages/web/src/userProfile.ts`): today names often fall back to a truncated hex pubkey because profiles (kind 0) are read only from the default relays (add the `purplepag.es` indexer and the author's NIP-65 relays), `fetchAuthorProfile` takes the first event a relay returns instead of the newest, and every `<nostr-post-view>` fetches its own profile (share one batched, in-flight-deduplicated cache with the feed). Fallback to a short `npub`, not hex; show the NIP-05 identifier when verified
 - [ ] User profile view: a `<nostr-profile>` web component (+ React wrapper) with picture, name, about, NIP-05, website and the user's posts (optionally filtered by manifest, e.g. their reviews); post and comment author names link to it (app-overridable link target)
+- [x] `<nostr-post-view>` shows kind 1 text like other clients: links, images/videos (extension or `imeta`), `#hashtags` and `nostr:` references in place (`@nostr-post/core/noteContent`), HTML-escaped; `r`/`t` tag values the text already shows aren't repeated below it
+- [ ] Inline note text, follow-ups: `nostr:npub`/`nprofile` references show a short id instead of the profile name; `nevent`/`naddr` link out instead of embedding the quoted event; hashtags aren't clickable (app-overridable target, e.g. a `#t` feed filter); image galleries for several images in a row
 - [ ] add link to library in web component footers for better discoverability
 - [ ] Publish npm packages for each package (packages/\*) with CI, semantic
       versioning, and automated releases to the npm registry
