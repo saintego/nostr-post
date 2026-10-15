@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { EventBundle, NostrPostManifest } from '../../packages/core/src/types';
+import { runBeforePublish } from '../../packages/plugins/src/publish';
 import type { NostrUIPlugin } from '../../packages/plugins/src/types';
-import { runBeforePublish, withTags } from '../../packages/web/src/composerSubmit';
+import { withTags } from '../../packages/web/src/composerSubmit';
 
 const manifest = {
   id: 'hook-test',

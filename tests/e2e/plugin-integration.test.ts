@@ -3,6 +3,7 @@
  */
 import { beforeEach, describe, expect, it } from 'vitest';
 import { coordinateEvents } from '../../packages/core/src/coordinator';
+import { prepareFormData } from '../../packages/core/src/enrichment';
 import type { FormData, NostrPostManifest } from '../../packages/core/src/types';
 import { encodeGeohash, geoPlugin } from '../../packages/plugin-geo/src/core';
 import { hashtagPlugin, normalizeTag } from '../../packages/plugin-hashtag/src/core';
@@ -195,7 +196,12 @@ describe('E2E: Plugin Integration', () => {
           id: 'venue',
           type: 'geo',
           uiPlugin: 'venue',
-          mapTo: { kind: 30078, target: 'content', path: 'venue.location' },
+          // Like real venue fields: a g tag on the note for location queries, and the structured data
+          mapBehavior: 'all-active',
+          mapTo: [
+            { kind: 1, target: 'tag', tagName: 'g' },
+            { kind: 30078, target: 'content', path: 'venue.location' },
+          ],
         },
         {
           id: 'venueName',
@@ -263,7 +269,7 @@ describe('E2E: Plugin Integration', () => {
     expect(locationPosts).toHaveLength(1);
   });
 
-  it('should auto-extract hashtags from content', async () => {
+  it('should auto-extract hashtags from content via a hashtag field attached to it', async () => {
     const manifest: NostrPostManifest = {
       id: 'auto-extract-test',
       version: '1.0.0',
@@ -275,12 +281,22 @@ describe('E2E: Plugin Integration', () => {
           uiPlugin: 'textarea',
           mapTo: { kind: 1, target: 'content' },
         },
+        {
+          id: 'tags',
+          type: 'string',
+          uiPlugin: 'hashtag',
+          // The composer runs the hashtag plugin's enrichment, which reads #tags from this field
+          attachTo: 'content',
+          mapTo: { kind: 1, target: 'tag', tagName: 't' },
+        },
       ],
     };
 
-    const formData: FormData = {
-      content: 'Testing #nostr and #bitcoin integration! #web3',
-    };
+    const formData = prepareFormData(
+      manifest,
+      { content: 'Testing #nostr and #bitcoin integration! #web3' },
+      (id) => (id === 'hashtag' ? hashtagPlugin : undefined)
+    );
 
     const result = coordinateEvents(manifest, formData, {
       pubkey: keypair.pubkey,
