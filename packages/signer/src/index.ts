@@ -206,10 +206,18 @@ export {
   _manifestCache,
 } from './manifest';
 export {
-  RELAY_LIST_INDEXERS,
+  INDEXER_RELAYS,
   fetchUserRelays,
   getPublishRelays,
   relayListUrls,
   publishRelayListUrls,
   clearRelayListCache,
 } from './relays';
+export {
+  type NostrProfile,
+  type ProfileOptions,
+  clearProfileCache,
+  fetchProfile,
+  fetchProfiles,
+  getCachedProfile,
+} from './profiles';

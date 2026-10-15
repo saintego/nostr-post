@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { coordinateEvents } from './coordinator';
+import { decodeNaddr, encodeNaddr } from './nip19';
 import {
-  decodeNaddr,
-  encodeNaddr,
   isPostRoleField,
   parsePostRoles,
   plainTextContent,

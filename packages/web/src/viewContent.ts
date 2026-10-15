@@ -6,6 +6,7 @@
 import type { NoteToken } from '@nostr-post/core/noteContent';
 import { html, type TemplateResult } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
+import type { NostrProfile } from './userProfile';
 
 /** Where `nostr:` references link to by default (a NIP-19 entity is appended) */
 export const DEFAULT_NOSTR_LINK_BASE = 'https://njump.me/';
@@ -37,7 +38,24 @@ const linkLabel = (url: string): string =>
 const shortNostrId = (id: string): string =>
   id.length > 20 ? `${id.slice(0, 12)}…${id.slice(-6)}` : id;
 
-const renderToken = (token: NoteToken, nostrLinkBase: string): TemplateResult => {
+export type NoteContentOptions = {
+  /** Where `nostr:` references link to; the NIP-19 entity is appended */
+  nostrLinkBase?: string;
+  /** Profiles of mentioned pubkeys, shown as `@name` */
+  profiles?: ReadonlyMap<string, NostrProfile>;
+};
+
+/** `@name` for a mentioned profile, else the short NIP-19 id */
+const nostrLabel = (
+  token: Extract<NoteToken, { type: 'nostr' }>,
+  profiles: ReadonlyMap<string, NostrProfile> | undefined
+): string => {
+  const profile = token.pubkey ? profiles?.get(token.pubkey) : undefined;
+  const name = profile?.display_name || profile?.name;
+  return name ? `@${name}` : shortNostrId(token.id);
+};
+
+const renderToken = (token: NoteToken, options: NoteContentOptions): TemplateResult => {
   switch (token.type) {
     case 'text':
       return html`${unsafeHTML(formatMarkdown(escapeHtml(token.text)))}`;
@@ -58,17 +76,17 @@ const renderToken = (token: NoteToken, nostrLinkBase: string): TemplateResult =>
     case 'nostr':
       return html`<a
         class="note-link"
-        href=${`${nostrLinkBase}${token.id}`}
+        href=${`${options.nostrLinkBase ?? DEFAULT_NOSTR_LINK_BASE}${token.id}`}
         target="_blank"
         rel="noopener noreferrer"
         title=${token.id}
-        >${shortNostrId(token.id)}</a
+        >${nostrLabel(token, options.profiles)}</a
       >`;
   }
 };
 
 export const renderNoteContent = (
   tokens: readonly NoteToken[],
-  nostrLinkBase: string = DEFAULT_NOSTR_LINK_BASE
+  options: NoteContentOptions = {}
 ): TemplateResult =>
-  html`<div class="note-text">${tokens.map((t) => renderToken(t, nostrLinkBase))}</div>`;
+  html`<div class="note-text">${tokens.map((t) => renderToken(t, options))}</div>`;

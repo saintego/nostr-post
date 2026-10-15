@@ -7,6 +7,8 @@
  * and skips tag values that already appear in it.
  */
 
+import { decodeProfile } from './nip19';
+
 export type NoteMedia = 'image' | 'video';
 
 export type NoteToken =
@@ -14,8 +16,11 @@ export type NoteToken =
   | { type: 'url'; url: string; media?: NoteMedia }
   /** `tag` without the `#`, as written */
   | { type: 'hashtag'; tag: string }
-  /** `id` is the NIP-19 entity, e.g. `npub1…` */
-  | { type: 'nostr'; uri: string; id: string };
+  /**
+   * `id` is the NIP-19 entity, e.g. `npub1…`. For `npub` and `nprofile`, `pubkey` (hex) is set
+   * and `relays` holds the `nprofile`'s relay hints.
+   */
+  | { type: 'nostr'; uri: string; id: string; pubkey?: string; relays?: string[] };
 
 const TOKEN_RE =
   /(https?:\/\/[^\s<>"']+)|(nostr:((?:npub|nprofile|note|nevent|naddr)1[023456789acdefghjklmnpqrstuvwxyz]+))|(?<![\w&/#])#([\w\u0080-￿][\w\u0080-￿-]*)/giu;
@@ -81,7 +86,8 @@ export const tokenizeNoteContent = (
       index = start + url.length;
       tokens.push({ type: 'url', url, media: mediaType(url, known) });
     } else if (uri && id) {
-      tokens.push({ type: 'nostr', uri, id: id.toLowerCase() });
+      const entity = id.toLowerCase();
+      tokens.push({ type: 'nostr', uri, id: entity, ...decodeProfile(entity) });
     } else if (tag) {
       tokens.push({ type: 'hashtag', tag });
     }
@@ -89,6 +95,16 @@ export const tokenizeNoteContent = (
   pushText(tokens, content.slice(index));
   return tokens;
 };
+
+/** Hex pubkeys the note mentions (`nostr:npub…` / `nostr:nprofile…`), without duplicates */
+export const mentionedPubkeys = (tokens: readonly NoteToken[]): string[] => [
+  ...new Set(tokens.flatMap((t) => (t.type === 'nostr' && t.pubkey ? [t.pubkey] : []))),
+];
+
+/** Relays the note's `nprofile` mentions suggest for finding those profiles */
+export const mentionRelayHints = (tokens: readonly NoteToken[]): string[] => [
+  ...new Set(tokens.flatMap((t) => (t.type === 'nostr' ? (t.relays ?? []) : []))),
+];
 
 /**
  * Whether a tag value is already shown in the note text: a URL written in it, or a
@@ -100,6 +116,6 @@ export const isShownInNote = (tokens: readonly NoteToken[], value: string): bool
     (t) =>
       (t.type === 'url' && t.url === value) ||
       (t.type === 'hashtag' && t.tag.toLowerCase() === lower) ||
-      (t.type === 'nostr' && t.id === lower)
+      (t.type === 'nostr' && (t.id === lower || t.pubkey === lower))
   );
 };

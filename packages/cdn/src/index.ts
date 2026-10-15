@@ -67,7 +67,11 @@ export {
   hasNostrSigner,
   fetchEvents,
   fetchEventsFromRelay,
+  fetchProfile,
+  fetchProfiles,
   fetchUserRelays,
+  getCachedProfile,
+  INDEXER_RELAYS,
   getPublishRelays,
   fetchManifestByATag,
   fetchManifestsByATags,
@@ -79,6 +83,8 @@ export {
   clearDryRunEntries,
   DRY_RUN_CHANGE_EVENT,
   type DryRunEntry,
+  type NostrProfile,
+  type ProfileOptions,
   type DryRunChangeDetail,
 } from '@nostr-post/signer';
 

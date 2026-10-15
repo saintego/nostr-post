@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { imetaMediaTypes, isShownInNote, tokenizeNoteContent } from './noteContent';
+import {
+  imetaMediaTypes,
+  isShownInNote,
+  mentionedPubkeys,
+  mentionRelayHints,
+  tokenizeNoteContent,
+} from './noteContent';
 
+const authorHex = '6a19c89b2694b307aae6dc40256264071a47bdad89d8ddae6d1ab7139a94015d';
 const blossom = 'https://npub1x.blossom.band/376fa6f2';
 
 describe('tokenizeNoteContent', () => {
@@ -12,7 +19,7 @@ describe('tokenizeNoteContent', () => {
       { type: 'text', text: 'Hi ' },
       { type: 'url', url: 'https://example.com/a', media: undefined },
       { type: 'text', text: ', see ' },
-      { type: 'nostr', uri: `nostr:${npub}`, id: npub },
+      { type: 'nostr', uri: `nostr:${npub}`, id: npub, pubkey: authorHex, relays: [] },
       { type: 'text', text: ' ' },
       { type: 'hashtag', tag: 'Nostr' },
       { type: 'text', text: ' ' },
@@ -66,5 +73,22 @@ describe('isShownInNote', () => {
   it('keeps tag values the text does not show', () => {
     expect(isShownInNote(tokens, 'https://other.com')).toBe(false);
     expect(isShownInNote(tokens, 'react')).toBe(false);
+  });
+});
+
+describe('mentionedPubkeys', () => {
+  it('lists each mentioned profile once, not notes or addresses', () => {
+    const npub = 'npub1dgvu3xexjjes02hxm3qz2cnyqudy00dd38vdmtndr2m38x55q9wss4r3ue';
+    const tokens = tokenizeNoteContent(`nostr:${npub} hi nostr:${npub} nostr:note1abc`);
+    expect(mentionedPubkeys(tokens)).toEqual([authorHex]);
+  });
+});
+
+describe('mentionRelayHints', () => {
+  it('collects the relay hints of nprofile mentions', () => {
+    const nprofile =
+      'nprofile1qyxhwumn8ghj7u3w0qhxxmmdqqsx5xwgnvnffvc84tndcsp9vfjqwxj8hkkcnkxa4ek34dcnn22qzhgzhmn5m';
+    const tokens = tokenizeNoteContent(`nostr:${nprofile} and nostr:${nprofile}`);
+    expect(mentionRelayHints(tokens)).toEqual(['wss://r.x.com']);
   });
 });

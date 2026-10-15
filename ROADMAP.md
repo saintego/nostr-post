@@ -16,10 +16,11 @@
 - [ ] fix pwa example shared image/text, it's not getting to post input now
 - [ ] fix list plugin to use lists(nip-51?) instead of manifests
 - [ ] User mention support: mention autocomplete, user tagging
-- [ ] Show user names on posts and comments reliably (`packages/web/src/userProfile.ts`): today names often fall back to a truncated hex pubkey because profiles (kind 0) are read only from the default relays (add the `purplepag.es` indexer and the author's NIP-65 relays), `fetchAuthorProfile` takes the first event a relay returns instead of the newest, and every `<nostr-post-view>` fetches its own profile (share one batched, in-flight-deduplicated cache with the feed). Fallback to a short `npub`, not hex; show the NIP-05 identifier when verified
+- [ ] Show user names on posts and comments reliably. Done: one profile loader in the signer (`fetchProfile`, `fetchProfiles`) for view authors, feed names and mentions: newest kind 0 per pubkey, one `limit: 1` filter per pubkey (a single multi-author filter hit purplepag.es's result cap), the `INDEXER_RELAYS` (purplepag.es) besides the app's relays, `nprofile` relay hints, a shared cache, in-flight deduplication and one batched request per tick. Left: the author's NIP-65 relays (outbox model); fallback to a short `npub`, not hex; show the NIP-05 identifier when verified
 - [ ] User profile view: a `<nostr-profile>` web component (+ React wrapper) with picture, name, about, NIP-05, website and the user's posts (optionally filtered by manifest, e.g. their reviews); post and comment author names link to it (app-overridable link target)
 - [x] `<nostr-post-view>` shows kind 1 text like other clients: links, images/videos (extension or `imeta`), `#hashtags` and `nostr:` references in place (`@nostr-post/core/noteContent`), HTML-escaped; `r`/`t` tag values the text already shows aren't repeated below it
-- [ ] Inline note text, follow-ups: `nostr:npub`/`nprofile` references show a short id instead of the profile name; `nevent`/`naddr` link out instead of embedding the quoted event; hashtags aren't clickable (app-overridable target, e.g. a `#t` feed filter); image galleries for several images in a row
+- [x] Inline note text: `nostr:npub`/`nprofile` mentions show the profile name (`@name`), fetched in one batch per post, newest kind 0 per pubkey (`fetchProfiles`); core decodes them without dependencies (`@nostr-post/core/nip19`, which now also holds the `naddr` helpers)
+- [ ] Inline note text, follow-ups: `nevent`/`naddr` link out instead of embedding the quoted event; hashtags aren't clickable (app-overridable target, e.g. a `#t` feed filter); image galleries for several images in a row
 - [ ] add link to library in web component footers for better discoverability
 - [ ] Publish npm packages for each package (packages/\*) with CI, semantic
       versioning, and automated releases to the npm registry
@@ -120,6 +121,8 @@
 - [ ] `plugin-list` has no tests, so `pnpm test` (which stops at the first failing package) fails there
 - [ ] Test plugins in the manifest-creator tool
 - [ ] Use the signer's dry-run mode (`setDryRun`, `getDryRunEntries`) in E2E and `web` tests to assert published bundles without real relays
+- [ ] Test mode (dry-run) doesn't work for a post with a venue whose wiki page must be created first (venue hub's `beforePublish` creates or updates the venue entity before the post): find where the chain breaks in dry-run and make the post publish into the test log like other posts
+- [ ] Composer: submitting with a required field empty shows the error only next to the field, nothing near the submit button; in a long form the field is off screen and it looks like nothing happened or something broke. Show a summary at the button ("Fill in the required fields: …") and scroll/focus to the first invalid field
 - [ ] User testing: get feedback from real-world usage, identify pain points and confusing APIs
 - [ ] API stabilization: stabilize the manifest schema, document breaking changes
 - [ ] Performance optimizations
@@ -135,7 +138,7 @@
 - [ ] Replace the `PluginRegistry` class (`packages/plugins/src/registry.ts`, the only class that isn't a custom element) with a module-level map and functions; update plugins, CDN exports and READMEs
 - [ ] Prefix private members of custom elements with `_` (AGENTS.md "Style"): the venue input, the post composer and view, and others without it; best together with thinning them
 - [ ] Thin the largest web components (AGENTS.md "Style": state and render only): `wiki-composer` (446 lines), `wiki-entity-picker` (444), `nostr-post-composer` (435); move logic and template parts into function modules
-- [ ] Bring oversized files under the 500-line limit: plugin-markdown input, web view/feed, core coordinator (done: plugin-geo input, manifest-creator ManifestEditor and FieldEditor, wiki-composer, plugin-venue input)
+- [ ] Bring oversized files under the 500-line limit: plugin-markdown input, web feed, core coordinator (done: web view, plugin-geo input, manifest-creator ManifestEditor and FieldEditor, wiki-composer, plugin-venue input)
 - [ ] Venue linking UI improvements (OSM ID deep links)
 - [ ] Additional plugins: polls, calendars, markets, date, tags, mentions
 - [ ] Plugin examples, plugin developer documentation and plugin validation examples

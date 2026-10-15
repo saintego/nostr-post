@@ -1,8 +1,8 @@
 import { DEFAULT_RELAYS, fetchEvents } from './fetch';
 import type { SignedEvent } from './index';
 
-/** Relays that index NIP-65 relay lists (kind 10002) */
-export const RELAY_LIST_INDEXERS = ['wss://purplepag.es'];
+/** Relays that index user metadata: profiles (kind 0) and NIP-65 relay lists (kind 10002) */
+export const INDEXER_RELAYS = ['wss://purplepag.es'];
 
 function newestRelayLists(events: SignedEvent[]): SignedEvent[] {
   const newest = new Map<string, SignedEvent>();
@@ -51,7 +51,7 @@ function fetchRelayList(pubkey: string, relays: string[]): Promise<SignedEvent[]
     };
     cached = fetchEvents({ authors: [pubkey], kinds: [10002] }, [
       ...relays,
-      ...RELAY_LIST_INDEXERS,
+      ...INDEXER_RELAYS,
     ]).then((events) => (events.length > 0 ? events : forget()), forget);
     listCache.set(key, cached);
   }

@@ -50,6 +50,10 @@
       "types": "./dist/enumOptions.d.ts",
       "import": "./dist/enumOptions.js"
     },
+    "./nip19": {
+      "types": "./dist/nip19.d.ts",
+      "import": "./dist/nip19.js"
+    },
     "./noteContent": {
       "types": "./dist/noteContent.d.ts",
       "import": "./dist/noteContent.js"

@@ -352,7 +352,8 @@ Default behavior when no `manifest` is provided:
 This means text, media (`r` tags), and hashtags (`t` tags) render out of the box for standard kind 1 posts.
 
 `<nostr-post-view>` shows a note's text the way other Nostr clients do: links, images and videos
-(by file extension or the event's `imeta` tags), `#hashtags` and `nostr:` references in place.
+(by file extension or the event's `imeta` tags), `#hashtags` and `nostr:` references in place;
+`nostr:npub…` / `nostr:nprofile…` mentions show the person's name once their profile loads.
 Tag values the text already shows (`r` URLs, `t` hashtags) aren't repeated below it.
 `nostr-link-base` (default `https://njump.me/`) sets where `nostr:` references link to.
 
