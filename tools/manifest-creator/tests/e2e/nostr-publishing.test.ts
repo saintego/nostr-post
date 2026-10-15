@@ -199,7 +199,7 @@ describe('Nostr Publishing E2E', () => {
         },
       ];
 
-      const subId = await relay.subscribe(filters, (event) => {
+      const subId = await relay.subscribe(filters, () => {
         // Handle received event
       });
 

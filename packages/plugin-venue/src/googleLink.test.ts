@@ -57,10 +57,10 @@ describe('Google Maps links', () => {
     const tags = venuePlugin.extraTags?.(venue, field) ?? [];
     expect(tags).toContainEqual(['i', 'gcid:123']);
     expect(tags.some((t) => t[0] === 'r')).toBe(false);
-    expect(
-      (venuePlugin.resolveFromTags?.([['g', 'u2fkbx'], ...tags], field) as { googleCid?: string })
-        .googleCid
-    ).toBe('123');
+    const resolved = venuePlugin.resolveFromTags?.([['g', 'u2fkbx'], ...tags], field) as
+      | { googleCid?: string }
+      | undefined;
+    expect(resolved?.googleCid).toBe('123');
     expect(venueIdentifiers(venue)).toEqual(['gcid:123']);
   });
 });

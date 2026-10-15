@@ -65,6 +65,7 @@
       font-weight: 500;
     }
     button:hover { background: #6d28d9; }
+    button.tag:hover { background: #ddd6fe; }
 
     nostr-wiki-view, nostr-wiki-composer {
       display: block;
@@ -76,6 +77,8 @@
       padding: 0.2rem 0.6rem;
       background: #ede9fe;
       color: #6d28d9;
+      border: none;
+      font-family: inherit;
       border-radius: 9999px;
       font-size: 0.75rem;
       font-weight: 500;
@@ -157,12 +160,12 @@
       <h2>🔍 View an entity</h2>
       <label for="view-entity-id">Entity d-tag (slug)</label>
       <input type="text" id="view-entity-id" placeholder="e.g. pliny-the-elder" />
-      <button onclick="loadEntity()">Load</button>
+      <button type="button" onclick="loadEntity()">Load</button>
 
       <div class="tag-row" style="margin-top:0.75rem">
-        <span class="tag" onclick="setAndLoad('pliny-the-elder')" style="cursor:pointer">pliny-the-elder</span>
-        <span class="tag" onclick="setAndLoad('bitcoin')" style="cursor:pointer">bitcoin</span>
-        <span class="tag" onclick="setAndLoad('nostr')" style="cursor:pointer">nostr</span>
+        <button type="button" class="tag" onclick="setAndLoad('pliny-the-elder')">pliny-the-elder</button>
+        <button type="button" class="tag" onclick="setAndLoad('bitcoin')">bitcoin</button>
+        <button type="button" class="tag" onclick="setAndLoad('nostr')">nostr</button>
       </div>
 
       <nostr-wiki-view id="wiki-view"></nostr-wiki-view>
@@ -176,7 +179,7 @@
       </p>
       <label for="compose-entity-id">Entity d-tag to edit (optional)</label>
       <input type="text" id="compose-entity-id" placeholder="e.g. pliny-the-elder" />
-      <button onclick="loadComposer()">Load composer</button>
+      <button type="button" onclick="loadComposer()">Load composer</button>
 
       <nostr-wiki-composer id="wiki-composer"></nostr-wiki-composer>
     </div>

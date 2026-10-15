@@ -164,7 +164,9 @@ describe('<wiki-entity-picker> result details and preview', () => {
     expect(row?.querySelector('.result-slug')?.textContent).toBe('bitcoin-beer');
     expect(row?.querySelector('.result-meta')?.textContent).toContain('2 versions');
 
-    (row?.querySelector('.preview-btn') as HTMLButtonElement).click();
+    const rowPreview = row?.querySelector<HTMLButtonElement>('.preview-btn');
+    expect(rowPreview).toBeTruthy();
+    rowPreview?.click();
     await picker.updateComplete;
     const view = picker.shadowRoot?.querySelector('nostr-wiki-view') as HTMLElement & {
       entityId?: string;
@@ -190,7 +192,9 @@ describe('<wiki-entity-picker> result details and preview', () => {
     picker.value = { dTag: 'bitcoin-beer', resolvedPubkey: 'pk', externalIds: [] };
     await picker.updateComplete;
     expect(picker.shadowRoot?.querySelector('.selected-slug')?.textContent).toBe('bitcoin-beer');
-    (picker.shadowRoot?.querySelector('.preview-btn') as HTMLButtonElement).click();
+    const selectedPreview = picker.shadowRoot?.querySelector<HTMLButtonElement>('.preview-btn');
+    expect(selectedPreview).toBeTruthy();
+    selectedPreview?.click();
     // happy-dom mis-renders this re-render (verified in Chrome), so check the state it drives
     // biome-ignore lint/suspicious/noExplicitAny: reading private state in a test
     expect((picker as any)._previewDTag).toBe('bitcoin-beer');

@@ -44,12 +44,68 @@ const withVisibility = (field: PostField, mode: 'edit' | 'view', value: string) 
 const wikiManifestFor = (field: PostField) =>
   field.uiPlugin ? WIKI_MANIFEST_KEYS[field.uiPlugin] : undefined;
 
+/** A target with only the keys its type uses (tagName for tags, path for content) */
+const normalizeTarget = (target: NostrTarget): NostrTarget => ({
+  kind: target.kind,
+  target: target.target,
+  ...(target.target === 'tag' && target.tagName ? { tagName: target.tagName } : {}),
+  ...(target.target === 'content' && target.path ? { path: target.path } : {}),
+});
+
+/** A new mapping: the manifest's first kind, into the content */
+const defaultTarget = (kinds: number[]): NostrTarget => ({
+  kind: kinds[0] ?? 1,
+  target: 'content',
+});
+
+/** The primary target's tag name (tag targets) or JSON path (structured content) */
+function TargetDetailInputs({
+  target,
+  onChange,
+}: {
+  target: NostrTarget;
+  onChange: (key: 'tagName' | 'path', value: string | undefined) => void;
+}) {
+  if (target.target === 'tag') {
+    return (
+      <div style={styles.formGroup}>
+        <label style={styles.label} htmlFor="field-tag-name">
+          Tag Name:
+        </label>
+        <input
+          id="field-tag-name"
+          style={styles.input}
+          type="text"
+          value={target.tagName || ''}
+          onChange={(e) => onChange('tagName', e.target.value)}
+          placeholder="tagName"
+        />
+      </div>
+    );
+  }
+  if (target.target === 'content' && isStructuredContentKind(target.kind)) {
+    return (
+      <div style={styles.formGroup}>
+        <label style={styles.label} htmlFor="field-path">
+          JSON Path:
+        </label>
+        <input
+          id="field-path"
+          style={styles.input}
+          type="text"
+          value={target.path || ''}
+          onChange={(e) => onChange('path', e.target.value || undefined)}
+          placeholder="e.g. ratings.wifi"
+        />
+      </div>
+    );
+  }
+  return null;
+}
+
 export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }: FieldEditorProps) {
   const currentTargets = getFieldTargets(field);
-  const primaryTarget = currentTargets[0] ?? {
-    kind: kinds[0] ?? 1,
-    target: 'content' as const,
-  };
+  const primaryTarget = currentTargets[0] ?? defaultTarget(kinds);
 
   const update = (key: keyof PostField, value: unknown) => {
     onChange({
@@ -68,23 +124,6 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
     });
   };
 
-  const normalizeTarget = (target: NostrTarget): NostrTarget => {
-    const normalized: NostrTarget = {
-      kind: target.kind,
-      target: target.target,
-    };
-
-    if (target.target === 'tag' && target.tagName) {
-      normalized.tagName = target.tagName;
-    }
-
-    if (target.target === 'content' && target.path) {
-      normalized.path = target.path;
-    }
-
-    return normalized;
-  };
-
   const commitTargets = (targets: NostrTarget[]) => {
     const normalizedTargets = targets.map(normalizeTarget);
     onChange({
@@ -95,7 +134,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
 
   const updateTargetAt = (index: number, patch: Partial<NostrTarget>) => {
     const nextTargets = [...currentTargets];
-    const existing = nextTargets[index] ?? { kind: kinds[0] ?? 1, target: 'content' as const };
+    const existing = nextTargets[index] ?? defaultTarget(kinds);
     nextTargets[index] = { ...existing, ...patch };
     commitTargets(nextTargets);
   };
@@ -105,7 +144,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
   };
 
   const addMapping = () => {
-    commitTargets([...currentTargets, { kind: kinds[0] ?? 1, target: 'content' }]);
+    commitTargets([...currentTargets, defaultTarget(kinds)]);
   };
 
   const removeMapping = (index: number) => {
@@ -256,37 +295,7 @@ export function FieldEditor({ field, kinds, fieldIds = [], onChange, onDelete }:
           </select>
         </div>
 
-        {primaryTarget.target === 'tag' && (
-          <div style={styles.formGroup}>
-            <label style={styles.label} htmlFor="field-tag-name">
-              Tag Name:
-            </label>
-            <input
-              id="field-tag-name"
-              style={styles.input}
-              type="text"
-              value={primaryTarget.tagName || ''}
-              onChange={(e) => updateMapTo('tagName', e.target.value)}
-              placeholder="tagName"
-            />
-          </div>
-        )}
-
-        {primaryTarget.target === 'content' && isStructuredContentKind(primaryTarget.kind) && (
-          <div style={styles.formGroup}>
-            <label style={styles.label} htmlFor="field-path">
-              JSON Path:
-            </label>
-            <input
-              id="field-path"
-              style={styles.input}
-              type="text"
-              value={primaryTarget.path || ''}
-              onChange={(e) => updateMapTo('path', e.target.value || undefined)}
-              placeholder="e.g. ratings.wifi"
-            />
-          </div>
-        )}
+        <TargetDetailInputs target={primaryTarget} onChange={updateMapTo} />
 
         <div style={styles.formGroup}>
           <label style={styles.label} htmlFor="field-map-behavior">

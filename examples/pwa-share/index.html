@@ -24,7 +24,7 @@
     <li>Use another app to "share" text or files to this PWA — the service worker will capture the POST and forward the data to the client.</li>
   </ol>
 
-  <button id="install" style="display:none">Check install prompt</button>
+  <button id="install" type="button" style="display:none">Check install prompt</button>
 
   <h2>Last shared content</h2>
   <div id="shared" class="shared"><em>No shared content yet.</em></div>
@@ -44,7 +44,7 @@
     window.addEventListener('nostr-bridge:auth', (e) => {
       const status = document.getElementById('login-status');
       if (status) status.textContent = e.detail.loggedIn
-        ? 'Signed in as ' + e.detail.pubkey.slice(0, 10) + '...'
+        ? `Signed in as ${e.detail.pubkey.slice(0, 10)}...`
         : 'Sign in with the button in the bottom-right corner';
     });
 
@@ -55,7 +55,7 @@
         <h2>Create a Nostr Post</h2>
         <p id="login-status">${
           window.NostrBridge?.getAuthState().loggedIn
-            ? 'Signed in as ' + NostrBridge.getAuthState().pubkey.slice(0, 10) + '...'
+            ? `Signed in as ${NostrBridge.getAuthState().pubkey.slice(0, 10)}...`
             : 'Sign in with the button in the bottom-right corner'
         }</p>
         <div style="margin-top:12px">
@@ -82,7 +82,7 @@
             alert('Saved manifest id locally');
           }
           ensureComposer();
-        } catch (err) {
+        } catch {
           alert('Invalid JSON');
         }
       });
@@ -95,7 +95,7 @@
         const manifestJSON = localStorage.getItem('pwa-manifest');
         const manifestId = localStorage.getItem('pwa-manifest-id');
         if (manifestJSON) {
-          try { composer.manifest = JSON.parse(manifestJSON); } catch(e){}
+          try { composer.manifest = JSON.parse(manifestJSON); } catch {}
         } else if (manifestId) {
           composer.manifestRef = manifestId;
         }
@@ -107,7 +107,7 @@
             // set draft fields if composer exposes a simple API
             // composer.setField is not guaranteed; we attempt common props
             if (d.text) composer.value = d.text;
-          } catch(e){}
+          } catch {}
         }
         host.appendChild(composer);
       }
@@ -129,61 +129,64 @@
       deferredPrompt = null;
     });
 
+    function renderSharedFiles(files) {
+      const list = document.createElement('div');
+      list.style.display = 'grid';
+      list.style.gridTemplateColumns = 'repeat(auto-fit,minmax(100px,1fr))';
+      list.style.gap = '8px';
+      for (const f of files) {
+        const box = document.createElement('div');
+        box.style.fontSize = '12px';
+        box.style.lineHeight = '1.2';
+        box.style.background = '#f3f5f9';
+        box.style.border = '1px solid #d8e1f5';
+        box.style.borderRadius = '8px';
+        box.style.padding = '8px';
+        if (f.type?.startsWith('image/') && f.file) {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(f.file);
+          img.style.maxWidth = '100%';
+          img.style.height = 'auto';
+          img.style.display = 'block';
+          img.style.borderRadius = '6px';
+          box.appendChild(img);
+        }
+        const name = document.createElement('div');
+        name.textContent = `${f.name} (${f.type || 'unknown'})`;
+        box.appendChild(name);
+        list.appendChild(box);
+      }
+      return list;
+    }
+
+    function prefillComposer(d) {
+      const composer = document.querySelector('nostr-post-composer');
+      if (!composer) return;
+      const prefill = {
+        ...(composer.prefill || {}),
+        content: d.text || d.title || (d.url ? `Shared URL: ${d.url}` : ''),
+      };
+      if (d.files?.length) {
+        prefill.media = d.files.map((f) => ({ name: f.name, type: f.type }));
+      }
+      composer.prefill = prefill;
+    }
+
+    function applySharedData(d) {
+      const el = document.getElementById('shared');
+      el.innerHTML = '';
+      if (d.title) el.appendChild(Object.assign(document.createElement('h3'), { textContent: d.title }));
+      if (d.text) el.appendChild(Object.assign(document.createElement('p'), { textContent: d.text }));
+      if (d.url) el.appendChild(Object.assign(document.createElement('a'), { textContent: d.url, href: d.url, target: '_blank' }));
+      if (d.files?.length) el.appendChild(renderSharedFiles(d.files));
+      prefillComposer(d);
+    }
+
     // Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').then(reg => {
         console.log('SW registered', reg);
       }).catch(console.error);
-
-      function applySharedData(d) {
-        const el = document.getElementById('shared');
-        el.innerHTML = '';
-        if (d.title) el.appendChild(Object.assign(document.createElement('h3'), { textContent: d.title }));
-        if (d.text) el.appendChild(Object.assign(document.createElement('p'), { textContent: d.text }));
-        if (d.url) el.appendChild(Object.assign(document.createElement('a'), { textContent: d.url, href: d.url, target: '_blank' }));
-
-        if (d.files && d.files.length) {
-          const list = document.createElement('div');
-          list.style.display = 'grid';
-          list.style.gridTemplateColumns = 'repeat(auto-fit,minmax(100px,1fr))';
-          list.style.gap = '8px';
-          for (const f of d.files) {
-            const box = document.createElement('div');
-            box.style.fontSize = '12px';
-            box.style.lineHeight = '1.2';
-            box.style.background = '#f3f5f9';
-            box.style.border = '1px solid #d8e1f5';
-            box.style.borderRadius = '8px';
-            box.style.padding = '8px';
-            if (f.type && f.type.startsWith('image/') && f.file) {
-              const img = document.createElement('img');
-              img.src = URL.createObjectURL(f.file);
-              img.style.maxWidth = '100%';
-              img.style.height = 'auto';
-              img.style.display = 'block';
-              img.style.borderRadius = '6px';
-              box.appendChild(img);
-            }
-            const name = document.createElement('div');
-            name.textContent = `${f.name} (${f.type || 'unknown'})`;
-            box.appendChild(name);
-            list.appendChild(box);
-          }
-          el.appendChild(list);
-        }
-
-        const composer = document.querySelector('nostr-post-composer');
-        if (composer) {
-          const prefill = {
-            ...(composer.prefill || {}),
-            content: d.text || d.title || (d.url ? `Shared URL: ${d.url}` : ''),
-          };
-          if (d.files && d.files.length) {
-            prefill.media = d.files.map((f) => ({ name: f.name, type: f.type }));
-          }
-          composer.prefill = prefill;
-        }
-      }
 
       navigator.serviceWorker.addEventListener('message', (ev) => {
         const payload = ev.data;

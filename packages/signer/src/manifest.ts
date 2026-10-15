@@ -173,12 +173,13 @@ async function resolveChain(
 
   // Merge parents left-to-right (each successive parent treated as "child" of the previous,
   // so rightmost wins on conflict). Then apply the actual child on top.
-  const mergedParent = foundParents
-    .slice(1)
-    .reduce(
-      (base, current) => ({ ...base, manifest: resolveManifest(current.manifest, base.manifest) }),
-      foundParents[0]
-    );
+  let mergedParent = foundParents[0];
+  for (const current of foundParents.slice(1)) {
+    mergedParent = {
+      ...mergedParent,
+      manifest: resolveManifest(current.manifest, mergedParent.manifest),
+    };
+  }
 
   const resolved: StoredManifest = {
     ...stored,

@@ -219,7 +219,7 @@ export class NostrPostComposer extends NostrPostElement {
         return true;
       }
       return false;
-    } catch (err) {
+    } catch {
       return false;
     } finally {
       this.isResolvingManifestRef = false;
@@ -276,25 +276,33 @@ export class NostrPostComposer extends NostrPostElement {
     }
   }
 
+  /** The manifest (resolving `manifestRef` if needed) and pubkey to submit with; shows why not */
+  private async _submitContext(): Promise<
+    { manifest: NostrPostManifest; pubkey: string } | undefined
+  > {
+    if (!this.manifest && this.manifestRef) {
+      const resolved = await this._resolveManifestRef();
+      if (!resolved || !this.manifest) {
+        this.showError('Failed to resolve manifestRef. Unable to submit post.');
+        return undefined;
+      }
+    }
+    const pubkey = this.pubkey ?? (this.autoPublish ? await getPublicKey() : undefined);
+    if (!pubkey) {
+      this.showError('No pubkey provided. Please login first.');
+      return undefined;
+    }
+    return { manifest: this.manifest || STANDARD_KIND1_POST_MANIFEST, pubkey };
+  }
+
   private async handleSubmit(e: Event): Promise<void> {
     e.preventDefault();
     this.successMessage = '';
     this.errors = {};
 
-    if (!this.manifest && this.manifestRef) {
-      const resolved = await this._resolveManifestRef();
-      if (!resolved || !this.manifest) {
-        this.showError('Failed to resolve manifestRef. Unable to submit post.');
-        return;
-      }
-    }
-
-    const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
-    const pubkey = this.pubkey ?? (this.autoPublish ? await getPublicKey() : undefined);
-    if (!pubkey) {
-      this.showError('No pubkey provided. Please login first.');
-      return;
-    }
+    const context = await this._submitContext();
+    if (!context) return;
+    const { manifest, pubkey } = context;
 
     this.isSubmitting = true;
 

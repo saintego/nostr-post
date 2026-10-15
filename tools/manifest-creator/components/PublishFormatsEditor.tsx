@@ -3,6 +3,7 @@
 import type { NostrPostManifest, PublishFormat } from '@nostr-post/core/types';
 import { formatKindLabel } from './kindLabels';
 import { styles } from './manifestEditorStyles';
+import { useListKeys } from './useListKeys';
 
 interface PublishFormatsEditorProps {
   manifest: NostrPostManifest;
@@ -17,6 +18,8 @@ export function PublishFormatsEditor({
   manifestKinds,
   onChange,
 }: PublishFormatsEditorProps) {
+  const formatKeys = useListKeys(manifest.publishFormats?.length ?? 0);
+
   const updatePublishFormats = (publishFormats: PublishFormat[] | undefined) => {
     onChange({
       ...manifest,
@@ -47,6 +50,7 @@ export function PublishFormatsEditor({
   };
 
   const deletePublishFormat = (index: number) => {
+    formatKeys.removeKey(index);
     const nextFormats = (manifest.publishFormats ?? []).filter(
       (_, formatIndex) => formatIndex !== index
     );
@@ -88,7 +92,7 @@ export function PublishFormatsEditor({
         >
           {manifest.publishFormats.map((format, index) => (
             <div
-              key={`${format.id}-${index}`}
+              key={formatKeys.keys[index]}
               style={{
                 border: '1px solid #e5e7eb',
                 borderRadius: '0.5rem',

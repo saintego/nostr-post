@@ -267,13 +267,6 @@ describe('Manifest Creator E2E', () => {
         ],
       };
 
-      // Simulate form data
-      const formData = {
-        title: 'Test Article',
-        summary: 'This is a test summary',
-        announcement: 'Check out my new article!',
-      };
-
       // Group fields by kind
       const fieldsByKind = new Map<number, typeof manifest.fields>();
       for (const field of manifest.fields) {

@@ -24,7 +24,12 @@ import {
 } from '@nostr-post/core/eventUpdates';
 import { getFieldsByKind, isStructuredContentKind } from '@nostr-post/core/manifestMappings';
 import { readPostRoles } from '@nostr-post/core/postRoles';
-import type { DisplayableEvent, NostrPostManifest, PostField } from '@nostr-post/core/types';
+import type {
+  DisplayableEvent,
+  NostrPostManifest,
+  NostrTarget,
+  PostField,
+} from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import type { TemplateResult } from 'lit';
 import { html, nothing } from 'lit';
@@ -113,6 +118,49 @@ export function formatPrefillAsUpdateComment(
   return lines.join('\n');
 }
 
+/** Structured content kinds (30078/30079): the JSON object keyed by field id */
+const parseStructuredContent = (event: DisplayableEvent): Record<string, unknown> | undefined => {
+  if (!isStructuredContentKind(event.kind) || !event.content) return undefined;
+  try {
+    return JSON.parse(event.content) as Record<string, unknown>;
+  } catch {
+    return undefined; // not valid JSON – treat as plain text
+  }
+};
+
+/** The value at a dot path (`a.b.c`), undefined if any step is missing */
+const valueAtPath = (root: unknown, path: string): unknown => {
+  let value = root;
+  for (const part of path.split('.')) {
+    if (!value || typeof value !== 'object') return undefined;
+    value = (value as Record<string, unknown>)[part];
+  }
+  return value;
+};
+
+/** A content-mapped field's value: from structured content (path or field id), else the text */
+const contentValue = (
+  field: PostField,
+  target: NostrTarget,
+  parsedContent: Record<string, unknown> | undefined,
+  text: string
+): unknown => {
+  if (!parsedContent) return text;
+  return target.path ? valueAtPath(parsedContent, target.path) : parsedContent[field.id];
+};
+
+/** A tag-mapped field's value: the plugin's resolveFromTags, else one value or all of them */
+const tagValue = (field: PostField, tagName: string, tags: string[][]): unknown => {
+  const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
+  // Plugins that aggregate multiple tags (e.g. venue: g + i + location)
+  if (plugin?.resolveFromTags) return plugin.resolveFromTags(tags, field) ?? undefined;
+  const values = tags.filter((t) => t[0] === tagName && t[1]).map((t) => t[1] as string);
+  if (values.length > 1) return values;
+  const [raw] = values;
+  if (raw === undefined) return undefined;
+  return plugin?.deserializeValue ? plugin.deserializeValue(raw, field) : raw;
+};
+
 /**
  * Extract current field values from a Nostr event for use as composer prefill.
  * Iterates over manifest fields and reads values from event content / tags
@@ -122,71 +170,21 @@ export function extractPrefillFromEvent(
   event: DisplayableEvent,
   manifest: NostrPostManifest
 ): Record<string, unknown> {
-  const prefill: Record<string, unknown> = {};
-
-  // For structured content kinds (30078/30079), content is a JSON object keyed by field id
-  let parsedContent: Record<string, unknown> | undefined;
-  if (isStructuredContentKind(event.kind) && event.content) {
-    try {
-      parsedContent = JSON.parse(event.content) as Record<string, unknown>;
-    } catch {
-      // not valid JSON – treat as plain text
-    }
-  }
-
+  const parsedContent = parseStructuredContent(event);
   // Plain-text posts: role lines (`Tasted at: nostr:naddr1…`) are their fields' values, not text
-  const fields = getFieldsByKind(manifest, event.kind, [event.kind]);
   const roles = readPostRoles(event, manifest.fields);
-  Object.assign(prefill, roles.values);
+  const prefill: Record<string, unknown> = { ...roles.values };
 
-  for (const field of fields) {
+  for (const field of getFieldsByKind(manifest, event.kind, [event.kind])) {
     if (field.id in roles.values) continue;
-    const targets = Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo];
-    const target = targets.find((t) => t.kind === event.kind);
-    if (!target) continue;
-
-    if (target.target === 'content') {
-      if (parsedContent) {
-        // Structured content: extract via dot-path or field.id key
-        if (target.path) {
-          const parts = target.path.split('.');
-          let val: unknown = parsedContent;
-          for (const part of parts) {
-            if (!val || typeof val !== 'object') {
-              val = undefined;
-              break;
-            }
-            val = (val as Record<string, unknown>)[part];
-          }
-          if (val !== undefined) prefill[field.id] = val;
-        } else {
-          const val = parsedContent[field.id];
-          if (val !== undefined) prefill[field.id] = val;
-        }
-      } else {
-        prefill[field.id] = roles.text;
-      }
-    } else if (target.target === 'tag' && target.tagName) {
-      const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
-      // Use resolveFromTags for plugins that aggregate multiple tags (e.g. venue: g + i + location)
-      if (plugin?.resolveFromTags) {
-        const resolved = plugin.resolveFromTags(roles.tags, field);
-        if (resolved !== undefined && resolved !== null) {
-          prefill[field.id] = resolved;
-        }
-        continue;
-      }
-      const tagValues = roles.tags
-        .filter((t) => t[0] === target.tagName)
-        .map((t) => t[1])
-        .filter(Boolean);
-      if (tagValues.length === 1) {
-        const raw = tagValues[0];
-        prefill[field.id] = plugin?.deserializeValue ? plugin.deserializeValue(raw, field) : raw;
-      } else if (tagValues.length > 1) {
-        prefill[field.id] = tagValues;
-      }
+    const target = [field.mapTo].flat().find((t) => t.kind === event.kind);
+    let value: unknown;
+    if (target?.target === 'content') {
+      value = contentValue(field, target, parsedContent, roles.text);
+    } else if (target?.target === 'tag' && target.tagName) {
+      value = tagValue(field, target.tagName, roles.tags);
     }
+    if (value !== undefined) prefill[field.id] = value;
   }
 
   return prefill;
