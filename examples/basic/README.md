@@ -1,6 +1,6 @@
 # nostr-post Basic Example
 
-A simple demo showing how to create Kind 1 Nostr posts using `@nostr-post/web` components with nostr-login authentication.
+A simple demo showing how to create Kind 1 Nostr posts using `@nostr-post/web` components with [nostr-shard-signer](https://github.com/saintego/nostr-shard-signer) sign-in.
 
 ## 🚀 Quick Start
 
@@ -9,8 +9,14 @@ A simple demo showing how to create Kind 1 Nostr posts using `@nostr-post/web` c
 cd examples/basic
 
 # Start the development server
-pnpm dev
+pnpm dev   # optional: VITE_WEB3AUTH_CLIENT_ID=<your client id> pnpm dev
 ```
+
+User sign-in uses [nostr-shard-signer](https://github.com/saintego/nostr-shard-signer).
+Without a client ID it offers Nostr-only sign-in (NIP-07 extension or NIP-46 bunker such as Amber).
+We recommend setting `VITE_WEB3AUTH_CLIENT_ID` to a Web3Auth client ID: it adds Google/Apple/X sign-in, so people
+without a Nostr key can start too. Register it for your origin in the
+[portal](https://saintego.github.io/nostr-shard-signer/portal/) (localhost cannot be registered).
 
 The app will be available at `http://localhost:3000`
 
@@ -18,7 +24,7 @@ The app will be available at `http://localhost:3000`
 
 This example demonstrates:
 
-- **Authentication** using [nostr-login](https://github.com/nostrband/nostr-login)
+- **Authentication** using [nostr-shard-signer](https://github.com/saintego/nostr-shard-signer) (Web3Auth social login, NIP-07 extension or NIP-46 bunker)
 - **Post Creation** with `<nostr-post-composer>` Web Component
 - **Post Viewing** with `<nostr-post-view>` Web Component
 - **Search & Filter** functionality
@@ -26,7 +32,7 @@ This example demonstrates:
 
 **Try it:**
 
-1. Click "Connect with Nostr" and sign in
+1. Click "Sign in" in the bottom-right corner
 2. Write your post in the composer
 3. Submit and see your post appear in the feed
 4. Search through your posts
@@ -54,20 +60,22 @@ import '@nostr-post/web';
 />
 ```
 
-### Integration with nostr-login
+### Integration with nostr-shard-signer
 
-```typescript
-import "nostr-login";
+```html
+<script src="https://saintego.github.io/nostr-shard-signer/nostr-bridge.js"></script>
+<script type="module">
+  // Listen for auth events (replays the current state to new subscribers)
+  NostrBridge.onAuthChange(({ loggedIn, pubkey }) => {
+    if (loggedIn) {
+      // User logged in: pubkey
+    }
+  });
 
-// Simple authentication
-<nl-auth bunkers="nsec.app"></nl-auth>;
-
-// Listen for auth events
-element.addEventListener("nlAuth", (e) => {
-  if (e.detail.type === "login") {
-    // User logged in
-  }
-});
+  // Installs window.nostr, which the nostr-post components use for signing
+  // clientId is optional: it adds Google/Apple/X sign-in
+  await NostrBridge.init({ clientId: "YOUR_WEB3AUTH_CLIENT_ID" });
+</script>
 ```
 
 ## 📝 Manifest Examples
@@ -180,13 +188,14 @@ Make sure to build the packages first:
 pnpm build
 ```
 
-### nostr-login Issues
+### Sign-in Issues
 
-If nostr-login doesn't load, check:
+If the sign-in widget doesn't load, check:
 
+- If you set `VITE_WEB3AUTH_CLIENT_ID`: it is registered for this origin in the
+  [portal](https://saintego.github.io/nostr-shard-signer/portal/) (localhost cannot be registered)
+- Browser console for nostr-bridge errors
 - Your internet connection
-- Browser console for errors
-- Try refreshing the page
 
 ### Manifest Validation Errors
 
@@ -204,7 +213,7 @@ Use the Manifest Creator tool to validate your manifests!
 - [nostr-post Documentation](../../README.md)
 - [Development Guide](../../DEVELOPMENT_GUIDE.md)
 - [Manifest Examples](../../EXAMPLES.md)
-- [nostr-login Docs](https://github.com/nostrband/nostr-login)
+- [nostr-shard-signer Docs](https://github.com/saintego/nostr-shard-signer)
 - [Nostr NIPs](https://github.com/nostr-protocol/nips)
 
 ## 🤝 Contributing

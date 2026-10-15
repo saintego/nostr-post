@@ -53,7 +53,7 @@ const styles = {
 };
 
 export default function Home() {
-  const { pubkey, isLoggedIn, isLoading, login, logout } = useNostrAuth();
+  const { pubkey, isLoggedIn, isLoading, checkAuth, logout } = useNostrAuth();
   const feedRef = useRef<NostrPostFeedRef>(null);
 
   // Initialize dark mode from system preferences (lazy initializer)
@@ -72,6 +72,17 @@ export default function Home() {
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
+  // Sign-in/out via nostr-shard-signer. A window event, because the bridge script
+  // loads after hydration and NostrBridge may not exist yet.
+  useEffect(() => {
+    const onAuth = (e: WindowEventMap['nostr-bridge:auth']) => {
+      if (e.detail.loggedIn) checkAuth();
+      else logout();
+    };
+    window.addEventListener('nostr-bridge:auth', onAuth);
+    return () => window.removeEventListener('nostr-bridge:auth', onAuth);
+  }, [checkAuth, logout]);
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -81,12 +92,20 @@ export default function Home() {
         ) : isLoggedIn ? (
           <div style={styles.userInfo}>
             <span style={styles.pubkey}>{pubkey?.slice(0, 12)}...</span>
-            <button type="button" style={styles.loginBtn} onClick={logout}>
+            <button
+              type="button"
+              style={styles.loginBtn}
+              onClick={() => window.NostrBridge?.logout()}
+            >
               Logout
             </button>
           </div>
         ) : (
-          <button type="button" style={styles.loginBtn} onClick={login}>
+          <button
+            type="button"
+            style={styles.loginBtn}
+            onClick={() => window.NostrBridge?.login().catch(console.error)}
+          >
             Login with Nostr
           </button>
         )}

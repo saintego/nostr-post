@@ -23,6 +23,8 @@ import '@nostr-post/plugin-reference/web';
 import '@nostr-post/plugin-markdown/web';
 import '@nostr-post/plugin-hashtag/web';
 import '@nostr-post/plugin-list/web';
+import '@nostr-post/wiki/web';
+import '@nostr-post/plugin-wiki-entity/web';
 
 // ── Re-exports for programmatic / advanced usage ────────────────────────────
 
@@ -33,7 +35,14 @@ export {
   getUsedKinds,
   findFieldById,
   getRequiredFields,
+  fieldLabel,
+  fieldDescription,
 } from '@nostr-post/core/manifest';
+export {
+  fieldOptionLabel,
+  groupFieldOptions,
+  matchFieldOption,
+} from '@nostr-post/core/enumOptions';
 export { coordinateEvents, validateFormData } from '@nostr-post/core/coordinator';
 
 // Plugin registry
@@ -58,6 +67,8 @@ export {
   hasNostrSigner,
   fetchEvents,
   fetchEventsFromRelay,
+  fetchUserRelays,
+  getPublishRelays,
   fetchManifestByATag,
   fetchManifestsByATags,
   getCachedManifest,
@@ -69,3 +80,52 @@ export {
   getUserRelays,
   getDefaultRelays,
 } from '@nostr-post/web';
+
+// Publishing a submitted post yourself (composer without auto-publish): plugin hooks
+export { runBeforePublish, runPublishHooks, withTags } from '@nostr-post/web';
+
+// Wiki (NIP-54 kind:30818)
+export {
+  WIKI_KIND,
+  DEFAULT_WIKI_RELAYS,
+  STANDARD_WIKI_MANIFEST,
+  manifestToWikiEvent,
+  wikiEventToManifestData,
+  unmappedTableRows,
+  buildWikiATag,
+  extractExternalIds,
+  normalizeDTag,
+  defaultResolver,
+  collectEntityATags,
+  fetchEntityVersions,
+  checkEntityDTag,
+  externalIdLink,
+  entityLinks,
+  manifestLinks,
+  // Entity manifests: register your own, or reference a published one by its 30078: address
+  registerEntityManifest,
+  getEntityManifest,
+  resolveEntityManifest,
+  // A plugin's "+ Create" form in the entity picker (e.g. venue pages from OpenStreetMap)
+  registerEntityCreator,
+  entityCreatorFor,
+  // Related items on an entity's page (wikiConfig.related)
+  fetchRelated,
+  filterRelated,
+  relatedImages,
+  relatedSnippet,
+  relatedStats,
+} from '@nostr-post/wiki';
+
+// Wiki entity picker (search, create)
+export { searchEntities, entityTypeAffixes } from '@nostr-post/plugin-wiki-entity';
+
+// Venues and the venue hub (wiki entity filled from OpenStreetMap)
+export {
+  searchNominatim,
+  fetchOsmElement,
+  findVenueEntity,
+  syncVenueEntity,
+  // The app's Google Maps Embed key for venues' place card
+  configureVenuePlugin,
+} from '@nostr-post/plugin-venue';

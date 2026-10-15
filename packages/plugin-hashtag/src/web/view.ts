@@ -6,7 +6,7 @@
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
-import { LitElement, css, html, nothing } from 'lit';
+import { css, html, LitElement, nothing } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 
 @customElement('np-hashtag-view')

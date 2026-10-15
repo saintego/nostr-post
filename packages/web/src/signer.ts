@@ -6,43 +6,37 @@
 
 // Re-export everything from shared signer
 export {
-  type SignedEvent,
-  type Nip07Provider,
-  type PublishResults,
-  type FetchFilter,
+  _manifestCache,
+  clearManifestCache,
   DEFAULT_RELAYS,
-  signEvent,
-  getPublicKey,
-  hasNostrSigner,
-  publishToRelay,
-  publishToRelays,
-  signAndPublish,
-  fetchEventsFromRelay,
+  type FetchFilter,
   fetchEvents,
+  fetchEventsFromRelay,
   // Manifest helpers
   fetchManifestByATag,
   fetchManifestsByATags,
+  fetchUserRelays,
   getCachedManifest,
-  clearManifestCache,
-  _manifestCache,
+  getPublicKey,
+  getPublishRelays,
+  hasNostrSigner,
+  type Nip07Provider,
+  type PublishResults,
+  publishToRelay,
+  publishToRelays,
+  type SignedEvent,
+  signAndPublish,
+  signEvent,
 } from '@nostr-post/signer';
 
 /**
- * Get user's preferred relays from NIP-07 provider
+ * Relays to publish the signed-in user's events to: the signer's write relays,
+ * the user's NIP-65 relay list and defaults (see getPublishRelays).
  */
 export async function getUserRelays(): Promise<string[]> {
-  const { DEFAULT_RELAYS } = await import('@nostr-post/signer');
-
-  if (!window.nostr?.getRelays) {
-    return DEFAULT_RELAYS;
-  }
-
+  const { DEFAULT_RELAYS, getPublicKey, getPublishRelays } = await import('@nostr-post/signer');
   try {
-    const relayMap = await window.nostr.getRelays();
-    const writeRelays = Object.entries(relayMap)
-      .filter(([, config]) => config.write)
-      .map(([url]) => url);
-    return writeRelays.length > 0 ? writeRelays : DEFAULT_RELAYS;
+    return await getPublishRelays(await getPublicKey());
   } catch {
     return DEFAULT_RELAYS;
   }
@@ -52,5 +46,5 @@ export async function getUserRelays(): Promise<string[]> {
  * Get default relays
  */
 export function getDefaultRelays(): string[] {
-  return ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.nostr.band'];
+  return ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 }

@@ -17,19 +17,25 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --dir src",
+    "test:watch": "vitest --dir src",
     "clean": "rm -rf dist"
   },
-  "keywords": ["nostr", "plugin", "media", "image", "upload"],
+  "keywords": [
+    "nostr",
+    "plugin",
+    "media",
+    "image",
+    "upload"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@nostr-post/plugins": "workspace:*",
-    "lit": "^3.2.1"
+    "lit": "^3.3.3"
   },
   "devDependencies": {
-    "typescript": "^5.6.3",
-    "vitest": "^2.0.0"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.4"
   }
 }

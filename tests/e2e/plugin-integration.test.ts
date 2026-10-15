@@ -6,7 +6,7 @@ import { coordinateEvents } from '../../packages/core/src/coordinator';
 import type { FormData, NostrPostManifest } from '../../packages/core/src/types';
 import { encodeGeohash, geoPlugin } from '../../packages/plugin-geo/src/core';
 import { hashtagPlugin, normalizeTag } from '../../packages/plugin-hashtag/src/core';
-import { MockNostrRelay, generateMockKeypair, mockSignEvent } from '../helpers/mock-relay';
+import { generateMockKeypair, MockNostrRelay, mockSignEvent } from '../helpers/mock-relay';
 
 describe('E2E: Plugin Integration', () => {
   let relay: MockNostrRelay;

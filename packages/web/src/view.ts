@@ -19,13 +19,13 @@ import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
-import { NostrPostElement, baseStyles } from './base-component';
+import { baseStyles, NostrPostElement } from './base-component';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
 import { fetchEvents, fetchManifestByATag, getPublicKey } from './signer';
 import {
-  type NostrProfile,
   authorDisplayName,
   fetchAuthorProfile,
+  type NostrProfile,
   truncatePubkey,
 } from './userProfile';
 import { type EditState, renderEditButton, renderInlineComposer } from './viewEdit';
@@ -34,11 +34,14 @@ import {
   renderLinkedEvents,
   renderManifestEventData,
 } from './viewLinked';
+import { DEFAULT_RAW_DATA_MESSAGES, type RawDataMessages, renderRawData } from './viewRawData';
+import { postRoleView } from './viewRoles';
 import { viewStyle } from './viewStyle';
 import { applyUpdateCommentsToEvent, renderUpdateComments } from './viewUpdates';
 
 /** Event type that can be either unsigned or signed — re-exported from core for convenience */
 export type { DisplayableEvent } from '@nostr-post/core/types';
+
 type RegisteredPlugin = Exclude<ReturnType<typeof pluginRegistry.get>, undefined>;
 
 /**
@@ -92,11 +95,17 @@ export class NostrPostView extends NostrPostElement {
   @state()
   private _editPubkey?: string;
 
-  @property({ type: Boolean })
+  /** Show the collapsed "All data" section (kind, author, ID, time, all tags, content) */
+  @property({ type: Boolean, attribute: 'show-tags' })
   showTags?: boolean;
 
-  @property({ type: Boolean })
+  /** Same as showTags */
+  @property({ type: Boolean, attribute: 'show-kind' })
   showKind?: boolean;
+
+  /** Overrides for the "All data" section's text (e.g. translations) */
+  @property({ attribute: false })
+  messages?: Partial<RawDataMessages>;
 
   /** Field IDs to exclude from the rendered view */
   @property({ type: Array, attribute: 'exclude-fields' })
@@ -328,12 +337,9 @@ export class NostrPostView extends NostrPostElement {
       this.effectiveManifest,
       this.interactionEvents
     );
-    const kind = event.kind;
-    const created_at = event.created_at;
-    const tags = event.tags;
-    const content = event.content;
-    const pubkey = event.pubkey;
-    const eventId = event.id;
+    const { kind, created_at, pubkey } = event;
+    // Role lines (`Tasted at: nostr:naddr1…`) show as rows, not in the text
+    const { text: content, rows: roleRows, tags } = postRoleView(event, this.effectiveManifest);
     const showTechnicalMeta = Boolean(this.showKind || this.showTags);
     const manifestRenderedData = renderManifestEventData(event, this.effectiveManifest);
     const shouldUseManifestRendering =
@@ -374,28 +380,12 @@ export class NostrPostView extends NostrPostElement {
               : nothing
           }
           ${shouldUseManifestRendering ? manifestRenderedData : nothing}
-          ${shouldUseManifestRendering ? nothing : this.renderTagPlugins(tags)}
+          ${shouldUseManifestRendering ? nothing : this.renderTagPlugins(tags)} ${roleRows}
         </div>
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
         ${renderUpdateComments(this.interactionEvents, this.event.pubkey)}
-        ${
-          this.showTags && tags.length > 0
-            ? html`
-              <div class="view-tags">
-                ${tags.map(
-                  (tag: string[]) => html`
-                    <span class="tag">
-                      <span class="tag-name">${tag[0]}:</span>
-                      ${tag.slice(1).join(', ')}
-                    </span>
-                  `
-                )}
-              </div>
-            `
-            : ''
-        }
-        ${showTechnicalMeta && eventId ? html`<div class="view-id">ID: ${eventId}</div>` : ''}
+        ${showTechnicalMeta ? renderRawData(event, { ...DEFAULT_RAW_DATA_MESSAGES, ...this.messages }) : ''}
         ${renderEditButton(event, this.editable, this._showInlineComposer, (ev) => this.handleEditRequest(ev))}
         ${renderInlineComposer(event, this.editState)}
       </div>

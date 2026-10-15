@@ -116,16 +116,19 @@ describe('EXAMPLE_MANIFESTS', () => {
     });
 
     it('should have valid mapTo configuration for all fields', () => {
-      for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
-        for (const field of manifest.fields) {
-          expect(field.mapTo).toBeDefined();
-          const targets = Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo];
-          for (const target of targets) {
-            expect(target.kind).toBeTypeOf('number');
-            expect(target.target).toBeDefined();
-            expect(['content', 'tag']).toContain(target.target);
-          }
-        }
+      const fields = Object.values(EXAMPLE_MANIFESTS).flatMap((manifest) => manifest.fields);
+      for (const field of fields) expect(field.mapTo).toBeDefined();
+
+      const targets = fields.flatMap((field) =>
+        Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo]
+      );
+      for (const target of targets) {
+        expect(target.kind).toBeTypeOf('number');
+        expect(['content', 'tag', 'table']).toContain(target.target);
+      }
+      // The Djot `table` target only exists on NIP-54 wiki events.
+      for (const target of targets.filter((t) => t.target === 'table')) {
+        expect(target.kind).toBe(30818);
       }
     });
   });

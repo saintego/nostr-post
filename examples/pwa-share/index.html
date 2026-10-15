@@ -5,25 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>nostr-post PWA — Web Share Target Example</title>
   <link rel="manifest" href="manifest.webmanifest">
-  <script>
-    window.wnjParams = {
-      accent: 'cyan',
-      position: 'bottom',
-      compactMode: false,
-      startHidden: false,
-      nostrConnectRelays: [
-        'wss://bucket.coracle.social',
-        'wss://relay.nsec.app',
-        'wss://nos.lol',
-        'wss://relay.primal.net'
-      ],
-      appMetadata: {
-        name: 'nostr-post Manifest Creator',
-        url: 'https://nostr-post.dev'
-      }
-    };
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/window.nostr.js/dist/window.nostr.min.js" defer></script>
+  <!-- nostr-shard-signer sign-in: Nostr-only (extension, NIP-46 bunker) as is. Add
+       data-client-id="<Web3Auth client ID>" for Google/Apple/X sign-in; register it for this
+       origin at https://saintego.github.io/nostr-shard-signer/portal/ -->
+  <script src="https://saintego.github.io/nostr-shard-signer/nostr-bridge.js" data-layout="floating"></script>
   <style>
     body { font-family: system-ui, -apple-system, sans-serif; padding: 24px; }
     pre { background:#f6f8fa; padding:12px; border-radius:6px }
@@ -55,26 +40,24 @@
     script.src = 'https://saintego.github.io/nostr-post/nostr-post.js';
     document.head.appendChild(script);
 
-    // Simple NIP-07 login helper
-    async function nostrLogin() {
-      if (!window.nostr) return alert('No NIP-07 provider found (window.nostr)');
-      try {
-        const pubkey = await window.nostr.getPublicKey();
-        localStorage.setItem('nostr-pubkey', pubkey);
-        document.getElementById('login-btn').textContent = pubkey.slice(0, 10) + '...';
-        return pubkey;
-      } catch (err) {
-        console.error(err);
-        alert('Login failed');
-      }
-    }
+    // Sign-in/out from the nostr-shard-signer widget
+    window.addEventListener('nostr-bridge:auth', (e) => {
+      const status = document.getElementById('login-status');
+      if (status) status.textContent = e.detail.loggedIn
+        ? 'Signed in as ' + e.detail.pubkey.slice(0, 10) + '...'
+        : 'Sign in with the button in the bottom-right corner';
+    });
 
     // Add composer container after nostr-post bundle loads
     script.addEventListener('load', () => {
       const composerWrap = document.createElement('div');
       composerWrap.innerHTML = `
         <h2>Create a Nostr Post</h2>
-        <button id="login-btn">Login (NIP-07)</button>
+        <p id="login-status">${
+          window.NostrBridge?.getAuthState().loggedIn
+            ? 'Signed in as ' + NostrBridge.getAuthState().pubkey.slice(0, 10) + '...'
+            : 'Sign in with the button in the bottom-right corner'
+        }</p>
         <div style="margin-top:12px">
           <label>Manifest ID or paste manifest JSON (optional)</label><br/>
           <input id="manifest-input" style="width:60%" placeholder="manifest id or JSON" />
@@ -83,9 +66,6 @@
         <div id="composer-host" style="margin-top:16px"></div>
       `;
       document.body.insertBefore(composerWrap, document.getElementById('shared'));
-
-      const loginBtn = document.getElementById('login-btn');
-      loginBtn.addEventListener('click', nostrLogin);
 
       document.getElementById('save-manifest').addEventListener('click', () => {
         const inputEl = document.getElementById('manifest-input');

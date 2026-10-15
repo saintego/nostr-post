@@ -19,13 +19,18 @@
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
-  "keywords": ["nostr", "plugin", "identifier", "nip-73"],
+  "keywords": [
+    "nostr",
+    "plugin",
+    "identifier",
+    "nip-73"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@nostr-post/plugins": "workspace:*"
   },
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^6.0.3"
   }
 }

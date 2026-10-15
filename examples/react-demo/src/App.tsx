@@ -51,7 +51,7 @@ const styles = {
 };
 
 export default function App() {
-  const { pubkey, isLoggedIn, isLoading, login, logout } = useNostrAuth();
+  const { pubkey, isLoggedIn, isLoading, checkAuth, logout } = useNostrAuth();
   const feedRef = useRef<NostrPostFeedRef>(null);
   const [isDark, setIsDark] = useState(false);
 
@@ -65,6 +65,16 @@ export default function App() {
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
+  // Sign-in/out via nostr-shard-signer (replays the current state on subscribe)
+  useEffect(
+    () =>
+      window.NostrBridge?.onAuthChange(({ loggedIn }) => {
+        if (loggedIn) checkAuth();
+        else logout();
+      }),
+    [checkAuth, logout]
+  );
+
   return (
     <div style={styles.container}>
       <header style={styles.header}>
@@ -74,12 +84,20 @@ export default function App() {
         ) : isLoggedIn ? (
           <div style={styles.userInfo}>
             <span style={styles.pubkey}>{pubkey?.slice(0, 12)}...</span>
-            <button type="button" style={styles.loginBtn} onClick={logout}>
+            <button
+              type="button"
+              style={styles.loginBtn}
+              onClick={() => window.NostrBridge?.logout()}
+            >
               Logout
             </button>
           </div>
         ) : (
-          <button type="button" style={styles.loginBtn} onClick={login}>
+          <button
+            type="button"
+            style={styles.loginBtn}
+            onClick={() => window.NostrBridge?.login().catch(console.error)}
+          >
             Login with Nostr
           </button>
         )}

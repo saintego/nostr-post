@@ -23,10 +23,11 @@ import {
   tryParseJsonObject,
 } from '@nostr-post/core/eventUpdates';
 import { getFieldsByKind, isStructuredContentKind } from '@nostr-post/core/manifestMappings';
+import { readPostRoles } from '@nostr-post/core/postRoles';
 import type { DisplayableEvent, NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { html, nothing } from 'lit';
 import type { TemplateResult } from 'lit';
+import { html, nothing } from 'lit';
 
 /**
  * Render the collapsible update-comments section shown beneath an event.
@@ -133,7 +134,13 @@ export function extractPrefillFromEvent(
     }
   }
 
-  for (const field of getFieldsByKind(manifest, event.kind, [event.kind])) {
+  // Plain-text posts: role lines (`Tasted at: nostr:naddr1…`) are their fields' values, not text
+  const fields = getFieldsByKind(manifest, event.kind, [event.kind]);
+  const roles = readPostRoles(event, manifest.fields);
+  Object.assign(prefill, roles.values);
+
+  for (const field of fields) {
+    if (field.id in roles.values) continue;
     const targets = Array.isArray(field.mapTo) ? field.mapTo : [field.mapTo];
     const target = targets.find((t) => t.kind === event.kind);
     if (!target) continue;
@@ -157,19 +164,19 @@ export function extractPrefillFromEvent(
           if (val !== undefined) prefill[field.id] = val;
         }
       } else {
-        prefill[field.id] = event.content;
+        prefill[field.id] = roles.text;
       }
     } else if (target.target === 'tag' && target.tagName) {
       const plugin = field.uiPlugin ? pluginRegistry.get(field.uiPlugin) : undefined;
       // Use resolveFromTags for plugins that aggregate multiple tags (e.g. venue: g + i + location)
       if (plugin?.resolveFromTags) {
-        const resolved = plugin.resolveFromTags(event.tags, field);
+        const resolved = plugin.resolveFromTags(roles.tags, field);
         if (resolved !== undefined && resolved !== null) {
           prefill[field.id] = resolved;
         }
         continue;
       }
-      const tagValues = event.tags
+      const tagValues = roles.tags
         .filter((t) => t[0] === target.tagName)
         .map((t) => t[1])
         .filter(Boolean);

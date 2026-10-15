@@ -3,6 +3,7 @@ const KIND_LABEL_ENTRIES = [
   [30023, '30023 (Article)'],
   [30078, '30078 (NIP-78)'],
   [30079, '30079 (Structured JSON)'],
+  [30818, '30818 (Wiki Entity)'],
 ] as const;
 
 const KIND_LABELS = new Map<number, string>(KIND_LABEL_ENTRIES);

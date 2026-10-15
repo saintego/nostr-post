@@ -8,30 +8,29 @@ import {
   getDefaultPublishFormat,
   getSelectablePublishFormats,
 } from '@nostr-post/core/manifestMappings';
-import {
-  type EventBundle,
-  type NostrPostManifest,
-  STANDARD_KIND1_POST_MANIFEST,
-} from '@nostr-post/core/types';
+import { type NostrPostManifest, STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
+import { runPublishHooks } from '@nostr-post/plugins/publish';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { NostrPostElement, baseStyles } from './base-component';
+import { baseStyles, NostrPostElement } from './base-component';
 import type { FieldRenderContext } from './composerField';
 import { renderFieldList } from './composerFieldList';
-import { buildInitialFormData, isFieldReadonly } from './composerForm';
-import { renderHiddenFieldErrors } from './composerForm';
+import { buildInitialFormData, isFieldReadonly, renderHiddenFieldErrors } from './composerForm';
 import { renderPublishFormatPicker } from './composerFormatPicker';
 import { renderComposerHeader } from './composerHeader';
 import { hasReplyTarget, renderReplyTargetPanel, updateReplyTargetValue } from './composerReply';
 import { composerStyle } from './composerStyle';
-import { renderSubmitButton } from './composerSubmit';
 import {
-  type ValidationResult,
+  type NostrPostSubmitDetail,
+  renderPublishSummaries,
+  renderSubmitButton,
   signAndPublishBundle,
+  type ValidationResult,
   validateAndCoordinate,
+  withTags,
 } from './composerSubmit';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
-import { type SignedEvent, fetchManifestByATag, getPublicKey } from './signer';
+import { fetchManifestByATag, getPublicKey, type SignedEvent } from './signer';
 
 @customElement('nostr-post-composer')
 export class NostrPostComposer extends NostrPostElement {
@@ -300,21 +299,7 @@ export class NostrPostComposer extends NostrPostElement {
     this.isSubmitting = true;
 
     try {
-      const outcome = validateAndCoordinate(
-        manifest,
-        this._formData as Parameters<typeof validateAndCoordinate>[1],
-        {
-          pubkey,
-          selectedFormatId: this.selectedPublishFormatId,
-          manifestRef: this.manifestRef,
-          dTag: this.dTag,
-          extraTags: this.extraTags,
-          replyToEventId: this.replyToEventId,
-          replyToPubkey: this.replyToPubkey,
-          rootEventId: this.rootEventId,
-          rootPubkey: this.rootPubkey,
-        }
-      );
+      const outcome = this._coordinate(manifest, this._formData, pubkey);
 
       if ('validationError' in outcome) {
         this.applyValidationError(outcome.validationError);
@@ -324,13 +309,16 @@ export class NostrPostComposer extends NostrPostElement {
       const { bundle, addressableDTag } = outcome;
 
       if (this.autoPublish) {
-        const signedEvents = await signAndPublishBundle(bundle, this.relays);
+        const signedEvents = await this._publish(manifest, pubkey);
         this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
         this.successMessage = `Published to ${signedEvents.length} event(s)!`;
       } else {
-        this.dispatchCustomEvent<{ bundle: EventBundle; dTag?: string }>('nostr-post-submit', {
+        // formData + manifest let the app run plugin hooks itself (runBeforePublish)
+        this.dispatchCustomEvent<NostrPostSubmitDetail>('nostr-post-submit', {
           bundle,
           dTag: addressableDTag,
+          formData: { ...this._formData },
+          manifest,
         });
         this.successMessage = 'Post created successfully!';
       }
@@ -341,6 +329,39 @@ export class NostrPostComposer extends NostrPostElement {
     } finally {
       this.isSubmitting = false;
     }
+  }
+
+  private _coordinate(
+    manifest: NostrPostManifest,
+    formData: Record<string, unknown>,
+    pubkey: string
+  ) {
+    return validateAndCoordinate(
+      manifest,
+      formData as Parameters<typeof validateAndCoordinate>[1],
+      {
+        pubkey,
+        selectedFormatId: this.selectedPublishFormatId,
+        manifestRef: this.manifestRef,
+        dTag: this.dTag,
+        extraTags: this.extraTags,
+        replyToEventId: this.replyToEventId,
+        replyToPubkey: this.replyToPubkey,
+        rootEventId: this.rootEventId,
+        rootPubkey: this.rootPubkey,
+      }
+    );
+  }
+
+  /**
+   * Let plugins publish related events first (e.g. a venue's wiki page), then
+   * build the post again with what they linked (e.g. a role's mention line) and publish it
+   */
+  private async _publish(manifest: NostrPostManifest, pubkey: string): Promise<SignedEvent[]> {
+    const hooks = await runPublishHooks(manifest, this._formData, pubkey);
+    const outcome = this._coordinate(manifest, hooks.formData, pubkey);
+    if ('validationError' in outcome) throw new Error('The post is invalid after publish hooks');
+    return signAndPublishBundle(withTags(outcome.bundle, hooks.tags), this.relays);
   }
 
   private updateReplyTarget(
@@ -403,6 +424,13 @@ export class NostrPostComposer extends NostrPostElement {
               : ''
           }
           ${renderFieldList(manifest, ctx, this.excludeFields, this.prefill)}
+          ${
+            this.autoPublish
+              ? renderPublishSummaries(manifest, this._formData, (id, val) =>
+                  this.handleFieldChange(id, val)
+                )
+              : ''
+          }
           ${renderSubmitButton(this.isSubmitting, this.isResolvingManifestRef)}
         </form>
       </div>

@@ -1,7 +1,9 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
+import type { WikiManifest } from '@nostr-post/wiki';
+import bjcpStyleManifest from './manifests/beerStyleBjcp2021.json';
 
-export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
+export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest> = {
   simple: {
     ...STANDARD_KIND1_POST_MANIFEST,
     id: 'kind1-simple-post',
@@ -78,6 +80,599 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
     },
   },
 
+  // The BJCP style list as a base manifest (lib/manifests/beerStyleBjcp2021.json).
+  // The beer entity extends it by id; other apps by its address once it's published.
+  'beer-style-bjcp-2021': bjcpStyleManifest as NostrPostManifest,
+
+  // ── NIP-54 Wiki Entity (kind:30818) ──────────────────────────────────────
+
+  'wiki-brewery-entity': {
+    id: 'brewery-entity-v1',
+    version: '1.0.0',
+    wikiConfig: {
+      titleTemplate: '{name} (Brewery)',
+      dTagTemplate: '{name}-(brewery)',
+      // Listed on the brewery's page: beers naming it in their roles
+      related: [
+        { label: 'Beers', kinds: [30818], dTagSuffix: '-beer', role: 'breweries' },
+        { label: 'Brewed here for others', kinds: [30818], dTagSuffix: '-beer', role: 'brewed_at' },
+      ],
+    },
+    fields: [
+      {
+        id: 'name',
+        type: 'string',
+        uiPlugin: 'text',
+        required: true,
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'Brewery Name', placeholder: 'e.g. Russian River Brewing' },
+      },
+      {
+        id: 'type',
+        type: 'enum',
+        uiPlugin: 'select',
+        options: [
+          {
+            value: 'microbrewery',
+            label: 'Microbrewery',
+            description: 'Small brewery, most beer sold off-site',
+          },
+          {
+            value: 'brewpub',
+            label: 'Brewpub',
+            description: 'Restaurant-brewery, most beer sold on-site',
+          },
+          {
+            value: 'taproom-brewery',
+            label: 'Taproom brewery',
+            description: 'Most beer sold in its own taproom',
+          },
+          {
+            value: 'regional-brewery',
+            label: 'Regional brewery',
+            description: 'Larger independent brewery',
+          },
+          {
+            value: 'large-brewery',
+            label: 'Large brewery',
+            description: 'Industrial-scale brewery',
+          },
+          {
+            value: 'contract-brewery',
+            label: 'Contract / flying brewery',
+            description: "Brews its beer on other breweries' equipment",
+          },
+        ],
+        mapTo: { kind: 30818, target: 'tag', tagName: 't' },
+        metadata: {
+          label: 'Type',
+          description: 'Kind of brewery, after the Brewers Association market segments',
+        },
+      },
+      {
+        id: 'location',
+        type: 'geo',
+        uiPlugin: 'venue',
+        mapTo: { kind: 30818, target: 'tag', tagName: 'g' },
+        metadata: {
+          label: 'Location',
+          description:
+            "Where the brewery is: its exact place, or only its city or country (e.g. when it brews on other breweries' equipment). Tagged with its country (iso3166) for searches; an exact place also gets its venue wiki page",
+          levels: ['country', 'city', 'place'],
+          providers: ['osm'],
+          // An exact place creates/links the venue's wiki page (venue hub); a city or country doesn't
+          wikiEntity: 'venue-entity-v1',
+        },
+      },
+      {
+        id: 'brewing_sites',
+        type: 'geo',
+        uiPlugin: 'venue',
+        // Link only: each venue's page as an `a` tag and in an infobox row naming the role,
+        // no venue tags (the brewery's own location has those)
+        mapTo: [
+          { kind: 30818, target: 'tag', tagName: 'a' },
+          { kind: 30818, target: 'table' },
+        ],
+        metadata: {
+          label: 'Other brewing sites',
+          description:
+            'Further places where it brews, besides its location: search OpenStreetMap; their venue pages are created or linked',
+          providers: ['osm'],
+          linkOnly: true,
+          multiple: true,
+          wikiEntity: 'venue-entity-v1',
+        },
+      },
+      {
+        id: 'taprooms',
+        type: 'geo',
+        uiPlugin: 'venue',
+        // Link only: each venue's page as an `a` tag and in an infobox row naming the role,
+        // no venue tags (the brewery's own location has those)
+        mapTo: [
+          { kind: 30818, target: 'tag', tagName: 'a' },
+          { kind: 30818, target: 'table' },
+        ],
+        metadata: {
+          label: 'Taprooms',
+          description:
+            'Its taprooms and bars: search OpenStreetMap; their venue pages are created or linked',
+          providers: ['osm'],
+          linkOnly: true,
+          multiple: true,
+          wikiEntity: 'venue-entity-v1',
+        },
+      },
+      {
+        id: 'external_ids',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'tag', tagName: 'i' },
+        metadata: {
+          label: 'External IDs',
+          description:
+            'The brewery on other sites, as namespace:id (e.g. untappd:brewery:3264), so other apps can match it',
+          placeholder: 'untappd:brewery:3264',
+        },
+      },
+      {
+        id: 'description',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 30818, target: 'content' },
+        metadata: { label: 'About', placeholder: 'A short history of the brewery…' },
+      },
+    ],
+    metadata: {
+      name: 'Brewery Entity (NIP-54 wiki)',
+      description: 'Collaborative wiki entity for a brewery — kind:30818.',
+    },
+  },
+
+  'wiki-beer-entity': {
+    id: 'beer-entity-v1',
+    version: '1.0.0',
+    // The style field comes from the BJCP base manifest
+    extends: 'beer-style-bjcp-2021',
+    wikiConfig: {
+      titleTemplate: '{title} (Beer)',
+      dTagTemplate: '{title}-(beer)',
+      // The style's page in the BJCP guidelines; local styles (X1…) have none and get no link
+      links: [
+        { label: 'BJCP', url: 'https://www.bjcp.org/style/2021/{style.category}/{style.code}/' },
+      ],
+      // Listed on the beer's page: reviews linking it (any author's version)
+      related: [
+        {
+          label: 'Reviews',
+          kinds: [1, 30078],
+          manifest: 'beer-review-v1',
+          stats: { tag: 'rating', max: 5 },
+          gallery: true,
+        },
+      ],
+    },
+    fields: [
+      {
+        id: 'title',
+        type: 'string',
+        uiPlugin: 'text',
+        required: true,
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'Beer Name', placeholder: 'e.g. Pliny the Elder' },
+      },
+      {
+        id: 'breweries',
+        type: 'ref',
+        uiPlugin: 'wiki-entity-picker',
+        // Plain `a` tags (found by `#a` queries) plus an infobox row of wikilinks naming the role
+        mapTo: [
+          { kind: 30818, target: 'tag', tagName: 'a' },
+          { kind: 30818, target: 'table' },
+        ],
+        metadata: {
+          label: 'Breweries',
+          description:
+            'The breweries whose beer it is: one, or several for a collaboration. Pick their wiki pages or create them',
+          entityManifest: 'brewery-entity-v1',
+          emitExtraTags: false,
+          multiple: true,
+        },
+      },
+      {
+        id: 'brewed_at',
+        type: 'ref',
+        uiPlugin: 'wiki-entity-picker',
+        mapTo: [
+          { kind: 30818, target: 'tag', tagName: 'a' },
+          { kind: 30818, target: 'table' },
+        ],
+        metadata: {
+          label: 'Brewed at',
+          description:
+            "Where it was brewed, when that isn't one of its breweries (contract brewing, flying breweries)",
+          entityManifest: 'brewery-entity-v1',
+          emitExtraTags: false,
+          multiple: true,
+        },
+      },
+      {
+        id: 'abv',
+        type: 'number',
+        uiPlugin: 'number',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          step: 0.1,
+          label: 'ABV %',
+          description: 'Alcohol by volume',
+          placeholder: '8.0',
+        },
+      },
+      {
+        id: 'ibu',
+        type: 'number',
+        uiPlugin: 'number',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'IBU',
+          description: 'International Bitterness Units',
+          placeholder: '100',
+        },
+      },
+      {
+        id: 'external_ids',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'tag', tagName: 'i' },
+        metadata: {
+          label: 'External IDs',
+          description:
+            'The beer on other sites, as namespace:id (e.g. untappd:beer:4892), so other apps can match it',
+          placeholder: 'untappd:beer:4892',
+        },
+      },
+      {
+        id: 'description',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 30818, target: 'content' },
+        metadata: {
+          label: 'Description',
+          placeholder: 'Collaborative description of this beer…',
+        },
+      },
+    ],
+    metadata: {
+      name: 'Beer Entity (NIP-54 wiki)',
+      description:
+        'Collaborative wiki entity for a beer — kind:30818. Multiple pubkeys can contribute.',
+    },
+  },
+
+  'wiki-beer-review': {
+    id: 'beer-review-v1',
+    version: '1.0.0',
+    publishFormats: [
+      { id: 'note', label: 'Note', kinds: [1], default: true },
+      { id: 'app-data', label: 'App Data', kinds: [30078] },
+    ],
+    fields: [
+      {
+        id: 'beer',
+        type: 'ref',
+        uiPlugin: 'wiki-entity-picker',
+        required: true,
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'a' },
+          { kind: 30078, target: 'tag', tagName: 'a' },
+        ],
+        metadata: {
+          label: 'Beer',
+          entityManifest: 'beer-entity-v1',
+        },
+      },
+      {
+        id: 'rating',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'rating' },
+          { kind: 30078, target: 'tag', tagName: 'rating' },
+        ],
+        metadata: {
+          label: 'Rating',
+          description: 'Your overall impression',
+          max: 5,
+          showNumber: true,
+        },
+      },
+      {
+        id: 'review',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: [
+          { kind: 1, target: 'content' },
+          { kind: 30078, target: 'content' },
+        ],
+        required: true,
+        metadata: { label: 'Review', placeholder: 'Your tasting notes...' },
+      },
+      {
+        id: 'tasting_at',
+        type: 'geo',
+        uiPlugin: 'venue',
+        // Link only: the venue's page as an `a` tag plus the role (kind 1: a mention line
+        // "Tasted at: nostr:naddr1…"; NIP-78: the address under this key), no venue tags,
+        // so the two venues don't mix
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'a' },
+          { kind: 1, target: 'content' },
+          { kind: 30078, target: 'tag', tagName: 'a' },
+          { kind: 30078, target: 'content', path: 'tasting_at' },
+        ],
+        metadata: {
+          label: 'Tasted at',
+          description:
+            'Where you had it: search OpenStreetMap; its venue page is created or linked',
+          providers: ['osm'],
+          linkOnly: true,
+          wikiEntity: 'venue-entity-v1',
+        },
+      },
+      {
+        id: 'purchase_at',
+        type: 'geo',
+        uiPlugin: 'venue',
+        // Link only: the venue's page as an `a` tag plus the role (kind 1: a mention line
+        // "Purchased at: nostr:naddr1…"; NIP-78: the address under this key), no venue tags,
+        // so the two venues don't mix
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'a' },
+          { kind: 1, target: 'content' },
+          { kind: 30078, target: 'tag', tagName: 'a' },
+          { kind: 30078, target: 'content', path: 'purchase_at' },
+        ],
+        metadata: {
+          label: 'Purchased at',
+          description:
+            'Where you bought it, if you did: search OpenStreetMap; its venue page is created or linked',
+          providers: ['osm'],
+          linkOnly: true,
+          wikiEntity: 'venue-entity-v1',
+        },
+      },
+      {
+        id: 'tags',
+        type: 'string',
+        uiPlugin: 'hashtag',
+        attachTo: 'review',
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 't' },
+          { kind: 30078, target: 'tag', tagName: 't' },
+        ],
+        metadata: {
+          label: 'Tags',
+          suggestions: [
+            'hoppy',
+            'crisp',
+            'smooth',
+            'bitter',
+            'sweet',
+            'fruity',
+            'crafted',
+            'seasonal',
+          ],
+        },
+      },
+      {
+        id: 'media',
+        type: 'string',
+        uiPlugin: 'media',
+        attachTo: 'review',
+        mapTo: [
+          { kind: 1, target: 'tag', tagName: 'r' },
+          { kind: 30078, target: 'tag', tagName: 'r' },
+        ],
+        metadata: {
+          label: 'Beer Photo',
+          accept: ['image/*'],
+          maxFiles: 2,
+          expandable: true,
+        },
+      },
+    ],
+    metadata: {
+      name: 'Beer Review',
+      description:
+        'Review a beer entity — links to the wiki entity via `a` tag and copies all `i` tags for cross-platform lookup.',
+    },
+  },
+
+  // ── Venue hub (NIP-54 kind:30818), filled from OpenStreetMap ─────────────
+  // `metadata.sources.osm` names the OSM tag(s) a field comes from (`a|b`: first
+  // present; `@name`, `@street`, `@city` from the picked venue). Fields without a
+  // source (description) are community-written and never overwritten by OSM.
+  'wiki-venue-entity': {
+    id: 'venue-entity-v1',
+    version: '1.0.0',
+    wikiConfig: {
+      titleTemplate: '{name} ({city})',
+      dTagTemplate: '{name}-{city}-(venue)',
+      // Derived when shown, not stored: BTC Map lists the places OSM marks as accepting bitcoin
+      links: [
+        {
+          label: 'BTC Map',
+          url: 'https://btcmap.org/merchant/{i:osm}',
+          when: { field: 'bitcoin', equals: 'yes' },
+        },
+      ],
+      // Listed on the venue's page
+      related: [
+        {
+          label: 'Reviews',
+          kinds: [1, 30078],
+          manifest: 'venue-review-v1',
+          stats: { tag: 'rating', max: 5 },
+          gallery: true,
+        },
+        { label: 'Beer reviews', kinds: [1, 30078], manifest: 'beer-review-v1', gallery: true },
+        { label: 'Taproom of', kinds: [30818], dTagSuffix: '-brewery', role: 'taprooms' },
+      ],
+    },
+    fields: [
+      {
+        id: 'name',
+        type: 'string',
+        uiPlugin: 'text',
+        required: true,
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Name',
+          description: 'From OpenStreetMap (name)',
+          sources: { osm: '@name' },
+        },
+      },
+      {
+        id: 'category',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'tag', tagName: 't' },
+        metadata: {
+          label: 'Category',
+          description:
+            'Kind of place, from OpenStreetMap (amenity, shop, craft, tourism or leisure)',
+          sources: { osm: 'amenity|shop|craft|tourism|leisure' },
+        },
+      },
+      {
+        id: 'street',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Street',
+          description: 'Street and house number, from OpenStreetMap',
+          sources: { osm: '@street' },
+        },
+      },
+      {
+        id: 'city',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: { label: 'City', description: 'From OpenStreetMap', sources: { osm: '@city' } },
+      },
+      {
+        id: 'opening_hours',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Opening hours',
+          description: 'In OpenStreetMap opening_hours syntax',
+          sources: { osm: 'opening_hours' },
+        },
+      },
+      {
+        id: 'website',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Website',
+          description: 'From OpenStreetMap',
+          sources: { osm: 'website|contact:website' },
+        },
+      },
+      {
+        id: 'phone',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Phone',
+          description: 'From OpenStreetMap',
+          sources: { osm: 'phone|contact:phone' },
+        },
+      },
+      // Bitcoin payments, as mapped on OSM for BTC Map (wikiConfig.links adds the BTC Map link)
+      {
+        id: 'bitcoin',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Bitcoin accepted',
+          description:
+            'yes/no: the place accepts bitcoin, from OpenStreetMap currency:XBT (the data BTC Map shows)',
+          sources: { osm: 'currency:XBT|payment:bitcoin' },
+        },
+      },
+      {
+        id: 'lightning',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Lightning',
+          description: 'yes/no: Lightning payments, from OpenStreetMap payment:lightning',
+          sources: { osm: 'payment:lightning' },
+        },
+      },
+      {
+        id: 'lightning_contactless',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Contactless Lightning',
+          description:
+            'yes/no: tap-to-pay Lightning cards (e.g. Bolt Card), from OpenStreetMap payment:lightning_contactless',
+          sources: { osm: 'payment:lightning_contactless' },
+        },
+      },
+      {
+        id: 'onchain',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'On-chain',
+          description: 'yes/no: on-chain bitcoin payments, from OpenStreetMap payment:onchain',
+          sources: { osm: 'payment:onchain' },
+        },
+      },
+      {
+        id: 'bitcoin_checked',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 30818, target: 'table' },
+        metadata: {
+          label: 'Bitcoin payments checked on',
+          description: 'When someone last confirmed the bitcoin payment data on OpenStreetMap',
+          sources: { osm: 'check_date:currency:XBT|survey:date|check_date' },
+        },
+      },
+      {
+        id: 'description',
+        type: 'string',
+        uiPlugin: 'textarea',
+        mapTo: { kind: 30818, target: 'content' },
+        metadata: {
+          label: 'About',
+          description: 'Written by the community; never overwritten from OpenStreetMap',
+          placeholder: 'What the community knows about this place…',
+        },
+      },
+    ],
+    metadata: {
+      name: 'Venue Entity (NIP-54 wiki)',
+      description:
+        'Venue hub — kind:30818, filled from OpenStreetMap when a venue review is published; reviews link to it.',
+    },
+  },
+
   'venue-review': {
     id: 'venue-review-v1',
     version: '1.0.0',
@@ -149,8 +744,12 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
         required: true,
         metadata: {
           label: 'Venue',
+          description:
+            'Search OpenStreetMap for the place; its wiki page is created or updated when you publish',
           precision: 6,
           providers: ['osm'],
+          // Create/update the venue's wiki page (the venue hub) from OSM and link it
+          wikiEntity: 'venue-entity-v1',
         },
       },
       {
@@ -649,131 +1248,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest> = {
       description:
         'Product review with 5-star rating and multiple NIP-73 product identifiers (gtin/ean/upc/asin) as i tags',
       tags: ['product', 'review', 'shopping', 'retail'],
-    },
-  },
-
-  'beer-review': {
-    id: 'beer-review-v1',
-    version: '1.0.0',
-    fields: [
-      {
-        id: 'review',
-        type: 'string',
-        uiPlugin: 'textarea',
-        mapTo: { kind: 1, target: 'content' },
-        required: true,
-        metadata: {
-          label: 'Tasting Notes',
-          placeholder: 'Describe the aroma, taste, mouthfeel, and overall impression...',
-        },
-      },
-      {
-        id: 'rating',
-        type: 'number',
-        uiPlugin: 'stars',
-        mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
-        required: true,
-        metadata: {
-          label: 'Rating',
-          max: 5,
-          min: 0.25,
-          step: 0.25,
-          showNumber: true,
-        },
-      },
-      {
-        id: 'name',
-        type: 'string',
-        uiPlugin: 'text',
-        mapTo: { kind: 1, target: 'tag', tagName: 'name' },
-        required: true,
-        metadata: {
-          label: 'Beer Name',
-          placeholder: 'e.g. Hoppy IPA',
-        },
-      },
-      {
-        id: 'brewery',
-        type: 'string',
-        uiPlugin: 'text',
-        mapTo: { kind: 1, target: 'tag', tagName: 'brewery' },
-        required: true,
-        metadata: {
-          label: 'Brewery',
-          placeholder: 'Brewery or distributor name',
-        },
-      },
-      {
-        id: 'style',
-        type: 'string',
-        uiPlugin: 'hashtag',
-        mapTo: { kind: 1, target: 'tag', tagName: 'style' },
-        metadata: {
-          label: 'Beer Style',
-          suggestions: [
-            'IPA',
-            'Lager',
-            'Pilsner',
-            'Stout',
-            'Porter',
-            'Sour',
-            'Wheat',
-            'Amber',
-            'Pale Ale',
-            'Saison',
-          ],
-        },
-      },
-      {
-        id: 'abv',
-        type: 'number',
-        uiPlugin: 'text',
-        mapTo: { kind: 1, target: 'tag', tagName: 'abv' },
-        metadata: {
-          step: 0.1,
-          label: 'ABV %',
-          placeholder: 'Alcohol by volume',
-        },
-      },
-      {
-        id: 'tags',
-        type: 'string',
-        uiPlugin: 'hashtag',
-        attachTo: 'review',
-        mapTo: { kind: 1, target: 'tag', tagName: 't' },
-        metadata: {
-          label: 'Tags',
-          suggestions: [
-            'hoppy',
-            'crisp',
-            'smooth',
-            'bitter',
-            'sweet',
-            'fruity',
-            'crafted',
-            'seasonal',
-          ],
-        },
-      },
-      {
-        id: 'media',
-        type: 'string',
-        uiPlugin: 'media',
-        attachTo: 'review',
-        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
-        metadata: {
-          label: 'Beer Photo',
-          accept: ['image/*'],
-          maxFiles: 2,
-          expandable: true,
-        },
-      },
-    ],
-    metadata: {
-      name: 'Beer Review (Untappd-style)',
-      description:
-        'Beer tasting review with 5-star rating, brewery, style, ABV, tasting notes, and beer photo',
-      tags: ['beer', 'review', 'craft', 'tasting'],
     },
   },
 

@@ -9,10 +9,10 @@
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
-import { LitElement, css, html, nothing } from 'lit';
+import { css, html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { type MediaPluginConfig, isImageUrl, isVideoUrl, toArray } from '../core';
-import { NOSTR_BUILD_UPLOAD, createNip98AuthToken } from './upload';
+import { isImageUrl, isVideoUrl, type MediaPluginConfig, toArray } from '../core';
+import { createNip98AuthToken, NOSTR_BUILD_UPLOAD } from './upload';
 
 @customElement('np-media-input')
 export class NpMediaInput extends LitElement {

@@ -13,11 +13,13 @@ import {
   type NostrPostManifest,
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
+import { publishSummaries } from '@nostr-post/plugins/publish';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { html } from 'lit';
+import { html, type TemplateResult } from 'lit';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { parseExtraTags } from './composerForm';
 import { applyReplyTargetToBundle } from './composerReply';
-import { type SignedEvent, getUserRelays, signAndPublish } from './signer';
+import { getUserRelays, type SignedEvent, signAndPublish } from './signer';
 
 // ---------------------------------------------------------------------------
 // Addressable-event helpers
@@ -134,6 +136,50 @@ export const validateAndCoordinate = (
   }
 
   return { bundle, addressableDTag };
+};
+
+// ---------------------------------------------------------------------------
+// Plugin beforePublish hooks
+// ---------------------------------------------------------------------------
+
+/**
+ * Plugins' publish summaries (publishSummaryTagName), shown next to the publish
+ * button: what their beforePublish hooks will publish, for the user to confirm.
+ */
+export const renderPublishSummaries = (
+  manifest: NostrPostManifest,
+  formData: Record<string, unknown>,
+  onFieldChange: (fieldId: string, value: unknown) => void
+): TemplateResult[] =>
+  publishSummaries(manifest, formData).map(({ field, value, tagName }) => {
+    const tag = unsafeStatic(tagName);
+    return staticHtml`<${tag}
+      .value=${value}
+      .field=${field}
+      @np-value-changed=${(e: CustomEvent) => onFieldChange(field.id, e.detail.value)}
+    ></${tag}>`;
+  });
+
+/** Detail of the composer's `nostr-post-submit` event (when it doesn't publish itself) */
+export interface NostrPostSubmitDetail {
+  bundle: EventBundle;
+  dTag?: string;
+  formData: Record<string, unknown>;
+  manifest: NostrPostManifest;
+}
+
+/** Add tags to every event of a bundle */
+/** Tags added to every event of the bundle, skipping ones an event already has */
+export const withTags = (bundle: EventBundle, tags: [string, ...string[]][]): EventBundle => {
+  if (tags.length === 0) return bundle;
+  const key = (t: string[]) => t.join('\u0000');
+  return {
+    ...bundle,
+    events: bundle.events.map((event) => {
+      const existing = new Set(event.tags.map(key));
+      return { ...event, tags: [...event.tags, ...tags.filter((t) => !existing.has(key(t)))] };
+    }),
+  };
 };
 
 // ---------------------------------------------------------------------------

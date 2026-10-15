@@ -186,7 +186,7 @@ if (await signer.isAvailable()) {
   // Publish to relays
   await signer.publishEvent(signedEvent, [
     "wss://relay.damus.io",
-    "wss://relay.nostr.band",
+    "wss://relay.primal.net",
   ]);
 }
 ```
@@ -256,7 +256,7 @@ npm install @nostr-post/web
     <nostr-post-view></nostr-post-view>
 
     <!-- Feed of events -->
-    <nostr-post-feed kinds="1" limit="20"></nostr-post-feed>
+    <nostr-post-feed kinds="[1]" limit="20"></nostr-post-feed>
   </body>
 </html>
 ```
@@ -269,26 +269,46 @@ Create and publish Nostr posts.
 
 **Attributes:**
 
-- `manifest` - Manifest JSON string or object
-- `pubkey` - User's public key (optional, will prompt if not provided)
-- `theme-primary-color` - Primary color for theming
-- `theme-background-color` - Background color
-- `theme-border-radius` - Border radius
+- `manifest-ref` - Address of a published manifest (`30078:<pubkey>:nostr-post:<id>`), fetched from relays
+- `auto-publish` - Sign and publish the post itself (boolean). Without it the composer only emits `nostr-post-submit`
+- `pubkey` - Author's public key (with `auto-publish` it's read from the signer when not set)
+- `d-tag` - d-tag for an addressable post (to update an existing one)
+- `exclude-fields`, `readonly-fields` - JSON arrays of field IDs
+- `extra-tags` - Extra tags added to the post
+- `default-format-id`, `hide-publish-format-selector` - Publish format choice
+- `reply-to-event-id`, `reply-to-pubkey`, `root-event-id`, `root-pubkey`, `show-reply-target`, `editable-reply-target` - Replies
 
 **Properties:**
 
-- `manifest: NostrPostManifest` - Set manifest programmatically
+- `manifest: NostrPostManifest` - Set the manifest programmatically
+- `prefill: Record<string, unknown>` - Initial field values
+- `relays: string[]` - Where to publish. Default: the signer's write relays, the author's NIP-65 write relays and the default relays
 
 **Events:**
 
-- `nostr-post-submit` - Fired when post is published
+- `nostr-post-published` - With `auto-publish`: the post was signed and published
   ```typescript
-  event.detail = { events: NostrEvent[] }
+  event.detail = SignedEvent[]
   ```
-- `nostr-post-error` - Fired on error
+- `nostr-post-submit` - Without `auto-publish`: the post is ready for the app to sign and publish
   ```typescript
-  event.detail = { error: string };
+  event.detail = { bundle: EventBundle; dTag?: string; formData: Record<string, unknown>; manifest: NostrPostManifest }
   ```
+- `nostr-post-form-change` - A field changed: `event.detail = { formData }`
+- `nostr-post-error` - Validation or publishing failed: `event.detail = { message: string }`
+
+**Plugin publish hooks:** with `auto-publish`, plugins can publish related events before the post and
+link them (e.g. the venue plugin creates the venue's wiki page and adds its `a` tag), and show what
+they'll do next to the publish button. An app that publishes `nostr-post-submit` itself runs the hooks
+with `runBeforePublish` and adds their tags with `withTags` (both from `@nostr-post/web`):
+
+```js
+composer.addEventListener("nostr-post-submit", async (e) => {
+  const { bundle, formData, manifest } = e.detail;
+  const tags = await runBeforePublish(manifest, formData, await getPublicKey());
+  const post = withTags(bundle, tags); // then sign and publish post.events
+});
+```
 
 **Example:**
 
@@ -300,8 +320,8 @@ Create and publish Nostr posts.
 
   const composer = document.getElementById('composer');
 
-  composer.addEventListener('nostr-post-submit', (e) => {
-    console.log('Published:', e.detail.events);
+  composer.addEventListener('nostr-post-published', (e) => {
+    console.log('Published:', e.detail);
   });
 
   // Set manifest programmatically
@@ -322,15 +342,16 @@ Display a single Nostr event with automatic field rendering based on manifest.
 
 **Attributes:**
 
-- `show-tags` - Show event tags (boolean)
-- `show-kind` - Show event kind (boolean)
-- `show-timestamp` - Show creation timestamp (boolean)
+- `show-tags` (or `show-kind`) - Show a collapsed "All data" section with the event's kind, author,
+  ID, creation time, all tags and raw content (boolean). Fields are always shown in the manifest's
+  format; this adds the full view for whoever needs it
 - `editable` - Show an "Edit" button on the event (boolean, see [Inline Editing](#inline-editing))
 
 **Properties:**
 
 - `event: DisplayableEvent` - Event to display
 - `manifest: NostrPostManifest` - Manifest to guide field rendering (optional, auto-fetched from event via NIP-78 if not provided)
+- `messages: Partial<RawDataMessages>` - Override the "All data" section's text (e.g. translations)
 - `interactionEvents: DisplayableEvent[]` - Kind-1 update-comment replies that should be merged into the displayed event (see [Inline Editing](#inline-editing))
 
 **Field Visibility**
@@ -426,34 +447,40 @@ If the event includes a manifest reference (NIP-78 `a` tag), the view component 
 
 #### `<nostr-post-feed>`
 
-Display a feed of Nostr events.
+Display a feed of Nostr events. Filters go straight into the relay `REQ` (see
+[Filtering in the CDN docs](./packages/cdn/README.md#filtering-nostr-post-feed)).
 
 **Attributes:**
 
-- `kinds` - Comma-separated event kinds (e.g., "1,30023")
-- `authors` - JSON array of author pubkeys
-- `limit` - Maximum number of events to show
-- `tags` - JSON object for tag filters
+- `kinds` - JSON array of event kinds (e.g. `"[1, 30023]"`)
+- `authors` - JSON array of author pubkeys (hex)
+- `ids`, `since`, `until`, `limit`, `search` - Standard filter fields
+- `filter-tags` - Tag filters as a string (e.g. `"#g:u09tvw"`); `tagFilters` takes an object
+- `manifest-ref` - Address of a published manifest to render posts with
+- `show-tags` (or `show-kind`) - Show each post's collapsed "All data" section
+- `comments-enabled`, `reactions-enabled` - Standard kind 1 comments and reactions
+- `exclude-fields` - JSON array of field IDs to hide
+- `editable` - Edit button on the author's addressable posts
+
+**Properties:**
+
+- `relays: string[]` - Relays to read from. Default: when `authors` is set (up to 10), their NIP-65
+  relays plus the default relays, so posts published only to the authors' own relays are found;
+  otherwise the default relays
+- `manifest`, `commentManifest`, `reactionOptions`, `filters` (advanced: several REQ filters)
 
 **Events:**
 
-- `nostr-feed-loaded` - Fired when events are loaded
-  ```typescript
-  event.detail = { events: NostrEvent[] }
-  ```
+- `nostr-post-interaction-published` - A comment or reaction was published
 
 **Example:**
 
 ```html
-<!-- Feed from specific authors -->
-<nostr-post-feed
-  authors='["pubkey1", "pubkey2"]'
-  kinds="1"
-  limit="20"
-></nostr-post-feed>
+<!-- Feed from specific authors (read from their own relays) -->
+<nostr-post-feed authors='["pubkey1", "pubkey2"]' kinds="[1]" limit="20"></nostr-post-feed>
 
-<!-- Feed with hashtag filter -->
-<nostr-post-feed kinds="1" tags='{"t": ["nostr"]}' limit="10"></nostr-post-feed>
+<!-- Feed with a hashtag filter -->
+<nostr-post-feed kinds="[1]" filter-tags="#t:nostr" limit="10"></nostr-post-feed>
 ```
 
 ### Advanced Composer Features
@@ -827,7 +854,7 @@ import { useNostrPublish } from "@nostr-post/react";
 
 function CustomPublisher() {
   const { publish, isPublishing } = useNostrPublish({
-    relays: ["wss://relay.damus.io", "wss://relay.nostr.band"],
+    relays: ["wss://relay.damus.io", "wss://relay.primal.net"],
     onSuccess: () => alert("Published!"),
     onError: (err) => alert(`Error: ${err}`),
   });
@@ -1616,7 +1643,7 @@ export function ArticlePublisher({ pubkey }: { pubkey: string }) {
         kind: 30078,
         dTag: "article-manifest-v1",
       }}
-      relays={["wss://relay.damus.io", "wss://relay.nostr.band"]}
+      relays={["wss://relay.damus.io", "wss://relay.primal.net"]}
       onPublish={(events) => {
         console.log(`Published ${events.length} events`);
       }}
@@ -1860,7 +1887,7 @@ async function publishWithValidation(
     ```typescript
     const relays = [
       "wss://relay.damus.io",
-      "wss://relay.nostr.band",
+      "wss://relay.primal.net",
       "wss://nostr.wine",
     ];
     ```

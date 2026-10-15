@@ -8,14 +8,16 @@
  * Architecture: Pure functional approach using data transformation pipelines.
  */
 
+import { isFieldOptionValue, optionValue } from './enumOptions';
 import { validateManifest } from './manifest';
 import {
-  type ResolvedPostField,
   getActiveKinds,
-  getFieldTargets,
   getFieldsByKind,
+  getFieldTargets,
   isStructuredContentKind,
+  type ResolvedPostField,
 } from './manifestMappings';
+import { plainTextContent, refAddresses, structuredContentValue } from './postRoles';
 import type {
   EventBundle,
   FormData,
@@ -166,12 +168,12 @@ const validateFieldType = (field: PostField, value: unknown): Result<void, Valid
       break;
 
     case 'enum':
-      if (typeof value !== 'string' || !field.options?.includes(value)) {
+      if (!isFieldOptionValue(field, value)) {
         return {
           success: false,
           error: {
             field: field.id,
-            message: `Field "${field.id}" must be one of: ${field.options?.join(', ')}`,
+            message: `Field "${field.id}" must be one of: ${field.options?.map(optionValue).join(', ')}`,
             code: 'INVALID_ENUM_VALUE',
           },
         };
@@ -204,12 +206,13 @@ const validateFieldType = (field: PostField, value: unknown): Result<void, Valid
       break;
 
     case 'ref':
-      if (typeof value !== 'string' || value.trim() === '') {
+      // A reference string (e.g. an address), or picked entities (`{ dTag, resolvedPubkey }`)
+      if (typeof value === 'string' ? value.trim() === '' : refAddresses(value).length === 0) {
         return {
           success: false,
           error: {
             field: field.id,
-            message: `Field "${field.id}" must be a non-empty string reference`,
+            message: `Field "${field.id}" must be a reference`,
             code: 'INVALID_REF',
           },
         };
@@ -262,24 +265,15 @@ const buildContentForKind = (
     return isStructuredContentKind(kind) ? '{}' : '';
   }
 
-  if (!isStructuredContentKind(kind)) {
-    return contentFields
-      .map((field) => formData[field.id])
-      .filter((value) => value !== undefined)
-      .join('\n');
-  }
+  if (!isStructuredContentKind(kind)) return plainTextContent(contentFields, formData);
 
   const contentObj: Record<string, unknown> = {};
   for (const field of contentFields) {
     const value = formData[field.id];
     if (value === undefined) continue;
-
-    if (field.mapTo.path) {
-      setNestedValue(contentObj, field.mapTo.path, value);
-      continue;
-    }
-
-    contentObj[field.id] = value;
+    const stored = structuredContentValue(field, value);
+    if (field.mapTo.path) setNestedValue(contentObj, field.mapTo.path, stored);
+    else contentObj[field.id] = stored;
   }
 
   return JSON.stringify(contentObj);
@@ -308,7 +302,11 @@ const appendTagValue = (
   field: PostField
 ) => {
   const custom = config.tagSerializer?.(value, field);
-  const stringValue = custom !== undefined ? custom : serializeTagValue(value);
+  // A referenced entity without its plugin loaded: its address
+  const stringValue =
+    custom ??
+    (field.type === 'ref' ? refAddresses(value)[0] : undefined) ??
+    serializeTagValue(value);
   // Skip empty values — plugins can return '' from serializeValue to suppress emission
   if (!stringValue) return;
   tags.push([tagName, stringValue]);

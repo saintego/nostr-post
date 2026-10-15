@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "target": "ES2017",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
@@ -25,6 +25,7 @@
   },
   "include": [
     "next-env.d.ts",
+    "../../types/nostr-bridge.d.ts",
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",

@@ -9,7 +9,8 @@ import type { NostrPostManifest } from '@nostr-post/core/types';
 import { type FetchFilter, fetchEvents, fetchManifestByATag } from '@nostr-post/signer';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { NostrPostElement, baseStyles } from './base-component';
+import { baseStyles, NostrPostElement } from './base-component';
+import { renderEventActions, renderReactionSummary } from './feedActions';
 import {
   handleCommentPublished as handleCommentPublishedDetail,
   isReplyComposerOpen,
@@ -17,16 +18,17 @@ import {
 } from './feedComments';
 import { buildFetchFilters, buildInteractionLoadKey, mergeUniqueEventsById } from './feedData';
 import { publishReaction, summarizeReactionsWithAuthors } from './feedReactions';
+import { fetchFeedEvents } from './feedRelays';
 import {
+  buildReplyTarget,
+  buildThreads,
   DEFAULT_COMMENT_MANIFEST,
   DEFAULT_REACTION_OPTIONS,
   type ReplyTarget,
-  buildReplyTarget,
-  buildThreads,
 } from './feedStandard';
 import { feedStyle } from './feedStyle';
 import type { SignedEvent } from './signer';
-import { type NostrProfile, displayNameForPubkey, loadProfilesForEvents } from './userProfile';
+import { displayNameForPubkey, loadProfilesForEvents, type NostrProfile } from './userProfile';
 import './composer';
 import './view';
 
@@ -55,6 +57,7 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Number })
   limit?: number;
 
+  /** Relay URLs to read from. Default: the authors' NIP-65 relays (up to 10 authors) plus defaults */
   @property({ type: Array })
   relays?: string[];
 
@@ -64,10 +67,11 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: String, attribute: 'manifest-ref' })
   manifestRef?: string;
 
-  @property({ type: Boolean })
+  @property({ type: Boolean, attribute: 'show-kind' })
   showKind?: boolean;
 
-  @property({ type: Boolean })
+  /** Show each post's collapsed "All data" section */
+  @property({ type: Boolean, attribute: 'show-tags' })
   showTags?: boolean;
 
   @property({ type: Boolean, attribute: 'comments-enabled' })
@@ -87,6 +91,9 @@ export class NostrPostFeed extends NostrPostElement {
 
   @state()
   private events: SignedEvent[] = [];
+
+  /** Authors' NIP-65 relays plus defaults, used for reading when `relays` isn't set */
+  private authorRelays?: string[];
 
   @state()
   private isLoading = false;
@@ -201,6 +208,11 @@ export class NostrPostFeed extends NostrPostElement {
     );
   }
 
+  /** Relays to read from: explicit `relays`, else the authors' relays (see loadEvents) */
+  private get readRelays(): string[] | undefined {
+    return this.relays ?? this.authorRelays;
+  }
+
   private scheduleInteractionsAndProfiles(events: SignedEvent[]) {
     const nextKey = buildInteractionLoadKey(events);
     if (!nextKey || nextKey === this.interactionLoadKey) return;
@@ -226,7 +238,7 @@ export class NostrPostFeed extends NostrPostElement {
         this.isLoading = false;
         this.scheduleInteractionsAndProfiles(arr);
       };
-      const events = await fetchEvents(
+      const { events, readRelays } = await fetchFeedEvents(
         buildFetchFilters({
           filters: this.filters,
           ids: this.ids,
@@ -239,11 +251,11 @@ export class NostrPostFeed extends NostrPostElement {
           filterTags: this.filterTags,
           tagFilters: this.tagFilters,
         }),
-        this.relays,
-        { onUpdate }
+        { relays: this.relays, authors: this.authors, onUpdate }
       );
 
       // Ensure final deduped list
+      this.authorRelays = readRelays;
       this.events = events;
       this.isLoading = false;
 
@@ -281,7 +293,7 @@ export class NostrPostFeed extends NostrPostElement {
     if (filters.length === 0) return;
 
     try {
-      const fetched = await fetchEvents(filters, this.relays, { waitForAll: true });
+      const fetched = await fetchEvents(filters, this.readRelays, { waitForAll: true });
 
       this.interactionEvents = mergeUniqueEventsById(this.interactionEvents, fetched);
     } catch (error) {
@@ -296,7 +308,7 @@ export class NostrPostFeed extends NostrPostElement {
       const loadedProfiles = await loadProfilesForEvents(
         [...this.events, ...this.interactionEvents],
         this.profileMap,
-        this.relays
+        this.readRelays
       );
 
       // Merge progressively loaded profiles by pubkey.
@@ -360,39 +372,15 @@ export class NostrPostFeed extends NostrPostElement {
   }
 
   private renderEventActions(event: SignedEvent, rootEvent?: SignedEvent) {
-    return html`
-      <div class="event-actions">
-        ${
-          this.commentsEnabled
-            ? html`
-              <button
-                class="action-button"
-                type="button"
-                @click=${() => this.openReplyComposer(event, rootEvent)}
-              >
-                Comment
-              </button>
-            `
-            : ''
-        }
-        ${
-          this.reactionsEnabled
-            ? this.reactionOptions?.map(
-                (reaction) => html`
-                <button
-                  class="reaction-button"
-                  type="button"
-                  ?disabled=${this.reactionPendingKey === `${event.id}:${reaction}`}
-                  @click=${() => this.publishReaction(event, reaction)}
-                >
-                  ${reaction}
-                </button>
-              `
-              )
-            : ''
-        }
-      </div>
-    `;
+    return renderEventActions({
+      commentsEnabled: this.commentsEnabled,
+      reactionsEnabled: this.reactionsEnabled,
+      reactionOptions: this.reactionOptions,
+      pendingKey: this.reactionPendingKey,
+      eventId: event.id,
+      onComment: () => this.openReplyComposer(event, rootEvent),
+      onReact: (reaction) => this.publishReaction(event, reaction),
+    });
   }
 
   public async refresh(): Promise<void> {
@@ -445,29 +433,10 @@ export class NostrPostFeed extends NostrPostElement {
                 .interactionEvents=${thread.replies}
                 .excludeFields=${this.excludeFields}
                 ?editable=${this.editable}
-                ?showKind=${this.showKind}
-                ?showTags=${this.showTags}
+                .showKind=${this.showKind}
+                .showTags=${this.showTags}
               ></nostr-post-view>
-              ${
-                reactionSummaryWithAuthors.length > 0
-                  ? html`
-                    <div class="reaction-summary">
-                      ${reactionSummaryWithAuthors.map(
-                        ({ reaction, count, authors }) => html`
-                          <span class="reaction-chip" title=${authors.join(', ')}>
-                            ${reaction} ${count}
-                            ${
-                              authors.length > 0
-                                ? html`<span class="reaction-authors"> ${authors.join(', ')}</span>`
-                                : ''
-                            }
-                          </span>
-                        `
-                      )}
-                    </div>
-                  `
-                  : ''
-              }
+              ${renderReactionSummary(reactionSummaryWithAuthors)}
               ${this.renderEventActions(thread.root, thread.root)}
               ${
                 isReplyComposerVisible

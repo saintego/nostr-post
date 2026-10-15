@@ -16,9 +16,9 @@ call_lefthook()
   elif lefthook -h >/dev/null 2>&1
   then
     lefthook "$@"
-  elif /Users/stego/Projects/nostr-post/node_modules/.pnpm/lefthook-darwin-arm64@2.0.13/node_modules/lefthook-darwin-arm64/bin/lefthook -h >/dev/null 2>&1
+  elif /Users/stego/Projects/nostr-post/node_modules/.pnpm/lefthook-darwin-arm64@2.2.2/node_modules/lefthook-darwin-arm64/bin/lefthook -h >/dev/null 2>&1
   then
-    /Users/stego/Projects/nostr-post/node_modules/.pnpm/lefthook-darwin-arm64@2.0.13/node_modules/lefthook-darwin-arm64/bin/lefthook "$@"
+    /Users/stego/Projects/nostr-post/node_modules/.pnpm/lefthook-darwin-arm64@2.2.2/node_modules/lefthook-darwin-arm64/bin/lefthook "$@"
   else
     dir="$(git rev-parse --show-toplevel)"
     osArch=$(uname | tr '[:upper:]' '[:lower:]')
@@ -56,6 +56,9 @@ call_lefthook()
     elif uv run lefthook -h >/dev/null 2>&1
     then
       uv run lefthook "$@"
+    elif composer exec lefthook -- -h >/dev/null 2>&1
+    then
+      composer exec lefthook -- "$@"
     elif mise exec -- lefthook -h >/dev/null 2>&1
     then
       mise exec -- lefthook "$@"

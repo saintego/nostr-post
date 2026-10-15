@@ -129,6 +129,12 @@ export const composerStyle = css`
     color: var(--nl-text-secondary, #6b7280);
   }
 
+  .field-description {
+    margin: -0.25rem 0 0.375rem;
+    font-size: 0.8rem;
+    color: var(--nl-text-secondary, #6b7280);
+  }
+
   .hidden-field-errors {
     margin-bottom: 1rem;
     padding: 0.75rem;

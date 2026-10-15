@@ -37,21 +37,39 @@
     "./eventUpdates": {
       "types": "./dist/eventUpdates.d.ts",
       "import": "./dist/eventUpdates.js"
+    },
+    "./nip50": {
+      "types": "./dist/nip50.d.ts",
+      "import": "./dist/nip50.js"
+    },
+    "./postRoles": {
+      "types": "./dist/postRoles.d.ts",
+      "import": "./dist/postRoles.js"
+    },
+    "./enumOptions": {
+      "types": "./dist/enumOptions.d.ts",
+      "import": "./dist/enumOptions.js"
     }
   },
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
+    "test": "vitest run --dir src",
+    "test:watch": "vitest --dir src",
+    "test:ui": "vitest --ui --dir src",
     "clean": "rm -rf dist"
   },
-  "keywords": ["nostr", "manifest", "validation", "event-coordination", "headless"],
+  "keywords": [
+    "nostr",
+    "manifest",
+    "validation",
+    "event-coordination",
+    "headless"
+  ],
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "typescript": "^5.6.3"
+    "typescript": "^6.0.3"
   }
 }

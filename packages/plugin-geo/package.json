@@ -17,20 +17,27 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --dir src",
+    "test:watch": "vitest --dir src",
     "clean": "rm -rf dist"
   },
-  "keywords": ["nostr", "plugin", "geo", "location", "map", "leaflet"],
+  "keywords": [
+    "nostr",
+    "plugin",
+    "geo",
+    "location",
+    "map",
+    "leaflet"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
     "@nostr-post/plugins": "workspace:*",
     "leaflet": "^1.9.4",
-    "lit": "^3.2.1"
+    "lit": "^3.3.3"
   },
   "devDependencies": {
-    "@types/leaflet": "^1.9.12",
-    "typescript": "^5.6.3"
+    "@types/leaflet": "^1.9.22",
+    "typescript": "^6.0.3"
   }
 }

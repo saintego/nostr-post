@@ -9,32 +9,6 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <Script id="wnj-config" strategy="afterInteractive">
-          {`
-            window.wnjParams = {
-              accent: 'purple',
-              compactMode: false,
-              startHidden: false,
-              nostrConnectRelays: [
-                'wss://bucket.coracle.social',
-                'wss://relay.nsec.app',
-                'wss://nos.lol',
-                'wss://relay.primal.net'
-              ],
-              appMetadata: {
-                name: 'nostr-post Manifest Creator',
-                url: 'https://nostr-post.dev',
-              }
-            };
-          `}
-        </Script>
-        <Script
-          id="window-nostr-js"
-          src="https://cdn.jsdelivr.net/npm/window.nostr.js/dist/window.nostr.min.js"
-          strategy="afterInteractive"
-        />
-      </head>
       <body
         style={{
           margin: 0,
@@ -43,6 +17,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           color: '#111827',
         }}
       >
+        {/* nostr-shard-signer sign-in, loaded after hydration (it injects its widget into the DOM).
+            Without a client ID: Nostr-only sign-in (extension, NIP-46 bunker). Set
+            NEXT_PUBLIC_WEB3AUTH_CLIENT_ID to add Google/Apple/X: https://saintego.github.io/nostr-shard-signer/portal/ */}
+        <Script
+          src="https://saintego.github.io/nostr-shard-signer/nostr-bridge.js"
+          data-client-id={process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID ?? ''}
+          strategy="afterInteractive"
+        />
         {children}
       </body>
     </html>

@@ -11,12 +11,18 @@
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
-import { LitElement, css, html, nothing } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
-import { type VenueData, googleMapsPlaceUrl, osmUrl } from '../core';
+import { type EntityManifestRef, getEntityManifest, resolveEntityManifest } from '@nostr-post/wiki';
+import { css, html, LitElement, nothing } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
+import { googleMapsPlaceUrl, osmUrl, type VenueData } from '../core';
+import { googleEmbedUrl } from '../googleEmbed';
+import { googleMapsCidUrl } from '../googleLink';
+import { loadVenueFromPage, needsPage } from '../venuePage';
+import { DEFAULT_VENUE_VIEW_MESSAGES, type VenueViewMessages } from './venueMessages';
 
-// Ensure <np-geo-view> is defined
+// Ensure <np-geo-view> and <nostr-wiki-view> are defined
 import '@nostr-post/plugin-geo/web';
+import '@nostr-post/wiki/web';
 
 @customElement('np-venue-view')
 export class NpVenueView extends LitElement {
@@ -33,6 +39,25 @@ export class NpVenueView extends LitElement {
       align-items: center;
       gap: 0.375rem;
       margin-bottom: 0.125rem;
+    }
+
+    .venue-wiki {
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+    }
+
+    .venue-wiki summary {
+      cursor: pointer;
+      color: #166534;
+      font-weight: 500;
+      margin-bottom: 0.375rem;
+    }
+
+    .google-card {
+      width: 100%;
+      height: 18rem;
+      border: 0;
+      border-radius: 0.375rem;
     }
 
     .venue-links {
@@ -69,6 +94,31 @@ export class NpVenueView extends LitElement {
   @property({ type: Object })
   field: PostField | null = null;
 
+  /** Overrides for the user-facing text */
+  @property({ attribute: false })
+  messages?: Partial<VenueViewMessages>;
+
+  @state() private wikiOpen = false;
+
+  private get m(): VenueViewMessages {
+    return { ...DEFAULT_VENUE_VIEW_MESSAGES, ...this.messages };
+  }
+
+  /** The place of a link-only venue, loaded from its venue page */
+  @state() private _fromPage?: VenueData;
+  private _loadingFor?: unknown;
+
+  override willUpdate(changed: Map<string, unknown>): void {
+    if (!changed.has('value')) return;
+    this._fromPage = undefined;
+    const value = this.value;
+    if (!needsPage(value) || !this.field || value === this._loadingFor) return;
+    this._loadingFor = value;
+    void loadVenueFromPage(value, this.field).then((loaded) => {
+      if (this.value === value && loaded.geohash) this._fromPage = loaded;
+    });
+  }
+
   render() {
     if (!this.value) {
       return html`<span>No location</span>`;
@@ -79,7 +129,8 @@ export class NpVenueView extends LitElement {
       return html`<np-geo-view .value=${this.value} .field=${this.field}></np-geo-view>`;
     }
 
-    const v = this.value as VenueData;
+    // A link-only venue: its place comes from its page, once loaded
+    const v = this._fromPage ?? (this.value as VenueData);
 
     return html`
       ${v.name ? html`<div class="venue-name">📍 ${v.name}</div>` : nothing}
@@ -89,19 +140,75 @@ export class NpVenueView extends LitElement {
           : nothing
       }
 
-      <np-geo-view .value=${v.geohash} .field=${this.field}></np-geo-view>
+      ${
+        // A country has no published area to show
+        v.geohash
+          ? html`<np-geo-view .value=${v.geohash} .field=${this.field}></np-geo-view>`
+          : nothing
+      }
 
       ${this.renderVenueLinks(v)}
+      ${this.renderWikiPage(v)}
+      ${this._renderGoogleCard(v)}
+    `;
+  }
+
+  /** Google's place card (Maps Embed API, the app's key); the iframe loads only when opened */
+  @state() private _googleOpen = false;
+
+  private _renderGoogleCard(v: VenueData) {
+    const url = googleEmbedUrl(v);
+    if (!url) return nothing;
+    return html`
+      <details class="venue-wiki" @toggle=${(e: Event) => {
+        this._googleOpen = (e.target as HTMLDetailsElement).open;
+      }}>
+        <summary>${this.m.googleCard}</summary>
+        ${
+          this._googleOpen
+            ? html`<iframe class="google-card" src=${url} title=${this.m.googleCard} loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade" allowfullscreen></iframe>`
+            : nothing
+        }
+      </details>
+    `;
+  }
+
+  /** The venue's wiki page, loaded only when opened (feeds show many posts) */
+  private renderWikiPage(v: VenueData) {
+    if (!v.wikiEntity) return nothing;
+    const ref = this.field?.metadata?.wikiEntity as EntityManifestRef | undefined;
+    const known = getEntityManifest(ref);
+    // A published manifest's address: fetch it once; unknown manifests show the article text
+    if (!known && ref && this.wikiOpen) {
+      void resolveEntityManifest(ref).then((manifest) => manifest && this.requestUpdate());
+    }
+    return html`
+      <details
+        class="venue-wiki"
+        @toggle=${(e: Event) => {
+          this.wikiOpen = (e.target as HTMLDetailsElement).open;
+        }}
+      >
+        <summary>${this.m.wikiPage}</summary>
+        ${
+          this.wikiOpen
+            ? html`<nostr-wiki-view .manifest=${known} .entityId=${v.wikiEntity.dTag}></nostr-wiki-view>`
+            : nothing
+        }
+      </details>
     `;
   }
 
   private renderVenueLinks(v: VenueData) {
     const osmType = v.osmType;
     const osmId = v.osmId;
-    const googlePlaceId = v.googlePlaceId;
+    // A Places ID, else the CID of a pasted Google Maps link
+    const googleUrl = v.googlePlaceId
+      ? googleMapsPlaceUrl(v.googlePlaceId)
+      : v.googleCid && googleMapsCidUrl(v.googleCid);
     const hasOsmLink = !!(osmType && osmId);
-    const hasGooglePlaceLink = !!googlePlaceId;
-    if (!hasOsmLink && !hasGooglePlaceLink) return nothing;
+    if (!hasOsmLink && !googleUrl) return nothing;
 
     return html`
       <div class="venue-links">
@@ -112,18 +219,18 @@ export class NpVenueView extends LitElement {
               href="${osmUrl(osmType, osmId)}"
               target="_blank"
               rel="noopener"
-              >View on OSM ↗</a
+              >${this.m.viewOnOsm}</a
             >`
             : nothing
         }
         ${
-          hasGooglePlaceLink
+          googleUrl
             ? html`<a
               class="venue-link"
-              href="${googleMapsPlaceUrl(googlePlaceId)}"
+              href="${googleUrl}"
               target="_blank"
               rel="noopener"
-              >Google Maps ↗</a
+              >${this.m.googleMaps}</a
             >`
             : nothing
         }

@@ -5,17 +5,19 @@
  */
 
 export {
-  type SignedEvent,
+  DEFAULT_RELAYS,
+  type FetchFilter,
+  fetchEvents,
+  fetchEventsFromRelay,
+  fetchUserRelays,
+  getPublicKey,
+  getPublishRelays,
+  hasNostrSigner,
   type Nip07Provider,
   type PublishResults,
-  type FetchFilter,
-  DEFAULT_RELAYS,
-  signEvent,
-  getPublicKey,
-  hasNostrSigner,
   publishToRelay,
   publishToRelays,
+  type SignedEvent,
   signAndPublish,
-  fetchEventsFromRelay,
-  fetchEvents,
+  signEvent,
 } from '@nostr-post/signer';

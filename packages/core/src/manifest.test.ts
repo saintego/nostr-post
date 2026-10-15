@@ -3,6 +3,8 @@
  */
 import { describe, expect, it } from 'vitest';
 import {
+  fieldDescription,
+  fieldLabel,
   findFieldById,
   getFieldsByKind,
   getRequiredFields,
@@ -967,5 +969,31 @@ describe('resolveManifest', () => {
     const resolved = resolveManifest(child, parent);
     const result = validateManifest(resolved);
     expect(result.success).toBe(true);
+  });
+});
+
+describe('field label and description', () => {
+  const field = {
+    id: 'abv',
+    type: 'number' as const,
+    uiPlugin: 'text',
+    mapTo: { kind: 1, target: 'tag' as const, tagName: 'abv' },
+  };
+
+  it('falls back to the id and ignores empty descriptions', () => {
+    expect(fieldLabel(field)).toBe('abv');
+    expect(fieldDescription(field)).toBeUndefined();
+    expect(fieldDescription({ ...field, metadata: { description: '  ' } })).toBeUndefined();
+  });
+
+  it('reads metadata.label and metadata.description', () => {
+    const described = { ...field, metadata: { label: 'ABV %', description: 'Alcohol by volume' } };
+    expect(fieldLabel(described)).toBe('ABV %');
+    expect(fieldDescription(described)).toBe('Alcohol by volume');
+  });
+
+  it('rejects a description that is not text', () => {
+    const result = validatePostField({ ...field, metadata: { description: 42 as never } });
+    expect(result.success).toBe(false);
   });
 });

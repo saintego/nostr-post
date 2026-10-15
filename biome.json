@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.5.15/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -8,19 +8,16 @@
   },
   "files": {
     "ignoreUnknown": false,
-    "ignore": [
-      "node_modules",
-      "dist",
-      "build",
-      "coverage",
-      ".next",
-      "*.config.js",
-      "packages/*/dist",
-      "examples/*/dist",
-      "examples/*/.next",
-      "tools/*/dist",
-      "tools/*/.next",
-      "tools/*/out"
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/dist",
+      "!**/build",
+      "!**/coverage",
+      "!**/.next",
+      "!**/out",
+      "!**/*.config.js",
+      "!**/nostr-bridge.d.ts"
     ]
   },
   "formatter": {
@@ -32,7 +29,7 @@
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true,
+      "preset": "recommended",
       "complexity": {
         "noExcessiveCognitiveComplexity": {
           "level": "warn",
@@ -55,7 +52,28 @@
       "arrowParentheses": "always"
     }
   },
-  "organizeImports": {
-    "enabled": true
-  }
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "packages/*/src/index.ts",
+        "packages/*/src/*/index.ts",
+        "packages/*/src/web.ts",
+        "packages/*/src/core.ts"
+      ],
+      "assist": {
+        "actions": {
+          "source": {
+            "organizeImports": "off"
+          }
+        }
+      }
+    }
+  ]
 }

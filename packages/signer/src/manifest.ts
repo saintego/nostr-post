@@ -1,11 +1,11 @@
 import { resolveManifest } from '@nostr-post/core/manifest';
+import type { StoredManifest } from '@nostr-post/core/nip78';
 import {
+  eventToManifest,
   MANIFEST_D_TAG_PREFIX,
   NIP78_KIND,
-  eventToManifest,
   parseManifestATag,
 } from '@nostr-post/core/nip78';
-import type { StoredManifest } from '@nostr-post/core/nip78';
 import { fetchEvents } from './fetch';
 
 /**

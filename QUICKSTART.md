@@ -56,7 +56,7 @@ Plugins register when imported. Add them at the top of your script:
     <nostr-post-composer></nostr-post-composer>
 
     <!-- Feed for viewing posts -->
-    <nostr-post-feed kinds="1" limit="20"></nostr-post-feed>
+    <nostr-post-feed kinds="[1]" limit="20"></nostr-post-feed>
 
     <script>
       const composer = document.querySelector("nostr-post-composer");

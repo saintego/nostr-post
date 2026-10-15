@@ -13,176 +13,30 @@
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
-import { LitElement, css, html, nothing } from 'lit';
+import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import {
-  type NominatimResult,
-  type VenueData,
-  type VenuePluginConfig,
   lookupNominatimByOsmId,
+  type NominatimResult,
   nominatimToVenue,
   osmUrl,
   searchNominatim,
+  type VenueData,
+  type VenuePluginConfig,
 } from '../core';
 
 // Ensure the geo input web component is registered
 import '@nostr-post/plugin-geo/web';
+import { type GoogleMapsLink, parseGoogleMapsUrl } from '../googleLink';
+import { googleLinkFocus, searchGoogleLink, venueAtPoint } from '../googleSearch';
+import { resultLevel, type VenueLevel, venueLevels } from '../levels';
+import { loadVenueFromPage, needsPage } from '../venuePage';
+import { venueInputStyles } from './inputStyles';
+import { DEFAULT_VENUE_INPUT_MESSAGES, type VenueInputMessages } from './venueMessages';
 
 @customElement('np-venue-input')
 export class NpVenueInput extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-    }
-
-    .container {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
-
-    /* Venue search */
-    .search-row {
-      display: flex;
-      gap: 0.5rem;
-    }
-
-    .search-input {
-      flex: 1;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      font-size: 0.875rem;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-
-    .search-input:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
-    }
-
-    .btn {
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
-      background: #f9fafb;
-      cursor: pointer;
-      font-size: 0.875rem;
-      white-space: nowrap;
-    }
-
-    .btn:hover {
-      background: #f3f4f6;
-    }
-
-    .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    /* Results */
-    .results {
-      border: 1px solid #e5e7eb;
-      border-radius: 6px;
-      max-height: 200px;
-      overflow-y: auto;
-      background: white;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .result-item {
-      padding: 0.5rem 0.75rem;
-      cursor: pointer;
-      font-size: 0.8125rem;
-      border-bottom: 1px solid #f3f4f6;
-      line-height: 1.4;
-    }
-
-    .result-item:last-child {
-      border-bottom: none;
-    }
-
-    .result-item:hover {
-      background: #f0f0ff;
-    }
-
-    .result-type {
-      font-size: 0.75rem;
-      color: #9ca3af;
-    }
-
-    /* Venue card */
-    .venue-card {
-      display: flex;
-      flex-direction: column;
-      gap: 0.25rem;
-      padding: 0.625rem 0.75rem;
-      background: #f0fdf4;
-      border: 1px solid #bbf7d0;
-      border-radius: 8px;
-    }
-
-    .venue-name {
-      font-weight: 600;
-      font-size: 0.9375rem;
-      color: #166534;
-    }
-
-    .venue-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      font-size: 0.8125rem;
-      color: #6b7280;
-    }
-
-    .venue-meta a {
-      color: #6366f1;
-      text-decoration: none;
-    }
-
-    .venue-meta a:hover {
-      text-decoration: underline;
-    }
-
-    .clear-btn {
-      background: none;
-      border: none;
-      color: #ef4444;
-      cursor: pointer;
-      font-size: 0.8125rem;
-      padding: 0;
-      text-decoration: underline;
-      align-self: flex-start;
-    }
-
-    .loading {
-      font-size: 0.8125rem;
-      color: #6b7280;
-      padding: 0.25rem 0;
-    }
-
-    .error-message {
-      padding: 0.625rem 0.75rem;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      border-radius: 6px;
-      color: #991b1b;
-      font-size: 0.8125rem;
-      line-height: 1.4;
-    }
-
-    .resolving {
-      padding: 0.625rem 0.75rem;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      border-radius: 6px;
-      color: #1e40af;
-      font-size: 0.8125rem;
-      line-height: 1.4;
-    }
-  `;
+  static styles = venueInputStyles;
 
   @property({ type: Object })
   value: VenueData | null = null;
@@ -190,12 +44,31 @@ export class NpVenueInput extends LitElement {
   @property({ type: Object })
   field: PostField | null = null;
 
+  /** Only the OSM search, no map or coordinates (the venue list adds venues with it) */
+  @property({ attribute: false })
+  searchOnly = false;
+
+  /** Overrides of the default English text */
+  @property({ attribute: false })
+  messages?: Partial<VenueInputMessages>;
+
+  private get m(): VenueInputMessages {
+    return { ...DEFAULT_VENUE_INPUT_MESSAGES, ...this.messages };
+  }
+
+  private get levels(): VenueLevel[] {
+    return venueLevels(this.config.levels);
+  }
+
   @state() private searchQuery = '';
   @state() private searchResults: NominatimResult[] = [];
   @state() private isSearching = false;
   @state() private showResults = false;
   @state() private isResolving = false;
   @state() private resolutionError: string | null = null;
+  /** A pasted Google Maps link: its CID goes with the picked place */
+  @state() private _googleLink?: GoogleMapsLink;
+  @state() private _googleNote?: string;
 
   private searchTimeout: ReturnType<typeof setTimeout> | null = null;
   private resolvedOsmId: string | null = null; // Track resolved OSM IDs to avoid re-resolving
@@ -244,7 +117,15 @@ export class NpVenueInput extends LitElement {
   override async updated(changedProperties: Map<string, unknown>) {
     super.updated(changedProperties);
 
-    if (changedProperties.has('value') && this.value) {
+    // Editing a link-only venue: only its page is known; load the place from it
+    if (changedProperties.has('value') && needsPage(this.value) && this.field) {
+      const linked = this.value;
+      const loaded = await loadVenueFromPage(linked, this.field);
+      if (this.value === linked && loaded.geohash) this.emitValue(loaded);
+      return;
+    }
+
+    if (changedProperties.has('value') && this.value && !this.config.multiple) {
       const { osmType, osmId, geohash } = this.value;
       const currentOsmId = osmId ? `${osmType}:${osmId}` : null;
 
@@ -288,16 +169,32 @@ export class NpVenueInput extends LitElement {
 
   private async doSearch() {
     if (this.searchQuery.length < 3) return;
+    const link = parseGoogleMapsUrl(this.searchQuery);
+    if (link) return this._searchGoogleLink(link);
     this.isSearching = true;
     this.showResults = true;
     try {
-      this.searchResults = await searchNominatim(this.searchQuery);
+      this.searchResults = await searchNominatim(this.searchQuery, this.levels);
     } catch (err) {
       console.error('Nominatim search failed:', err);
       this.searchResults = [];
     } finally {
       this.isSearching = false;
     }
+  }
+
+  /** A pasted Google Maps link: the same place on OSM, else a note to set it on the map */
+  private async _searchGoogleLink(link: GoogleMapsLink) {
+    this._googleLink = link.short ? undefined : link;
+    this.showResults = true;
+    this.isSearching = true;
+    this.searchResults = link.short
+      ? []
+      : await searchGoogleLink(link, this.levels).catch(() => []);
+    this.isSearching = false;
+    if (link.short) this._googleNote = this.m.googleShortLink;
+    else
+      this._googleNote = this.searchResults.length ? undefined : this.m.googleNotOnOsm(link.name);
   }
 
   private onSearchKeydown(e: KeyboardEvent) {
@@ -312,7 +209,9 @@ export class NpVenueInput extends LitElement {
   private selectResult(result: NominatimResult) {
     this.resolvedOsmId = null; // Reset resolution tracking since we have complete data
     const venue = nominatimToVenue(result, this.precision);
-    this.emitValue(venue);
+    this.emitValue({ ...venue, googleCid: this._googleLink?.cid });
+    this._googleLink = undefined;
+    this._googleNote = undefined;
     this.searchQuery = '';
     this.showResults = false;
     this.searchResults = [];
@@ -348,6 +247,14 @@ export class NpVenueInput extends LitElement {
 
     // Map click → new geohash without venue metadata
     this.resolvedOsmId = null;
+    const link = this._googleLink;
+    if (link) {
+      // A pasted Google place OSM doesn't have: the author's point, OSM's address there
+      this._googleLink = undefined;
+      this._googleNote = undefined;
+      void venueAtPoint(link, geohash, this.precision).then((venue) => this.emitValue(venue));
+      return;
+    }
     this.emitValue({ geohash, lat: 0, lon: 0 });
   }
 
@@ -407,6 +314,15 @@ export class NpVenueInput extends LitElement {
   // ── Render ─────────────────────────────────────────────────────
 
   render() {
+    // Several venues (`metadata.multiple`): the list adds them through this input's search
+    if (this.config.multiple) {
+      return html`<np-venue-list .value=${this.value ?? []} .field=${this.field}></np-venue-list>`;
+    }
+    if (this.searchOnly) {
+      // A pasted Google place OSM doesn't have is set on the map, also in a list
+      const map = this._googleLink && this._googleNote ? this._renderMap() : nothing;
+      return html`<div class="container">${this.renderVenueSearch()} ${map}</div>`;
+    }
     const hasVenueMeta = this.value?.name || this.value?.osmId;
 
     return html`
@@ -427,14 +343,20 @@ export class NpVenueInput extends LitElement {
         
         ${hasVenueMeta ? this.renderVenueCard() : nothing}
 
-        <np-geo-input
-          .value=${this.value?.geohash ?? null}
-          .field=${this.field}
-          .hideSearch=${true}
-          @np-value-changed=${this.onGeoValueChanged}
-        ></np-geo-input>
+        ${this._renderMap()}
       </div>
     `;
+  }
+
+  /** The map: the venue's point, or zoomed to a pasted Google link's point for the author to click */
+  private _renderMap() {
+    return html`<np-geo-input
+      .value=${this.value?.geohash ?? null}
+      .focusPoint=${googleLinkFocus(this._googleLink)}
+      .field=${this.field}
+      .hideSearch=${true}
+      @np-value-changed=${this.onGeoValueChanged}
+    ></np-geo-input>`;
   }
 
   private renderVenueSearch() {
@@ -443,7 +365,7 @@ export class NpVenueInput extends LitElement {
         <input
           class="search-input"
           type="text"
-          placeholder="Search for a venue (OSM)…"
+          placeholder=${this.m.searchPlaceholder(this.levels)}
           .value=${this.searchQuery}
           @input=${this.onSearchInput}
           @keydown=${this.onSearchKeydown}
@@ -456,11 +378,12 @@ export class NpVenueInput extends LitElement {
           @click=${() => this.doSearch()}
           ?disabled=${this.isSearching}
         >
-          ${this.isSearching ? 'Searching…' : '🔍 Search'}
+          ${this.isSearching ? this.m.searching : this.m.search}
         </button>
       </div>
 
-      ${this.isSearching ? html`<div class="loading">Searching…</div>` : nothing}
+      ${this.isSearching ? html`<div class="loading">${this.m.searching}</div>` : nothing}
+      ${this._googleNote ? html`<div class="loading">${this._googleNote}</div>` : nothing}
       ${
         this.showResults && this.searchResults.length > 0
           ? html`
@@ -470,7 +393,8 @@ export class NpVenueInput extends LitElement {
                   <div class="result-item" @click=${() => this.selectResult(r)}>
                     ${r.display_name}
                     <div class="result-type">
-                      ${r.class}/${r.type} · ${r.osm_type}:${r.osm_id}
+                      ${this.levels.length > 1 ? `${this.m.levelLabel[resultLevel(r)]} · ` : ''}${r.class}/${r.type} ·
+                      ${r.osm_type}:${r.osm_id}
                     </div>
                   </div>
                 `

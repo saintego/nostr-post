@@ -1,5 +1,5 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { type TemplateResult, html } from 'lit';
+import { html, type TemplateResult } from 'lit';
 import type { ReplyTarget } from './feedStandard';
 import { mergeUniqueEvents } from './feedStandard';
 import type { SignedEvent } from './signer';

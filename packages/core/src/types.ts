@@ -9,13 +9,18 @@
  * Defines where and how a field's data is stored in the Nostr event ecosystem.
  *
  * @property kind - The Nostr event kind (e.g., 1 for notes, 30078 for NIP-78 app data)
- * @property target - Whether data goes in 'content' field or as a 'tag'
- * @property tagName - Required when target is 'tag' (e.g., "r" for rating, "t" for topic)
+ * @property target - Where the data lives:
+ *   - 'tag'     → Nostr event tags array (relay-filterable, e.g. 't', 'a', 'i', 'title')
+ *   - 'content' → plain prose in the event content string
+ *   - 'table'   → a row in a structured Djot table inside content (wiki kind:30818 only;
+ *                 **not handled by the core coordinator** — use `@nostr-post/wiki`'s
+ *                 `manifestToWikiEvent` for this target)
+ * @property tagName - Required when target is 'tag' (e.g., "t" for topic, "a" for reference)
  * @property path - JSON path for structured data in NIP-78 events (e.g., "venue.address.city")
  */
 export type NostrTarget = {
   kind: number;
-  target: 'content' | 'tag';
+  target: 'content' | 'tag' | 'table';
   tagName?: string;
   path?: string;
 };
@@ -59,6 +64,43 @@ export interface FieldVisibility {
   view?: 'visible' | 'hidden';
 }
 
+/**
+ * A field's descriptive metadata. Plugins add their own keys (e.g. the venue
+ * field's `wikiEntity`, the picker's `entityManifest`); see MANIFEST.md.
+ */
+export interface FieldMetadata {
+  /** Label shown in composers and views (default: the field id) */
+  label?: string;
+  /** Example input shown in an empty input */
+  placeholder?: string;
+  /**
+   * What the field means and where its value comes from, for people filling in
+   * or reading it: help text in composers, a tooltip on labels in views
+   */
+  description?: string;
+  [key: string]: unknown;
+}
+
+/**
+ * One allowed value of an `enum` field, with display text. A plain string is
+ * an option whose value and label are the same. Further string keys are data
+ * that isn't published, e.g. a code in an external list (`code: "21A"`);
+ * wiki link templates read them as `{fieldId.key}`.
+ */
+export interface EnumOption {
+  /** Published value, e.g. `american-ipa` */
+  value: string;
+  /** Shown in selects and views (default: the value) */
+  label?: string;
+  /** What the option means: shown as a tooltip */
+  description?: string;
+  /** Heading the option is listed under, e.g. a style category */
+  group?: string;
+  [key: string]: string | undefined;
+}
+
+export type FieldOption = string | EnumOption;
+
 export interface PostField {
   id: string;
   type: FieldType;
@@ -67,8 +109,9 @@ export interface PostField {
   /** How to apply multiple mappings when more than one active kind matches. Defaults to 'first-active'. */
   mapBehavior?: FieldMapBehavior;
   required?: boolean;
-  options?: string[];
-  metadata?: Record<string, unknown>;
+  /** Allowed values of an `enum` field */
+  options?: FieldOption[];
+  metadata?: FieldMetadata;
   /** Default value to prefill in the composer. For hashtags: string[], for geo: geohash, etc. */
   defaultValue?: unknown;
   /** Controls field visibility in the composer and viewer. */
