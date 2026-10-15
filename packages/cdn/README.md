@@ -120,6 +120,11 @@ The bundle re-exports utilities for advanced usage:
   one that wasn't found is tried again next time. `getCachedProfile(pubkey)` reads the cache.
   The view and feed use them for author and mention names
 
+**Composer text**
+
+- `DEFAULT_COMPOSER_MESSAGES`: the composer's submit-area text (button, running step, errors); set
+  `composer.messages = { submit: '…' }` to override any of it
+
 **Publishing a submitted post yourself** (composer without `auto-publish`)
 
 - `runPublishHooks(manifest, formData, pubkey)`: like `runBeforePublish`, plus the form data with each

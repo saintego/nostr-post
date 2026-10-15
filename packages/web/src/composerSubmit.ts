@@ -5,7 +5,7 @@
 
 import { coordinateEvents } from '@nostr-post/core/coordinator';
 import { prepareFormData } from '@nostr-post/core/enrichment';
-import { validateManifest } from '@nostr-post/core/manifest';
+import { fieldLabel, validateManifest } from '@nostr-post/core/manifest';
 import { getActiveKinds } from '@nostr-post/core/manifestMappings';
 import {
   type EventBundle,
@@ -18,6 +18,7 @@ import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html, type TemplateResult } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { parseExtraTags } from './composerForm';
+import type { ComposerMessages } from './composerMessages';
 import { applyReplyTargetToBundle } from './composerReply';
 import { getUserRelays, type SignedEvent, signAndPublish } from './signer';
 
@@ -218,22 +219,66 @@ export const signAndPublishBundle = async (
   return signedEvents;
 };
 
-export const renderSubmitButton = (isSubmitting: boolean, isResolvingManifestRef: boolean) => html`
-  <div class="composer-actions">
-    <button
-      type="submit"
-      class="primary"
-      ?disabled=${isSubmitting || isResolvingManifestRef}
-    >
-      ${
-        isSubmitting
-          ? 'Creating...'
-          : isResolvingManifestRef
-            ? 'Loading Manifest...'
-            : 'Create Post'
+/** Rejects with `message` when `promise` hasn't settled after `ms` */
+export const withTimeout = <T>(promise: Promise<T>, ms: number, message: string): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
       }
-    </button>
-  </div>
-`;
+    );
+  });
+
+/** Labels of the fields with a validation error, in manifest order */
+export const invalidFieldLabels = (
+  manifest: NostrPostManifest,
+  errors: Record<string, string>
+): string[] => manifest.fields.filter((field) => errors[field.id]).map(fieldLabel);
+
+export interface SubmitAreaState {
+  isSubmitting: boolean;
+  isResolvingManifestRef: boolean;
+  /** What's running while submitting, e.g. messages.stepHooks */
+  step?: string;
+  /** Why the last submit failed */
+  error?: string;
+  /** Labels of fields that failed validation */
+  invalidFields: string[];
+  messages: ComposerMessages;
+}
+
+/** The submit button with the running step, the last error and invalid fields next to it */
+export const renderSubmitArea = (state: SubmitAreaState) => {
+  const m = state.messages;
+  let label = m.submit;
+  if (state.isSubmitting) label = m.submitting;
+  else if (state.isResolvingManifestRef) label = m.loadingManifest;
+  return html`
+    <div class="composer-actions">
+      <button
+        type="submit"
+        class="primary"
+        ?disabled=${state.isSubmitting || state.isResolvingManifestRef}
+      >
+        ${label}
+      </button>
+      ${state.isSubmitting && state.step ? html`<span class="submit-step">${state.step}</span>` : ''}
+    </div>
+    ${
+      state.invalidFields.length > 0
+        ? html`<div class="submit-error" role="alert">
+            ${m.invalidFields} ${state.invalidFields.join(', ')}
+          </div>`
+        : ''
+    }
+    ${state.error ? html`<div class="submit-error" role="alert">${state.error}</div>` : ''}
+  `;
+};
 
 export { STANDARD_KIND1_POST_MANIFEST };

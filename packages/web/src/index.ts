@@ -6,6 +6,7 @@
 
 // Components
 export { NostrPostComposer } from './composer';
+export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from './composerMessages';
 export { NostrPostView } from './view';
 export { NostrPostFeed } from './feed';
 export { NostrPostElement } from './base-component';

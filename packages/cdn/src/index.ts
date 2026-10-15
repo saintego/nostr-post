@@ -97,6 +97,9 @@ export {
 // Publishing a submitted post yourself (composer without auto-publish): plugin hooks
 export { runBeforePublish, runPublishHooks, withTags } from '@nostr-post/web';
 
+// Composer text (submit button, steps, errors) for overriding via its `messages` property
+export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from '@nostr-post/web';
+
 // Wiki (NIP-54 kind:30818)
 export {
   WIKI_KIND,

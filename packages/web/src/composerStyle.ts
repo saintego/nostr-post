@@ -35,8 +35,30 @@ export const composerStyle = css`
 
   .composer-actions {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
     margin-top: 1rem;
+  }
+
+  .submit-step {
+    font-size: 0.875rem;
+    color: var(--nl-text-secondary, #6b7280);
+  }
+
+  .submit-error {
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #fef2f2;
+    border: 1px solid #fca5a5;
+    border-radius: 8px;
+    color: #991b1b;
+    font-size: 0.875rem;
+  }
+
+  :host-context(.dark) .submit-error {
+    background: #450a0a;
+    border-color: #b91c1c;
+    color: #fecaca;
   }
 
   .reply-target-panel {

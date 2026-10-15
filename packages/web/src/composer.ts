@@ -18,17 +18,24 @@ import { renderFieldList } from './composerFieldList';
 import { buildInitialFormData, isFieldReadonly, renderHiddenFieldErrors } from './composerForm';
 import { renderPublishFormatPicker } from './composerFormatPicker';
 import { renderComposerHeader } from './composerHeader';
+import { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from './composerMessages';
 import { hasReplyTarget, renderReplyTargetPanel, updateReplyTargetValue } from './composerReply';
 import { composerStyle } from './composerStyle';
 import {
+  invalidFieldLabels,
   type NostrPostSubmitDetail,
   renderPublishSummaries,
-  renderSubmitButton,
+  renderSubmitArea,
   signAndPublishBundle,
   type ValidationResult,
   validateAndCoordinate,
   withTags,
+  withTimeout,
 } from './composerSubmit';
+
+/** Publish hooks (e.g. a venue's wiki page) taking longer than this fail the submit */
+const PUBLISH_HOOKS_TIMEOUT_MS = 90_000;
+
 import { ensurePluginsForManifest } from './pluginAutoLoad';
 import { fetchManifestByATag, getPublicKey, type SignedEvent } from './signer';
 
@@ -38,6 +45,10 @@ export class NostrPostComposer extends NostrPostElement {
 
   @property({ type: Object })
   manifest?: NostrPostManifest;
+
+  /** Overrides for the submit area's text (e.g. translations) */
+  @property({ attribute: false })
+  messages?: Partial<ComposerMessages>;
 
   @property({ type: String })
   pubkey?: string;
@@ -127,6 +138,18 @@ export class NostrPostComposer extends NostrPostElement {
 
   @state()
   private successMessage!: string;
+
+  /** What the running submit is doing, shown next to the button */
+  @state()
+  private _submitStep?: string;
+
+  /** Why the last submit failed, shown below the button */
+  @state()
+  private _submitError?: string;
+
+  private get _m(): ComposerMessages {
+    return { ...DEFAULT_COMPOSER_MESSAGES, ...this.messages };
+  }
 
   @state()
   private _expandedFields: Set<string> = new Set();
@@ -267,12 +290,21 @@ export class NostrPostComposer extends NostrPostElement {
     this.dispatchFormChange();
   }
 
+  /** Shown below the submit button, and dispatched as `nostr-post-error` */
+  protected override showError(message: string): void {
+    this._submitError = message;
+    super.showError(message);
+  }
+
   private applyValidationError(error: ValidationResult) {
     if (!error) return;
     if (error.type === 'manifest') {
       this.showError(error.message);
     } else {
       this.errors = error.errors;
+      void this.updateComplete.then(() =>
+        this.shadowRoot?.querySelector('.field-error')?.scrollIntoView({ block: 'center' })
+      );
     }
   }
 
@@ -298,6 +330,7 @@ export class NostrPostComposer extends NostrPostElement {
   private async handleSubmit(e: Event): Promise<void> {
     e.preventDefault();
     this.successMessage = '';
+    this._submitError = undefined;
     this.errors = {};
 
     const context = await this._submitContext();
@@ -333,9 +366,10 @@ export class NostrPostComposer extends NostrPostElement {
 
       this._formData = {};
     } catch (error) {
-      this.showError(error instanceof Error ? error.message : 'Unknown error occurred');
+      this.showError(error instanceof Error ? error.message : this._m.unknownError);
     } finally {
       this.isSubmitting = false;
+      this._submitStep = undefined;
     }
   }
 
@@ -366,9 +400,15 @@ export class NostrPostComposer extends NostrPostElement {
    * build the post again with what they linked (e.g. a role's mention line) and publish it
    */
   private async _publish(manifest: NostrPostManifest, pubkey: string): Promise<SignedEvent[]> {
-    const hooks = await runPublishHooks(manifest, this._formData, pubkey);
+    this._submitStep = this._m.stepHooks;
+    const hooks = await withTimeout(
+      runPublishHooks(manifest, this._formData, pubkey),
+      PUBLISH_HOOKS_TIMEOUT_MS,
+      this._m.hooksTimeout
+    );
     const outcome = this._coordinate(manifest, hooks.formData, pubkey);
     if ('validationError' in outcome) throw new Error('The post is invalid after publish hooks');
+    this._submitStep = this._m.stepPublish;
     return signAndPublishBundle(withTags(outcome.bundle, hooks.tags), this.relays);
   }
 
@@ -439,7 +479,14 @@ export class NostrPostComposer extends NostrPostElement {
                 )
               : ''
           }
-          ${renderSubmitButton(this.isSubmitting, this.isResolvingManifestRef)}
+          ${renderSubmitArea({
+            isSubmitting: this.isSubmitting,
+            isResolvingManifestRef: this.isResolvingManifestRef,
+            step: this._submitStep,
+            error: this._submitError,
+            invalidFields: invalidFieldLabels(manifest, this.errors),
+            messages: this._m,
+          })}
         </form>
       </div>
     `;
