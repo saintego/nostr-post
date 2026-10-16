@@ -3,9 +3,14 @@ import type { StoredManifest } from '@nostr-post/core/nip78';
 import {
   eventToManifest,
   MANIFEST_D_TAG_PREFIX,
+  manifestATagOf,
+  manifestFitsEvent,
+  manifestLabelOf,
   NIP78_KIND,
   parseManifestATag,
+  parseManifestDTag,
 } from '@nostr-post/core/nip78';
+import type { NostrPostManifest } from '@nostr-post/core/types';
 import { fetchEvents } from './fetch';
 
 /**
@@ -224,6 +229,51 @@ export async function fetchManifestsByATags(
     })
   );
   return results;
+}
+
+/** How a manifest was found for an event, from the most to the least certain */
+export type ManifestSource = 'address' | 'registered' | 'other';
+
+export interface EventManifest {
+  manifest: NostrPostManifest;
+  source: ManifestSource;
+  /** Who published the manifest, when it came from relays */
+  pubkey?: string;
+}
+
+/**
+ * The manifest to show an event with: the published manifest its `a` tag names; else by
+ * the id of its manifest label (or of that `a` tag): one the app registered (`registered`),
+ * then any author's. Those may differ from the one the event was made with, so they're
+ * used only when they fit its tags.
+ * Extends are resolved; undefined when nothing fits.
+ */
+export async function fetchManifestForEvent(
+  event: { kind: number; pubkey: string; tags: string[][] },
+  options: {
+    relays?: string[];
+    registered?: (manifestId: string) => NostrPostManifest | undefined;
+  } = {}
+): Promise<EventManifest | undefined> {
+  const { relays, registered } = options;
+  const address = manifestATagOf(event.tags);
+  if (address) {
+    const exact = await fetchManifestByATag(address, relays, false);
+    if (exact) return { manifest: exact.manifest, source: 'address', pubkey: exact.pubkey };
+  }
+  const addressDTag = address ? parseManifestATag(address)?.dTag : undefined;
+  const id = manifestLabelOf(event.tags) ?? (addressDTag && parseManifestDTag(addressDTag));
+  if (!id) return undefined;
+  const fits = (manifest: NostrPostManifest | undefined) =>
+    !!manifest && manifestFitsEvent(manifest, event);
+
+  const known = registered?.(id);
+  if (known && fits(known)) return { manifest: known, source: 'registered' };
+  const other = await fetchManifestByATag(id, relays, true);
+  if (other && fits(other.manifest)) {
+    return { manifest: other.manifest, source: 'other', pubkey: other.pubkey };
+  }
+  return undefined;
 }
 
 export { manifestCache as _manifestCache };

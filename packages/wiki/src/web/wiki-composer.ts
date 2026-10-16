@@ -72,6 +72,10 @@ export class NostrWikiComposer extends LitElement {
   @property({ attribute: false })
   messages?: Partial<WikiComposerMessages>;
 
+  /** The published manifest's address (`30078:<pubkey>:nostr-post:<id>`), linked from the page */
+  @property({ type: String, attribute: 'manifest-ref' })
+  manifestRef?: string;
+
   /** Initial form values for a new entity (used when no existing version is loaded) */
   @property({ attribute: false })
   prefill?: Record<string, unknown>;
@@ -241,6 +245,7 @@ export class NostrWikiComposer extends LitElement {
     const unsignedEvent = manifestToWikiEvent(manifest, formData, {
       dTag: explicitDTag,
       title: qualified ? this._previewTitle : undefined,
+      manifestRef: this.manifestRef,
     });
     const dTag =
       explicitDTag ||

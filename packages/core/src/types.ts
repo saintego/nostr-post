@@ -303,6 +303,8 @@ export const STANDARD_KIND1_POST_MANIFEST: NostrPostManifest = {
       userSelectable: true,
     },
   ],
+  // Only presets the editor for plain notes: no manifest tags on them
+  linkManifest: false,
   fields: [
     {
       id: 'content',

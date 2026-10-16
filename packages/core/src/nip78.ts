@@ -15,6 +15,7 @@
  * - Additional tags: `t` tags for discoverability, `name` for display
  */
 
+import { getFieldTargets, getManifestAvailableKinds } from './manifestMappings';
 import type { NostrPostManifest, UnsignedNostrEvent } from './types';
 
 /** Kind number for NIP-78 application-specific data */
@@ -197,3 +198,54 @@ export function manifestDeleteEvent(manifestId: string, pubkey = ''): UnsignedNo
     pubkey,
   };
 }
+
+// ── Manifest label (NIP-32) ──────────────────────────────────────────
+
+/** NIP-32 namespace of the label naming the manifest an event was made with */
+export const MANIFEST_LABEL_NAMESPACE = 'nostr-post';
+
+/**
+ * The tags saying which manifest an event was made with, by id: `["L", "nostr-post"]`,
+ * `["l", "<id>", "nostr-post"]`. Unlike the `a` tag they don't need a published manifest,
+ * and relays can combine them with `#a` (e.g. a venue's reviews of one manifest).
+ */
+export const manifestLabelTags = (manifestId: string): [string, ...string[]][] => [
+  ['L', MANIFEST_LABEL_NAMESPACE],
+  ['l', manifestId, MANIFEST_LABEL_NAMESPACE],
+];
+
+/** The id of the manifest an event is labelled with, if any */
+export const manifestLabelOf = (tags: readonly string[][]): string | undefined =>
+  tags.find((t) => t[0] === 'l' && t[2] === MANIFEST_LABEL_NAMESPACE)?.[1];
+
+/** The address of the published manifest an event links (`a` tag `30078:…:nostr-post:<id>`) */
+export const manifestATagOf = (tags: readonly string[][]): string | undefined =>
+  tags.find((t) => t[0] === 'a' && !!t[1] && !!parseManifestATag(t[1]))?.[1];
+
+/** Whether an event names this manifest id, by label or by its `a` tag */
+export const eventUsesManifest = (tags: readonly string[][], manifestId: string): boolean => {
+  if (manifestLabelOf(tags) === manifestId) return true;
+  const address = manifestATagOf(tags);
+  return !!address && parseManifestATag(address)?.dTag === buildManifestDTag(manifestId);
+};
+
+/** Tags that say nothing about a manifest's fields */
+const GENERIC_TAGS = new Set(['L', 'l', 'a', 'e', 'p', 'd', 'client', 'alt']);
+
+/**
+ * Whether a manifest found by an event's label (not its exact `a` address) fits the event:
+ * it has the event's kind, and when the event has field tags, at least one of them is a
+ * tag the manifest maps. Another author's manifest with the same id may be a different one.
+ */
+export const manifestFitsEvent = (
+  manifest: NostrPostManifest,
+  event: { kind: number; tags: readonly string[][] }
+): boolean => {
+  if (!getManifestAvailableKinds(manifest).includes(event.kind)) return false;
+  const eventTagNames = new Set(event.tags.map((t) => t[0]).filter((n) => !GENERIC_TAGS.has(n)));
+  if (eventTagNames.size === 0) return true;
+  const mapped = manifest.fields.flatMap((f) =>
+    getFieldTargets(f).flatMap((t) => (t.kind === event.kind && t.tagName ? [t.tagName] : []))
+  );
+  return mapped.some((name) => eventTagNames.has(name));
+};

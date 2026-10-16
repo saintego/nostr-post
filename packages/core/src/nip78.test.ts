@@ -6,8 +6,13 @@ import {
   buildManifestATag,
   buildManifestDTag,
   eventToManifest,
+  eventUsesManifest,
   MANIFEST_D_TAG_PREFIX,
+  manifestATagOf,
   manifestDeleteEvent,
+  manifestFitsEvent,
+  manifestLabelOf,
+  manifestLabelTags,
   manifestToEvent,
   NIP78_KIND,
   parseManifestATag,
@@ -365,5 +370,50 @@ describe('Round-trip event/manifest conversion', () => {
     expect(stored?.pubkey).toBe('testpubkey');
     expect(stored?.dTag).toBe('nostr-post:roundtrip-test');
     expect(stored?.eventId).toBe('test-event-id');
+  });
+});
+
+describe('manifest label helpers', () => {
+  const address = `30078:${'a'.repeat(64)}:nostr-post:beer-review-v1`;
+
+  it('reads the label and the manifest address of an event', () => {
+    const tags = [
+      ['a', '30818:pk:bitcoin-beer'],
+      ['a', address],
+      ...manifestLabelTags('beer-review-v1'),
+    ];
+    expect(manifestLabelOf(tags)).toBe('beer-review-v1');
+    expect(manifestATagOf(tags)).toBe(address);
+  });
+
+  it('knows an event uses a manifest by label or by address', () => {
+    expect(eventUsesManifest(manifestLabelTags('beer-review-v1'), 'beer-review-v1')).toBe(true);
+    expect(eventUsesManifest([['a', address]], 'beer-review-v1')).toBe(true);
+    expect(eventUsesManifest([['a', address]], 'review-v1')).toBe(false);
+    expect(eventUsesManifest([['l', 'beer-review-v1', 'other']], 'beer-review-v1')).toBe(false);
+  });
+
+  it('accepts a manifest found by label only when it fits the event', () => {
+    const manifest = {
+      id: 'beer-review-v1',
+      version: '1',
+      fields: [
+        { id: 'text', type: 'string', uiPlugin: 'textarea', mapTo: { kind: 1, target: 'content' } },
+        {
+          id: 'rating',
+          type: 'number',
+          uiPlugin: 'stars',
+          mapTo: { kind: 1, target: 'tag', tagName: 'rating' },
+        },
+      ],
+    } as NostrPostManifest;
+    const event = (kind: number, tags: string[][]) => ({
+      kind,
+      tags: [...manifestLabelTags('x'), ...tags],
+    });
+    expect(manifestFitsEvent(manifest, event(1, [['rating', '4']]))).toBe(true);
+    expect(manifestFitsEvent(manifest, event(1, []))).toBe(true);
+    expect(manifestFitsEvent(manifest, event(1, [['price', '3']]))).toBe(false);
+    expect(manifestFitsEvent(manifest, event(30023, [['rating', '4']]))).toBe(false);
   });
 });

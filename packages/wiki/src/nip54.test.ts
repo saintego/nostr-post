@@ -3,6 +3,7 @@ import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   manifestToWikiEvent,
+  STANDARD_WIKI_MANIFEST,
   unmappedTableRows,
   WIKI_KIND,
   wikiEventToManifestData,
@@ -698,5 +699,31 @@ describe('infobox tables', () => {
     };
     expect(unmappedTableRows(event, beerManifest)).toEqual([['extra', 'yes']]);
     expect(wikiEventToManifestData(event, beerManifest).abv).toBe(8);
+  });
+});
+
+describe('manifest tags on wiki pages', () => {
+  const venue = {
+    id: 'venue-entity-v1',
+    version: '1.0.0',
+    fields: [
+      { id: 'name', type: 'string', uiPlugin: 'text', mapTo: { kind: 30818, target: 'table' } },
+    ],
+  } as NostrPostManifest;
+
+  it('labels a page with its manifest, and links the published one', () => {
+    const address = `30078:${'a'.repeat(64)}:nostr-post:venue-entity-v1`;
+    const tags = manifestToWikiEvent(venue, { name: 'Louvre' }, { manifestRef: address }).tags;
+    expect(tags).toContainEqual(['L', 'nostr-post']);
+    expect(tags).toContainEqual(['l', 'venue-entity-v1', 'nostr-post']);
+    expect(tags).toContainEqual(['a', address]);
+    expect(manifestToWikiEvent(venue, { name: 'Louvre' }).tags.some((t) => t[0] === 'a')).toBe(
+      false
+    );
+  });
+
+  it('leaves plain articles unlabelled', () => {
+    const tags = manifestToWikiEvent(STANDARD_WIKI_MANIFEST, { content: 'Text' }).tags;
+    expect(tags.some((t) => t[0] === 'l' || t[0] === 'L')).toBe(false);
   });
 });

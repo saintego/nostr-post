@@ -7,7 +7,6 @@
  */
 
 import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
-import { parseManifestATag } from '@nostr-post/core/nip78';
 import {
   mentionedPubkeys,
   mentionRelayHints,
@@ -23,8 +22,9 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { baseStyles, NostrPostElement } from './base-component';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
 import {
+  type EventManifest,
   fetchEvents,
-  fetchManifestByATag,
+  fetchManifestForEvent,
   fetchProfile,
   fetchProfiles,
   getPublicKey,
@@ -125,8 +125,12 @@ export class NostrPostView extends NostrPostElement {
   @state()
   private _fetchedLinkedEvents?: DisplayableEvent[];
 
-  /** Track which `a` tag value we've already fetched for */
-  private _lastFetchedATag?: string;
+  /** The event we last looked up the manifest for */
+  private _lastManifestLookup?: string;
+
+  /** Set when the manifest is another author's with the event's manifest id: said in the view */
+  @state()
+  private _manifestSource?: EventManifest;
 
   /** Track which event ID we've fetched linked events for */
   private _lastFetchedLinkedId?: string;
@@ -213,32 +217,20 @@ export class NostrPostView extends NostrPostElement {
   }
 
   /**
-   * Find an `a` tag in the event that references a nostr-post manifest
-   * and fetch it from relays if not already cached.
+   * The manifest the event was made with: its `a` address, else by its manifest label
+   * (the author's own, then another author's, only when it fits the event)
    */
   private async _tryFetchManifest() {
-    if (!this.event) return;
-
-    // Look for an `a` tag referencing a NIP-78 manifest
-    const aTag = this.event.tags.find((t: string[]) => {
-      if (t[0] !== 'a') return false;
-      const ref = parseManifestATag(t[1]);
-      return !!ref;
-    });
-
-    if (!aTag) return;
-
-    const aTagValue = aTag[1];
-
-    // Skip if we already fetched this one
-    if (this._lastFetchedATag === aTagValue) return;
-    this._lastFetchedATag = aTagValue;
-
+    const event = this.event;
+    if (!event) return;
+    const key = event.id ?? JSON.stringify(event.tags);
+    if (this._lastManifestLookup === key) return;
+    this._lastManifestLookup = key;
     try {
-      const stored = await fetchManifestByATag(aTagValue);
-      if (stored) {
-        this._resolvedManifest = stored.manifest;
-      }
+      const found = await fetchManifestForEvent(event);
+      if (this.event !== event || !found) return;
+      this._resolvedManifest = found.manifest;
+      this._manifestSource = found.source === 'other' ? found : undefined;
     } catch (err) {
       console.warn('Failed to auto-fetch manifest from relay:', err);
     }
@@ -411,6 +403,16 @@ export class NostrPostView extends NostrPostElement {
                 })
           } ${roleRows}
         </div>
+        ${
+          this._manifestSource && !this.manifest
+            ? html`<div class="view-manifest-note">
+                ${{ ...DEFAULT_RAW_DATA_MESSAGES, ...this.messages }.shownWithManifest(
+                  this._manifestSource.manifest.id,
+                  truncatePubkey(this._manifestSource.pubkey ?? '')
+                )}
+              </div>`
+            : nothing
+        }
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
         ${renderUpdateComments(this.interactionEvents, this.event.pubkey)}

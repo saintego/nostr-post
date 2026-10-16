@@ -13,6 +13,8 @@ import { styles } from './wiki/wikiPanelStyles';
 
 interface WikiPreviewPanelProps {
   manifest: NostrPostManifest;
+  /** The published manifest's address, when it is published: new pages link it */
+  manifestRef?: string;
 }
 
 type Tab = 'view' | 'edit' | 'versions';
@@ -30,7 +32,7 @@ type Target = { kind: 'entity'; dTag: string } | { kind: 'new'; prefill: Record<
  * Find an entity of this manifest's type, then view it, edit it (from the
  * newest or any older version), browse its versions or find its reviews.
  */
-export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
+export function WikiPreviewPanel({ manifest, manifestRef }: WikiPreviewPanelProps) {
   const [componentsLoaded, setComponentsLoaded] = useState(false);
   const [componentsError, setComponentsError] = useState(false);
   const [target, setTarget] = useState<Target>();
@@ -130,6 +132,7 @@ export function WikiPreviewPanel({ manifest }: WikiPreviewPanelProps) {
                   dTag={dTag}
                   baseEvent={baseEvent}
                   prefill={target.kind === 'new' ? target.prefill : undefined}
+                  manifestRef={manifestRef}
                   onUseNewest={() => setBaseEvent(undefined)}
                   onPublished={onPublished}
                 />

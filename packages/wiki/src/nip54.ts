@@ -1,5 +1,6 @@
 import { parse, renderDjot } from '@djot/djot';
 import { fieldOptionLabel, matchFieldOption } from '@nostr-post/core/enumOptions';
+import { manifestLabelTags } from '@nostr-post/core/nip78';
 import type {
   NostrPostManifest,
   NostrTarget,
@@ -40,6 +41,8 @@ export const DEFAULT_WIKI_RELAYS = [
 export const STANDARD_WIKI_MANIFEST: NostrPostManifest = {
   id: 'standard-wiki-v1',
   version: '1.0.0',
+  // Plain articles: no manifest tags on them
+  linkManifest: false,
   fields: [
     {
       id: 'content',
@@ -166,6 +169,8 @@ export interface WikiEventConfig {
   title?: string;
   pubkey?: string;
   createdAt?: number;
+  /** The published manifest's address (`30078:<pubkey>:nostr-post:<id>`), linked with an `a` tag */
+  manifestRef?: string;
 }
 
 type Tag = [string, ...string[]];
@@ -280,6 +285,13 @@ function addField(parts: WikiEventParts, field: PostField, value: unknown): void
 const uniqueTags = (tags: Tag[]): Tag[] =>
   tags.filter((t, i) => tags.findIndex((o) => o.join('\u0000') === t.join('\u0000')) === i);
 
+/** Which manifest made the page, like posts: its label, and an `a` tag when it's published */
+const manifestTags = (manifest: NostrPostManifest, config: WikiEventConfig): Tag[] => {
+  if (manifest.linkManifest === false) return [];
+  const label = manifestLabelTags(manifest.id) as Tag[];
+  return config.manifestRef ? [...label, ['a', config.manifestRef]] : label;
+};
+
 export function manifestToWikiEvent(
   manifest: NostrPostManifest | WikiManifest,
   formData: Record<string, unknown>,
@@ -300,7 +312,10 @@ export function manifestToWikiEvent(
   return {
     kind: WIKI_KIND,
     created_at: config.createdAt ?? Math.floor(Date.now() / 1000),
-    tags: [['d', dTag], ...uniqueTags(parts.tags.filter((t) => t[0] !== 'd'))],
+    tags: [
+      ['d', dTag],
+      ...uniqueTags([...parts.tags.filter((t) => t[0] !== 'd'), ...manifestTags(manifest, config)]),
+    ],
     content: [tablePart, prosePart].filter(Boolean).join('\n\n'),
     pubkey: config.pubkey ?? '',
   };

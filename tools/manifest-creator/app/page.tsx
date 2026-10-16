@@ -173,7 +173,7 @@ export default function Home() {
             />
           </div>
           {isWikiManifest(resolvedManifest) ? (
-            <WikiPreviewPanel manifest={resolvedManifest} />
+            <WikiPreviewPanel manifest={resolvedManifest} manifestRef={manifestRef} />
           ) : (
             <PreviewPane
               manifest={resolvedManifest}

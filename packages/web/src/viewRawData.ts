@@ -23,6 +23,11 @@ export interface RawDataMessages {
   created: string;
   tags: string;
   content: string;
+  /**
+   * The post's own manifest wasn't found: it's shown with another author's manifest of the
+   * same id, which may differ from the one it was made with
+   */
+  shownWithManifest: (manifestId: string, author: string) => string;
 }
 
 export const DEFAULT_RAW_DATA_MESSAGES: RawDataMessages = {
@@ -33,6 +38,7 @@ export const DEFAULT_RAW_DATA_MESSAGES: RawDataMessages = {
   created: 'Created',
   tags: 'Tags',
   content: 'Content',
+  shownWithManifest: (manifestId, author) => `Shown with "${manifestId}" by ${author}`,
 };
 
 /**

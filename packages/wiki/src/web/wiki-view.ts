@@ -2,7 +2,7 @@ import { fieldOptionLabel } from '@nostr-post/core/enumOptions';
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { fetchEvents } from '@nostr-post/signer';
+import { type EventManifest, fetchEvents, fetchManifestForEvent } from '@nostr-post/signer';
 import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
@@ -17,6 +17,7 @@ import {
   WIKI_KIND,
   wikiEventToManifestData,
 } from '../nip54';
+import { getEntityManifest, resolveEntityManifest } from '../registry';
 import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { countContributors, defaultResolver, selectNewestEntity } from '../resolver';
 import type { WikiManifest } from '../types';
@@ -72,11 +73,18 @@ export class NostrWikiView extends LitElement {
   @state() private _formData?: Record<string, unknown>;
   @state() private _winningEvent?: WikiEvent;
   @state() private _allEvents: WikiEvent[] = [];
+  /** The given manifest with its `extends` resolved, when it has one */
+  @state() private _givenResolved?: NostrPostManifest;
+  /** Without a given manifest: the one the page was made with (see fetchManifestForEvent) */
+  @state() private _found?: EventManifest;
   private _fetchId = 0;
+  private _manifestLookup?: string;
 
   // First fetch happens in the initial updated() call, which reports every
   // property set before the first render — no separate connectedCallback fetch.
   override updated(changed: Map<string, unknown>): void {
+    if (changed.has('manifest')) this._resolveGiven();
+    if (changed.has('_winningEvent') || changed.has('manifest')) void this._findManifest();
     if (this.event && (changed.has('event') || changed.has('manifest'))) {
       this._showEvent(this.event);
     } else if (
@@ -166,9 +174,46 @@ export class NostrWikiView extends LitElement {
     return [...byId.values()];
   }
 
-  /** The given manifest, or the standard one (article text) for wiki pages of unknown type */
+  /**
+   * The given manifest (its `extends` resolved), else the one the page names (its `a`
+   * address or manifest label), else the standard one (article text)
+   */
   private get _manifest(): NostrPostManifest {
-    return this.manifest ?? STANDARD_WIKI_MANIFEST;
+    return this._givenResolved ?? this.manifest ?? this._found?.manifest ?? STANDARD_WIKI_MANIFEST;
+  }
+
+  /** A given manifest that extends others (e.g. an app's local extension): merge its parents */
+  private _resolveGiven(): void {
+    const given = this.manifest;
+    this._givenResolved = undefined;
+    if (!given?.extends) return;
+    void resolveEntityManifest(given).then((resolved) => {
+      if (this.manifest !== given || !resolved) return;
+      this._givenResolved = resolved;
+      this._refreshData();
+    });
+  }
+
+  /** Without a given manifest: look up the one the shown page was made with */
+  private async _findManifest(): Promise<void> {
+    const event = this._winningEvent;
+    if (this.manifest || !event) return;
+    if (this._manifestLookup === event.id) return;
+    this._manifestLookup = event.id;
+    const found = await fetchManifestForEvent(event, {
+      relays: this.relays,
+      registered: (id) => getEntityManifest(id),
+    }).catch(() => undefined);
+    if (this._winningEvent !== event || this.manifest || !found) return;
+    this._found = found;
+    this._refreshData();
+  }
+
+  /** Read the shown page again with the manifest now in effect */
+  private _refreshData(): void {
+    if (this._winningEvent) {
+      this._formData = wikiEventToManifestData(this._winningEvent, this._manifest);
+    }
   }
 
   private get _m(): WikiViewMessages {
@@ -299,6 +344,13 @@ export class NostrWikiView extends LitElement {
 
         ${this._renderLinks(this._winningEvent)}
         ${this._renderSources(this._winningEvent)}
+        ${
+          this._found?.source === 'other' && !this.manifest
+            ? html`<p class="wiki-sources">
+                ${m.shownWithManifest(this._found.manifest.id, `${this._found.pubkey?.slice(0, 8) ?? ''}…`)}
+              </p>`
+            : nothing
+        }
         ${this._renderRelated()}
         ${this._renderAllData(this._winningEvent)}
         ${this.event ? nothing : this._renderVersionList()}

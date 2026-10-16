@@ -162,6 +162,9 @@ The bundle re-exports utilities for advanced usage:
 
 - `fetchManifestByATag(aTag, relays?, fallbackToD?)` — Resolve a NIP-78 `a:` tag and return a `StoredManifest` (cached).
 - `fetchManifestsByATags(aTags[], relays?, fallbackToD?)` — Batch fetch many aTags.
+- `fetchManifestForEvent(event, { relays?, registered? })` — The manifest a post or wiki page was made
+  with: its `a` address, else by its manifest label (`registered(id)`, then any author's,
+  only when it fits the event); `{ manifest, source, pubkey? }` or undefined.
 - `getCachedManifest(aTag)` — Synchronously read the in-memory manifest cache.
 - `clearManifestCache(aTag?)` — Clear cache for a specific `aTag` or the whole cache.
 

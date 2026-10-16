@@ -84,6 +84,12 @@ export const viewStyle = css`
     color: #f3f4f6;
   }
 
+  .view-manifest-note {
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--nl-text-secondary, #6b7280);
+  }
+
   .note-link,
   .note-hashtag {
     color: var(--nl-primary, #6366f1);
