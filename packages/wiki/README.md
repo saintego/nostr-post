@@ -327,7 +327,7 @@ Displays a resolved wiki entity as a read-only infobox and its article, with:
 | --------------------------- | --------------------------- | ------------------------------------------------------------- |
 | `entity-id` / `entityId`    | `string`                    | Entity d-tag (slug) to load                                   |
 | `entity-i-id` / `entityIId` | `string`                    | External ID to look up (`i` tag) — triggers two-hop query     |
-| `manifest`                  | `NostrPostManifest`         | Field definitions; defaults to `STANDARD_WIKI_MANIFEST`       |
+| `manifest`                  | `NostrPostManifest`         | Field definitions; its `extends` is resolved. Without it, the page's own manifest is looked up ([how](../../MANIFEST.md#which-manifest-an-event-was-made-with)), else `STANDARD_WIKI_MANIFEST` |
 | `event`                     | `WikiEvent`                 | Show this version instead of fetching (property only)         |
 | `relays`                    | `string[]`                  | Override relay list (property only)                           |
 | `resolver`                  | `WikiResolverFunction`      | Custom resolver (property only)                               |
@@ -357,6 +357,7 @@ A form for creating or editing a wiki entity. Pre-fills from the resolved event 
 | `relays`                       | `string[]`                      | Relays to load from and publish to (property only)            |
 | `auto-publish` / `autoPublish` | `boolean`                       | Publish automatically using NIP-07 signer                     |
 | `messages`                     | `Partial<WikiComposerMessages>` | Override user-facing text, e.g. translations (property only)  |
+| `manifest-ref` / `manifestRef` | `string`                        | The published manifest's address; pages link it with an `a` tag (they always carry its label) |
 
 Publishing goes to `relays` plus the author's own relays (NIP-65). Plugins' publish summaries (e.g. the
 venue field's "Also create/update the venue's wiki page") show next to the publish button, and their

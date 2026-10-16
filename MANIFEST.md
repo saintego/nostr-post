@@ -31,7 +31,7 @@ Types: `NostrPostManifest`, `PostField` and `FieldMetadata` in `@nostr-post/core
     { id: "note", label: "Note", kinds: [1], default: true },
     { id: "app-data", label: "App data", kinds: [30078], userSelectable: true },
   ],
-  linkManifest: true,             // add an `a` tag to posts so viewers can load this manifest
+  linkManifest: true,             // tag posts and wiki pages with this manifest (label, and `a` when published)
   fields: [/* see Fields */],
   metadata: { name: "Venue review", description: "Review a place", author: "…", tags: [] },
 }
@@ -42,9 +42,29 @@ Types: `NostrPostManifest`, `PostField` and `FieldMetadata` in `@nostr-post/core
 | `id`, `version`  | Required. The id identifies the manifest; publish a new version under the same id                                                                        |
 | `extends`        | A parent's address or bare id, or an array of them; fields are merged by id ([inheritance](./ARCHITECTURE.md#manifest-inheritance))                      |
 | `publishFormats` | Choices of event kinds (`kinds`), the `default` one, and whether the author can pick (`userSelectable`). Without it, kinds come from the fields' `mapTo` |
-| `linkManifest`   | Default `true`. `false` for manifests that only preset the editor (e.g. hashtags) and need no custom view                                                |
+| `linkManifest`   | Default `true`: events made with it carry its [label and address](#which-manifest-an-event-was-made-with). `false` for manifests that only preset the editor (e.g. hashtags) and need no custom view, like the standard post and wiki manifests |
 | `metadata`       | `name`, `description` (shown in the composer's header), `author`, `tags`                                                                                 |
 | `wikiConfig`     | Wiki entity manifests only, see [below](#wiki-entity-manifests)                                                                                          |
+
+### Which manifest an event was made with
+
+Posts and wiki pages made with a manifest (`linkManifest` not `false`) say so in two ways:
+
+- **Label** (NIP-32), always: `["L", "nostr-post"]`, `["l", "<manifest id>", "nostr-post"]`, also when
+  the manifest isn't published (local or inline).
+- **Address**, when the manifest is published: `["a", "30078:<pubkey>:nostr-post:<id>"]`, the exact
+  manifest (the composers' `manifestRef` / `manifest-ref`).
+
+Relays can combine the label with other tags: a related section of one manifest asks for
+`#a` (the entity) and `#l` (the manifest), so a busy venue's beer reviews don't come with every other
+post linking it. Posts from before labels existed (`a` tag only) don't show up in such a section.
+
+`<nostr-post-view>` and `<nostr-wiki-view>` find the manifest themselves (`fetchManifestForEvent`): the
+address; else by the label's id (published manifests have the d-tag `nostr-post:<id>`): one the app
+registered, then any author's published one. A manifest found by id can differ from the one the event
+was made with (same id by another author, or a changed version), so it's used only when the event's
+tags fit its fields, and the view says when it's another author's; else the event is shown
+unformatted.
 
 ## Fields
 

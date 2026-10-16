@@ -17,6 +17,7 @@ interface NostrWikiComposerElement extends HTMLElement {
   baseEvent?: WikiEvent;
   prefill?: Record<string, unknown>;
   autoPublish?: boolean;
+  manifestRef?: string;
 }
 
 declare module 'react' {
@@ -71,6 +72,8 @@ interface WikiComposerProps {
   prefill?: Record<string, unknown>;
   /** Sign and publish (NIP-07) instead of only handing over the unsigned event */
   autoPublish?: boolean;
+  /** The published manifest's address: pages link it */
+  manifestRef?: string;
   onSubmit?: (detail: WikiComposerDetail) => void;
   onPublished?: (detail: WikiComposerDetail) => void;
 }
@@ -82,6 +85,7 @@ export function WikiComposer({
   baseEvent,
   prefill,
   autoPublish,
+  manifestRef,
   onSubmit,
   onPublished,
 }: WikiComposerProps) {
@@ -94,7 +98,8 @@ export function WikiComposer({
     el.baseEvent = baseEvent;
     el.entityId = entityId;
     el.autoPublish = autoPublish;
-  }, [manifest, entityId, baseEvent, prefill, autoPublish]);
+    el.manifestRef = manifestRef;
+  }, [manifest, entityId, baseEvent, prefill, autoPublish, manifestRef]);
 
   useEffect(() => {
     const el = ref.current;

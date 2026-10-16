@@ -5,6 +5,7 @@
  * author's version has its own address), so references to any version count.
  */
 
+import { eventUsesManifest } from '@nostr-post/core/nip78';
 import { parsePostRoles } from '@nostr-post/core/postRoles';
 import { fetchEvents } from '@nostr-post/signer';
 import { fetchEntityVersions } from './fetch';
@@ -50,10 +51,6 @@ const BATCH = 50;
 
 const dTagOf = (event: WikiEvent): string => event.tags.find((t) => t[0] === 'd')?.[1] ?? '';
 
-/** Whether an event links the manifest with this id (`a` tag `30078:<pubkey>:nostr-post:<id>`) */
-const linksManifest = (event: WikiEvent, id: string): boolean =>
-  event.tags.some((t) => t[0] === 'a' && t[1]?.startsWith('30078:') && t[1].endsWith(`:${id}`));
-
 /**
  * The section's items among the events referencing the entity: its kinds,
  * type, role and manifest; wiki entities in their newest version, none of the
@@ -66,7 +63,7 @@ export function filterRelated(
 ): WikiEvent[] {
   const matching = events.filter((e) => {
     if (!section.kinds.includes(e.kind)) return false;
-    if (section.manifest && !linksManifest(e, section.manifest)) return false;
+    if (section.manifest && !eventUsesManifest(e.tags, section.manifest)) return false;
     if (e.kind !== WIKI_KIND) return true;
     const entity = dTagOf(e);
     if (entity === dTag) return false;
@@ -80,6 +77,19 @@ export function filterRelated(
   return [...entities, ...posts].sort((a, b) => b.created_at - a.created_at);
 }
 
+/**
+ * Relay filter for a section's events linking these entity addresses. A section of one
+ * manifest also asks for its label (`#l`), so relays return only that manifest's posts.
+ */
+export function relatedFilter(
+  section: WikiRelatedSection,
+  addresses: string[],
+  limit: number
+): Record<string, unknown> {
+  const base = { kinds: section.kinds, '#a': addresses, limit };
+  return section.manifest ? { ...base, '#l': [section.manifest] } : base;
+}
+
 /** The related items of the entity at `dTag` for one section */
 export async function fetchRelated(
   dTag: string,
@@ -88,10 +98,12 @@ export async function fetchRelated(
   limit = section.limit ?? 20
 ): Promise<WikiEvent[]> {
   const addresses = collectEntityATags(await fetchEntityVersions(dTag, relays));
-  // filterRelated drops events client-side (other types, the entity's own versions,
-  // other manifests): ask relays for more, so the cut-off doesn't hide matching items
-  const filtered = section.kinds.includes(WIKI_KIND) || !!section.manifest;
-  const relayLimit = filtered ? Math.max(limit, RELATED_STATS_LIMIT) : limit;
+  // filterRelated drops wiki entities client-side (other types, the entity's own versions):
+  // ask relays for more, so the cut-off doesn't hide matching items. A manifest's posts
+  // are filtered by the relays (#l)
+  const relayLimit = section.kinds.includes(WIKI_KIND)
+    ? Math.max(limit, RELATED_STATS_LIMIT)
+    : limit;
   const batches = Array.from({ length: Math.ceil(addresses.length / BATCH) }, (_, i) =>
     addresses.slice(i * BATCH, (i + 1) * BATCH)
   );
@@ -99,7 +111,7 @@ export async function fetchRelated(
     batches.map(
       (batch) =>
         fetchEvents(
-          { kinds: section.kinds, '#a': batch, limit: relayLimit } as never,
+          relatedFilter(section, batch, relayLimit) as never,
           relays
         ) as unknown as Promise<WikiEvent[]>
     )

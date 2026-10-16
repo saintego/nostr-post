@@ -21,6 +21,11 @@ export interface WikiViewMessages {
   source: string;
   /** Attribution line for data copied from a source (`source` tag), e.g. OpenStreetMap */
   sourceAttribution: (source: string) => string;
+  /**
+   * The page's own manifest wasn't found: it's shown with another author's manifest of the
+   * same id, which may differ from the one it was made with
+   */
+  shownWithManifest: (manifestId: string, author: string) => string;
 }
 
 export const DEFAULT_WIKI_VIEW_MESSAGES: WikiViewMessages = {
@@ -37,4 +42,5 @@ export const DEFAULT_WIKI_VIEW_MESSAGES: WikiViewMessages = {
   externalLink: (provider) => `${provider} ↗`,
   sourceAttribution: (source) =>
     source === 'OpenStreetMap' ? '© OpenStreetMap contributors' : `Data from ${source}`,
+  shownWithManifest: (manifestId, author) => `Shown with "${manifestId}" by ${author}`,
 };

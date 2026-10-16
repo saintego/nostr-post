@@ -63,6 +63,8 @@ Use it in plain HTML through the CDN bundle, drop in Web Components, use the Rea
   components (`view`, `composer`, `feed`) use to resolve an `a` tag (NIP-01 format
   for NIP-78 manifests). The helper deduplicates in-flight requests and optionally
   falls back to querying by `d` tag across authors (configurable via `fallbackToD`).
+- `fetchManifestForEvent` finds the manifest a post or wiki page was made with: its `a` address,
+  else by its manifest label (see [MANIFEST.md](./MANIFEST.md#which-manifest-an-event-was-made-with)).
 
 This keeps relay I/O in one place and avoids duplicate network requests.
 ```

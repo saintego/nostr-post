@@ -73,7 +73,7 @@ describe('enum options', () => {
     expect(result.success).toBe(true);
     if (!result.success) return;
     const tags = result.data.events[0]?.tags ?? [];
-    expect(tags.filter((t) => t[0] !== 'a' && t[0] !== 'content')).toEqual([['t', 'american-ipa']]);
+    expect(tags.filter((t) => t[0] === 't')).toEqual([['t', 'american-ipa']]);
     expect(coordinateEvents(manifest, { content: 'hi', style: 'American IPA' }).success).toBe(
       false
     );

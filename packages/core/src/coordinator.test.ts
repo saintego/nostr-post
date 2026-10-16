@@ -870,3 +870,32 @@ describe('coordinateEvents', () => {
     expect(result.success).toBe(false);
   });
 });
+
+describe('manifest label', () => {
+  const manifest: NostrPostManifest = {
+    id: 'beer-review-v1',
+    version: '1.0.0',
+    fields: [
+      { id: 'text', type: 'string', uiPlugin: 'textarea', mapTo: { kind: 1, target: 'content' } },
+    ],
+  };
+  const tagsOf = (m: NostrPostManifest, config: CoordinatorConfig = {}) => {
+    const result = coordinateEvents(m, { text: 'hi' }, config);
+    return result.success ? (result.data.events[0]?.tags ?? []) : [];
+  };
+
+  it('labels events with the manifest id, published or not', () => {
+    expect(tagsOf(manifest)).toEqual(
+      expect.arrayContaining([
+        ['L', 'nostr-post'],
+        ['l', 'beer-review-v1', 'nostr-post'],
+      ])
+    );
+    const address = `30078:${'a'.repeat(64)}:nostr-post:beer-review-v1`;
+    expect(tagsOf(manifest, { manifestRef: address })).toContainEqual(['a', address]);
+  });
+
+  it('leaves events of manifests that only preset the editor unlabelled', () => {
+    expect(tagsOf({ ...manifest, linkManifest: false }).some((t) => t[0] === 'l')).toBe(false);
+  });
+});

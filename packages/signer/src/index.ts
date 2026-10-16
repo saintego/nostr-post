@@ -234,6 +234,9 @@ export {
 export {
   fetchManifestByATag,
   fetchManifestsByATags,
+  fetchManifestForEvent,
+  type EventManifest,
+  type ManifestSource,
   getCachedManifest,
   clearManifestCache,
   _manifestCache,

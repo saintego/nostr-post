@@ -1,10 +1,15 @@
-import { buildManifestATag, manifestToEvent } from '@nostr-post/core/nip78';
+import { buildManifestATag, manifestLabelTags, manifestToEvent } from '@nostr-post/core/nip78';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import type { Mock } from 'vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // The module under test
-import { clearManifestCache, fetchManifestByATag, getCachedManifest } from './manifest';
+import {
+  clearManifestCache,
+  fetchManifestByATag,
+  fetchManifestForEvent,
+  getCachedManifest,
+} from './manifest';
 
 // Mock the fetch module which provides fetchEvents
 vi.mock('./fetch', () => ({
@@ -359,5 +364,73 @@ describe('fetchManifestByATag (inheritance)', () => {
 
     void coffeeATag;
     void cafeATag;
+  });
+});
+
+describe('fetchManifestForEvent', () => {
+  const review = (author: string, tagName: string): NostrPostManifest => ({
+    id: 'beer-review-v1',
+    version: '1.0.0',
+    fields: [
+      { id: 'text', type: 'string', uiPlugin: 'textarea', mapTo: { kind: 1, target: 'content' } },
+      {
+        id: 'score',
+        type: 'number',
+        uiPlugin: 'stars',
+        mapTo: { kind: 1, target: 'tag', tagName },
+      },
+      {
+        id: 'by',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 1, target: 'tag', tagName: author },
+      },
+    ],
+  });
+  const alice = 'a'.repeat(64);
+  const bob = 'b'.repeat(64);
+  const event = (pubkey: string, tags: string[][]) => ({ kind: 1, pubkey, tags });
+  /** Relays holding these manifest events; answers by author and d-tag like a relay */
+  const relaysWith = (events: ManifestEvent[]) =>
+    fetchEventsMock.mockImplementation(async (filter: { authors?: string[]; '#d'?: string[] }) =>
+      events.filter(
+        (e) =>
+          (!filter.authors || filter.authors.includes(e.pubkey)) &&
+          e.tags.some((t) => t[0] === 'd' && filter['#d']?.includes(t[1] ?? ''))
+      )
+    );
+
+  beforeEach(() => {
+    clearManifestCache();
+    fetchEventsMock.mockReset();
+  });
+
+  it('uses the exact manifest of the a tag', async () => {
+    relaysWith([buildSignedManifestEvent(review('x', 'rating'), bob, 'm1')]);
+    const found = await fetchManifestForEvent(
+      event(alice, [['a', buildManifestATag(bob, 'beer-review-v1')]])
+    );
+    expect(found?.source).toBe('address');
+    expect(found?.pubkey).toBe(bob);
+  });
+
+  it("finds an unpublished manifest's posts by label, from any author when it fits", async () => {
+    relaysWith([buildSignedManifestEvent(review('x', 'rating'), bob, 'm1')]);
+    const found = await fetchManifestForEvent(
+      event(alice, [...manifestLabelTags('beer-review-v1'), ['rating', '4']])
+    );
+    expect(found?.source).toBe('other');
+    expect(found?.pubkey).toBe(bob);
+  });
+
+  it('prefers a registered manifest to other authors, and skips ones that do not fit', async () => {
+    relaysWith([buildSignedManifestEvent(review('x', 'stars'), bob, 'm1')]);
+    const tags = [...manifestLabelTags('beer-review-v1'), ['rating', '4']];
+    const registered = () => review('x', 'rating');
+    expect((await fetchManifestForEvent(event(alice, tags), { registered }))?.source).toBe(
+      'registered'
+    );
+    // Bob's manifest maps `stars`, the event has `rating`: not the one it was made with
+    expect(await fetchManifestForEvent(event(alice, tags))).toBeUndefined();
   });
 });

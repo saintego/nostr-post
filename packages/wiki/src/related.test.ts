@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { filterRelated, relatedImages, relatedSnippet, relatedStats } from './related';
+import {
+  filterRelated,
+  relatedFilter,
+  relatedImages,
+  relatedSnippet,
+  relatedStats,
+} from './related';
 import type { WikiEvent } from './resolver';
 
 const event = (over: Partial<WikiEvent>): WikiEvent => ({
@@ -113,5 +119,33 @@ describe('related items', () => {
       }),
     ];
     expect(relatedImages(posts)).toEqual(['https://x.org/a.jpg', 'https://cdn.org/b']);
+  });
+});
+
+describe('related posts of one manifest', () => {
+  const section = { label: 'Reviews', kinds: [1], manifest: 'beer-review-v1' };
+  const venue = '30818:pk:louvre-praha-venue';
+
+  it("asks relays for the manifest's label next to the entity", () => {
+    expect(relatedFilter(section, [venue], 20)).toEqual({
+      kinds: [1],
+      '#a': [venue],
+      limit: 20,
+      '#l': ['beer-review-v1'],
+    });
+    expect(relatedFilter({ label: 'All', kinds: [1] }, [venue], 20)).toEqual({
+      kinds: [1],
+      '#a': [venue],
+      limit: 20,
+    });
+  });
+
+  it('keeps posts of the manifest by label or by its a tag, and drops others', () => {
+    const post = (tags: string[][]) => event({ kind: 1, tags: [['a', venue], ...tags] });
+    const labelled = post([['l', 'beer-review-v1', 'nostr-post']]);
+    const linked = post([['a', '30078:pk:nostr-post:beer-review-v1']]);
+    const other = post([['l', 'coffee-review-v1', 'nostr-post']]);
+    const items = filterRelated([labelled, linked, other], section, 'louvre-praha-venue');
+    expect(items.map((e) => e.id).sort()).toEqual([labelled.id, linked.id].sort());
   });
 });

@@ -9,6 +9,7 @@
  */
 
 import { isFieldOptionValue, optionValue } from './enumOptions';
+import { extractGeohash, geohashPrefixTags, isValidGeohash } from './geohash';
 import { validateManifest } from './manifest';
 import {
   getActiveKinds,
@@ -17,6 +18,7 @@ import {
   isStructuredContentKind,
   type ResolvedPostField,
 } from './manifestMappings';
+import { manifestLabelTags } from './nip78';
 import { plainTextContent, refAddresses, structuredContentValue } from './postRoles';
 import type {
   EventBundle,
@@ -223,20 +225,6 @@ const validateFieldType = (field: PostField, value: unknown): Result<void, Valid
   return { success: true, data: undefined };
 };
 
-/** Base32 alphabet used by geohash encoding. */
-const GEOHASH_BASE32 = '0123456789bcdefghjkmnpqrstuvwxyz';
-
-/**
- * Type guard for geohash strings.
- */
-const isValidGeohash = (value: unknown): value is string => {
-  if (typeof value !== 'string' || value.length === 0) return false;
-  for (const ch of value) {
-    if (!GEOHASH_BASE32.includes(ch)) return false;
-  }
-  return true;
-};
-
 const addAddressableDTagIfNeeded = (
   kind: number,
   tagFields: ResolvedPostField[],
@@ -279,21 +267,6 @@ const buildContentForKind = (
   return JSON.stringify(contentObj);
 };
 
-const extractGeohash = (value: unknown): string | undefined => {
-  if (isValidGeohash(value)) {
-    return value;
-  }
-
-  if (typeof value === 'object' && value !== null && 'geohash' in value) {
-    const geohash = (value as Record<string, unknown>).geohash;
-    if (isValidGeohash(geohash)) {
-      return geohash;
-    }
-  }
-
-  return undefined;
-};
-
 const appendTagValue = (
   tags: NostrTag[],
   tagName: string,
@@ -324,9 +297,7 @@ const appendGeohashTags = (
     return;
   }
 
-  for (let len = geohash.length; len >= 2; len--) {
-    tags.push(['g', geohash.slice(0, len)]);
-  }
+  tags.push(...geohashPrefixTags(geohash));
 };
 
 const appendTagMappings = (
@@ -502,7 +473,12 @@ export const coordinateEvents = (
       continue;
     }
     const event = createEventForKind(kind, fieldsForKind, formData, effectiveConfig);
-    events.push(event);
+    // Which manifest made it, by id: works unpublished, and relays can combine it with #a
+    events.push(
+      manifest.linkManifest === false
+        ? event
+        : { ...event, tags: dedupeTags([...event.tags, ...manifestLabelTags(manifest.id)]) }
+    );
   }
 
   // Add cross-linking tags

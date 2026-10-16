@@ -151,7 +151,10 @@ export async function syncVenueEntity(venue: VenueData, field: PostField): Promi
           keepTags: action.base.tags.filter((t) => t[0] === 'i' || t[0] === 't') as Tag[],
         };
 
-  const unsigned = manifestToWikiEvent(manifest, data, { dTag, title });
+  const ref = field.metadata?.wikiEntity;
+  // A published manifest's address: the page links it, like posts do
+  const manifestRef = typeof ref === 'string' && ref.startsWith('30078:') ? ref : undefined;
+  const unsigned = manifestToWikiEvent(manifest, data, { dTag, title, manifestRef });
   // Hub tags: identifiers, area, address, OSM attribution with the synced version
   unsigned.tags = addMissingTags(unsigned.tags as Tag[], [
     ...venueEntityTags(venue, osm),

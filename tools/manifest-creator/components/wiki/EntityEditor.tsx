@@ -13,6 +13,8 @@ interface EntityEditorProps {
   /** Version to edit from; newest when unset */
   baseEvent?: WikiEvent;
   prefill?: Record<string, unknown>;
+  /** The published manifest's address: pages link it */
+  manifestRef?: string;
   onUseNewest: () => void;
   onPublished: (dTag: string) => void;
 }
@@ -23,6 +25,7 @@ export function EntityEditor({
   dTag,
   baseEvent,
   prefill,
+  manifestRef,
   onUseNewest,
   onPublished,
 }: EntityEditorProps) {
@@ -59,6 +62,7 @@ export function EntityEditor({
         baseEvent={baseEvent}
         prefill={prefill}
         autoPublish
+        manifestRef={manifestRef}
         onSubmit={handleSubmit}
         onPublished={handlePublished}
       />
