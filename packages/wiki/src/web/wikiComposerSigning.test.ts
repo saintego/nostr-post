@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, expect, it, vi } from 'vitest';
-import './wiki-composer';
+import './wikiComposer';
 
 /** A relay that answers every REQ with EOSE */
 class EmptyRelay {

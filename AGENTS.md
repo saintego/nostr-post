@@ -82,7 +82,7 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
   hard-code domain examples ("brewery", "barrel aged"); derive them from the manifest (field
   labels, values) instead.
 - Prepare for translation: put a component's user-facing text in a messages object with English
-  defaults that apps can override (see `packages/wiki/src/web/wiki-composer-messages.ts`), not
+  defaults that apps can override (see `packages/wiki/src/web/wikiComposerMessages.ts`), not
   inline in templates. Move existing inline text over when you touch it.
 
 ## Keep docs in sync

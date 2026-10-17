@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { osm, venue, venueManifest } from './fixtures.test-helpers';
+import { osm, venue, venueManifest } from './fixtures.testHelpers';
 import { geohashTags } from './levels';
 import {
   entitySyncAction,

@@ -9,7 +9,7 @@ export { NostrPostComposer } from './composer';
 export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from './composerMessages';
 export { NostrPostView } from './view';
 export { NostrPostFeed } from './feed';
-export { NostrPostElement } from './base-component';
+export { NostrPostElement } from './baseComponent';
 
 // Theme (single source of truth for colors and styles)
 export { colors, baseStyles } from './theme';

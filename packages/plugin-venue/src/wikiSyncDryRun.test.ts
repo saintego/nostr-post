@@ -10,7 +10,7 @@ vi.mock('./osm', () => ({ fetchOsmElement: vi.fn() }));
 
 import { clearDryRunEntries, getDryRunEntries, setDryRun } from '@nostr-post/signer';
 import { registerEntityManifest } from '@nostr-post/wiki';
-import { osm, venue, venueManifest } from './fixtures.test-helpers';
+import { osm, venue, venueManifest } from './fixtures.testHelpers';
 import { fetchOsmElement } from './osm';
 import { syncVenueEntity } from './wikiSync';
 

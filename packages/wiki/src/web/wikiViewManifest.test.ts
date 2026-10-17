@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, expect, it, vi } from 'vitest';
 import { registerEntityManifest } from '../registry';
-import './wiki-view';
+import './wikiView';
 
 /** A relay that answers every REQ with EOSE */
 class EmptyRelay {

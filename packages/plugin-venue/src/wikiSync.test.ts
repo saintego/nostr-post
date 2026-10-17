@@ -16,7 +16,7 @@ vi.mock('@nostr-post/wiki', async (importOriginal) => ({
 
 import { fetchEvents, signEvent } from '@nostr-post/signer';
 import { checkEntityDTag, fetchEntityVersions, registerEntityManifest } from '@nostr-post/wiki';
-import { osm, venue, venueManifest } from './fixtures.test-helpers';
+import { osm, venue, venueManifest } from './fixtures.testHelpers';
 import { fetchOsmElement } from './osm';
 import { syncVenueEntity } from './wikiSync';
 

@@ -19,7 +19,7 @@ import {
 } from '@nostr-post/core/types';
 import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { baseStyles, NostrPostElement } from './base-component';
+import { baseStyles, NostrPostElement } from './baseComponent';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
 import {
   type EventManifest,

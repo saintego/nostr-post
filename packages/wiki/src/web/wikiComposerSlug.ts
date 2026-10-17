@@ -1,5 +1,5 @@
 import { html, nothing } from 'lit';
-import type { WikiComposerMessages } from './wiki-composer-messages';
+import type { WikiComposerMessages } from './wikiComposerMessages';
 
 /** Whether a new entity's d-tag is used by another entity */
 export type SlugStatus = 'idle' | 'checking' | 'free' | 'taken' | 'unknown';
