@@ -1,269 +1,187 @@
 /**
  * @nostr-post/plugin-list - Core
  *
- * NIP-51 user lists plugin for managing curated lists of users
- * on Nostr. Supports fetching, creating, and deleting lists.
- *
- * Lists can be used for:
- * - Audience control (who can see/respond to events)
- * - Trust networks (verified reviewers, moderators)
- * - Content curation (favorite authors, trusted sources)
- * - Access control (invite-only groups)
- *
- * No DOM dependencies — safe for SSR/Node.
+ * NIP-51 bookmark lists as pure functions: read list events, add and remove items,
+ * create and delete lists. No relays, signer or DOM here (see lists.ts for those).
  */
 
-import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
-import type { ListSelectionData, Nip51Adapter, Nip51ListEvent, UserList } from './types';
+import {
+  BOOKMARK_SET_KIND,
+  BOOKMARKS_KIND,
+  type BookmarkList,
+  DELETION_KIND,
+  type ListEvent,
+  type ListItem,
+  WIKI_KIND,
+} from './types';
 
-const getSelectedListIds = (value: unknown): string[] => {
-  if (!value) return [];
+const LIST_KINDS = [BOOKMARKS_KIND, BOOKMARK_SET_KIND];
 
-  if (typeof value === 'string') {
-    return value
-      .split(',')
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
+const tagValue = (tags: string[][], name: string): string | undefined =>
+  tags.find((t) => t[0] === name)?.[1];
+
+export const listAddress = (kind: number, pubkey: string, dTag: string): string =>
+  `${kind}:${pubkey}:${dTag}`;
+
+/** The list in a kind 10003 or 30003 event; null for other events or a set without d-tag */
+export function parseList(event: ListEvent): BookmarkList | null {
+  if (!LIST_KINDS.includes(event.kind)) return null;
+  const dTag = event.kind === BOOKMARK_SET_KIND ? (tagValue(event.tags, 'd') ?? '') : '';
+  if (event.kind === BOOKMARK_SET_KIND && !dTag) return null;
+  const items: ListItem[] = [];
+  for (const [tag, value, relay] of event.tags) {
+    if ((tag === 'a' || tag === 'e') && value)
+      items.push({ tag, value, relay: relay || undefined });
   }
-
-  if (Array.isArray(value)) {
-    return value.filter((id): id is string => typeof id === 'string' && id.length > 0);
-  }
-
-  if (typeof value !== 'object') return [];
-  const listData = value as ListSelectionData;
-
-  if (Array.isArray(listData.listIds)) {
-    return listData.listIds.filter((id) => typeof id === 'string' && id.length > 0);
-  }
-
-  if (typeof listData.listId === 'string' && listData.listId.length > 0) {
-    return [listData.listId];
-  }
-
-  return [];
-};
-
-/**
- * Fetch all NIP-51 lists (kind 30000-30099) for a user.
- * Returns parsed list data with pubkey/tag entries.
- */
-export const fetchUserLists = async (userPubkey: string, relays: string[]): Promise<UserList[]> => {
-  if (!userPubkey || relays.length === 0) {
-    return [];
-  }
-
-  const lists: UserList[] = [];
-
-  try {
-    // Fetch all kinds 30000-30099 owned by this user
-    for (const relay of relays) {
-      try {
-        const url = new URL(relay);
-        const wsUrl =
-          url.protocol === 'https:'
-            ? url.href.replace('https:', 'wss:')
-            : url.href.replace('http:', 'ws:');
-
-        // Use NIP-45 COUNT or just fetch events
-        const events = await fetchFromRelay(wsUrl, {
-          kinds: Array.from({ length: 100 }, (_, i) => 30000 + i),
-          authors: [userPubkey],
-        });
-
-        for (const event of events) {
-          const list = parseListEvent(event);
-          if (list) {
-            lists.push(list);
-          }
-        }
-      } catch (err) {
-        console.warn(`Failed to fetch lists from relay ${relay}:`, err);
-        // Continue with other relays
-      }
-    }
-  } catch (err) {
-    console.error('Error fetching user lists:', err);
-  }
-
-  return lists;
-};
-
-/**
- * Parse a NIP-51 list event into UserList format.
- */
-export const parseListEvent = (event: Nip51ListEvent): UserList | null => {
-  try {
-    const dTag = event.tags.find((t: string[]) => t[0] === 'd')?.[1];
-    const name = dTag || `List-${event.kind}`;
-
-    // Extract pubkeys from 'p' tags
-    const pubkeys = event.tags
-      .filter((t: string[]) => t[0] === 'p')
-      .map((t: string[]) => t[1])
-      .filter(Boolean);
-
-    return {
-      id: `${event.kind}:${event.pubkey}:${dTag}`,
-      name,
-      description: event.content,
-      pubkeys,
-      createdAt: event.created_at,
-    };
-  } catch (err) {
-    console.error('Failed to parse list event:', err);
-    return null;
-  }
-};
-
-/**
- * Create a new NIP-51 list event.
- * Returns unsigned event; caller must sign and publish.
- */
-export const createListEvent = (
-  userPubkey: string,
-  listName: string,
-  pubkeys: string[],
-  listKind = 30000,
-  description = ''
-): Nip51ListEvent => {
-  const pubkeyTags: Array<[string, ...string[]]> = pubkeys.map((pk) => ['p', pk]);
   return {
-    kind: listKind,
-    pubkey: userPubkey,
-    created_at: Math.floor(Date.now() / 1000),
-    content: description,
-    tags: [['d', listName], ...pubkeyTags],
+    address: listAddress(event.kind, event.pubkey, dTag),
+    kind: event.kind,
+    pubkey: event.pubkey,
+    dTag,
+    title: tagValue(event.tags, 'title') || undefined,
+    description: tagValue(event.tags, 'description') || undefined,
+    items,
+    createdAt: event.created_at,
+    event,
   };
+}
+
+/** The d-tag of a wiki entity address (`30818:<pubkey>:<d-tag>`) */
+const wikiDTag = (address: string): string | undefined => {
+  const match = address.match(/^(\d+):[^:]*:(.+)$/);
+  return match && Number(match[1]) === WIKI_KIND ? match[2] : undefined;
 };
 
 /**
- * Load NIP-51 lists for a user via an injected relay adapter.
+ * Whether two items are the same thing. Wiki entities are the same by d-tag, whichever
+ * author's version was saved: the list shows the entity, not one version of it.
  */
-export const loadUserLists = async (
-  pubkey: string,
-  relays: string[],
-  adapter: Nip51Adapter
-): Promise<UserList[]> => {
-  const events = await adapter.queryEvents(
-    { kinds: Array.from({ length: 100 }, (_, i) => 30000 + i), authors: [pubkey], limit: 200 },
-    relays
+export function sameItem(a: ListItem, b: ListItem): boolean {
+  if (a.tag !== b.tag) return false;
+  if (a.value === b.value) return true;
+  const dTag = a.tag === 'a' ? wikiDTag(a.value) : undefined;
+  return dTag !== undefined && dTag === wikiDTag(b.value);
+}
+
+export const hasItem = (list: BookmarkList, item: ListItem): boolean =>
+  list.items.some((i) => sameItem(i, item));
+
+/** The item for an `a` address or an event id */
+export const itemFor = (target: string, relay?: string): ListItem =>
+  /^\d+:/.test(target) ? { tag: 'a', value: target, relay } : { tag: 'e', value: target, relay };
+
+/** A replacement must be newer than the event it replaces, even within the same second */
+const nextCreatedAt = (event: ListEvent, now: number): number =>
+  Math.max(now, event.created_at + 1);
+
+const itemTag = (item: ListItem): string[] =>
+  item.relay ? [item.tag, item.value, item.relay] : [item.tag, item.value];
+
+/**
+ * The list event with `item` appended (unchanged tags if it's already there). Other tags
+ * and the content, which may hold encrypted private items, are kept as they are.
+ */
+export function withItem(event: ListEvent, item: ListItem, now: number): ListEvent {
+  const list = parseList(event);
+  if (list && hasItem(list, item)) return event;
+  return { ...event, created_at: nextCreatedAt(event, now), tags: [...event.tags, itemTag(item)] };
+}
+
+/** The list event without `item` (and other versions of the same wiki entity) */
+export function withoutItem(event: ListEvent, item: ListItem, now: number): ListEvent {
+  const tags = event.tags.filter(
+    ([tag, value]) => !((tag === 'a' || tag === 'e') && value && sameItem({ tag, value }, item))
   );
-  return events
-    .map(parseListEvent)
-    .filter((list): list is UserList => list !== null)
-    .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0));
+  return { ...event, created_at: nextCreatedAt(event, now), tags };
+}
+
+/** An empty bookmarks list (kind 10003), for a user who has none yet */
+export const newBookmarksEvent = (pubkey: string, now: number): ListEvent => ({
+  kind: BOOKMARKS_KIND,
+  pubkey,
+  created_at: now,
+  content: '',
+  tags: [],
+});
+
+/** A d-tag for a new set: the title's slug and a random part, so sets with one title don't clash */
+export const newSetDTag = (title: string, random: string): string => {
+  const slug = title
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/\p{M}/gu, '')
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '');
+  return slug ? `${slug}-${random}` : random;
 };
 
-/**
- * Create, sign, and publish a new NIP-51 list via an injected adapter.
- */
-export const publishNewList = async (
-  params: { pubkey: string; name: string; description?: string; kind?: number },
-  relays: string[],
-  adapter: Nip51Adapter
-): Promise<UserList> => {
-  const event = createListEvent(
-    params.pubkey,
-    params.name,
-    [],
-    params.kind ?? 30000,
-    params.description ?? ''
-  );
-  const signed = await adapter.signEvent(event);
-  const result = await adapter.publishEvent(signed, relays);
-  if (result.success === 0) throw new Error('Failed to publish list to relays');
-  const list = parseListEvent(signed);
-  if (!list) throw new Error('Failed to parse created list');
-  return list;
-};
+/** A new bookmark set */
+export function newSetEvent(
+  params: { pubkey: string; dTag: string; title: string; description?: string },
+  now: number
+): ListEvent {
+  const tags = [
+    ['d', params.dTag],
+    ['title', params.title],
+  ];
+  if (params.description) tags.push(['description', params.description]);
+  return { kind: BOOKMARK_SET_KIND, pubkey: params.pubkey, created_at: now, content: '', tags };
+}
 
-/**
- * Fetch events from a relay using a simple HTTP subscription.
- * This is a basic implementation; production code should use proper NIP-01.
- */
-async function fetchFromRelay(
-  _wsUrl: string,
-  _filters: { kinds: number[]; authors: string[] }
-): Promise<Nip51ListEvent[]> {
-  // This is a placeholder - actual implementation would use WebSocket or REST
-  // For now, return empty array to indicate not implemented
-  console.warn('Relay fetching not fully implemented. Use NIP-01 WebSocket or REST endpoints.');
-  return [];
+/** A deletion request (NIP-09) for a list */
+export const deletionEvent = (list: BookmarkList, now: number): ListEvent => ({
+  kind: DELETION_KIND,
+  pubkey: list.pubkey,
+  created_at: nextCreatedAt(list.event, now),
+  content: '',
+  tags: [
+    ['a', list.address],
+    ['k', String(list.kind)],
+  ],
+});
+
+/** When each address was last asked to be deleted (NIP-09), by its own author */
+function deletionTimes(events: ListEvent[]): Map<string, number> {
+  const deletedAt = new Map<string, number>();
+  for (const event of events) {
+    if (event.kind !== DELETION_KIND) continue;
+    const addresses = event.tags
+      .filter(([tag, value]) => tag === 'a' && value?.split(':')[1] === event.pubkey)
+      .map(([, value]) => value ?? '');
+    for (const address of addresses) {
+      deletedAt.set(address, Math.max(deletedAt.get(address) ?? 0, event.created_at));
+    }
+  }
+  return deletedAt;
 }
 
 /**
- * Main plugin definition.
+ * The lists in `events`: the newest event per address, without lists their author asked
+ * to delete after that version. The bookmarks list comes first, then sets by title.
  */
-export const listPlugin: NostrUIPlugin = {
-  id: 'list',
-  type: 'string', // Lists are stored as string IDs or JSON
+export function currentLists(events: ListEvent[]): BookmarkList[] {
+  const newest = new Map<string, BookmarkList>();
+  for (const event of events) {
+    const list = parseList(event);
+    const known = list && newest.get(list.address);
+    if (list && (!known || list.createdAt > known.createdAt)) newest.set(list.address, list);
+  }
+  const deletedAt = deletionTimes(events);
+  return [...newest.values()]
+    .filter((list) => list.createdAt > (deletedAt.get(list.address) ?? -1))
+    .sort(
+      (a, b) =>
+        Number(b.kind === BOOKMARKS_KIND) - Number(a.kind === BOOKMARKS_KIND) ||
+        (a.title ?? a.dTag).localeCompare(b.title ?? b.dTag)
+    );
+}
 
-  validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
-    if (!value) {
-      // Lists are optional by default
-      return { success: true, data: undefined };
-    }
-
-    const selectedListIds = getSelectedListIds(value);
-
-    if (selectedListIds.length === 0) {
-      return {
-        success: false,
-        error: {
-          field: field.id,
-          message: 'At least one valid list ID must be provided',
-          code: 'INVALID_LIST_ID',
-        },
-      };
-    }
-
-    return { success: true, data: undefined };
-  },
-
-  formatValue: (value: unknown) => {
-    if (!value) return '';
-    const selectedListIds = getSelectedListIds(value);
-    return selectedListIds.join(',');
-  },
-
-  serializeValue: (value: unknown, _field?: PostField) => {
-    if (!value) return '';
-    const selectedListIds = getSelectedListIds(value);
-    // Store as comma-separated IDs for tag/content mapping targets
-    return selectedListIds.join(',');
-  },
-
-  deserializeValue: (raw: string, field: PostField) => {
-    if (!raw) return null;
-    const listIds = raw
-      .split(',')
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
-    const multiple = (field.metadata as { multiple?: boolean } | undefined)?.multiple !== false;
-    return multiple ? listIds : (listIds[0] ?? '');
-  },
-
-  // Extra tags hook for multi-event coordination
-  extraTags: (value: unknown, _field: PostField) => {
-    if (!value) return [];
-
-    const listData = value as ListSelectionData;
-    const selectedListIds = getSelectedListIds(value);
-    const tags: Array<[string, ...string[]]> = [];
-
-    // Add list references as NIP-73 tags
-    for (const listId of selectedListIds) {
-      tags.push(['i', `list:${listId}`]);
-    }
-
-    // Add explicit pubkey references if provided
-    if (listData.pubkeys && listData.pubkeys.length > 0) {
-      for (const pk of listData.pubkeys) {
-        tags.push(['p', pk]);
-      }
-    }
-
-    return tags;
-  },
-};
+/**
+ * `lists` with the user's bookmarks list first: an empty one (never published, createdAt 0)
+ * when they have none yet, so it can be saved to like any other list.
+ */
+export function withBookmarks(lists: BookmarkList[], pubkey: string): BookmarkList[] {
+  if (lists.some((l) => l.kind === BOOKMARKS_KIND && l.pubkey === pubkey)) return lists;
+  const empty = parseList(newBookmarksEvent(pubkey, 0));
+  return empty ? [empty, ...lists] : lists;
+}

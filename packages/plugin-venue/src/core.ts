@@ -51,7 +51,7 @@ export interface VenuePluginConfig {
 const isLinkOnly = (field?: PostField): boolean => field?.metadata?.linkOnly === true;
 
 /** The venue's wiki page address, once the venue hub created or found it */
-const pageAddress = (venue: VenueData): string =>
+export const pageAddress = (venue: VenueData): string =>
   venue.wikiEntity ? `30818:${venue.wikiEntity.pubkey}:${venue.wikiEntity.dTag}` : '';
 
 /**

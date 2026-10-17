@@ -35,7 +35,7 @@ Loading the bundle automatically registers every custom element:
 | View      | `<nostr-post-view>`     |
 | Feed      | `<nostr-post-feed>`     |
 
-All six plugins and their UI elements are also registered:
+The plugins and their UI elements are also registered:
 
 - **Stars** — `@nostr-post/plugin-stars`
 - **Geo** — `@nostr-post/plugin-geo`
@@ -43,6 +43,8 @@ All six plugins and their UI elements are also registered:
 - **Media** — `@nostr-post/plugin-media`
 - **Markdown** — `@nostr-post/plugin-markdown`
 - **Hashtag** — `@nostr-post/plugin-hashtag`
+- **Lists** — `@nostr-post/plugin-list`: `<np-list-save target="30818:<pubkey>:<d-tag>">` (Save to the
+  user's lists) and `<np-list-view>` (the user's lists, or one list by `address`)
 
 ## Programmatic API
 
@@ -157,6 +159,15 @@ The bundle re-exports utilities for advanced usage:
 - `configureVenuePlugin({ googleMapsEmbedKey })`: the app's Google Maps Embed API key (free, restrict it to
   your domain); venues with a Google link then show Google's place card (name, address, rating), loaded
   when opened, nothing stored. Keep keys out of manifests: they're public on Nostr
+
+**Bookmark lists (NIP-51)**
+
+- `fetchMyLists({ relays? })`, `fetchLists(pubkey, { relays? })`: the bookmarks list (kind 10003, empty
+  until first used) and bookmark sets (kind 30003), without deleted ones
+- `addToList(list, item)`, `removeFromList(list, item)`, `createList({ title, description?, items? })`,
+  `deleteList(list)`: publish through the signer (test mode applies); they return a `Result`
+- `itemFor(addressOrId)`, `hasItem(list, item)`: wiki entities count as one item whichever author's
+  version was saved
 
 **Manifest helpers (preload & cache)**
 

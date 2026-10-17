@@ -1,0 +1,178 @@
+/**
+ * @nostr-post/plugin-list - <np-list-save>
+ *
+ * A Save button for one thing (`target`: an `a` address such as a wiki entity, or an event
+ * id): it opens the signed-in user's lists, to add it to or remove it from each, or to
+ * start a new list with it. Lists load when it's first opened, since feeds show many.
+ *
+ * Dispatches 'np-list-change' with { detail: { list } } after a list was published.
+ */
+
+import { hasNostrSigner } from '@nostr-post/signer';
+import { html, LitElement, nothing } from 'lit';
+import { customElement, property, state } from 'lit/decorators.js';
+import { hasItem, itemFor } from '../core';
+import { addToList, createList, fetchMyLists, removeFromList } from '../lists';
+import type { BookmarkList } from '../types';
+import { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle } from './listMessages';
+import { listStyles } from './styles';
+
+@customElement('np-list-save')
+export class NpListSave extends LitElement {
+  static override styles = listStyles;
+
+  /** What to save: an `a` address (e.g. `30818:<pubkey>:<d-tag>`) or an event id */
+  @property() target = '';
+  /** Relay hint saved with the item */
+  @property() relay?: string;
+  /** Relays besides the user's own */
+  @property({ type: Array }) relays?: string[];
+  @property({ type: Object }) messages: Partial<ListMessages> = {};
+
+  @state() _open = false;
+  @state() _lists: BookmarkList[] | null = null;
+  /** Address of the list being published, or 'new' */
+  @state() _busy = '';
+  @state() _error = '';
+  @state() _newTitle = '';
+
+  get _m(): ListMessages {
+    return { ...DEFAULT_LIST_MESSAGES, ...this.messages };
+  }
+
+  get _item() {
+    return itemFor(this.target, this.relay);
+  }
+
+  override updated(changed: Map<string, unknown>): void {
+    // Another target: whether it's saved is unknown until the lists are checked again
+    if (changed.has('target') && changed.get('target') !== undefined) this._lists = null;
+  }
+
+  async _toggleOpen(): Promise<void> {
+    this._open = !this._open;
+    if (this._open && !this._lists) await this._load();
+  }
+
+  async _load(): Promise<void> {
+    this._error = '';
+    if (!hasNostrSigner()) {
+      this._error = this._m.noSigner;
+      return;
+    }
+    try {
+      this._lists = await fetchMyLists({ relays: this.relays });
+    } catch (error) {
+      this._error = this._m.failed(error instanceof Error ? error.message : String(error));
+    }
+  }
+
+  _published(list: BookmarkList): void {
+    const lists = this._lists ?? [];
+    this._lists = lists.some((l) => l.address === list.address)
+      ? lists.map((l) => (l.address === list.address ? list : l))
+      : [...lists, list];
+    this.dispatchEvent(
+      new CustomEvent('np-list-change', { detail: { list }, bubbles: true, composed: true })
+    );
+  }
+
+  async _toggle(list: BookmarkList): Promise<void> {
+    this._busy = list.address;
+    this._error = '';
+    const options = { relays: this.relays };
+    const result = hasItem(list, this._item)
+      ? await removeFromList(list, this._item, options)
+      : await addToList(list, this._item, options);
+    this._busy = '';
+    if (result.success) this._published(result.data);
+    else this._error = this._m.failed(result.error.message);
+  }
+
+  async _create(e: Event): Promise<void> {
+    e.preventDefault();
+    const title = this._newTitle.trim();
+    if (!title) return;
+    this._busy = 'new';
+    this._error = '';
+    const result = await createList({ title, items: [this._item] }, { relays: this.relays });
+    this._busy = '';
+    if (result.success) {
+      this._newTitle = '';
+      this._published(result.data);
+    } else {
+      this._error = this._m.failed(result.error.message);
+    }
+  }
+
+  _renderPanel() {
+    const m = this._m;
+    const item = this._item;
+    return html`
+      <div class="panel" role="dialog" aria-label=${m.save}>
+        ${this._error ? html`<div class="error">${this._error}</div>` : nothing}
+        ${
+          this._lists === null && !this._error
+            ? html`<div class="muted">${m.loading}</div>`
+            : (this._lists ?? []).map(
+                (list) => html`
+                <label class="list-option">
+                  <input
+                    type="checkbox"
+                    .checked=${hasItem(list, item)}
+                    ?disabled=${this._busy !== ''}
+                    @change=${() => this._toggle(list)}
+                  />
+                  <span>${listTitle(list, m)}</span>
+                  <span class="count">${m.itemCount(list.items.length)}</span>
+                </label>
+              `
+              )
+        }
+        ${
+          this._lists
+            ? html`<form class="new-list" @submit=${this._create}>
+                <input
+                  .value=${this._newTitle}
+                  placeholder=${m.newListPlaceholder}
+                  aria-label=${m.newListPlaceholder}
+                  @input=${(e: Event) => {
+                    this._newTitle = (e.target as HTMLInputElement).value;
+                  }}
+                />
+                <button type="submit" ?disabled=${this._busy !== '' || !this._newTitle.trim()}>
+                  ${this._busy === 'new' ? m.creating : m.createList}
+                </button>
+              </form>`
+            : nothing
+        }
+        <div class="actions">
+          <button type="button" @click=${this._toggleOpen}>${m.close}</button>
+        </div>
+      </div>
+    `;
+  }
+
+  override render() {
+    if (!this.target) return nothing;
+    const saved = (this._lists ?? []).some((list) => hasItem(list, this._item));
+    return html`
+      <button
+        type="button"
+        class="save-btn"
+        aria-pressed=${saved ? 'true' : 'false'}
+        aria-expanded=${this._open ? 'true' : 'false'}
+        @click=${this._toggleOpen}
+      >
+        ${saved ? `★ ${this._m.saved}` : `☆ ${this._m.save}`}
+      </button>
+      ${this._open ? this._renderPanel() : nothing}
+    `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'np-list-save': NpListSave;
+  }
+}

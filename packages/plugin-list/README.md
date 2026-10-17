@@ -1,15 +1,24 @@
 # @nostr-post/plugin-list
 
-NIP-51 user lists plugin for `@nostr-post`. Enables managing curated lists of Nostr users for audience control, trust networks, and access management.
+Bookmark lists ([NIP-51](https://github.com/nostr-protocol/nips/blob/master/51.md)) for `@nostr-post`:
+save wiki entities (a venue, a beer) and other events to the user's lists, like saved places in a
+map app ("Want to go", "Favourite pubs").
 
-## Features
+- **Lists**: the user's bookmarks list (kind 10003, the one other clients show as "Bookmarks") and
+  bookmark sets (kind 30003, named, as many as they like)
+- **Items**: `a` tags (addressable events, e.g. a wiki entity `30818:<pubkey>:<d-tag>`) and `e` tags
+  (event ids)
+- **Wiki entities** are one item whichever author's version was saved: the list stores the address of
+  the version the user saw (like reviews cite entities) and shows the entity by its d-tag, so it shows
+  the current page, and saving another version of it doesn't add it twice
+- **Edits** start from the newest copy of the list on relays, so a change made on another device isn't
+  undone. Tags other clients wrote and the content (where NIP-51 keeps encrypted private items) are kept
+- **Deleting** a set publishes a deletion request (NIP-09, kind 5); deleted sets aren't listed. The
+  bookmarks list can't be deleted, only emptied
+- **Publishing** goes through `@nostr-post/signer` (`signAndPublish`) to the user's relays (signer and
+  NIP-65) plus `relays`, so test mode (dry run) applies
 
-- **Fetch user lists** (NIP-51, kind 30000-30099)
-- **Create new lists** inline with optional description
-- **Delete lists** with confirmation
-- **Select lists** for audience targeting
-- **Add pubkeys** to track specific users
-- **Type-safe** plugin integration
+Private (encrypted) items aren't read or written yet.
 
 ## Installation
 
@@ -17,240 +26,102 @@ NIP-51 user lists plugin for `@nostr-post`. Enables managing curated lists of No
 pnpm add @nostr-post/plugin-list
 ```
 
-## Basic Usage
-
-### Web Component
+## Web components
 
 ```html
 <script type="module">
   import "@nostr-post/plugin-list/web";
 </script>
 
-<np-list-input id="list-select"></np-list-input>
+<!-- A Save button: opens the user's lists to add it to or remove it from, or start a new list -->
+<np-list-save target="30818:<pubkey>:tap-house-venue"></np-list-save>
 
-<script>
-  const input = document.getElementById("list-select");
-  input.addEventListener("np-value-changed", (e) => {
-    console.log("Selected list:", e.detail.value);
-    // { listIds: ["30000:pubkey:list-name"], pubkeys?: [...] }
+<!-- The signed-in user's lists; or one list with address="30003:<pubkey>:<d-tag>" -->
+<np-list-view id="lists"></np-list-view>
+
+<script type="module">
+  document.getElementById("lists").addEventListener("np-list-item-select", (e) => {
+    const { item, list, title } = e.detail; // item: { tag: "a", value: "30818:…" }
+    // open the entity, e.g. <nostr-wiki-view entity-id="tap-house-venue">
   });
 </script>
 ```
 
-### Manifest Integration
+`<np-venue-view>` (`@nostr-post/plugin-venue`) shows `<np-list-save>` next to a venue that has a wiki
+page.
+
+### `<np-list-save>`
+
+| Property / attribute | Type                    | Description                                                     |
+| -------------------- | ----------------------- | --------------------------------------------------------------- |
+| `target`             | `string`                | What to save: an `a` address or an event id                     |
+| `relay`              | `string`                | Relay hint saved with the item                                  |
+| `relays`             | `string[]`              | Relays besides the user's own (default `DEFAULT_RELAYS`)        |
+| `messages`           | `Partial<ListMessages>` | Overrides for the user-facing text (`DEFAULT_LIST_MESSAGES`)    |
+
+Lists load when it's first opened, since feeds show many. Fires `np-list-change`
+(`{ list }`) after a list was published.
+
+### `<np-list-view>`
+
+| Property / attribute | Type                    | Description                                                    |
+| -------------------- | ----------------------- | -------------------------------------------------------------- |
+| `address`            | `string`                | The list to show; empty: the signed-in user's lists            |
+| `relays`             | `string[]`              | Relays besides the list owner's own                            |
+| `messages`           | `Partial<ListMessages>` | Overrides for the user-facing text                             |
+
+Items show the title of their event (a wiki entity's newest version, by d-tag). The owner can remove
+items and delete sets. Fires `np-list-item-select` (`{ item, list, title }`) when an item is clicked
+and `np-list-change` (`{ list, deleted? }`) after a change.
+
+## Functions
 
 ```typescript
-import type { NostrPostManifest } from "@nostr-post/core/types";
+import { addToList, createList, fetchMyLists, itemFor } from "@nostr-post/plugin-list";
 
-const venueReviewManifest: NostrPostManifest = {
-  id: "venue-review-v1",
-  version: "1.0.0",
-  publishFormats: [
-    { id: "article", label: "Article", kinds: [30023], default: true },
-  ],
-  fields: [
-    {
-      id: "review",
-      type: "string",
-      uiPlugin: "textarea",
-      mapTo: { kind: 30023, target: "content" },
-      required: true,
-    },
-    {
-      id: "audience",
-      type: "string",
-      uiPlugin: "list",
-      mapTo: { kind: 30023, target: "tag", tagName: "L" },
-      metadata: {
-        allowCreate: true,
-        allowDelete: true,
-        defaultList: "trusted-reviewers",
-        multiple: true,
-      },
-    },
-  ],
-};
+const item = itemFor("30818:<pubkey>:tap-house-venue");
+const [bookmarks, ...sets] = await fetchMyLists();
+
+const saved = await addToList(bookmarks, item);
+if (!saved.success) console.error(saved.error.message);
+
+await createList({ title: "Want to go", items: [item] });
 ```
 
-### React Component
+Reading and publishing (`lists.ts`; they take `{ relays? }` and return a `Result` instead of throwing):
 
-```tsx
-import { NostrPostComposer } from "@nostr-post/react";
-import "@nostr-post/plugin-list/web";
+- `fetchLists(pubkey, options)`, `fetchMyLists(options)`: the bookmarks list first (empty, `createdAt`
+  0, until first used), then sets by title; deleted sets left out
+- `addToList(list, item, options)`, `removeFromList(list, item, options)`
+- `createList({ title, description?, items? }, options)`: a new set with a d-tag from the title
+- `deleteList(list, options)`: sets only
 
-export function ReviewForm() {
-  return (
-    <NostrPostComposer
-      manifest={venueReviewManifest}
-      prefill={{
-        audience: {
-          listIds: ["my-trusted-reviewers", "venue-mods"],
-        },
-      }}
-    />
-  );
+Pure helpers (`core.ts`): `parseList`, `currentLists`, `withBookmarks`, `withItem`, `withoutItem`,
+`sameItem`, `hasItem`, `itemFor`, `listAddress`, `newSetEvent`, `newSetDTag`, `newBookmarksEvent`,
+`deletionEvent`. Item titles (`itemTitles.ts`): `fetchItemTitles`, `itemFilters`, `eventForItem`,
+`eventTitle`.
+
+### Types
+
+```typescript
+interface ListItem {
+  tag: "a" | "e";
+  value: string; // address or event id
+  relay?: string;
 }
-```
 
-## Types
-
-### `UserList`
-
-```typescript
-interface UserList {
-  name: string;
+interface BookmarkList {
+  address: string; // "10003:<pubkey>:" or "30003:<pubkey>:<d-tag>"
+  kind: number;
+  pubkey: string;
+  dTag: string;
+  title?: string;
   description?: string;
-  pubkeys: string[];
-  createdAt?: number;
-  id?: string;
+  items: ListItem[];
+  createdAt: number;
+  event: ListEvent; // what edits start from
 }
 ```
-
-### `ListSelectionData`
-
-Value type used for list selection fields.
-
-```typescript
-interface ListSelectionData {
-  listIds: string[];
-  listId?: string;
-  pubkeys?: string[];
-}
-```
-
-### `ListPluginConfig`
-
-Plugin configuration in field metadata.
-
-```typescript
-interface ListPluginConfig {
-  relays?: string[];
-  allowCreate?: boolean;
-  allowDelete?: boolean;
-  defaultList?: string;
-  multiple?: boolean;
-}
-```
-
-## Core Functions
-
-### `fetchUserLists(userPubkey, relays)`
-
-Fetches all NIP-51 lists for a user from specified relays.
-
-```typescript
-import { fetchUserLists } from "@nostr-post/plugin-list";
-
-const lists = await fetchUserLists(userPubkey, relays);
-console.log(lists);
-// [
-//   { name: 'Trusted Reviewers', pubkeys: [...], ... },
-//   { name: 'Moderators', pubkeys: [...], ... }
-// ]
-```
-
-### `createListEvent(userPubkey, listName, pubkeys, kind, description)`
-
-Creates an unsigned NIP-51 list event. Must be signed and published by caller.
-
-```typescript
-import { createListEvent } from "@nostr-post/plugin-list";
-
-const event = createListEvent(
-  userPubkey,
-  "Trusted Reviewers",
-  ["npub1...", "npub2..."],
-  30000,
-  "People I trust for venue reviews",
-);
-
-// Sign and publish
-const signed = await signer.call("sign_event", event);
-await relay.publish(signed);
-```
-
-### `parseListEvent(event)`
-
-Parses a NIP-51 event into UserList format.
-
-```typescript
-import { parseListEvent } from "@nostr-post/plugin-list";
-
-const list = parseListEvent(nostrEvent);
-```
-
-## Use Cases
-
-### 1. Verified Reviewer Network
-
-```typescript
-const manifest = {
-  fields: [
-    {
-      id: "audience",
-      type: "string",
-      uiPlugin: "list",
-      metadata: {
-        defaultList: "verified-reviewers",
-        allowCreate: false,
-        allowDelete: false,
-      },
-    },
-  ],
-};
-```
-
-### 2. Moderation & Curation
-
-```typescript
-const manifest = {
-  fields: [
-    {
-      id: "moderators",
-      type: "string",
-      uiPlugin: "list",
-      mapTo: { kind: 30023, target: "tag", tagName: "moderator" },
-      metadata: {
-        allowCreate: true,
-        allowDelete: true,
-      },
-    },
-  ],
-};
-```
-
-### 3. Community Access Control
-
-```typescript
-<nostr-post-composer
-  manifest={manifest}
-  prefill={{
-    audience: { listIds: ['community-members'] },
-    // or multiple lists:
-    // audience: { listIds: ['community-members', 'trusted-reviewers'] },
-  }}
-/>
-```
-
-## NIP-51 Reference
-
-**Kind 30000**: Mute list (users, hashtags, events)
-**Kind 30001**: Pinned notes
-**Kind 30002**: Relay list
-**Kind 30003**: Bookmark list
-**Kind 30004**: Communities
-**Kind 30005**: Public chats
-**Kind 30008**: Relay sets
-**Kind 30009**: User groups
-
-See [NIP-51](https://github.com/nostr-protocol/nips/blob/master/51.md) for full specification.
-
-## Related Plugins
-
-- [@nostr-post/plugin-venue](../plugin-venue) - OSM location/venue selection
-- [@nostr-post/plugin-geo](../plugin-geo) - Geohash + map
-- [@nostr-post/plugin-stars](../plugin-stars) - Star ratings
-- [@nostr-post/plugin-markdown](../plugin-markdown) - Rich text editing
 
 ## License
 

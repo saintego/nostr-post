@@ -210,9 +210,9 @@ importers:
 
   packages/plugin-list:
     dependencies:
-      '@nostr-post/plugins':
+      '@nostr-post/core':
         specifier: workspace:*
-        version: link:../plugins
+        version: link:../core
       '@nostr-post/signer':
         specifier: workspace:*
         version: link:../signer
@@ -299,6 +299,9 @@ importers:
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../plugin-geo
+      '@nostr-post/plugin-list':
+        specifier: workspace:*
+        version: link:../plugin-list
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins

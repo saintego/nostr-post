@@ -10,18 +10,20 @@
  * delegates entirely to <np-geo-view>.
  */
 
+import type { ListMessages } from '@nostr-post/plugin-list/web';
 import type { PostField } from '@nostr-post/plugins/types';
 import { type EntityManifestRef, getEntityManifest, resolveEntityManifest } from '@nostr-post/wiki';
 import { css, html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { googleMapsPlaceUrl, osmUrl, type VenueData } from '../core';
+import { googleMapsPlaceUrl, osmUrl, pageAddress, type VenueData } from '../core';
 import { googleEmbedUrl } from '../googleEmbed';
 import { googleMapsCidUrl } from '../googleLink';
 import { loadVenueFromPage, needsPage } from '../venuePage';
 import { DEFAULT_VENUE_VIEW_MESSAGES, type VenueViewMessages } from './venueMessages';
 
-// Ensure <np-geo-view> and <nostr-wiki-view> are defined
+// Ensure <np-geo-view>, <np-list-save> and <nostr-wiki-view> are defined
 import '@nostr-post/plugin-geo/web';
+import '@nostr-post/plugin-list/web';
 import '@nostr-post/wiki/web';
 
 @customElement('np-venue-view')
@@ -39,6 +41,11 @@ export class NpVenueView extends LitElement {
       align-items: center;
       gap: 0.375rem;
       margin-bottom: 0.125rem;
+    }
+
+    .venue-save {
+      margin-left: auto;
+      font-weight: 400;
     }
 
     .venue-wiki {
@@ -98,6 +105,10 @@ export class NpVenueView extends LitElement {
   @property({ attribute: false })
   messages?: Partial<VenueViewMessages>;
 
+  /** Overrides for the text of the Save (to list) button */
+  @property({ attribute: false })
+  listMessages?: Partial<ListMessages>;
+
   @state() private wikiOpen = false;
 
   private get m(): VenueViewMessages {
@@ -133,7 +144,23 @@ export class NpVenueView extends LitElement {
     const v = this._fromPage ?? (this.value as VenueData);
 
     return html`
-      ${v.name ? html`<div class="venue-name">📍 ${v.name}</div>` : nothing}
+      ${
+        v.name
+          ? html`<div class="venue-name">
+              📍 ${v.name}
+              ${
+                // Save the venue's wiki entity to the user's lists (NIP-51)
+                v.wikiEntity
+                  ? html`<np-list-save
+                      class="venue-save"
+                      .target=${pageAddress(v)}
+                      .messages=${this.listMessages ?? {}}
+                    ></np-list-save>`
+                  : nothing
+              }
+            </div>`
+          : nothing
+      }
       ${
         v.osmType && v.osmId
           ? html`<span class="osm-badge">OSM ${v.osmType}:${v.osmId}</span>`

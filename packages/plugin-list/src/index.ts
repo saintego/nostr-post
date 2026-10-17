@@ -1,22 +1,34 @@
 export {
-  listPlugin,
-  fetchUserLists,
-  parseListEvent,
-  createListEvent,
-  loadUserLists,
-  publishNewList,
+  currentLists,
+  deletionEvent,
+  hasItem,
+  itemFor,
+  listAddress,
+  newBookmarksEvent,
+  newSetDTag,
+  newSetEvent,
+  parseList,
+  sameItem,
+  withBookmarks,
+  withItem,
+  withoutItem,
 } from './core';
-export type {
-  UserList,
-  ListSelectionData,
-  ListPluginConfig,
-  Nip51ListEvent,
-  Nip51ParsedList,
-  Nip51Adapter,
+export { eventForItem, eventTitle, fetchItemTitles, itemFilters } from './itemTitles';
+export {
+  addToList,
+  createList,
+  deleteList,
+  fetchLists,
+  fetchMyLists,
+  removeFromList,
+} from './lists';
+export {
+  BOOKMARK_SET_KIND,
+  BOOKMARKS_KIND,
+  type BookmarkList,
+  DELETION_KIND,
+  type ListEvent,
+  type ListItem,
+  type ListRelayOptions,
+  WIKI_KIND,
 } from './types';
-
-// Register the plugin
-import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { listPlugin } from './core';
-
-pluginRegistry.register(listPlugin);

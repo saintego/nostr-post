@@ -150,3 +150,15 @@ export {
   // The app's Google Maps Embed key for venues' place card
   configureVenuePlugin,
 } from '@nostr-post/plugin-venue';
+
+// Bookmark lists (NIP-51): <np-list-save> and <np-list-view>, and the functions behind them
+export {
+  fetchLists,
+  fetchMyLists,
+  addToList,
+  removeFromList,
+  createList,
+  deleteList,
+  itemFor,
+  hasItem,
+} from '@nostr-post/plugin-list';

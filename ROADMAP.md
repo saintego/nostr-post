@@ -14,8 +14,13 @@
 - [ ] add style customization options for web components (CSS custom properties, theming)
 - [ ] Dark mode in the manifest creator (follow `prefers-color-scheme`, with a toggle); the web components' colors need CSS custom properties for it (see theming above)
 - [ ] fix pwa example shared image/text, it's not getting to post input now
-- [ ] fix list plugin to use lists(nip-51?) instead of manifests
-- [ ] Rewrite `plugin-list` and test it as a whole: it likely doesn't work properly, and it has no tests (`pnpm test` fails there). Check list loading, creating ("Creating…"), selecting and deleting against real NIP-51 events; it signs and publishes through its own adapter (`publishNewList`), so make sure it goes through the signer (test mode, relays). Covers the items below: no tests, deleting the list event, NIP-51 instead of manifests
+- [x] fix list plugin to use lists(nip-51?) instead of manifests (NIP-51 bookmark lists, see the rewrite below)
+- [x] Rewrite `plugin-list` and test it as a whole: it's now save-to-list for wiki entities and other events, on NIP-51 bookmark lists (the bookmarks list, kind 10003, and bookmark sets, kind 30003; items as `a`/`e` tags). `<np-list-save target=…>` adds/removes the target in the user's lists or starts a new one; `<np-list-view>` shows lists with item titles, removing items and deleting sets. Wiki entities are one item whichever author's version was saved (compared and shown by d-tag); edits start from the newest copy on relays and keep other clients' tags and content; deleting sends a NIP-09 request. Publishes through the signer (`signAndPublish`: test mode, the user's relays). `<np-venue-view>` shows Save for a venue with a wiki page. The old audience-picker composer field (`np-list-input`, made-up `i list:` tags, never used) is gone. Tested with an in-memory relay (core, publishing, both components)
+- [ ] plugin-list: try it with a real signer and relays (save a venue from a review, the lists in another client such as one showing NIP-51 bookmark sets), and show `<np-list-view>` somewhere in the manifest creator
+- [ ] plugin-list: private items (NIP-51 encrypted `content`, NIP-44 through the signer's `nip44`), with a fallback when the signer lacks it; Google Maps-style lists are private by default. Edits already keep the content as it is
+- [ ] plugin-list: make a private list public (republish its encrypted items as public tags); sharing a private list with chosen people has no standard yet (a copy encrypted to each, or a per-list key), later. After private items
+- [ ] plugin-list: lists of lists instead of lists edited by several people: a set's items can already be other users' sets (`a` tags `30003:<pubkey>:<d-tag>`); `<np-list-view>` shows such items as nested lists (merged, or expandable)
+- [ ] `<np-list-view>` titles wiki items by their newest version; use the wiki resolver's canonical version like `<nostr-wiki-view>` (without making plugin-list depend on the wiki package, e.g. a `titleFor` hook)
 - [ ] User mention support: mention autocomplete, user tagging
 - [ ] Show user names on posts and comments reliably. Done: one profile loader in the signer (`fetchProfile`, `fetchProfiles`) for view authors, feed names and mentions: newest kind 0 per pubkey, one `limit: 1` filter per pubkey (a single multi-author filter hit purplepag.es's result cap), the `INDEXER_RELAYS` (purplepag.es) besides the app's relays, `nprofile` relay hints, a shared cache, in-flight deduplication and one batched request per tick. Left: the author's NIP-65 relays (outbox model); fallback to a short `npub`, not hex; show the NIP-05 identifier when verified
 - [ ] User profile view: a `<nostr-profile>` web component (+ React wrapper) with picture, name, about, NIP-05, website and the user's posts (optionally filtered by manifest, e.g. their reviews); post and comment author names link to it (app-overridable link target)
@@ -119,7 +124,7 @@
 - [ ] Integration tests for plugin rendering
 - [ ] E2E tests for web components
 - [ ] Fix the 2 failing E2E tests in `tests/e2e/plugin-integration.test.ts` (geohash `#g` lookup, hashtag auto-extraction)
-- [ ] `plugin-list` has no tests, so `pnpm test` (which stops at the first failing package) fails there (part of the plugin-list rewrite above)
+- [x] `plugin-list` has no tests, so `pnpm test` (which stops at the first failing package) fails there (part of the plugin-list rewrite above)
 - [ ] Test plugins in the manifest-creator tool
 - [ ] Use the signer's dry-run mode (`setDryRun`, `getDryRunEntries`) in E2E and `web` tests to assert published bundles without real relays
 - [x] Test mode (dry-run) with a venue whose wiki page must be created first: the post stayed at "Publishing linked pages…" until the timeout. Not a test-mode bug: the venue page's signature waited for approval in the remote signer (Amber), and nothing said so. The post composer and the wiki composer now show "Waiting for your signer to approve…" while `signEvent` waits (`SIGNING_EVENT`)
@@ -151,7 +156,8 @@
 - [ ] Additional plugins: polls, calendars, markets, date, tags, mentions
 - [ ] Plugin examples, plugin developer documentation and plugin validation examples
 - [ ] Advanced manifest features (conditions, dependencies)
-- [ ] plugin-list: delete the list event from relays when a list is deleted (TODO in `packages/plugin-list/src/web.ts`)
+- [x] plugin-list: delete the list event from relays when a list is deleted (TODO in `packages/plugin-list/src/web.ts`): a NIP-09 deletion request, and deleted sets aren't listed
 - [ ] `<nostr-post-feed>` array attributes (`kinds`, `authors`, `ids`) only accept JSON (`kinds="[1]"`); `kinds="1,30023"` is silently ignored. Accept comma lists too
 - [ ] Docs drift check: a test that every name exported by the CDN bundle (`packages/cdn/src/index.ts`) appears in packages/cdn/README.md; later, if drift keeps happening, a read-only Sonnet docs-check agent (`.claude/agents/`) that compares entry points, component properties and plugin hooks against the READMEs before releases
 - [ ] Documentation: API reference for each package, API documentation website, more usage examples, best practices guide, video tutorials
+- [ ] make list of all non standard nostr behaviour and try to fix it
