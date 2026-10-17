@@ -10,20 +10,20 @@
  * delegates entirely to <np-geo-view>.
  */
 
-import type { ListMessages } from '@nostr-post/plugin-list/web';
+import { eventActionsFor } from '@nostr-post/plugins/entities';
 import type { PostField } from '@nostr-post/plugins/types';
 import { type EntityManifestRef, getEntityManifest, resolveEntityManifest } from '@nostr-post/wiki';
 import { css, html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { googleMapsPlaceUrl, osmUrl, pageAddress, type VenueData } from '../core';
 import { googleEmbedUrl } from '../googleEmbed';
 import { googleMapsCidUrl } from '../googleLink';
 import { loadVenueFromPage, needsPage } from '../venuePage';
 import { DEFAULT_VENUE_VIEW_MESSAGES, type VenueViewMessages } from './venueMessages';
 
-// Ensure <np-geo-view>, <np-list-save> and <nostr-wiki-view> are defined
+// Ensure <np-geo-view> and <nostr-wiki-view> are defined
 import '@nostr-post/plugin-geo/web';
-import '@nostr-post/plugin-list/web';
 import '@nostr-post/wiki/web';
 
 @customElement('np-venue-view')
@@ -43,7 +43,7 @@ export class NpVenueView extends LitElement {
       margin-bottom: 0.125rem;
     }
 
-    .venue-save {
+    .venue-action {
       margin-left: auto;
       font-weight: 400;
     }
@@ -105,10 +105,6 @@ export class NpVenueView extends LitElement {
   @property({ attribute: false })
   messages?: Partial<VenueViewMessages>;
 
-  /** Overrides for the text of the Save (to list) button */
-  @property({ attribute: false })
-  listMessages?: Partial<ListMessages>;
-
   @state() private wikiOpen = false;
 
   private get m(): VenueViewMessages {
@@ -148,16 +144,7 @@ export class NpVenueView extends LitElement {
         v.name
           ? html`<div class="venue-name">
               📍 ${v.name}
-              ${
-                // Save the venue's wiki entity to the user's lists (NIP-51)
-                v.wikiEntity
-                  ? html`<np-list-save
-                      class="venue-save"
-                      .target=${pageAddress(v)}
-                      .messages=${this.listMessages ?? {}}
-                    ></np-list-save>`
-                  : nothing
-              }
+              ${this._renderActions(v)}
             </div>`
           : nothing
       }
@@ -199,6 +186,28 @@ export class NpVenueView extends LitElement {
         }
       </details>
     `;
+  }
+
+  /**
+   * Plugins' controls for the venue's entity type (`@nostr-post/plugins/entities`), like
+   * <nostr-wiki-view> shows them, e.g. Save to lists when the type has `wikiConfig.lists`
+   */
+  private _renderActions(v: VenueData) {
+    if (!v.wikiEntity) return nothing;
+    const ref = this.field?.metadata?.wikiEntity as EntityManifestRef | undefined;
+    const manifest = getEntityManifest(ref);
+    if (!manifest && ref) {
+      void resolveEntityManifest(ref).then((found) => found && this.requestUpdate());
+    }
+    if (!manifest) return nothing;
+    return eventActionsFor(manifest).map((action) => {
+      const tag = unsafeStatic(action.tagName);
+      return staticHtml`<${tag}
+        class="venue-action"
+        .target=${pageAddress(v)}
+        .manifest=${manifest}
+      ></${tag}>`;
+    });
   }
 
   /** The venue's wiki page, loaded only when opened (feeds show many posts) */

@@ -1,6 +1,8 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
+import { listField } from '@nostr-post/plugin-list';
 import type { WikiManifest } from '@nostr-post/wiki';
+import { BEER_LISTS, SAVE_PLACE_MANIFEST, VENUE_LISTS } from './listExamples';
 import bjcpStyleManifest from './manifests/beerStyleBjcp2021.json';
 
 export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest> = {
@@ -239,6 +241,9 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
   'wiki-beer-entity': {
     id: 'beer-entity-v1',
     version: '1.0.0',
+    // Lists people save beers to; `beer` names them across versions (nostr-post:beer:liked)
+    lists: BEER_LISTS,
+    listType: 'beer',
     // The style field comes from the BJCP base manifest
     extends: 'beer-style-bjcp-2021',
     wikiConfig: {
@@ -383,6 +388,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
           entityManifest: 'beer-entity-v1',
         },
       },
+      listField({ saveField: 'beer', label: 'Save the beer to lists' }),
       {
         id: 'rating',
         type: 'number',
@@ -507,6 +513,9 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
   'wiki-venue-entity': {
     id: 'venue-entity-v1',
     version: '1.0.0',
+    // Lists people save venues to; the beer venue inherits them (nostr-post:venue:visited)
+    lists: VENUE_LISTS,
+    listType: 'venue',
     wikiConfig: {
       titleTemplate: '{name} ({city})',
       dTagTemplate: '{name}-{city}-(venue)',
@@ -715,9 +724,13 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
     },
     fields: [],
   },
+  'save-place': SAVE_PLACE_MANIFEST,
   'venue-review': {
     id: 'venue-review-v1',
     version: '1.0.0',
+    // Reviews themselves can be saved too (Save in the review's view)
+    lists: [{ id: 'saved', label: 'Saved reviews' }],
+    listType: 'venue-review',
     publishFormats: [
       {
         id: 'kind1-note',
@@ -794,6 +807,7 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
           wikiEntity: 'venue-entity-v1',
         },
       },
+      listField({ saveField: 'venue', label: 'Save the venue to lists' }),
       {
         id: 'photos',
         type: 'string',

@@ -22,6 +22,8 @@ export interface WikiComposerMessages {
   waitingForSigner: string;
   /** Shown with `auto-publish` when no relay accepted the event */
   publishFailed: string;
+  /** Published, but a plugin's after-publish step failed (e.g. saving to lists) */
+  afterPublishFailed: (errors: string[]) => string;
   checkingSlug: string;
   slugFree: (dTag: string) => string;
   /** Shown when a new entity's d-tag belongs to another entity */
@@ -49,6 +51,7 @@ export const DEFAULT_WIKI_COMPOSER_MESSAGES: WikiComposerMessages = {
   publishing: 'Publishing…',
   waitingForSigner: 'Waiting for your signer to approve…',
   publishFailed: 'No relay accepted the entity. Check your connection and try again.',
+  afterPublishFailed: (errors) => `Published, but: ${errors.join('; ')}`,
   checkingSlug: 'Checking whether the slug is free…',
   slugFree: (dTag) => `✓ "${dTag}" is free`,
   slugTaken: (dTag) =>

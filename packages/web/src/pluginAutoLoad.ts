@@ -16,7 +16,10 @@ const builtInPluginLoaders: Record<string, () => Promise<unknown>> = {
 const pendingPluginLoads = new Map<string, Promise<unknown>>();
 
 const ensurePluginLoaded = async (pluginId: string) => {
-  if (pluginRegistry.has(pluginId)) return;
+  // A plugin registered from its main entry only (e.g. an app imported a helper from it)
+  // has no input yet: its web entry still has to load
+  const registered = pluginRegistry.get(pluginId);
+  if (registered && (registered.inputTagName || !builtInPluginLoaders[pluginId])) return;
 
   const existing = pendingPluginLoads.get(pluginId);
   if (existing) {

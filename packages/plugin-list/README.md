@@ -18,6 +18,13 @@ map app ("Want to go", "Favourite pubs").
 - **Publishing** goes through `@nostr-post/signer` (`signAndPublish`) to the user's relays (signer and
   NIP-65) plus `relays`, so test mode (dry run) applies
 
+- **Manifest driven**: a manifest names the lists for events made with it (`lists`, e.g. "Want to
+  go" and "Visited" for venues, "Saved reviews" for reviews, see [MANIFEST.md](../../MANIFEST.md#lists)).
+  They are offered first, also before the user has them (ticking one creates it), and only such events
+  get a Save button. A post manifest saves its venue or picked entity, or the post itself, with a
+  `list` field once the post is published; with a publish format of `kinds: []` a manifest only saves
+  (find a place, save it)
+
 Private (encrypted) items aren't read or written yet.
 
 ## Installation
@@ -47,8 +54,40 @@ pnpm add @nostr-post/plugin-list
 </script>
 ```
 
-`<np-venue-view>` (`@nostr-post/plugin-venue`) shows `<np-list-save>` next to a venue that has a wiki
-page.
+Importing `@nostr-post/plugin-list/web` also registers the `list` field plugin (input
+`<np-list-input>`) and adds `<np-list-save>` to events made with manifests that have `lists`
+(`registerEventAction` of `@nostr-post/plugins/entities`): `<nostr-post-view>` shows it in the header,
+`<nostr-wiki-view>` next to the title, `<np-venue-view>` next to the venue's name. The package doesn't
+depend on `@nostr-post/wiki`: the entity manifests the list field needs are resolved through
+`@nostr-post/plugins/entities`, which the wiki package provides once loaded.
+
+A manifest's list has the d-tag `nostr-post:<listType>:<id>` (`nostr-post:venue:visited`; `listType`
+defaults to the manifest id), or its own `dTag` ([MANIFEST.md](../../MANIFEST.md#lists)). Both
+components show what they wait for: the signer (a remote signer or a permission prompt; after 20 s
+"Your signer didn't answer" with "Try again"), then the relays (the manifest's lists show meanwhile).
+`<np-list-input>` takes the composer's `pubkey` when it has one, and doesn't ask the signer then.
+
+## The list field
+
+```js
+import { listField } from "@nostr-post/plugin-list";
+
+listField({ saveField: "venue", label: "Save the venue to lists" });
+// {
+//   id: "venue_lists", type: "string", uiPlugin: "list",
+//   mapTo: { kind: 1, target: "tag", tagName: "lists" }, // nothing is added to the post
+//   metadata: { label: "Save the venue to lists", saveField: "venue" },
+// }
+```
+
+The input explains itself (`messages.fieldHint`), so the field needs only a label.
+
+`<np-list-input>` lists the signed-in user's lists, the `lists` of the `saveField`'s entity manifest
+first (a `venue` field's `wikiEntity`, a `wiki-entity-picker`'s `entityManifest`), or without
+`saveField` the post manifest's own, and takes new lists by title. It publishes nothing: the value is a
+string array of list addresses and `new:<title>` for lists to create (`listChoices(value)` reads it). Once the post is published, the field's `afterPublish` hook saves the
+entity (the venue's page the venue field may just have created) to them; without `saveField` it saves
+the post itself. A list it can't save to is reported by the composer; the post stays published.
 
 ### `<np-list-save>`
 
@@ -57,6 +96,7 @@ page.
 | `target`             | `string`                | What to save: an `a` address or an event id                     |
 | `relay`              | `string`                | Relay hint saved with the item                                  |
 | `relays`             | `string[]`              | Relays besides the user's own (default `DEFAULT_RELAYS`)        |
+| `manifest`           | `NostrPostManifest`     | The manifest the target was made with: its `lists` come first   |
 | `messages`           | `Partial<ListMessages>` | Overrides for the user-facing text (`DEFAULT_LIST_MESSAGES`)    |
 
 Lists load when it's first opened, since feeds show many. Fires `np-list-change`
@@ -95,10 +135,16 @@ Reading and publishing (`lists.ts`; they take `{ relays? }` and return a `Result
 - `addToList(list, item, options)`, `removeFromList(list, item, options)`
 - `createList({ title, description?, items? }, options)`: a new set with a d-tag from the title
 - `deleteList(list, options)`: sets only
+- `addItemsToList(list, items, options)`: several items in one event
 
-Pure helpers (`core.ts`): `parseList`, `currentLists`, `withBookmarks`, `withItem`, `withoutItem`,
-`sameItem`, `hasItem`, `itemFor`, `listAddress`, `newSetEvent`, `newSetDTag`, `newBookmarksEvent`,
-`deletionEvent`. Item titles (`itemTitles.ts`): `fetchItemTitles`, `itemFilters`, `eventForItem`,
+The list field (`listField.ts`): `listField(options)`, `listFieldPlugin`, `listChoices(value)`,
+`choiceValue(choice)`, `fieldPresets(field, manifest)`, `itemsToSave(field, { formData,
+events })` and `saveToChoices(choices, items, options)`.
+
+Pure helpers (`core.ts`): `parseList`, `currentLists`, `withBookmarks`, `withPresets`, `withItem`,
+`withoutItem`, `sameItem`, `hasItem`, `itemFor`, `itemForEvent`, `entityItems`, `listAddress`,
+`listAtAddress`, `listPresets(lists, type)`, `manifestListPresets(manifest)`, `newSetEvent`,
+`newSetDTag`, `newBookmarksEvent`, `deletionEvent`. Item titles (`itemTitles.ts`): `fetchItemTitles`, `itemFilters`, `eventForItem`,
 `eventTitle`.
 
 ### Types

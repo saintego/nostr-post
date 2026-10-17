@@ -899,3 +899,29 @@ describe('manifest label', () => {
     expect(tagsOf({ ...manifest, linkManifest: false }).some((t) => t[0] === 'l')).toBe(false);
   });
 });
+
+describe('hooks-only publish format (kinds: [])', () => {
+  const manifest: NostrPostManifest = {
+    id: 'save-place',
+    version: '1.0.0',
+    publishFormats: [{ id: 'save', label: 'Save', kinds: [], default: true }],
+    fields: [
+      {
+        id: 'venue',
+        type: 'string',
+        uiPlugin: 'text',
+        required: true,
+        mapTo: { kind: 1, target: 'tag', tagName: 'g' },
+      },
+    ],
+  };
+
+  it('builds no events', () => {
+    const result = coordinateEvents(manifest, { venue: 'u2fk' }, { pubkey: 'pk' });
+    expect(result.success && result.data.events).toEqual([]);
+  });
+
+  it('still requires required fields', () => {
+    expect(coordinateEvents(manifest, {}, { pubkey: 'pk' }).success).toBe(false);
+  });
+});

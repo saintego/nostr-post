@@ -11,6 +11,12 @@ export interface ComposerMessages {
   stepHooks: string;
   /** While the post itself is signed and published */
   stepPublish: string;
+  /** After the post is out, while plugins finish (e.g. save its venue to lists) */
+  stepAfterPublish: string;
+  /** A hooks-only format (`kinds: []`) finished: its plugins did their steps, no post */
+  doneWithoutPost: string;
+  /** The post is published but a plugin's after-publish step failed; its errors follow */
+  afterPublishFailed: (errors: string[]) => string;
   /** While the signer works on a signature, e.g. waits for the user to approve it */
   stepSigning: string;
   /** Shown at the button when fields failed validation; the field labels follow */
@@ -28,6 +34,9 @@ export const DEFAULT_COMPOSER_MESSAGES: ComposerMessages = {
   loadingManifest: 'Loading Manifest...',
   stepHooks: 'Publishing linked pages…',
   stepPublish: 'Signing and publishing the post…',
+  stepAfterPublish: 'Finishing (e.g. saving to lists)…',
+  doneWithoutPost: 'Done!',
+  afterPublishFailed: (errors) => `Published, but: ${errors.join('; ')}`,
   stepSigning: 'Waiting for your signer to approve…',
   invalidFields: 'Please fix these fields:',
   hooksTimeout: 'Publishing linked pages took too long. Nothing was published; try again.',

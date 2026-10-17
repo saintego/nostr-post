@@ -286,6 +286,13 @@ displayName }` once the entity exists. `@nostr-post/plugin-venue/web` registers 
 (entity manifests with `sources.osm` fields): search OpenStreetMap, then create or link the page. Without `entityManifest` the picker searches all wiki
 articles and can't create entities.
 
+Plugins add controls to pages: `registerEventAction({ tagName, matches })` (from
+`@nostr-post/plugins/entities`, re-exported here) names a custom element with `target` (the shown
+version's address, `30818:<pubkey>:<d-tag>`) and `manifest` properties, which `<nostr-wiki-view>` shows
+next to the title for the manifests `matches` accepts (`eventActionsFor(manifest)` lists them). Loading
+this package also lets plugins resolve entity manifests there (`entityManifests()`), so they don't
+depend on it, see [PLUGINS.md](../../PLUGINS.md#event-actions-and-entity-manifests).
+
 ---
 
 ## Two-hop review queries
@@ -321,7 +328,9 @@ Displays a resolved wiki entity as a read-only infobox and its article, with:
   [derived links](../../MANIFEST.md#derived-links);
 - the attribution line from a `source` tag;
 - contributors and all versions;
-- a collapsed "All data" section: infobox rows the manifest doesn't know, all tags and the source.
+- a collapsed "All data" section: infobox rows the manifest doesn't know, all tags and the source;
+- next to the title, plugins' controls for the manifest (`registerEventAction`), e.g. Save to lists for
+  manifests with [`lists`](../../MANIFEST.md#lists) (`@nostr-post/plugin-list/web`).
 
 | Attribute / Property        | Type                        | Description                                                   |
 | --------------------------- | --------------------------- | ------------------------------------------------------------- |
@@ -370,8 +379,8 @@ shows next to the button (`SIGNING_EVENT` from `@nostr-post/signer`; text: `wait
 
 | Event                     | `detail`             | Description                                        |
 | ------------------------- | -------------------- | -------------------------------------------------- |
-| `nostr-wiki-submit`       | `{ event, dTag, formData, manifest }` | Unsigned event ready (when `autoPublish` is false); plugin publish hooks haven't run: call `runBeforePublish` and add its tags |
-| `nostr-wiki-published`    | `{ event, results, dTag }` | Event signed and published; `event` is the unsigned event, `results` `{ signedEvent, publishResults }` |
+| `nostr-wiki-submit`       | `{ event, dTag, formData, manifest }` | Unsigned event ready (when `autoPublish` is false); plugin publish hooks haven't run: call `runBeforePublish` and add its tags, and `runAfterPublish` once it's published |
+| `nostr-wiki-published`    | `{ event, results, dTag }` | Event signed and published, and plugins' after-publish steps ran (one that failed is shown, the page stays published); `event` is the unsigned event, `results` `{ signedEvent, publishResults }` |
 | `nostr-wiki-error`        | `{ error }`          | Error during sign/publish                          |
 | `nostr-wiki-field-change` | `{ fieldId, value }` | A field value changed                              |
 

@@ -36,7 +36,6 @@
   "dependencies": {
     "@nostr-post/core": "workspace:*",
     "@nostr-post/plugin-geo": "workspace:*",
-    "@nostr-post/plugin-list": "workspace:*",
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/signer": "workspace:*",
     "@nostr-post/wiki": "workspace:*",

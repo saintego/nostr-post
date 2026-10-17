@@ -213,6 +213,9 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
       '@nostr-post/signer':
         specifier: workspace:*
         version: link:../signer
@@ -299,9 +302,6 @@ importers:
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../plugin-geo
-      '@nostr-post/plugin-list':
-        specifier: workspace:*
-        version: link:../plugin-list
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins
@@ -483,6 +483,9 @@ importers:
       '@nostr-post/plugin-identifier':
         specifier: workspace:*
         version: link:../../packages/plugin-identifier
+      '@nostr-post/plugin-list':
+        specifier: workspace:*
+        version: link:../../packages/plugin-list
       '@nostr-post/plugin-markdown':
         specifier: workspace:*
         version: link:../../packages/plugin-markdown

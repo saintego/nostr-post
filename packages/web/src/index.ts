@@ -15,7 +15,7 @@ export { NostrPostElement } from './baseComponent';
 export { colors, baseStyles } from './theme';
 
 // Publishing a submitted post yourself: run plugin hooks, add their tags
-export { runBeforePublish, runPublishHooks } from '@nostr-post/plugins/publish';
+export { runAfterPublish, runBeforePublish, runPublishHooks } from '@nostr-post/plugins/publish';
 export { type NostrPostSubmitDetail, withTags } from './composerSubmit';
 
 // Standard manifests

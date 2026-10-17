@@ -13,7 +13,7 @@ import {
   type NostrPostManifest,
   STANDARD_KIND1_POST_MANIFEST,
 } from '@nostr-post/core/types';
-import { publishSummaries, runPublishHooks } from '@nostr-post/plugins/publish';
+import { publishSummaries, runAfterPublish, runPublishHooks } from '@nostr-post/plugins/publish';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { html, type TemplateResult } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
@@ -252,12 +252,21 @@ export interface PublishWithHooksInput {
   isSigning: () => boolean;
 }
 
+/** What publishWithHooks published, and the after-publish steps that failed */
+export interface PublishWithHooksResult {
+  events: SignedEvent[];
+  afterPublishErrors: Error[];
+}
+
 /**
  * Let plugins publish related events first (e.g. a venue's wiki page, within
  * PUBLISH_HOOKS_TIMEOUT_MS), then build the post again with what they linked (e.g. a
- * role's mention line) and publish it
+ * role's mention line) and publish it, then run the plugins' after-publish steps
+ * (e.g. saving the venue to lists). A hooks-only format (`kinds: []`) publishes no post.
  */
-export const publishWithHooks = async (input: PublishWithHooksInput): Promise<SignedEvent[]> => {
+export const publishWithHooks = async (
+  input: PublishWithHooksInput
+): Promise<PublishWithHooksResult> => {
   const m = input.messages;
   input.onStep(m.stepHooks);
   const hooks = await withTimeout(
@@ -274,7 +283,13 @@ export const publishWithHooks = async (input: PublishWithHooksInput): Promise<Si
   const outcome = input.coordinate(hooks.formData);
   if ('validationError' in outcome) throw new Error('The post is invalid after publish hooks');
   input.onStep(m.stepPublish);
-  return signAndPublishBundle(withTags(outcome.bundle, hooks.tags), input.relays);
+  const events = await signAndPublishBundle(withTags(outcome.bundle, hooks.tags), input.relays);
+  input.onStep(m.stepAfterPublish);
+  const afterPublishErrors = await runAfterPublish(input.manifest, hooks.formData, {
+    pubkey: input.pubkey,
+    events,
+  });
+  return { events, afterPublishErrors };
 };
 
 /** Labels of the fields with a validation error, in manifest order */

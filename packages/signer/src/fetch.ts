@@ -79,6 +79,11 @@ export function fetchEventsFromRelay(
         const data = JSON.parse(msg.data);
         if (data[0] === 'EVENT' && data[1] === subId) {
           acceptEvent(data[2] as SignedEvent);
+        } else if (data[0] === 'CLOSED' && data[1] === subId) {
+          // The relay refused or ended the subscription (e.g. an unsupported filter)
+          clearTimeout(timeout);
+          ws.close();
+          resolve(events);
         } else if (data[0] === 'EOSE') {
           clearTimeout(timeout);
           ws.send(JSON.stringify(['CLOSE', subId]));

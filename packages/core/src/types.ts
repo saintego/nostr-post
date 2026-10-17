@@ -31,6 +31,7 @@ export interface PublishFormat {
   id: string;
   label: string;
   description?: string;
+  /** Event kinds to publish; `[]`: none of its own, only what plugins' publish hooks do */
   kinds: number[];
   default?: boolean;
   userSelectable?: boolean;
@@ -168,12 +169,33 @@ export interface NostrPostManifest {
    * (e.g., preset tags/hashtags) without requiring a custom view.
    */
   linkManifest?: boolean;
+  /**
+   * Lists people save events made with this manifest to (e.g. a venue type's "Want to go",
+   * a movie review's "Watchlist"), offered first by the list plugin
+   */
+  lists?: ManifestList[];
+  /**
+   * The type part of the lists' d-tags (`nostr-post:<listType>:<id>`); default the
+   * manifest's id. Set it so later versions and manifests extending this one share the
+   * user's lists (e.g. `venue` for `venue-entity-v1`).
+   */
+  listType?: string;
   metadata?: {
     name?: string;
     description?: string;
     author?: string;
     tags?: string[];
   };
+}
+
+/** A list for a manifest's events (`lists`) */
+export interface ManifestList {
+  /** Short, e.g. `visited`: the user's list is `nostr-post:<listType>:<id>` */
+  id: string;
+  /** The list's title when it's created */
+  label: string;
+  /** A fixed d-tag instead, to share one list across manifests (e.g. `nostr-post:favourites`) */
+  dTag?: string;
 }
 
 /**

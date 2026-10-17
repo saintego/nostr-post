@@ -87,8 +87,9 @@ export const listStyles = css`
     justify-content: flex-end;
   }
 
-  /* <np-list-view> */
-  :host(np-list-view) {
+  /* <np-list-view>, <np-list-input> */
+  :host(np-list-view),
+  :host(np-list-input) {
     display: block;
   }
 

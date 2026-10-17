@@ -41,9 +41,11 @@ Types: `NostrPostManifest`, `PostField` and `FieldMetadata` in `@nostr-post/core
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`, `version`  | Required. The id identifies the manifest; publish a new version under the same id                                                                        |
 | `extends`        | A parent's address or bare id, or an array of them; fields are merged by id ([inheritance](./ARCHITECTURE.md#manifest-inheritance))                      |
-| `publishFormats` | Choices of event kinds (`kinds`), the `default` one, and whether the author can pick (`userSelectable`). Without it, kinds come from the fields' `mapTo` |
+| `publishFormats` | Choices of event kinds (`kinds`), the `default` one, and whether the author can pick (`userSelectable`). Without it, kinds come from the fields' `mapTo`. `kinds: []` publishes no event of its own, only what plugins' publish hooks do, e.g. [save a place to lists](#lists) |
 | `linkManifest`   | Default `true`: events made with it carry its [label and address](#which-manifest-an-event-was-made-with). `false` for manifests that only preset the editor (e.g. hashtags) and need no custom view, like the standard post and wiki manifests |
 | `metadata`       | `name`, `description` (shown in the composer's header), `author`, `tags`                                                                                 |
+| `lists`          | Lists people save events made with it to, e.g. a venue type's "Want to go", see [lists](#lists)                                                         |
+| `listType`       | The type part of those lists' d-tags; default the manifest's `id`, see [lists](#lists)                                                                   |
 | `wikiConfig`     | Wiki entity manifests only, see [below](#wiki-entity-manifests)                                                                                          |
 
 ### Which manifest an event was made with
@@ -65,6 +67,50 @@ registered, then any author's published one. A manifest found by id can differ f
 was made with (same id by another author, or a changed version), so it's used only when the event's
 tags fit its fields, and the view says when it's another author's; else the event is shown
 unformatted.
+
+## Lists
+
+`lists` names the lists people save events made with the manifest to (see
+[plugin-list](./packages/plugin-list/README.md)): any events, posts as well as wiki pages. They are
+offered first, before the user's other lists and a new one, by the Save button on those events
+(`<nostr-post-view>`, `<nostr-wiki-view>`, `<np-venue-view>`) and by `list` fields. Without `lists`
+the events have no Save button.
+
+```typescript
+{
+  id: "venue-entity-v1",
+  lists: [
+    { id: "want-to-go", label: "Want to go" },
+    { id: "visited", label: "Visited" },
+    { id: "favourites", label: "Favourites", dTag: "nostr-post:favourites" }, // shared with other types
+  ],
+  listType: "venue",
+}
+```
+
+| Key        | Description                                                                                    |
+| ---------- | ---------------------------------------------------------------------------------------------- |
+| `id`       | Short and free (`visited`). The user's list has the d-tag `nostr-post:<listType>:<id>` (`nostr-post:venue:visited`), so another manifest's `visited` is another list. A manifest extending this one replaces the entry with the same `id` (e.g. to translate its label) and inherits the others |
+| `label`    | The list's title when it's created; the user's list keeps its own title afterwards             |
+| `dTag`     | Optional fixed d-tag instead, to share one list across manifests (`nostr-post:favourites`). Lists of other apps can clash with it; the `nostr-post:` prefix makes that unlikely |
+| `listType` | Manifest key: the type part of the d-tags, default the manifest's `id`. Set it when the id has a version (`venue-entity-v1`), so later versions and extending manifests (they inherit it) share the user's lists |
+
+A `list` field saves to the lists the author ticks, once the post is published; it adds nothing to the
+post. With `metadata.saveField` it saves that field's wiki entity (the venue field's page, which it may
+have just created) and offers that entity manifest's `lists`; without it, it saves the post itself and
+offers the post manifest's own `lists`. A review can have both. With a publish format of `kinds: []` a
+manifest only saves:
+
+```typescript
+publishFormats: [{ id: "save", label: "Save only", kinds: [], default: true }],
+fields: [
+  { id: "venue", type: "geo", uiPlugin: "venue", mapTo: { kind: 1, target: "tag", tagName: "g" },
+    metadata: { wikiEntity: "venue-entity-v1" } },
+  // listField({ saveField: "venue", label: "Save to lists" }) from @nostr-post/plugin-list
+  { id: "venue_lists", type: "string", uiPlugin: "list", mapTo: { kind: 1, target: "tag", tagName: "lists" },
+    metadata: { label: "Save to lists", saveField: "venue" } },
+]
+```
 
 ## Fields
 
@@ -161,7 +207,7 @@ styles, mapped to `t` for posts and wiki entities; the beer entity extends it an
 | `identifier`         | `string` | `prefix` (NIP-73 namespace, e.g. `isbn`)                                                                                                                                                                                       |
 | `geo`                | `geo`    | `precision` (geohash length, default 6), `defaultZoom`, `allowSearch`                                                                                                                                                          |
 | `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts)); `multiple` (several venues, a list)                                                                                  |
-| `list`               | `string` | `relays`, `allowCreate`, `allowDelete`, `defaultList`, `multiple` (default `true`)                                                                                                                                             |
+| `list`               | `string` | `saveField`: the field whose wiki entity is saved (a `venue` field's page, a `wiki-entity-picker`'s entity); without it, the post itself. `relays`. The value: list addresses and `new:<title>`. See [lists](#lists) |
 | `wiki-entity-picker` | `ref`    | `entityManifest`: the entity type ([reference](#referencing-entity-manifests)), which limits search to it and enables "+ Create"; `relays`; `minSearchLength` (2); `emitExtraTags` (`false`: don't copy the entity's `i` tags); `multiple` (pick several; the value is a list) |
 
 Deprecated: `hashtag.autoExtractFrom`, `media.urlAutoExtractFrom` and `reference.enrichFrom`

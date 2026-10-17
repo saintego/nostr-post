@@ -43,8 +43,9 @@ The plugins and their UI elements are also registered:
 - **Media** — `@nostr-post/plugin-media`
 - **Markdown** — `@nostr-post/plugin-markdown`
 - **Hashtag** — `@nostr-post/plugin-hashtag`
-- **Lists** — `@nostr-post/plugin-list`: `<np-list-save target="30818:<pubkey>:<d-tag>">` (Save to the
-  user's lists) and `<np-list-view>` (the user's lists, or one list by `address`)
+- **Lists** — `@nostr-post/plugin-list`: the `list` field, `<np-list-save target="30818:<pubkey>:<d-tag>">`
+  (Save to the user's lists; also on events made with manifests that have `lists`) and
+  `<np-list-view>` (the user's lists, or one list by `address`)
 
 ## Programmatic API
 
@@ -137,6 +138,9 @@ The bundle re-exports utilities for advanced usage:
 - `runBeforePublish(manifest, formData, pubkey)`: runs plugin publish hooks (e.g. the venue's wiki
   page), returns tags for the post
 - `withTags(bundle, tags)`: adds them to every event of the submitted bundle
+- `runAfterPublish(manifest, formData, { pubkey, events })`: once the post is published, runs plugins'
+  after-publish steps (e.g. the list field saving the venue to lists) with the form data
+  `runPublishHooks` returned; returns the errors of those that failed
 
 **Wiki (NIP-54)**: see [packages/wiki](../wiki/README.md)
 
@@ -151,6 +155,8 @@ The bundle re-exports utilities for advanced usage:
   related items (`wikiConfig.related`, e.g. a brewery's beers), as `<nostr-wiki-related>` lists them
 - `registerEntityCreator({ tagName, matches })`, `entityCreatorFor(manifest)`: a plugin's own "+ Create"
   form in the entity picker for the types it can fill (the venue plugin creates venue pages from OSM)
+- `registerEventAction({ tagName, matches })`, `eventActionsFor(manifest)`: a plugin's control shown with
+  events made with a manifest, in `<nostr-post-view>` and `<nostr-wiki-view>` (the list plugin's Save button)
 - `searchEntities`, `entityTypeAffixes`
 
 **Venues and the venue hub**
@@ -168,6 +174,9 @@ The bundle re-exports utilities for advanced usage:
   `deleteList(list)`: publish through the signer (test mode applies); they return a `Result`
 - `itemFor(addressOrId)`, `hasItem(list, item)`: wiki entities count as one item whichever author's
   version was saved
+- `listField({ saveField, label })`: a `list` field for a manifest
+- `itemsToSave(field, { formData, events })`, `saveToChoices(choices, items)`: what a `list` field saves
+  after publishing, and saving it (its `afterPublish` hook)
 
 **Manifest helpers (preload & cache)**
 

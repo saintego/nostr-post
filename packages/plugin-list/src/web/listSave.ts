@@ -5,16 +5,20 @@
  * id): it opens the signed-in user's lists, to add it to or remove it from each, or to
  * start a new list with it. Lists load when it's first opened, since feeds show many.
  *
+ * With `manifest` (the one the target was made with), its lists (`lists`) come first,
+ * also those the user hasn't got yet: ticking one creates it.
+ *
  * Dispatches 'np-list-change' with { detail: { list } } after a list was published.
  */
 
-import { hasNostrSigner } from '@nostr-post/signer';
+import type { NostrPostManifest } from '@nostr-post/core/types';
 import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { hasItem, itemFor } from '../core';
-import { addToList, createList, fetchMyLists, removeFromList } from '../lists';
+import { hasItem, itemFor, manifestListPresets } from '../core';
+import { addToList, createList, removeFromList } from '../lists';
 import type { BookmarkList } from '../types';
 import { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle } from './listMessages';
+import { loadMyLists, type MyListsState, NOT_LOADED, renderLoadState, shownLists } from './myLists';
 import { listStyles } from './styles';
 
 @customElement('np-list-save')
@@ -27,10 +31,12 @@ export class NpListSave extends LitElement {
   @property() relay?: string;
   /** Relays besides the user's own */
   @property({ type: Array }) relays?: string[];
+  /** The manifest the target was made with: its lists (`lists`) come first */
+  @property({ attribute: false }) manifest?: NostrPostManifest;
   @property({ type: Object }) messages: Partial<ListMessages> = {};
 
   @state() _open = false;
-  @state() _lists: BookmarkList[] | null = null;
+  @state() _my: MyListsState = NOT_LOADED;
   /** Address of the list being published, or 'new' */
   @state() _busy = '';
   @state() _error = '';
@@ -44,34 +50,34 @@ export class NpListSave extends LitElement {
     return itemFor(this.target, this.relay);
   }
 
+  get _lists(): BookmarkList[] {
+    return shownLists(this._my, manifestListPresets(this.manifest));
+  }
+
   override updated(changed: Map<string, unknown>): void {
     // Another target: whether it's saved is unknown until the lists are checked again
-    if (changed.has('target') && changed.get('target') !== undefined) this._lists = null;
+    if (changed.has('target') && changed.get('target') !== undefined) this._my = NOT_LOADED;
   }
 
   async _toggleOpen(): Promise<void> {
     this._open = !this._open;
-    if (this._open && !this._lists) await this._load();
+    if (this._open && !this._my.lists && !this._my.waitingForSigner) await this._load();
   }
 
-  async _load(): Promise<void> {
-    this._error = '';
-    if (!hasNostrSigner()) {
-      this._error = this._m.noSigner;
-      return;
-    }
-    try {
-      this._lists = await fetchMyLists({ relays: this.relays });
-    } catch (error) {
-      this._error = this._m.failed(error instanceof Error ? error.message : String(error));
-    }
+  _load(): Promise<void> {
+    return loadMyLists(this.relays, this._m, (patch) => {
+      this._my = { ...this._my, ...patch };
+    });
   }
 
   _published(list: BookmarkList): void {
-    const lists = this._lists ?? [];
-    this._lists = lists.some((l) => l.address === list.address)
-      ? lists.map((l) => (l.address === list.address ? list : l))
-      : [...lists, list];
+    const lists = this._my.lists ?? [];
+    this._my = {
+      ...this._my,
+      lists: lists.some((l) => l.address === list.address)
+        ? lists.map((l) => (l.address === list.address ? list : l))
+        : [...lists, list],
+    };
     this.dispatchEvent(
       new CustomEvent('np-list-change', { detail: { list }, bubbles: true, composed: true })
     );
@@ -111,26 +117,23 @@ export class NpListSave extends LitElement {
     return html`
       <div class="panel" role="dialog" aria-label=${m.save}>
         ${this._error ? html`<div class="error">${this._error}</div>` : nothing}
+        ${this._lists.map(
+          (list) => html`
+            <label class="list-option">
+              <input
+                type="checkbox"
+                .checked=${hasItem(list, item)}
+                ?disabled=${this._busy !== '' || !this._my.lists}
+                @change=${() => this._toggle(list)}
+              />
+              <span>${listTitle(list, m)}</span>
+              <span class="count">${m.itemCount(list.items.length)}</span>
+            </label>
+          `
+        )}
+        ${renderLoadState(this._my, m, () => void this._load())}
         ${
-          this._lists === null && !this._error
-            ? html`<div class="muted">${m.loading}</div>`
-            : (this._lists ?? []).map(
-                (list) => html`
-                <label class="list-option">
-                  <input
-                    type="checkbox"
-                    .checked=${hasItem(list, item)}
-                    ?disabled=${this._busy !== ''}
-                    @change=${() => this._toggle(list)}
-                  />
-                  <span>${listTitle(list, m)}</span>
-                  <span class="count">${m.itemCount(list.items.length)}</span>
-                </label>
-              `
-              )
-        }
-        ${
-          this._lists
+          this._my.lists
             ? html`<form class="new-list" @submit=${this._create}>
                 <input
                   .value=${this._newTitle}
@@ -155,7 +158,7 @@ export class NpListSave extends LitElement {
 
   override render() {
     if (!this.target) return nothing;
-    const saved = (this._lists ?? []).some((list) => hasItem(list, this._item));
+    const saved = (this._my.lists ?? []).some((list) => hasItem(list, this._item));
     return html`
       <button
         type="button"

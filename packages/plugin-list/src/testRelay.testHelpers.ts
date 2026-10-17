@@ -34,6 +34,7 @@ const matches = (event: ListEvent & { id: string }, filter: Record<string, unkno
 export const signerMock = {
   DEFAULT_RELAYS: ['wss://default'],
   hasNostrSigner: () => true,
+  clearPublicKeyCache: () => {},
   getPublicKey: vi.fn(async () => 'me'),
   fetchUserRelays: vi.fn(async (_pk: string, relays: string[]) => relays),
   getPublishRelays: vi.fn(async (_pk: string, relays: string[]) => relays),

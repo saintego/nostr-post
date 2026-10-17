@@ -2,8 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   currentLists,
   deletionEvent,
+  entityItems,
   hasItem,
   itemFor,
+  itemForEvent,
+  listAtAddress,
+  listPresets,
   newSetDTag,
   newSetEvent,
   parseList,
@@ -11,6 +15,7 @@ import {
   withBookmarks,
   withItem,
   withoutItem,
+  withPresets,
 } from './core';
 import type { ListEvent } from './types';
 
@@ -154,5 +159,62 @@ describe('new and deleted lists', () => {
     const lists = withBookmarks([], 'me');
     expect(lists.map((l) => [l.address, l.createdAt])).toEqual([['10003:me:', 0]]);
     expect(withBookmarks(lists, 'me')).toBe(lists);
+  });
+});
+
+describe('presets and saved things', () => {
+  const presets = listPresets(
+    [
+      { id: 'want-to-go', label: 'Want to go' },
+      { id: 'visited', label: 'Visited' },
+      { id: 'favourites', label: 'Favourites', dTag: 'nostr-post:favourites' },
+    ],
+    'venue'
+  );
+
+  it("names a preset's list by type and id, unless it has a fixed d-tag", () => {
+    expect(presets.map((p) => p.dTag)).toEqual([
+      'nostr-post:venue:want-to-go',
+      'nostr-post:venue:visited',
+      'nostr-post:favourites',
+    ]);
+  });
+
+  it('puts the preset lists first, unpublished ones for those the user has not got', () => {
+    const visited = parseList(set('nostr-post:venue:visited', 5));
+    const other = parseList(set('pubs', 5));
+    if (!visited || !other) throw new Error('parse');
+    const lists = withPresets([other, visited], presets, 'me');
+    expect(lists.map((l) => [l.address, l.title, l.createdAt])).toEqual([
+      ['30003:me:nostr-post:venue:want-to-go', 'Want to go', 0],
+      // The user's own copy, with its own title
+      ['30003:me:nostr-post:venue:visited', 'NOSTR-POST:VENUE:VISITED', 5],
+      ['30003:me:nostr-post:favourites', 'Favourites', 0],
+      ['30003:me:pubs', 'PUBS', 5],
+    ]);
+  });
+
+  it('makes an unpublished list from an address', () => {
+    expect(listAtAddress('30003:me:x', 'X')).toMatchObject({ dTag: 'x', title: 'X', createdAt: 0 });
+    expect(listAtAddress('10003:me:')?.kind).toBe(10003);
+    expect(listAtAddress('1:me:x')).toBe(null);
+  });
+
+  it('finds the wiki entities in field values', () => {
+    expect(
+      entityItems([
+        { wikiEntity: { pubkey: 'hub', dTag: 'a-venue' } },
+        { dTag: 'b-beer', resolvedPubkey: 'pk' },
+        '30818:pk:c-beer',
+        { name: 'not linked' },
+      ]).map((i) => i.value)
+    ).toEqual(['30818:hub:a-venue', '30818:pk:b-beer', '30818:pk:c-beer']);
+  });
+
+  it('saves an addressable event by address, others by id', () => {
+    expect(itemForEvent({ id: 'x', kind: 30023, pubkey: 'pk', tags: [['d', 'post']] })?.value).toBe(
+      '30023:pk:post'
+    );
+    expect(itemForEvent({ id: 'x', kind: 1, pubkey: 'pk', tags: [] })?.value).toBe('x');
   });
 });

@@ -5,6 +5,7 @@
  * create and delete lists. No relays, signer or DOM here (see lists.ts for those).
  */
 
+import type { ManifestList, NostrPostManifest } from '@nostr-post/core/types';
 import {
   BOOKMARK_SET_KIND,
   BOOKMARKS_KIND,
@@ -184,4 +185,80 @@ export function withBookmarks(lists: BookmarkList[], pubkey: string): BookmarkLi
   if (lists.some((l) => l.kind === BOOKMARKS_KIND && l.pubkey === pubkey)) return lists;
   const empty = parseList(newBookmarksEvent(pubkey, 0));
   return empty ? [empty, ...lists] : lists;
+}
+
+/** A preset list resolved for a user: the d-tag of their set and its title */
+export interface ListPreset {
+  dTag: string;
+  label: string;
+}
+
+/** The d-tags and titles of lists as manifests name them (`lists`), for a list type */
+export const listPresets = (lists: ManifestList[], type: string): ListPreset[] =>
+  lists.map((l) => ({ dTag: l.dTag ?? `nostr-post:${type}:${l.id}`, label: l.label }));
+
+/** A manifest's lists (`lists`), their d-tags typed by its `listType`, else its id */
+export const manifestListPresets = (manifest: NostrPostManifest | undefined): ListPreset[] =>
+  manifest ? listPresets(manifest.lists ?? [], manifest.listType ?? manifest.id) : [];
+
+/** An unpublished list at `address` (createdAt 0), for one the user may not have yet */
+export function listAtAddress(address: string, title?: string): BookmarkList | null {
+  const [kind, pubkey = '', ...rest] = address.split(':');
+  const dTag = rest.join(':');
+  if (Number(kind) === BOOKMARKS_KIND) return parseList(newBookmarksEvent(pubkey, 0));
+  if (Number(kind) !== BOOKMARK_SET_KIND || !pubkey || !dTag) return null;
+  return parseList(newSetEvent({ pubkey, dTag, title: title ?? dTag }, 0));
+}
+
+/**
+ * `lists` with the type's preset lists first (unpublished ones for those the user hasn't
+ * got yet), then the others in their order
+ */
+export function withPresets(
+  lists: BookmarkList[],
+  presets: ListPreset[],
+  pubkey: string
+): BookmarkList[] {
+  const presetLists = presets.flatMap((preset) => {
+    const address = listAddress(BOOKMARK_SET_KIND, pubkey, preset.dTag);
+    const list = lists.find((l) => l.address === address) ?? listAtAddress(address, preset.label);
+    return list ? [list] : [];
+  });
+  const presetAddresses = new Set(presetLists.map((l) => l.address));
+  return [...presetLists, ...lists.filter((l) => !presetAddresses.has(l.address))];
+}
+
+/** The list item for a published event: its address if it's addressable, else its id */
+export function itemForEvent(event: {
+  id?: string;
+  kind: number;
+  pubkey: string;
+  tags: string[][];
+}) {
+  const dTag = event.tags.find((t) => t[0] === 'd')?.[1];
+  if (event.kind >= 30000 && event.kind < 40000 && dTag !== undefined) {
+    return itemFor(listAddress(event.kind, event.pubkey, dTag));
+  }
+  return event.id ? itemFor(event.id) : undefined;
+}
+
+/**
+ * The wiki entities in a field's value, as list items: a venue's linked page
+ * (`wikiEntity`), a picked entity (`dTag` + `resolvedPubkey`/`pubkey`), an address, or a
+ * list of those
+ */
+export function entityItems(value: unknown): ListItem[] {
+  if (Array.isArray(value)) return value.flatMap(entityItems);
+  if (typeof value === 'string') return /^30818:[^:]+:.+/.test(value) ? [itemFor(value)] : [];
+  if (!value || typeof value !== 'object') return [];
+  const v = value as {
+    wikiEntity?: { pubkey?: string; dTag?: string };
+    dTag?: string;
+    resolvedPubkey?: string;
+    pubkey?: string;
+  };
+  const entity = v.wikiEntity ?? { pubkey: v.resolvedPubkey ?? v.pubkey, dTag: v.dTag };
+  return entity.pubkey && entity.dTag
+    ? [itemFor(listAddress(WIKI_KIND, entity.pubkey, entity.dTag))]
+    : [];
 }

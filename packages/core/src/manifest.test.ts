@@ -786,6 +786,29 @@ describe('resolveManifest', () => {
     linkManifest: true,
   };
 
+  it('merges lists by id and inherits listType', () => {
+    const withLists = {
+      ...parent,
+      lists: [
+        { id: 'visited', label: 'Visited' },
+        { id: 'want-to-go', label: 'Want to go' },
+      ],
+      listType: 'venue',
+    };
+    const child: NostrPostManifest = {
+      id: 'venue-cs',
+      version: '1.0.0',
+      fields: [],
+      lists: [
+        { id: 'visited', label: 'Navštíveno' },
+        { id: 'liked', label: 'Oblíbené' },
+      ],
+    };
+    const resolved = resolveManifest(child, withLists);
+    expect(resolved.lists?.map((l) => l.label)).toEqual(['Navštíveno', 'Want to go', 'Oblíbené']);
+    expect(resolved.listType).toBe('venue');
+  });
+
   it('should preserve child id and version', () => {
     const child: NostrPostManifest = {
       id: 'restaurant-review',

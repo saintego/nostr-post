@@ -44,6 +44,41 @@ describe('composer submit area', async () => {
     expect(text(c)).toContain('Create Post');
   });
 
+  it('hooks-only format: runs the publish hooks and after-publish steps, publishes no post', async () => {
+    const after = vi.fn(async () => {});
+    pluginRegistry.register({
+      id: 'save-test',
+      type: 'string',
+      beforePublish: async () => [['a', '30818:hub:tap-house-venue']],
+      afterPublish: after,
+    } as never);
+    const manifest = {
+      id: 'save-only',
+      version: '1',
+      publishFormats: [{ id: 'save', label: 'Save', kinds: [], default: true }],
+      fields: [
+        {
+          id: 'x',
+          type: 'string',
+          uiPlugin: 'save-test',
+          mapTo: { kind: 1, target: 'tag', tagName: 'x' },
+        },
+      ],
+    };
+    const published: unknown[] = [];
+    document.addEventListener('nostr-post-published', (e) =>
+      published.push((e as CustomEvent).detail)
+    );
+    const c = await make(manifest, { x: 'v' });
+    expect(after).toHaveBeenCalledWith(
+      'v',
+      expect.objectContaining({ id: 'x' }),
+      expect.objectContaining({ events: [], formData: { x: 'v' } })
+    );
+    expect(published).toEqual([[]]);
+    expect(text(c)).toContain('Done!');
+  });
+
   it('shows the running step, then a timeout error when a hook never settles', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout'] });
     pluginRegistry.register({

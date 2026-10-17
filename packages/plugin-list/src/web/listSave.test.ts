@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@nostr-post/signer', () => import('../testRelay.testHelpers').then((m) => m.signerMock));
 
+import { provideEntityManifests } from '@nostr-post/plugins/entities';
 import { createList } from '../lists';
 import { relay } from '../testRelay.testHelpers';
 import './listSave';
@@ -111,5 +112,114 @@ describe('<np-list-view>', () => {
     await settle();
     await el.updateComplete;
     expect(el.shadowRoot?.querySelector('.muted')?.textContent).toBe('Nothing saved yet');
+  });
+});
+
+const venueManifest = {
+  id: 'venue-entity-test',
+  version: '1.0.0',
+  lists: [{ id: 'visited', label: 'Visited' }],
+  listType: 'venue',
+  fields: [],
+};
+
+// What @nostr-post/wiki provides: inline manifests resolve to themselves
+provideEntityManifests({
+  resolve: async (ref) => (typeof ref === 'object' ? (ref as never) : undefined),
+});
+
+describe('preset lists', () => {
+  it('<np-list-save> offers the manifest presets first and creates one when ticked', async () => {
+    const el = document.createElement('np-list-save');
+    el.target = venue;
+    el.manifest = venueManifest as never;
+    document.body.append(el);
+    await el.updateComplete;
+    el.shadowRoot?.querySelector<HTMLButtonElement>('.save-btn')?.click();
+    await settle();
+    await el.updateComplete;
+    const titles = [...(el.shadowRoot?.querySelectorAll('.list-option span:first-of-type') ?? [])];
+    expect(titles.map((s) => s.textContent)).toEqual(['Visited', 'Bookmarks']);
+
+    checkboxes(el)[0]?.dispatchEvent(new Event('change'));
+    await settle();
+    await el.updateComplete;
+    const set = relay.events.find((e) => e.kind === 30003);
+    expect(set?.tags).toEqual([
+      ['d', 'nostr-post:venue:visited'],
+      ['title', 'Visited'],
+      ['a', venue],
+    ]);
+  });
+
+  it("<np-list-input> offers the saved field's presets and emits the choices", async () => {
+    await import('./listInput');
+    const el = document.createElement('np-list-input');
+    el.field = { id: 'lists', metadata: { saveField: 'venue' } } as never;
+    el.manifest = {
+      id: 'review',
+      version: '1',
+      fields: [{ id: 'venue', metadata: { wikiEntity: venueManifest } }],
+    } as never;
+    document.body.append(el);
+    await settle();
+    await el.updateComplete;
+    const texts = [...(el.shadowRoot?.querySelectorAll('.list-option span:first-of-type') ?? [])];
+    expect(texts.map((s) => s.textContent)).toEqual(['Visited', 'Bookmarks']);
+
+    const values: unknown[] = [];
+    el.addEventListener('np-value-changed', (e) => values.push((e as CustomEvent).detail.value));
+    const boxes = checkboxes(el);
+    if (boxes[0]) boxes[0].checked = true;
+    boxes[0]?.dispatchEvent(new Event('change'));
+    const input = el.shadowRoot?.querySelector<HTMLInputElement>('.new-list input');
+    if (!input) throw new Error('no input');
+    input.value = 'Date night';
+    input.dispatchEvent(new Event('input'));
+    await el.updateComplete;
+    el.shadowRoot?.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }));
+
+    expect(values.at(-1)).toEqual(['30003:me:nostr-post:venue:visited', 'new:Date night']);
+    // Nothing is published before the post
+    expect(relay.events).toEqual([]);
+  });
+});
+
+describe('loading', () => {
+  it('says it waits for the signer, then shows the presets while the lists load', async () => {
+    const { signerMock } = await import('../testRelay.testHelpers');
+    let givePubkey: (pk: string) => void = () => {};
+    signerMock.getPublicKey.mockImplementationOnce(
+      () => new Promise<string>((resolve) => (givePubkey = resolve))
+    );
+    let answerRelays: (events: never[]) => void = () => {};
+    // The relay list lookup answers at once; the lists themselves wait
+    signerMock.fetchEvents.mockImplementationOnce(
+      () => new Promise((resolve) => (answerRelays = resolve as never))
+    );
+    await import('./listInput');
+    const el = document.createElement('np-list-input');
+    el.field = { id: 'lists', metadata: { saveField: 'venue' } } as never;
+    el.manifest = {
+      id: 'review',
+      version: '1',
+      fields: [{ id: 'venue', metadata: { wikiEntity: venueManifest } }],
+    } as never;
+    document.body.append(el);
+    await settle();
+    await el.updateComplete;
+    const shown = () => el.shadowRoot?.textContent?.replace(/\s+/g, ' ') ?? '';
+    expect(shown()).toContain('Waiting for your signer…');
+
+    givePubkey('me');
+    await settle();
+    await el.updateComplete;
+    expect(shown()).toContain('Visited');
+    expect(shown()).toContain('Loading your lists…');
+
+    answerRelays([]);
+    await settle();
+    await el.updateComplete;
+    expect(shown()).not.toContain('Loading your lists…');
   });
 });

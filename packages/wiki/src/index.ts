@@ -1,3 +1,6 @@
+// Entity manifests for plugins (@nostr-post/plugins/entities)
+import './entityManifests';
+
 export { normalizeDTag } from './normalizeDTag';
 export {
   type EntityManifestRef,
@@ -20,6 +23,12 @@ export {
   entityCreatorFor,
   registerEntityCreator,
 } from './creators';
+// Event actions live in @nostr-post/plugins, where plugins register them
+export {
+  type EventAction,
+  eventActionsFor,
+  registerEventAction,
+} from '@nostr-post/plugins/entities';
 export { type ExternalIdLink, entityLinks, externalIdLink } from './externalIds';
 export { linkFromTemplate, manifestLinks } from './links';
 

@@ -109,14 +109,26 @@ async function publishList(
 }
 
 /** Add `item` to the newest version of `list` */
-export async function addToList(
+export const addToList = (
   list: BookmarkList,
   item: ListItem,
+  options: ListRelayOptions = {}
+): Promise<Result<BookmarkList>> => addItemsToList(list, [item], options);
+
+/** Add `items` to the newest version of `list`, in one event */
+export async function addItemsToList(
+  list: BookmarkList,
+  items: ListItem[],
   options: ListRelayOptions = {}
 ): Promise<Result<BookmarkList>> {
   try {
     const latest = await latestEvent(list, options);
-    return publishList(withItem(latest, item, now()), options);
+    const at = now();
+    const added = items.reduce((event, item) => withItem(event, item, at), latest);
+    // Already in the published list: nothing to publish
+    const unchanged = added === latest && latest.created_at > 0 && parseList(latest);
+    if (unchanged) return { success: true, data: unchanged };
+    return publishList({ ...added, created_at: Math.max(at, latest.created_at + 1) }, options);
   } catch (error) {
     return failure(error);
   }

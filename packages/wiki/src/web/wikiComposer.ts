@@ -1,15 +1,7 @@
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
-import { runPublishHooks } from '@nostr-post/plugins/publish';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import {
-  getPublicKey,
-  getPublishRelays,
-  publishToRelays,
-  SIGNING_EVENT,
-  type SigningDetail,
-  signEvent,
-} from '@nostr-post/signer';
+import { SIGNING_EVENT, type SigningDetail } from '@nostr-post/signer';
 import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
@@ -33,10 +25,11 @@ import { defaultResolver } from '../resolver';
 import type { WikiManifest } from '../types';
 import { validateWikiForm } from '../validate';
 import { renderEnumControl } from './enumControl';
-import { renderPublishSummaries, withHookTags } from './publishSummaries';
+import { renderPublishSummaries } from './publishSummaries';
 import { DEFAULT_WIKI_COMPOSER_MESSAGES, type WikiComposerMessages } from './wikiComposerMessages';
 import { renderSlugCheck, type SlugStatus } from './wikiComposerSlug';
 import { composerStyles } from './wikiComposerStyles';
+import { publishWikiPage } from './wikiPublish';
 
 /** An empty number input clears the value instead of storing 0. */
 const parseNumberInput = (raw: string): number | undefined =>
@@ -261,27 +254,28 @@ export class NostrWikiComposer extends LitElement {
     this._publishing = true;
     this._error = undefined;
 
+    const manifest = this.manifest;
     try {
-      let { unsignedEvent, dTag } = this._buildEvent(this.manifest);
+      const { unsignedEvent, dTag } = this._buildEvent(manifest);
 
       if (this.autoPublish) {
-        // Plugin hooks first (e.g. venue fields creating their venue pages), then the page
-        // again with what they linked (role rows name the linked pages)
-        const hooks = await runPublishHooks(this.manifest, this._formData, await getPublicKey());
-        ({ unsignedEvent, dTag } = this._buildEvent(this.manifest, hooks.formData));
-        unsignedEvent.tags = withHookTags(
-          unsignedEvent.tags as [string, ...string[]][],
-          hooks.tags
-        );
-        // Wiki relays (where entities are looked up) plus the author's own relays
-        const signedEvent = await signEvent(unsignedEvent);
-        const relays = await getPublishRelays(signedEvent.pubkey, this.relays);
-        const publishResults = await publishToRelays(signedEvent, relays);
-        if (publishResults.success === 0) throw new Error(this._m.publishFailed);
-        const results = { signedEvent, publishResults };
+        const published = await publishWikiPage({
+          manifest,
+          formData: this._formData,
+          build: (formData) => this._buildEvent(manifest, formData),
+          relays: this.relays,
+          publishFailed: this._m.publishFailed,
+        });
+        const { signedEvent, publishResults, afterPublishErrors: errors } = published;
+        if (errors.length > 0)
+          this._error = this._m.afterPublishFailed(errors.map((e) => e.message));
         this.dispatchEvent(
           new CustomEvent('nostr-wiki-published', {
-            detail: { event: unsignedEvent, results, dTag },
+            detail: {
+              event: published.unsignedEvent,
+              results: { signedEvent, publishResults },
+              dTag: published.dTag,
+            },
             bubbles: true,
             composed: true,
           })
@@ -343,7 +337,10 @@ export class NostrWikiComposer extends LitElement {
     const m = this._m;
     if (!this.manifest) return html`<p>${m.noManifest}</p>`;
     if (this._loading) return html`<slot name="loading"><p>${m.loading}</p></slot>`;
-    if (this._published) return html`<slot name="success"><p>${m.published}</p></slot>`;
+    if (this._published) {
+      const error = this._error ? html`<p class="wiki-composer-error">${this._error}</p>` : nothing;
+      return html`<slot name="success"><p>${m.published}</p></slot>${error}`;
+    }
 
     return html`
       <form class="nostr-wiki-composer" @submit=${(e: Event) => {
@@ -444,6 +441,7 @@ export class NostrWikiComposer extends LitElement {
       id=${`field-${f.id}`}
       .value=${value}
       .field=${f}
+      .manifest=${this.manifest}
       @np-value-changed=${(e: CustomEvent) => this._onFieldChange(f.id, e.detail.value)}
     ></${tag}>`;
   }

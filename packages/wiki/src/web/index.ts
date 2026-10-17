@@ -1,3 +1,5 @@
+// Entity manifests for plugins (the list field finding a venue type's lists)
+import '../entityManifests';
 export { NostrWikiView } from './wikiView';
 export { NostrWikiComposer } from './wikiComposer';
 export {
