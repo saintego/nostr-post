@@ -72,8 +72,8 @@ pnpm test:coverage
   - `FieldEditor.test.tsx` - Component tests for field editor
 
 - **E2E Tests**: Located in `tests/e2e/`
-  - `manifest-workflow.test.ts` - Complete manifest creation workflows
-  - `nostr-publishing.test.ts` - Mock Nostr integration tests
+  - `manifestWorkflow.test.ts` - Complete manifest creation workflows
+  - `nostrPublishing.test.ts` - Mock Nostr integration tests
 
 All tests use mocked Nostr functionality to avoid requiring a real Nostr extension or relay connections.
 

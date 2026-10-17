@@ -34,12 +34,9 @@ import type { WikiManifest } from '../types';
 import { validateWikiForm } from '../validate';
 import { renderEnumControl } from './enumControl';
 import { renderPublishSummaries, withHookTags } from './publishSummaries';
-import {
-  DEFAULT_WIKI_COMPOSER_MESSAGES,
-  type WikiComposerMessages,
-} from './wiki-composer-messages';
-import { renderSlugCheck, type SlugStatus } from './wiki-composer-slug';
-import { composerStyles } from './wiki-composer-styles';
+import { DEFAULT_WIKI_COMPOSER_MESSAGES, type WikiComposerMessages } from './wikiComposerMessages';
+import { renderSlugCheck, type SlugStatus } from './wikiComposerSlug';
+import { composerStyles } from './wikiComposerStyles';
 
 /** An empty number input clears the value instead of storing 0. */
 const parseNumberInput = (raw: string): number | undefined =>

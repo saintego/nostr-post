@@ -9,7 +9,7 @@ import type { NostrPostManifest } from '@nostr-post/core/types';
 import { type FetchFilter, fetchEvents, fetchManifestByATag } from '@nostr-post/signer';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { baseStyles, NostrPostElement } from './base-component';
+import { baseStyles, NostrPostElement } from './baseComponent';
 import { renderEventActions, renderReactionSummary } from './feedActions';
 import {
   handleCommentPublished as handleCommentPublishedDetail,

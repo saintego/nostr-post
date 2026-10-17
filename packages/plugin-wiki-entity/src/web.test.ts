@@ -24,6 +24,8 @@ vi.mock('@nostr-post/signer', () => ({
     wikiEvent('bitcoin-beer', 'Bitcoin (Beer)', 'pk2'),
     wikiEvent('bitcoin-brewery', 'Bitcoin (Brewery)'),
   ]),
+  // The wiki view looks up the manifest of the page it shows: none here
+  fetchManifestForEvent: vi.fn(async () => undefined),
   // The wiki composer listens for it to show "Waiting for your signer…"
   SIGNING_EVENT: 'nostr-post:signing',
 }));

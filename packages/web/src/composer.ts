@@ -8,7 +8,7 @@ import { getSelectablePublishFormats } from '@nostr-post/core/manifestMappings';
 import { type NostrPostManifest, STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { baseStyles, NostrPostElement } from './base-component';
+import { baseStyles, NostrPostElement } from './baseComponent';
 import type { FieldRenderContext } from './composerField';
 import { renderFieldList } from './composerFieldList';
 import { buildInitialFormData, isFieldReadonly, renderHiddenFieldErrors } from './composerForm';

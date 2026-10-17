@@ -21,8 +21,8 @@ import { getEntityManifest, resolveEntityManifest } from '../registry';
 import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { countContributors, defaultResolver, selectNewestEntity } from '../resolver';
 import type { WikiManifest } from '../types';
-import { DEFAULT_WIKI_VIEW_MESSAGES, type WikiViewMessages } from './wiki-view-messages';
-import { viewStyles } from './wiki-view-styles';
+import { DEFAULT_WIKI_VIEW_MESSAGES, type WikiViewMessages } from './wikiViewMessages';
+import { viewStyles } from './wikiViewStyles';
 import './wikiRelated';
 
 /** Resolving the newest version needs every relay's versions, not the first answer */
