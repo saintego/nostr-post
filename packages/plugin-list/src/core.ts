@@ -105,15 +105,36 @@ export const newBookmarksEvent = (pubkey: string, now: number): ListEvent => ({
   tags: [],
 });
 
-/** A d-tag for a new set: the title's slug and a random part, so sets with one title don't clash */
-export const newSetDTag = (title: string, random: string): string => {
+/**
+ * The d-tag of a list the user creates by title: `nostr-post:<slug>` (`nostr-post:liked`), the
+ * same for the same title, so creating it again adds to the existing list; a title without
+ * letters or digits gets `fallback` (e.g. a random part)
+ */
+export const newSetDTag = (title: string, fallback: string): string => {
   const slug = title
     .toLowerCase()
     .normalize('NFKD')
     .replace(/\p{M}/gu, '')
     .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-+|-+$/g, '');
-  return slug ? `${slug}-${random}` : random;
+  return `nostr-post:${slug || fallback}`;
+};
+
+/** The type in a manifest list's d-tag (`beer` in `nostr-post:beer:liked`), if it has one */
+export const listTypeOf = (list: { dTag: string }): string | undefined =>
+  list.dTag.match(/^nostr-post:([^:]+):./)?.[1];
+
+/**
+ * The list among `lists` with this title (any case), e.g. to reuse instead of creating
+ * another; `titleOf` gives the shown title (the bookmarks list has none of its own)
+ */
+export const listWithTitle = <T extends { title?: string }>(
+  lists: T[],
+  title: string,
+  titleOf: (list: T) => string | undefined = (l) => l.title
+): T | undefined => {
+  const wanted = title.trim().toLowerCase();
+  return lists.find((l) => titleOf(l)?.trim().toLowerCase() === wanted);
 };
 
 /** A new bookmark set */

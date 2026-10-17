@@ -223,3 +223,38 @@ describe('loading', () => {
     expect(shown()).not.toContain('Loading your lists…');
   });
 });
+
+describe('lists with the same title', () => {
+  it('get their type, and typing an existing title ticks that list', async () => {
+    const { createList: create } = await import('../lists');
+    await create({ title: 'Liked' });
+    const beerManifest = {
+      id: 'beer-e',
+      version: '1',
+      lists: [{ id: 'liked', label: 'Liked' }],
+      listType: 'beer',
+      fields: [],
+    };
+    const el = document.createElement('np-list-save');
+    el.target = '30818:pk1:pliny-beer';
+    el.manifest = beerManifest as never;
+    document.body.append(el);
+    await el.updateComplete;
+    el.shadowRoot?.querySelector<HTMLButtonElement>('.save-btn')?.click();
+    await settle();
+    await el.updateComplete;
+    const titles = [...(el.shadowRoot?.querySelectorAll('.list-option span:first-of-type') ?? [])];
+    expect(titles.map((s) => s.textContent)).toEqual(['Liked (beer)', 'Bookmarks', 'Liked']);
+
+    const input = el.shadowRoot?.querySelector<HTMLInputElement>('.new-list input');
+    if (!input) throw new Error('no input');
+    input.value = 'Bookmarks';
+    input.dispatchEvent(new Event('input'));
+    await el.updateComplete;
+    el.shadowRoot?.querySelector('form')?.dispatchEvent(new Event('submit', { cancelable: true }));
+    await settle();
+    await el.updateComplete;
+    expect(relay.events.filter((e) => e.kind === 10003)).toHaveLength(1);
+    expect(relay.events.filter((e) => e.kind === 30003)).toHaveLength(1);
+  });
+});

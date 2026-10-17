@@ -41,12 +41,21 @@ describe('lists on relays', () => {
   it('creates a set with the item, and deleting it hides it from the lists', async () => {
     const created = await createList({ title: 'Want to go', items: [venue] });
     if (!created.success) throw created.error;
-    expect(created.data.dTag).toMatch(/^want-to-go-/);
+    expect(created.data.dTag).toBe('nostr-post:want-to-go');
     expect((await fetchMyLists()).map((l) => l.title)).toEqual([undefined, 'Want to go']);
 
     const deleted = await deleteList(created.data);
     expect(deleted.success).toBe(true);
     expect((await fetchMyLists()).map((l) => l.address)).toEqual(['10003:me:']);
+  });
+
+  it('creating a list with a title the user has adds to that list', async () => {
+    await createList({ title: 'Liked', items: [venue] });
+    const again = await createList({ title: 'liked', items: [beer] });
+    expect(again.success && again.data.items).toEqual([venue, beer]);
+    // It keeps its title
+    expect(again.success && again.data.title).toBe('Liked');
+    expect((await fetchMyLists()).filter((l) => l.kind === 30003)).toHaveLength(1);
   });
 
   it("doesn't delete the bookmarks list", async () => {

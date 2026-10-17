@@ -10,10 +10,10 @@
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { ListPreset } from '../core';
+import { type ListPreset, listWithTitle } from '../core';
 import { choiceValue, fieldPresets, type ListChoice, listChoices } from '../listField';
 import type { BookmarkList } from '../types';
-import { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle } from './listMessages';
+import { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle, listTitles } from './listMessages';
 import { loadMyLists, type MyListsState, NOT_LOADED, renderLoadState, shownLists } from './myLists';
 import { listStyles } from './styles';
 
@@ -101,6 +101,14 @@ export class NpListInput extends LitElement {
     const title = this._newTitle.trim();
     if (!title || this._choices.some((c) => !c.address && c.title === title)) return;
     this._newTitle = '';
+    // A list with that title already: tick it instead of making a second one
+    const existing = listWithTitle(shownLists(this._my, this._presets), title, (l) =>
+      listTitle(l, this._m)
+    );
+    if (existing) {
+      if (!this._choices.some((c) => c.address === existing.address)) this._toggle(existing, true);
+      return;
+    }
     this._emit([...this._choices, { title }]);
   }
 
@@ -108,15 +116,17 @@ export class NpListInput extends LitElement {
     const m = this._m;
     const chosen = new Set(this._choices.map((c) => c.address));
     const newOnes = this._choices.filter((c) => !c.address && c.title);
+    const lists = shownLists(this._my, this._presets);
+    const titles = listTitles(lists, m);
     return html`
-      ${shownLists(this._my, this._presets).map(
+      ${lists.map(
         (list) => html`<label class="list-option">
           <input
             type="checkbox"
             .checked=${chosen.has(list.address)}
             @change=${(e: Event) => this._toggle(list, (e.target as HTMLInputElement).checked)}
           />
-          <span>${listTitle(list, m)}</span>
+          <span>${titles.get(list.address)}</span>
           <span class="count">${m.itemCount(list.items.length)}</span>
         </label>`
       )}

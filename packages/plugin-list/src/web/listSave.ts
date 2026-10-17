@@ -14,10 +14,10 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { hasItem, itemFor, manifestListPresets } from '../core';
+import { hasItem, itemFor, listWithTitle, manifestListPresets } from '../core';
 import { addToList, createList, removeFromList } from '../lists';
 import type { BookmarkList } from '../types';
-import { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle } from './listMessages';
+import { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle, listTitles } from './listMessages';
 import { loadMyLists, type MyListsState, NOT_LOADED, renderLoadState, shownLists } from './myLists';
 import { listStyles } from './styles';
 
@@ -99,6 +99,13 @@ export class NpListSave extends LitElement {
     e.preventDefault();
     const title = this._newTitle.trim();
     if (!title) return;
+    // A list with that title already: save to it instead of making a second one
+    const existing = listWithTitle(this._lists, title, (l) => listTitle(l, this._m));
+    if (existing) {
+      this._newTitle = '';
+      if (!hasItem(existing, this._item)) await this._toggle(existing);
+      return;
+    }
     this._busy = 'new';
     this._error = '';
     const result = await createList({ title, items: [this._item] }, { relays: this.relays });
@@ -114,10 +121,12 @@ export class NpListSave extends LitElement {
   _renderPanel() {
     const m = this._m;
     const item = this._item;
+    const lists = this._lists;
+    const titles = listTitles(lists, m);
     return html`
       <div class="panel" role="dialog" aria-label=${m.save}>
         ${this._error ? html`<div class="error">${this._error}</div>` : nothing}
-        ${this._lists.map(
+        ${lists.map(
           (list) => html`
             <label class="list-option">
               <input
@@ -126,7 +135,7 @@ export class NpListSave extends LitElement {
                 ?disabled=${this._busy !== '' || !this._my.lists}
                 @change=${() => this._toggle(list)}
               />
-              <span>${listTitle(list, m)}</span>
+              <span>${titles.get(list.address)}</span>
               <span class="count">${m.itemCount(list.items.length)}</span>
             </label>
           `

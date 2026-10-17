@@ -16,7 +16,7 @@ import { customElement, property, state } from 'lit/decorators.js';
 import { fetchItemTitles } from '../itemTitles';
 import { deleteList, fetchLists, fetchMyLists, removeFromList } from '../lists';
 import { BOOKMARK_SET_KIND, type BookmarkList, type ListItem } from '../types';
-import { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle } from './listMessages';
+import { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle, listTitles } from './listMessages';
 import { listStyles } from './styles';
 
 @customElement('np-list-view')
@@ -111,7 +111,7 @@ export class NpListView extends LitElement {
     return html`
       <section class="list">
         <div class="list-header">
-          <h3>${listTitle(list, m)}</h3>
+          <h3>${listTitles(this._lists ?? [], m).get(list.address) ?? listTitle(list, m)}</h3>
           <span class="count">${m.itemCount(list.items.length)}</span>
           ${
             own && list.kind === BOOKMARK_SET_KIND

@@ -1,3 +1,5 @@
+import { listTypeOf } from '../core';
+
 /**
  * User-facing text of <np-list-save> and <np-list-view>. Apps can override any of it
  * with the components' `messages` property (e.g. for translations).
@@ -36,6 +38,8 @@ export interface ListMessages {
   unknownItem: (value: string) => string;
   /** Under the list field's lists: when they're saved to */
   fieldHint: string;
+  /** A list next to another one with the same title: its type (`Liked (beer)`) */
+  titleWithType: (title: string, type: string) => string;
   /** A new list the list field will create when the post is published */
   newListChoice: (title: string) => string;
   /** The list field's add button for a new list */
@@ -66,6 +70,7 @@ export const DEFAULT_LIST_MESSAGES: ListMessages = {
   confirmDelete: (title) => `Delete the list "${title}"?`,
   unknownItem: (value) => value,
   fieldHint: 'Saved to the lists you tick when you publish. Lists for its type come first.',
+  titleWithType: (title, type) => `${title} (${type})`,
   newListChoice: (title) => `${title} (new)`,
   addNewList: 'Add',
   failed: (reason) => `Failed: ${reason}`,
@@ -76,3 +81,25 @@ export const listTitle = (
   list: { kind: number; title?: string },
   m: Pick<ListMessages, 'bookmarks' | 'untitled'>
 ): string => list.title ?? (list.kind === 10003 ? m.bookmarks : m.untitled);
+
+/**
+ * What each of `lists` is called where they're shown together: lists with the same title
+ * get their type (`Liked (beer)`, `Liked (venue)`), from manifest list d-tags
+ */
+export function listTitles(
+  lists: Array<{ address: string; kind: number; title?: string; dTag: string }>,
+  m: Pick<ListMessages, 'bookmarks' | 'untitled' | 'titleWithType'>
+): Map<string, string> {
+  const count = new Map<string, number>();
+  for (const l of lists) {
+    const key = listTitle(l, m).toLowerCase();
+    count.set(key, (count.get(key) ?? 0) + 1);
+  }
+  return new Map(
+    lists.map((l) => {
+      const title = listTitle(l, m);
+      const type = (count.get(title.toLowerCase()) ?? 0) > 1 ? listTypeOf(l) : undefined;
+      return [l.address, type ? m.titleWithType(title, type) : title];
+    })
+  );
+}

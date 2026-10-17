@@ -92,8 +92,11 @@ the events have no Save button.
 | ---------- | ---------------------------------------------------------------------------------------------- |
 | `id`       | Short and free (`visited`). The user's list has the d-tag `nostr-post:<listType>:<id>` (`nostr-post:venue:visited`), so another manifest's `visited` is another list. A manifest extending this one replaces the entry with the same `id` (e.g. to translate its label) and inherits the others |
 | `label`    | The list's title when it's created; the user's list keeps its own title afterwards             |
-| `dTag`     | Optional fixed d-tag instead, to share one list across manifests (`nostr-post:favourites`). Lists of other apps can clash with it; the `nostr-post:` prefix makes that unlikely |
+| `dTag`     | Optional fixed d-tag instead, to share one list across manifests (`nostr-post:favourites`). Lists of other apps can clash with it; the `nostr-post:` prefix makes that unlikely. A list the user creates by name gets `nostr-post:<slug of the name>`, so creating "Favourites" is that same list |
 | `listType` | Manifest key: the type part of the d-tags, default the manifest's `id`. Set it when the id has a version (`venue-entity-v1`), so later versions and extending manifests (they inherit it) share the user's lists |
+
+Lists shown together with the same title get the type from their d-tag ("Liked (beer)", "Liked (venue)"),
+and typing the name of a list the user has ticks that list instead of creating another.
 
 A `list` field saves to the lists the author ticks, once the post is published; it adds nothing to the
 post. With `metadata.saveField` it saves that field's wiki entity (the venue field's page, which it may

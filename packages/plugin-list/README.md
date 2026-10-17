@@ -133,7 +133,8 @@ Reading and publishing (`lists.ts`; they take `{ relays? }` and return a `Result
 - `fetchLists(pubkey, options)`, `fetchMyLists(options)`: the bookmarks list first (empty, `createdAt`
   0, until first used), then sets by title; deleted sets left out
 - `addToList(list, item, options)`, `removeFromList(list, item, options)`
-- `createList({ title, description?, items? }, options)`: a new set with a d-tag from the title
+- `createList({ title, description?, items? }, options)`: a set with the d-tag `nostr-post:<slug of the
+  title>` (`nostr-post:liked`); when the user has it already, the items are added to it
 - `deleteList(list, options)`: sets only
 - `addItemsToList(list, items, options)`: several items in one event
 

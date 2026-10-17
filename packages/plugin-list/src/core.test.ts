@@ -8,6 +8,8 @@ import {
   itemForEvent,
   listAtAddress,
   listPresets,
+  listTypeOf,
+  listWithTitle,
   newSetDTag,
   newSetEvent,
   parseList,
@@ -103,10 +105,19 @@ describe('items', () => {
 });
 
 describe('new and deleted lists', () => {
-  it('makes a d-tag from the title plus a random part', () => {
-    expect(newSetDTag('Want to go!', 'x1y2')).toBe('want-to-go-x1y2');
-    expect(newSetDTag('Bières', 'x1')).toBe('bieres-x1');
-    expect(newSetDTag('!!!', 'x1')).toBe('x1');
+  it('makes the d-tag from the title, the same for the same title', () => {
+    expect(newSetDTag('Want to go!', 'x1y2')).toBe('nostr-post:want-to-go');
+    expect(newSetDTag('Bières', 'x1')).toBe('nostr-post:bieres');
+    // Like the shared preset of that name
+    expect(newSetDTag('Favourites', 'x1')).toBe('nostr-post:favourites');
+    expect(newSetDTag('!!!', 'x1')).toBe('nostr-post:x1');
+  });
+
+  it('finds a list by title and tells the type of manifest lists', () => {
+    const liked = parseList(set('nostr-post:beer:liked', 1, [['title', 'Liked']]));
+    expect(liked && listTypeOf(liked)).toBe('beer');
+    expect(listTypeOf({ dTag: 'nostr-post:liked' })).toBeUndefined();
+    expect(listWithTitle([{ title: 'Liked ' }], 'liked')).toEqual({ title: 'Liked ' });
   });
 
   it('creates a set with title and description', () => {

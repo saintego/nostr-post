@@ -148,7 +148,11 @@ export async function removeFromList(
   }
 }
 
-/** Create a bookmark set for the signed-in user, optionally with its first items */
+/**
+ * Create a bookmark set for the signed-in user, optionally with its first items. Its d-tag
+ * comes from the title (newSetDTag): when the user has that list already, the items are
+ * added to it (it keeps its title).
+ */
 export async function createList(
   params: { title: string; description?: string; items?: ListItem[] },
   options: ListRelayOptions = {}
@@ -156,9 +160,10 @@ export async function createList(
   try {
     const pubkey = await getPublicKey();
     const dTag = newSetDTag(params.title, Math.random().toString(36).slice(2, 8));
-    const empty = newSetEvent({ ...params, pubkey, dTag }, now());
-    const withItems = (params.items ?? []).reduce((e, item) => withItem(e, item, 0), empty);
-    return publishList({ ...withItems, created_at: empty.created_at }, options);
+    const list = parseList(newSetEvent({ ...params, pubkey, dTag }, 0));
+    if (!list) return failure(new Error('Not a list event'));
+    // Unpublished (createdAt 0): addItemsToList starts from the user's copy if there is one
+    return addItemsToList(list, params.items ?? [], options);
   } catch (error) {
     return failure(error);
   }
