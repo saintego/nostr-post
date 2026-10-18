@@ -1,11 +1,13 @@
 import { fieldOptionLabel } from '@nostr-post/core/enumOptions';
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
+import { eventActionsFor } from '@nostr-post/plugins/entities';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { type EventManifest, fetchEvents, fetchManifestForEvent } from '@nostr-post/signer';
 import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { entityLinks } from '../externalIds';
 import { fetchEntityVersions } from '../fetch';
 import { templateText } from '../identity';
@@ -272,6 +274,18 @@ export class NostrWikiView extends LitElement {
     </div>`;
   }
 
+  /** Plugins' controls for this entity type (registerEventAction), e.g. Save to a list */
+  private _renderActions(manifest: NostrPostManifest) {
+    const event = this._winningEvent;
+    const dTag = event?.tags.find((t) => t[0] === 'd')?.[1];
+    if (!event || !dTag) return nothing;
+    const target = `${WIKI_KIND}:${event.pubkey}:${dTag}`;
+    return eventActionsFor(manifest).map((action) => {
+      const tag = unsafeStatic(action.tagName);
+      return staticHtml`<${tag} .target=${target} .manifest=${manifest}></${tag}>`;
+    });
+  }
+
   override render() {
     const m = this._m;
     if (this._loading) return html`<slot name="loading"><p>${m.loading}</p></slot>`;
@@ -315,6 +329,7 @@ export class NostrWikiView extends LitElement {
               ? `${this.event.pubkey.slice(0, 8)}… · ${new Date(this.event.created_at * 1000).toLocaleString()}`
               : m.contributors(countContributors(_allEvents))
           }</span>
+          ${this._renderActions(manifest)}
         </header>
 
         ${

@@ -1,7 +1,7 @@
 {
   "name": "@nostr-post/plugin-list",
   "version": "0.1.0",
-  "description": "NIP-51 user lists plugin for nostr-post",
+  "description": "NIP-51 bookmark lists for nostr-post: save wiki entities and events to lists",
   "type": "module",
   "exports": {
     ".": {
@@ -26,11 +26,12 @@
     "plugin",
     "lists",
     "nip-51",
-    "audience"
+    "bookmarks"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@nostr-post/core": "workspace:*",
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/signer": "workspace:*",
     "lit": "^3.3.3"

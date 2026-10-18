@@ -72,11 +72,11 @@ export const validateFormData = (
   const errors: ValidationError[] = [];
   const activeKinds = getActiveKinds(manifest, config);
 
-  // Check all required fields are present
+  // Check all required fields are present; with no kinds (hooks only) every field counts
   for (const field of manifest.fields) {
-    const hasActiveMapping = getFieldTargets(field).some((target) =>
-      activeKinds.includes(target.kind)
-    );
+    const hasActiveMapping =
+      activeKinds.length === 0 ||
+      getFieldTargets(field).some((target) => activeKinds.includes(target.kind));
 
     if (field.required && hasActiveMapping && !(field.id in formData)) {
       errors.push({

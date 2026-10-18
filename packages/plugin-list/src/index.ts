@@ -1,22 +1,69 @@
 export {
-  listPlugin,
-  fetchUserLists,
-  parseListEvent,
-  createListEvent,
-  loadUserLists,
-  publishNewList,
+  currentLists,
+  deletionEvent,
+  hasItem,
+  entityItems,
+  itemFor,
+  itemForEvent,
+  type ListPreset,
+  listPresets,
+  listTypeOf,
+  listWithTitle,
+  manifestListPresets,
+  listAddress,
+  listAtAddress,
+  newBookmarksEvent,
+  newSetDTag,
+  newSetEvent,
+  parseList,
+  sameItem,
+  withBookmarks,
+  withItem,
+  withPresets,
+  withoutItem,
 } from './core';
-export type {
-  UserList,
-  ListSelectionData,
-  ListPluginConfig,
-  Nip51ListEvent,
-  Nip51ParsedList,
-  Nip51Adapter,
+export { eventForItem, eventTitle, fetchItemTitles, itemFilters } from './itemTitles';
+export { type ListTitleNames, listTitle, listTitles } from './listTitles';
+export {
+  loadMyLists,
+  type MyListsMessages,
+  type MyListsState,
+  NOT_LOADED,
+  SIGNER_TIMEOUT_MS,
+  shownLists,
+} from './myLists';
+export {
+  choiceValue,
+  fieldPresets,
+  type ListChoice,
+  itemsToSave,
+  listChoices,
+  listField,
+  listFieldPlugin,
+  saveToChoices,
+} from './listField';
+export {
+  addItemsToList,
+  addToList,
+  createList,
+  deleteList,
+  fetchLists,
+  fetchMyLists,
+  removeFromList,
+} from './lists';
+export {
+  BOOKMARK_SET_KIND,
+  BOOKMARKS_KIND,
+  type BookmarkList,
+  DELETION_KIND,
+  type ListEvent,
+  type ListItem,
+  type ListRelayOptions,
+  WIKI_KIND,
 } from './types';
 
-// Register the plugin
+// Register the list field plugin (the /web entry adds its input)
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { listPlugin } from './core';
+import { listFieldPlugin } from './listField';
 
-pluginRegistry.register(listPlugin);
+pluginRegistry.register(listFieldPlugin);

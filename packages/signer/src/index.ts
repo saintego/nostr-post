@@ -73,14 +73,33 @@ export async function signEvent(event: UnsignedNostrEvent): Promise<SignedEvent>
   }
 }
 
+/** The signer's answer to getPublicKey, asked once per signer */
+let pubkeyRequest: { provider: Nip07Provider; promise: Promise<string> } | undefined;
+
 /**
- * Get the current user's public key
+ * Get the current user's public key. The signer is asked once (also when several
+ * components ask at the same time): signers that handle one request at a time, or ask
+ * the user, would otherwise queue every caller. A failed request is asked again next
+ * time; call clearPublicKeyCache when the user signs in or out.
  */
 export async function getPublicKey(): Promise<string> {
-  if (!window.nostr) {
+  const provider = window.nostr;
+  if (!provider) {
     throw new Error('No Nostr signer available.');
   }
-  return window.nostr.getPublicKey();
+  if (pubkeyRequest?.provider !== provider) {
+    const promise = provider.getPublicKey();
+    pubkeyRequest = { provider, promise };
+    promise.catch(() => {
+      if (pubkeyRequest?.promise === promise) pubkeyRequest = undefined;
+    });
+  }
+  return pubkeyRequest.promise;
+}
+
+/** Forget the signer's pubkey (after signing in or out, or a request that never answered) */
+export function clearPublicKeyCache(): void {
+  pubkeyRequest = undefined;
 }
 
 /**

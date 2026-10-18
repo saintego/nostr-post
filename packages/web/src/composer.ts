@@ -341,9 +341,15 @@ export class NostrPostComposer extends NostrPostElement {
       const { bundle, addressableDTag } = outcome;
 
       if (this.autoPublish) {
-        const signedEvents = await this._publish(manifest, pubkey);
+        const { events: signedEvents, afterPublishErrors } = await this._publish(manifest, pubkey);
         this.dispatchCustomEvent<SignedEvent[]>('nostr-post-published', signedEvents);
-        this.successMessage = `Published to ${signedEvents.length} event(s)!`;
+        this.successMessage =
+          signedEvents.length > 0
+            ? `Published to ${signedEvents.length} event(s)!`
+            : this._m.doneWithoutPost;
+        if (afterPublishErrors.length > 0) {
+          this.showError(this._m.afterPublishFailed(afterPublishErrors.map((e) => e.message)));
+        }
       } else {
         // formData + manifest let the app run plugin hooks itself (runBeforePublish)
         this.dispatchCustomEvent<NostrPostSubmitDetail>('nostr-post-submit', {
@@ -387,7 +393,7 @@ export class NostrPostComposer extends NostrPostElement {
   }
 
   /** Plugins' related events first (e.g. a venue's wiki page), then the post */
-  private _publish(manifest: NostrPostManifest, pubkey: string): Promise<SignedEvent[]> {
+  private _publish(manifest: NostrPostManifest, pubkey: string) {
     return publishWithHooks({
       manifest,
       formData: this._formData,
@@ -418,6 +424,7 @@ export class NostrPostComposer extends NostrPostElement {
       errors: this.errors,
       expandedFields: this._expandedFields,
       manifest,
+      pubkey: this.pubkey,
       isReadonly: (f) => isFieldReadonly(f, this.readonlyFields),
       onFieldChange: (id, val) => this.handleFieldChange(id, val),
       onToggleExpanded: (fieldId) => {

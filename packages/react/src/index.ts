@@ -40,6 +40,7 @@ export {
   baseStyles,
   STANDARD_KIND1_POST_MANIFEST,
   type NostrPostSubmitDetail,
+  runAfterPublish,
   runBeforePublish,
   runPublishHooks,
   withTags,

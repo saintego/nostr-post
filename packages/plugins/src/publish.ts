@@ -8,7 +8,7 @@
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from './registry';
-import type { NostrUIPlugin, PostField } from './types';
+import type { NostrUIPlugin, PostField, PublishedEvent } from './types';
 
 type GetPlugin = (id: string) => NostrUIPlugin | undefined;
 
@@ -77,6 +77,32 @@ export const runBeforePublish = async (
   pubkey: string,
   getPlugin: GetPlugin = defaultGetPlugin
 ): Promise<Tag[]> => (await runPublishHooks(manifest, formData, pubkey, getPlugin)).tags;
+
+/**
+ * Runs the `afterPublish` hooks of the fields that have a value, one after another,
+ * once the post is published (`events`; none for a hooks-only format). `formData` is
+ * what runPublishHooks returned, with the pages earlier hooks linked. Every hook runs;
+ * the errors of those that failed are returned (the post is out either way).
+ */
+export const runAfterPublish = async (
+  manifest: NostrPostManifest,
+  formData: Record<string, unknown>,
+  ctx: { pubkey: string; events: PublishedEvent[] },
+  getPlugin: GetPlugin = defaultGetPlugin
+): Promise<Error[]> => {
+  const errors: Error[] = [];
+  for (const field of manifest.fields) {
+    const value = formData[field.id];
+    const plugin = field.uiPlugin ? getPlugin(field.uiPlugin) : undefined;
+    if (!hasValue(value) || !plugin?.afterPublish) continue;
+    try {
+      await plugin.afterPublish(value, field as PostField, { ...ctx, formData, manifest });
+    } catch (error) {
+      errors.push(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+  return errors;
+};
 
 /** A field whose plugin shows a summary next to the publish button */
 export interface PublishSummary {

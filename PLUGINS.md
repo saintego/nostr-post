@@ -345,6 +345,23 @@ interface NostrUIPlugin {
     ctx: { pubkey: string },
   ): Promise<[string, ...string[]][]>;
 
+  // Async, after the post was published (fields with a value only), e.g. the list field saving
+  // the post's venue to the user's lists. `formData` is what runPublishHooks returned (with the
+  // pages beforePublish hooks linked, as `wikiEntity`); `events` the published events (none for
+  // a hooks-only publish format, `kinds: []`). The post is out by then: throwing doesn't undo
+  // it, the composer shows the error. Apps publishing on nostr-post-submit / nostr-wiki-submit
+  // call runAfterPublish(manifest, formData, { pubkey, events }) (@nostr-post/plugins/publish).
+  afterPublish?(
+    value: unknown,
+    field: PostField,
+    ctx: {
+      pubkey: string;
+      formData: Record<string, unknown>;
+      events: PublishedEvent[];
+      manifest: NostrPostManifest;
+    },
+  ): Promise<void>;
+
   // Web component tag names (set by /web entrypoint)
   inputTagName?: string; // e.g. 'np-stars-input'
   viewTagName?: string; // e.g. 'np-stars-view'
@@ -379,10 +396,12 @@ interface NostrUIPlugin {
 
 ### Input Component Contract
 
-| Property | Type        | Description                                             |
-| -------- | ----------- | ------------------------------------------------------- |
-| `.value` | `unknown`   | Current field value                                     |
-| `.field` | `PostField` | Full field definition from manifest (includes metadata) |
+| Property    | Type                | Description                                                               |
+| ----------- | ------------------- | ------------------------------------------------------------------------- |
+| `.value`    | `unknown`           | Current field value                                                       |
+| `.field`    | `PostField`         | Full field definition from manifest (includes metadata)                   |
+| `.manifest` | `NostrPostManifest` | The whole manifest, for inputs that use other fields (e.g. `saveField`)   |
+| `.pubkey`   | `string`            | The author, when the composer knows it (its `pubkey`), so inputs needing the user's data don't ask the signer |
 
 | Event              | Detail               | When                                  |
 | ------------------ | -------------------- | ------------------------------------- |
@@ -394,6 +413,23 @@ interface NostrUIPlugin {
 | -------- | ----------- | ----------------------------------- |
 | `.value` | `unknown`   | Deserialized field value            |
 | `.field` | `PostField` | Full field definition from manifest |
+
+## Event actions and entity manifests
+
+Plugins meet the views and the wiki package through `@nostr-post/plugins/entities` instead of
+depending on them (or on each other):
+
+- `registerEventAction({ tagName, matches })`: a control shown with events made with the manifests
+  `matches` accepts, a custom element with `target` (the event's address, e.g. `30818:<pubkey>:<d-tag>`,
+  or its id) and `manifest` properties. `<nostr-post-view>` (in its header), `<nostr-wiki-view>` (next to
+  the title) and the venue view show them (`eventActionsFor(manifest)`); the list plugin's Save button,
+  for manifests with `lists`, is one.
+- `entityManifests()`: once `@nostr-post/wiki` is loaded, `resolve(ref)`, an entity manifest from its id,
+  `30078:` address or the manifest itself. The list field uses it for the lists of the venue it saves.
+
+Fields meet through the manifest and the publish hooks: the venue field's `beforePublish` links the
+venue's page, `runPublishHooks` puts it into the form data (`wikiEntity`), and the list field's
+`afterPublish` saves what its `saveField` holds. Neither plugin knows the other.
 
 ## Existing Plugins
 
@@ -410,7 +446,7 @@ When a plugin reads a new key, add it there.
 | `@nostr-post/plugin-hashtag`   | `hashtag`   | `string` | Hashtag array input; auto-extracts from target field when `attachTo` is set      |
 | `@nostr-post/plugin-reference` | `reference` | `string` | URL/nostr reference list; auto-extracts from target field when `attachTo` is set |
 | `@nostr-post/plugin-identifier` | `identifier` | `string` | External identifier (NIP-73 `i` tag), e.g. an ISBN, with an optional fixed prefix |
-| `@nostr-post/plugin-list` | `list` | `string` | Pick or create lists |
+| `@nostr-post/plugin-list` | `list` | `string` | Pick lists (NIP-51 bookmark sets) to save the post's wiki entity (`metadata.saveField`) or the post to, after publishing (`afterPublish`); adds Save to events made with manifests that have `lists` (`registerEventAction`) |
 | `@nostr-post/plugin-wiki-entity` | `wiki-entity-picker` | `ref` | Search, pick and create wiki entities (NIP-54); links the post with an `a` tag. Its text is overridable through the `messages` property (`WikiEntityPickerMessages`, defaults in `DEFAULT_WIKI_ENTITY_PICKER_MESSAGES`) |
 
 ## Custom Field Types

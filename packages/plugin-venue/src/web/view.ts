@@ -10,11 +10,13 @@
  * delegates entirely to <np-geo-view>.
  */
 
+import { eventActionsFor } from '@nostr-post/plugins/entities';
 import type { PostField } from '@nostr-post/plugins/types';
 import { type EntityManifestRef, getEntityManifest, resolveEntityManifest } from '@nostr-post/wiki';
 import { css, html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { googleMapsPlaceUrl, osmUrl, type VenueData } from '../core';
+import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
+import { googleMapsPlaceUrl, osmUrl, pageAddress, type VenueData } from '../core';
 import { googleEmbedUrl } from '../googleEmbed';
 import { googleMapsCidUrl } from '../googleLink';
 import { loadVenueFromPage, needsPage } from '../venuePage';
@@ -39,6 +41,11 @@ export class NpVenueView extends LitElement {
       align-items: center;
       gap: 0.375rem;
       margin-bottom: 0.125rem;
+    }
+
+    .venue-action {
+      margin-left: auto;
+      font-weight: 400;
     }
 
     .venue-wiki {
@@ -133,7 +140,14 @@ export class NpVenueView extends LitElement {
     const v = this._fromPage ?? (this.value as VenueData);
 
     return html`
-      ${v.name ? html`<div class="venue-name">📍 ${v.name}</div>` : nothing}
+      ${
+        v.name
+          ? html`<div class="venue-name">
+              📍 ${v.name}
+              ${this._renderActions(v)}
+            </div>`
+          : nothing
+      }
       ${
         v.osmType && v.osmId
           ? html`<span class="osm-badge">OSM ${v.osmType}:${v.osmId}</span>`
@@ -172,6 +186,28 @@ export class NpVenueView extends LitElement {
         }
       </details>
     `;
+  }
+
+  /**
+   * Plugins' controls for the venue's entity type (`@nostr-post/plugins/entities`), like
+   * <nostr-wiki-view> shows them, e.g. Save to lists when the type has `wikiConfig.lists`
+   */
+  private _renderActions(v: VenueData) {
+    if (!v.wikiEntity) return nothing;
+    const ref = this.field?.metadata?.wikiEntity as EntityManifestRef | undefined;
+    const manifest = getEntityManifest(ref);
+    if (!manifest && ref) {
+      void resolveEntityManifest(ref).then((found) => found && this.requestUpdate());
+    }
+    if (!manifest) return nothing;
+    return eventActionsFor(manifest).map((action) => {
+      const tag = unsafeStatic(action.tagName);
+      return staticHtml`<${tag}
+        class="venue-action"
+        .target=${pageAddress(v)}
+        .manifest=${manifest}
+      ></${tag}>`;
+    });
   }
 
   /** The venue's wiki page, loaded only when opened (feeds show many posts) */

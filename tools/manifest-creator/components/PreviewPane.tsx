@@ -15,6 +15,7 @@ import { styles } from './previewPaneStyles';
 interface NostrPostComposerElement extends HTMLElement {
   manifest: NostrPostManifest;
   manifestRef?: string;
+  pubkey?: string;
 }
 
 interface PreviewPaneProps {
@@ -99,6 +100,8 @@ export const PreviewPane = ({ manifest, manifestRef, isResolvingParents }: Previ
   // Reload when the user signs in or out via the nostr-shard-signer widget
   useEffect(() => {
     const onAuth = (e: WindowEventMap['nostr-bridge:auth']) => {
+      // Another account (or none): the signer's pubkey is asked again
+      void import('@nostr-post/signer').then(({ clearPublicKeyCache }) => clearPublicKeyCache());
       if (e.detail.loggedIn) void reloadCurrentPubkey();
       else setCurrentPubkey('');
     };
@@ -189,6 +192,11 @@ export const PreviewPane = ({ manifest, manifestRef, isResolvingParents }: Previ
       composerRef.current.manifestRef = manifestRef;
     }
   }, [manifest, manifestRef]);
+
+  // The signed-in user, so the composer and its inputs (e.g. lists) don't ask the signer again
+  useEffect(() => {
+    if (composerRef.current) composerRef.current.pubkey = currentPubkey || undefined;
+  }, [currentPubkey]);
 
   useEffect(() => {
     const composer = composerRef.current;

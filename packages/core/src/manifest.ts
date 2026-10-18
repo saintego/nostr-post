@@ -214,12 +214,14 @@ const validatePublishFormat = (format: PublishFormat): Result<void, ValidationEr
     };
   }
 
-  if (!format.kinds || format.kinds.length === 0) {
+  // `kinds: []` publishes no event of its own, only what plugins' publish hooks do
+  // (e.g. save a place to a list)
+  if (!Array.isArray(format.kinds)) {
     return {
       success: false,
       error: {
         field: 'kinds',
-        message: 'Publish format must define at least one kind',
+        message: 'Publish format must define its kinds',
         code: 'MISSING_PUBLISH_FORMAT_KINDS',
       },
     };

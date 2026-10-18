@@ -1,4 +1,6 @@
 // @vitest-environment happy-dom
+
+import { registerEventAction } from '@nostr-post/plugins/entities';
 import { describe, expect, it, vi } from 'vitest';
 import { registerEntityManifest } from '../registry';
 import './wikiView';
@@ -56,6 +58,47 @@ describe('<nostr-wiki-view> without a manifest', () => {
     };
     document.body.appendChild(view);
     await vi.waitFor(() => expect(text(view)).toContain('Coffee beans'), { timeout: 5000 });
+    vi.unstubAllGlobals();
+  });
+});
+
+describe('<nostr-wiki-view> entity actions', () => {
+  it("shows plugins' controls for the entity type, with the shown version's address", async () => {
+    vi.stubGlobal('WebSocket', EmptyRelay);
+    customElements.define(
+      'test-save-action',
+      class extends HTMLElement {
+        target?: string;
+      }
+    );
+    registerEventAction({
+      tagName: 'test-save-action',
+      matches: (manifest) => manifest.id === 'listed-entity-test',
+    });
+    const view = document.createElement('nostr-wiki-view') as HTMLElement & {
+      event: unknown;
+      manifest: unknown;
+      updateComplete: Promise<boolean>;
+    };
+    view.manifest = { id: 'listed-entity-test', version: '1.0.0', fields: [] };
+    view.event = {
+      id: 'e2',
+      pubkey: 'b'.repeat(64),
+      sig: 's',
+      kind: 30818,
+      created_at: 1,
+      content: '',
+      tags: [['d', 'tap-house-venue']],
+    };
+    document.body.appendChild(view);
+    await vi.waitFor(() => {
+      const action = view.shadowRoot?.querySelector('test-save-action') as { target?: string };
+      expect(action?.target).toBe(`30818:${'b'.repeat(64)}:tap-house-venue`);
+    });
+
+    view.manifest = { id: 'other-entity-test', version: '1.0.0', fields: [] };
+    await view.updateComplete;
+    expect(view.shadowRoot?.querySelector('test-save-action')).toBeNull();
     vi.unstubAllGlobals();
   });
 });

@@ -4,7 +4,7 @@
  * Merges a child manifest onto its parent. Pure functions over immutable data.
  */
 
-import type { NostrPostManifest, PostField, PublishFormat } from './types';
+import type { ManifestList, NostrPostManifest, PostField, PublishFormat } from './types';
 
 /** Parent items in order with child items of the same id merged in, then child-only items */
 const mergeById = <T extends { id: string }>(
@@ -95,7 +95,7 @@ const mergeConfigKeys = (
  * - `fields`: parent fields form the base; child fields with matching `id` override
  *   (field-level `metadata` is shallow-merged so the child can patch individual keys
  *   without repeating the rest). Child-only fields are appended after parent fields.
- * - `publishFormats`: same override-then-append strategy as fields.
+ * - `publishFormats` and `lists`: same override-then-append strategy as fields.
  * - `metadata`: shallow-merged (`{ ...parent.metadata, ...child.metadata }`).
  * - `linkManifest`: child's value takes priority; falls back to parent's.
  * - Other keys whose values are objects in both (e.g. `wikiConfig`) are merged per key:
@@ -118,6 +118,10 @@ export const resolveManifest = (
     child.publishFormats ?? [],
     (parentFormat, childFormat) => ({ ...parentFormat, ...childFormat })
   );
+  const mergedLists = mergeById<ManifestList>(parent.lists ?? [], child.lists ?? [], (p, c) => ({
+    ...p,
+    ...c,
+  }));
 
   // Drop `extends` from both parent and child so it doesn't propagate to the resolved manifest
   const { extends: _parentExtendsRef, ...parentRest } = parent;
@@ -131,6 +135,7 @@ export const resolveManifest = (
     ...mergeConfigKeys(parentRest, childRest),
     fields: mergedFields,
     publishFormats: mergedFormats.length > 0 ? mergedFormats : undefined,
+    lists: mergedLists.length > 0 ? mergedLists : undefined,
     linkManifest: child.linkManifest ?? parent.linkManifest,
     metadata:
       parent.metadata || child.metadata ? { ...parent.metadata, ...child.metadata } : undefined,

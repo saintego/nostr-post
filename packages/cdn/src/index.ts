@@ -100,7 +100,7 @@ export {
 } from '@nostr-post/web';
 
 // Publishing a submitted post yourself (composer without auto-publish): plugin hooks
-export { runBeforePublish, runPublishHooks, withTags } from '@nostr-post/web';
+export { runAfterPublish, runBeforePublish, runPublishHooks, withTags } from '@nostr-post/web';
 
 // Composer text (submit button, steps, errors) for overriding via its `messages` property
 export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from '@nostr-post/web';
@@ -130,6 +130,9 @@ export {
   // A plugin's "+ Create" form in the entity picker (e.g. venue pages from OpenStreetMap)
   registerEntityCreator,
   entityCreatorFor,
+  // A plugin's control shown with events of a manifest (e.g. Save to lists)
+  registerEventAction,
+  eventActionsFor,
   // Related items on an entity's page (wikiConfig.related)
   fetchRelated,
   filterRelated,
@@ -150,3 +153,19 @@ export {
   // The app's Google Maps Embed key for venues' place card
   configureVenuePlugin,
 } from '@nostr-post/plugin-venue';
+
+// Bookmark lists (NIP-51): <np-list-save> and <np-list-view>, and the functions behind them
+export {
+  fetchLists,
+  fetchMyLists,
+  addToList,
+  removeFromList,
+  createList,
+  deleteList,
+  itemFor,
+  hasItem,
+  // The list field (uiPlugin "list"): what it saves after publishing
+  saveToChoices,
+  itemsToSave,
+  listField,
+} from '@nostr-post/plugin-list';

@@ -49,6 +49,14 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
 - Framework agnostic: `@nostr-post/core` has zero dependencies, and core/plugin logic must not
   depend on React, Lit or the DOM. Framework code lives in `web`/`react` and in plugins'
   `web` entry points.
+- A package's main entry (its logic) never imports its `/web` or `/react` entry, Lit, React or
+  the DOM; `/web` and `/react` build on the main entry, not the other way round. Logic a UI needs
+  (loading, naming, validation, building events) goes into the main entry as framework-free
+  functions, so an app can build its own UI on it without importing `/web`; `/web` and `/react`
+  keep only components, templates and styles. A function that mixes logic with a template is
+  split.
+- The same goes for docs: a package README documents its main entry first (what works without
+  any UI), and `/web` and `/react` in their own sections.
 - pnpm workspaces: depend on sibling packages with `workspace:*`.
 
 ### Types

@@ -369,7 +369,10 @@ Tag values the text already shows (`r` URLs, `t` hashtags) aren't repeated below
 (publishing linked pages such as a venue's wiki page, then signing and publishing the post, and
 "waiting for your signer to approve" while a signature is pending), the
 fields that failed validation (the first one is scrolled into view) and why a submit failed (also
-dispatched as `nostr-post-error`). Publish hooks that take longer than 90 s fail the submit. The text
+dispatched as `nostr-post-error`). Publish hooks that take longer than 90 s fail the submit. After the
+post is out, plugins' after-publish steps run (e.g. saving its venue to lists); one that fails is shown
+next to the button but doesn't undo the post. A publish format with `kinds: []` publishes no post, only
+the plugins' steps ("Done!"). The text
 comes from `messages` (`ComposerMessages`, defaults in `DEFAULT_COMPOSER_MESSAGES`), which apps can
 override, e.g. for translations.
 

@@ -103,8 +103,11 @@ describe('EXAMPLE_MANIFESTS', () => {
       }
     });
 
-    it('should have at least one publish kind', () => {
+    it('should have at least one publish kind, unless it only runs publish hooks', () => {
       for (const manifest of Object.values(EXAMPLE_MANIFESTS)) {
+        const formats = resolved(manifest).publishFormats ?? [];
+        // A hooks-only format (`kinds: []`, e.g. save a place to lists) publishes no event
+        if (formats.length > 0 && formats.every((f) => f.kinds.length === 0)) continue;
         expect(getManifestAvailableKinds(resolved(manifest)).length).toBeGreaterThan(0);
       }
     });

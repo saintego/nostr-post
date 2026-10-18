@@ -30,6 +30,7 @@ import {
   getPublicKey,
 } from './signer';
 import { authorDisplayName, type NostrProfile, truncatePubkey } from './userProfile';
+import { renderEventActions } from './viewActions';
 import { DEFAULT_NOSTR_LINK_BASE, renderNoteContent } from './viewContent';
 import { type EditState, renderEditButton, renderInlineComposer } from './viewEdit';
 import {
@@ -379,6 +380,7 @@ export class NostrPostView extends NostrPostElement {
           <span class="view-timestamp"
             >${this.formatTimestamp(created_at)}</span
           >
+          ${renderEventActions(event, this.effectiveManifest)}
         </div>
 
         <div class="view-content">

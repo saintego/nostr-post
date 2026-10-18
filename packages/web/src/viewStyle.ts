@@ -25,6 +25,10 @@ export const viewStyle = css`
     font-size: 12px;
   }
 
+  .view-action {
+    margin-left: auto;
+  }
+
   .view-avatar {
     width: 24px;
     height: 24px;

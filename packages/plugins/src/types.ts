@@ -5,7 +5,13 @@
  * that registers itself with the shared PluginRegistry.
  */
 
-import type { FieldMapBehavior, FieldOption, FieldType, NostrTarget } from '@nostr-post/core/types';
+import type {
+  FieldMapBehavior,
+  FieldOption,
+  FieldType,
+  NostrPostManifest,
+  NostrTarget,
+} from '@nostr-post/core/types';
 
 export type {
   EnumOption,
@@ -80,6 +86,31 @@ export type Result<T, E = Error> = { success: true; data: T } | { success: false
 export interface BeforePublishContext {
   /** Hex pubkey of the post's author */
   pubkey: string;
+}
+
+/** An event the post published, as afterPublish hooks get it */
+export interface PublishedEvent {
+  id: string;
+  kind: number;
+  pubkey: string;
+  created_at: number;
+  tags: string[][];
+  content: string;
+}
+
+/** Context passed to a plugin's afterPublish hook */
+export interface AfterPublishContext {
+  /** Hex pubkey of the post's author */
+  pubkey: string;
+  /**
+   * The form data after the beforePublish hooks: fields they linked to a wiki page have
+   * it as `wikiEntity` (e.g. the venue whose page a venue field just created)
+   */
+  formData: Record<string, unknown>;
+  /** The post's published events; none for a hooks-only publish format (`kinds: []`) */
+  events: PublishedEvent[];
+  /** The manifest the post was made with */
+  manifest: NostrPostManifest;
 }
 
 /**
@@ -188,6 +219,13 @@ export interface NostrUIPlugin {
     field: PostField,
     ctx: BeforePublishContext
   ) => Promise<[string, ...string[]][]>;
+
+  /**
+   * Async step after the post was published (fields with a value only), e.g. the list
+   * plugin saving the post's venue to the user's lists. The post is out by then: a hook
+   * that throws doesn't undo it; the composer shows the error.
+   */
+  afterPublish?: (value: unknown, field: PostField, ctx: AfterPublishContext) => Promise<void>;
 
   /**
    * Resolve a rich view value from all event tags.
