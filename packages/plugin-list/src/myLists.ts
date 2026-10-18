@@ -1,16 +1,23 @@
 /**
- * Loading the signed-in user's lists for <np-list-save> and <np-list-input>, step by
- * step so each shows what it waits for: the signer (a remote signer or a permission
- * prompt can take a while), then the relays. The preset lists show as soon as the
- * pubkey is known.
+ * @nostr-post/plugin-list - loading the signed-in user's lists
+ *
+ * Step by step, so a UI can show what it waits for: the signer (a remote signer or a
+ * permission prompt can take a while), then the relays. The manifest's lists show as soon
+ * as the pubkey is known. Framework-free: <np-list-save> and <np-list-input> use it, and so
+ * can any other UI.
  */
 
 import { clearPublicKeyCache, getPublicKey, hasNostrSigner } from '@nostr-post/signer';
-import { html, nothing } from 'lit';
-import { type ListPreset, withBookmarks, withPresets } from '../core';
-import { fetchLists } from '../lists';
-import type { BookmarkList } from '../types';
-import type { ListMessages } from './listMessages';
+import { type ListPreset, withBookmarks, withPresets } from './core';
+import { fetchLists } from './lists';
+import type { BookmarkList } from './types';
+/** The words loading needs (error messages) */
+export interface MyListsMessages {
+  noSigner: string;
+  /** The signer didn't give the pubkey in time */
+  signerNoAnswer: string;
+  failed: (reason: string) => string;
+}
 
 export interface MyListsState {
   /** Empty until the signer answered */
@@ -56,7 +63,7 @@ const reason = (error: unknown) => (error instanceof Error ? error.message : Str
  */
 export async function loadMyLists(
   relays: string[] | undefined,
-  m: ListMessages,
+  m: MyListsMessages,
   update: (patch: Partial<MyListsState>) => void,
   knownPubkey?: string
 ): Promise<void> {
@@ -87,7 +94,7 @@ export async function loadMyLists(
 async function loadLists(
   pubkey: string,
   relays: string[] | undefined,
-  m: ListMessages,
+  m: MyListsMessages,
   update: (patch: Partial<MyListsState>) => void
 ): Promise<void> {
   try {
@@ -102,16 +109,3 @@ export const shownLists = (state: MyListsState, presets: ListPreset[]): Bookmark
   state.pubkey
     ? withPresets(state.lists ?? withBookmarks([], state.pubkey), presets, state.pubkey)
     : [];
-
-/** What the loading waits for, or why it failed (with a retry) */
-export function renderLoadState(state: MyListsState, m: ListMessages, retry: () => void) {
-  if (state.error) {
-    return html`<div class="error">
-      ${state.error}
-      <button type="button" @click=${retry}>${m.retry}</button>
-    </div>`;
-  }
-  if (state.waitingForSigner) return html`<div class="muted">${m.waitingForSigner}</div>`;
-  if (!state.lists) return html`<div class="muted">${m.loading}</div>`;
-  return nothing;
-}

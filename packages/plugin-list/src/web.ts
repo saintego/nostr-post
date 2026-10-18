@@ -26,4 +26,4 @@ registerEventAction({
 export { NpListInput } from './web/listInput';
 export { NpListSave } from './web/listSave';
 export { NpListView } from './web/listView';
-export { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle } from './web/listMessages';
+export { DEFAULT_LIST_MESSAGES, type ListMessages } from './web/listMessages';

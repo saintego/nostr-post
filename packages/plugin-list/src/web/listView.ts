@@ -15,8 +15,9 @@ import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { fetchItemTitles } from '../itemTitles';
 import { deleteList, fetchLists, fetchMyLists, removeFromList } from '../lists';
+import { listTitle, listTitles } from '../listTitles';
 import { BOOKMARK_SET_KIND, type BookmarkList, type ListItem } from '../types';
-import { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle, listTitles } from './listMessages';
+import { DEFAULT_LIST_MESSAGES, type ListMessages } from './listMessages';
 import { listStyles } from './styles';
 
 @customElement('np-list-view')

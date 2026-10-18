@@ -1,10 +1,12 @@
-import { listTypeOf } from '../core';
+import type { ListTitleNames } from '../listTitles';
+import type { MyListsMessages } from '../myLists';
 
 /**
- * User-facing text of <np-list-save> and <np-list-view>. Apps can override any of it
- * with the components' `messages` property (e.g. for translations).
+ * User-facing text of <np-list-save>, <np-list-view> and <np-list-input>. Apps can
+ * override any of it with the components' `messages` property (e.g. for translations).
+ * It includes the words of the framework-free helpers (listTitles, loadMyLists).
  */
-export interface ListMessages {
+export interface ListMessages extends ListTitleNames, MyListsMessages {
   /** Save button, when the item is in none of the user's lists */
   save: string;
   /** Save button, when it's in at least one */
@@ -75,31 +77,3 @@ export const DEFAULT_LIST_MESSAGES: ListMessages = {
   addNewList: 'Add',
   failed: (reason) => `Failed: ${reason}`,
 };
-
-/** What a list is called: its title; the bookmarks list has none */
-export const listTitle = (
-  list: { kind: number; title?: string },
-  m: Pick<ListMessages, 'bookmarks' | 'untitled'>
-): string => list.title ?? (list.kind === 10003 ? m.bookmarks : m.untitled);
-
-/**
- * What each of `lists` is called where they're shown together: lists with the same title
- * get their type (`Liked (beer)`, `Liked (venue)`), from manifest list d-tags
- */
-export function listTitles(
-  lists: Array<{ address: string; kind: number; title?: string; dTag: string }>,
-  m: Pick<ListMessages, 'bookmarks' | 'untitled' | 'titleWithType'>
-): Map<string, string> {
-  const count = new Map<string, number>();
-  for (const l of lists) {
-    const key = listTitle(l, m).toLowerCase();
-    count.set(key, (count.get(key) ?? 0) + 1);
-  }
-  return new Map(
-    lists.map((l) => {
-      const title = listTitle(l, m);
-      const type = (count.get(title.toLowerCase()) ?? 0) > 1 ? listTypeOf(l) : undefined;
-      return [l.address, type ? m.titleWithType(title, type) : title];
-    })
-  );
-}

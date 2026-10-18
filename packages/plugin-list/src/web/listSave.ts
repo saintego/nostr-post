@@ -16,9 +16,11 @@ import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { hasItem, itemFor, listWithTitle, manifestListPresets } from '../core';
 import { addToList, createList, removeFromList } from '../lists';
+import { listTitle, listTitles } from '../listTitles';
+import { loadMyLists, type MyListsState, NOT_LOADED, shownLists } from '../myLists';
 import type { BookmarkList } from '../types';
-import { DEFAULT_LIST_MESSAGES, type ListMessages, listTitle, listTitles } from './listMessages';
-import { loadMyLists, type MyListsState, NOT_LOADED, renderLoadState, shownLists } from './myLists';
+import { DEFAULT_LIST_MESSAGES, type ListMessages } from './listMessages';
+import { renderLoadState } from './loadState';
 import { listStyles } from './styles';
 
 @customElement('np-list-save')
