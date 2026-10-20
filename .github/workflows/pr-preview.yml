@@ -67,24 +67,42 @@ jobs:
 
       - if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
+      # Skip the deploy when only Markdown changed since the last preview (the push's `before`
+      # commit; the PR base on open/reopen): no .md file goes into the site. The previous preview
+      # and its comment stay. If the diff fails (e.g. `before` gone after a force push), deploy.
+      - id: changes
+        if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
+        env:
+          SINCE: ${{ github.event.action == 'synchronize' && github.event.before || github.event.pull_request.base.sha }}
+        run: |
+          if files=$(git diff --name-only "$SINCE" HEAD) && [ -n "$files" ] \
+            && ! grep -qvE '\.md$' <<< "$files"; then
+            echo "Only Markdown changed; keeping the current preview."
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.changes.outputs.deploy == 'true'
         uses: pnpm/action-setup@v4
 
-      - if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
+      - if: steps.changes.outputs.deploy == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'pnpm'
 
-      - if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
+      - if: steps.changes.outputs.deploy == 'true'
         run: pnpm install
 
       # Same tree as GitHub Pages, served from the site root (.pages-local)
-      - if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
+      - if: steps.changes.outputs.deploy == 'true'
         run: pnpm build:pages
 
-      - if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
+      - if: steps.changes.outputs.deploy == 'true'
         run: |
           nsyte deploy .pages-local --name "$SITE_NAME" --sec "$NSITE_SEC" \
             --relays "$NSITE_RELAYS" --servers "$NSITE_SERVERS" \
@@ -93,7 +111,7 @@ jobs:
       # Named site host: the pubkey in base36 (50 chars), then the d tag (NIP-5A). The pubkey may
       # be an npub (bech32 data minus the 6-char checksum, 5 bits per char) or hex.
       - id: url
-        if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
+        if: steps.changes.outputs.deploy == 'true'
         run: |
           label=$(node -e '
             const [key, name] = process.argv.slice(1);
@@ -105,7 +123,7 @@ jobs:
             console.log(pubkey.toString(36).padStart(50, "0") + name);' "$NSITE_PUBKEY" "$SITE_NAME")
           echo "url=https://${label}.${NSITE_GATEWAY}/" >> "$GITHUB_OUTPUT"
 
-      - if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
+      - if: steps.changes.outputs.deploy == 'true'
         uses: actions/github-script@v7
         env:
           PREVIEW_URL: ${{ steps.url.outputs.url }}
