@@ -5,9 +5,9 @@ name: PR Preview (nsite)
 #
 # Setup (repository settings → Secrets and variables → Actions):
 # - secret NSITE_PREVIEW_SEC: signing secret of a key used only for previews (nsec or nbunksec)
-# - variable NSITE_PREVIEW_PUBKEY: that key's public key as 64-char hex (for the preview URL)
+# - variable NSITE_PREVIEW_PUBKEY: that key's public key, npub or hex (for the preview URL)
 # - optional variables: NSITE_GATEWAY (default nsite.lol), NSITE_RELAYS and NSITE_SERVERS
-#   (comma separated)
+#   (comma separated). An unreachable server slows the deploy a lot: nsyte retries every file.
 # Without the secret the job is skipped. PRs from forks get no preview: secrets aren't passed
 # to their workflows.
 
@@ -30,7 +30,7 @@ env:
   NSITE_PUBKEY: ${{ vars.NSITE_PREVIEW_PUBKEY }}
   NSITE_GATEWAY: ${{ vars.NSITE_GATEWAY || 'nsite.lol' }}
   NSITE_RELAYS: ${{ vars.NSITE_RELAYS || 'wss://relay.nsite.lol,wss://relay.primal.net' }}
-  NSITE_SERVERS: ${{ vars.NSITE_SERVERS || 'https://cdn.hzrd149.com,https://cdn.sovbit.host' }}
+  NSITE_SERVERS: ${{ vars.NSITE_SERVERS || 'https://cdn.hzrd149.com,https://blossom.primal.net' }}
 
 jobs:
   preview:
@@ -90,11 +90,19 @@ jobs:
             --relays "$NSITE_RELAYS" --servers "$NSITE_SERVERS" \
             --no-config --non-interactive --skip-secrets-scan
 
-      # Named site host: the pubkey in base36 (50 chars), then the d tag (NIP-5A)
+      # Named site host: the pubkey in base36 (50 chars), then the d tag (NIP-5A). The pubkey may
+      # be an npub (bech32 data minus the 6-char checksum, 5 bits per char) or hex.
       - id: url
         if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
         run: |
-          label=$(node -e 'console.log(BigInt("0x" + process.argv[1]).toString(36).padStart(50, "0") + process.argv[2])' "$NSITE_PUBKEY" "$SITE_NAME")
+          label=$(node -e '
+            const [key, name] = process.argv.slice(1);
+            const pubkey = key.startsWith("npub1")
+              ? BigInt("0b" + [...key.slice(5, -6)]
+                  .map((c) => "qpzry9x8gf2tvdw0s3jn54khce6mua7l".indexOf(c).toString(2).padStart(5, "0"))
+                  .join("").slice(0, 256))
+              : BigInt("0x" + key);
+            console.log(pubkey.toString(36).padStart(50, "0") + name);' "$NSITE_PUBKEY" "$SITE_NAME")
           echo "url=https://${label}.${NSITE_GATEWAY}/" >> "$GITHUB_OUTPUT"
 
       - if: steps.config.outputs.enabled == 'true' && github.event.action != 'closed'
