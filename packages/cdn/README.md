@@ -292,6 +292,15 @@ Then open:
 - `/examples/` (examples index)
 - `/manifest-creator/`
 
+## PR Previews (nsite)
+
+`.github/workflows/pr-preview.yml` deploys the same `.pages-local/` tree for every pull request as a
+named [nsite](https://github.com/nostr-protocol/nips/blob/master/5A.md) (d tag `pr-<number>`) and
+comments its URL on the PR. Closing the PR deletes the site manifest. It needs a key used only for
+previews: its signing secret (nsec or nbunksec) as the `NSITE_PREVIEW_SEC` secret, and its hex
+public key as the `NSITE_PREVIEW_PUBKEY` variable; the workflow file lists the optional settings.
+PRs from forks get no preview.
+
 ## Development
 
 Watch mode rebuilds on file changes (ESM only, unminified):
