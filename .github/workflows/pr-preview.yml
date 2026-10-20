@@ -52,16 +52,31 @@ jobs:
             "https://github.com/sandwichfarm/nsyte/releases/download/${NSYTE_VERSION}/nsyte-linux-${NSYTE_VERSION#v}"
           chmod +x /usr/local/bin/nsyte
 
-      # Closed PR: delete the site manifest so the gateway stops serving it. Blobs stay on the
-      # Blossom servers: they're content-addressed and shared with other previews of the same key.
-      # `nsyte delete` has no --no-config, so it gets a minimal config file. It also fails when
-      # the PR never had a preview (e.g. opened before the secret was set): only warn then.
+      # Closed PR: first replace the site with a "preview removed" page (index.html and 404.html,
+      # so every old path shows it). relay.nsite.lol, which the nsite.lol gateway reads, only
+      # accepts nsite kinds, not kind 5 deletions, but a newer kind 35128 replaces the old one.
+      # `deploy` never deletes blobs: they're content-addressed and shared with other previews.
+      # Then delete the manifest on the relays that honor deletions. `nsyte delete` has no
+      # --no-config, so it gets a minimal config file. It also fails when the PR never had a
+      # preview (e.g. opened before the secret was set): only warn then.
+      # Relative paths: nsyte resolves the deploy folder against the working directory even
+      # when it's absolute.
       - if: steps.config.outputs.enabled == 'true' && github.event.action == 'closed'
+        working-directory: ${{ runner.temp }}
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
         run: |
+          mkdir -p removed
+          printf '<!doctype html><meta charset="utf-8"><title>Preview removed</title><p>This preview was removed when <a href="%s">%s</a> was closed.</p>\n' \
+            "$PR_URL" "$PR_URL" > removed/index.html
+          cp removed/index.html removed/404.html
+          nsyte deploy removed --name "$SITE_NAME" --sec "$NSITE_SEC" \
+            --relays "$NSITE_RELAYS" --servers "$NSITE_SERVERS" \
+            --no-config --non-interactive --skip-secrets-scan
           node -e 'const [r, s] = process.argv.slice(1).map((v) => v.split(","));
             console.log(JSON.stringify({ relays: r, servers: s }))' \
-            "$NSITE_RELAYS" "$NSITE_SERVERS" > "$RUNNER_TEMP/nsite-config.json"
-          nsyte delete -c "$RUNNER_TEMP/nsite-config.json" --name "$SITE_NAME" --yes \
+            "$NSITE_RELAYS" "$NSITE_SERVERS" > nsite-config.json
+          nsyte delete -c nsite-config.json --name "$SITE_NAME" --yes \
             --sec "$NSITE_SEC" --relays "$NSITE_RELAYS" --servers "$NSITE_SERVERS" \
             || echo "::warning::Could not delete nsite $SITE_NAME (no preview deployed, or relays unreachable)."
 
