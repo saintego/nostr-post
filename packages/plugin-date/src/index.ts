@@ -13,6 +13,7 @@ export {
   formatDateValue,
   TIMED_EVENT_KIND,
 } from './core';
+export { CALENDAR_EVENT_MANIFEST } from './calendarManifest';
 export {
   type DatePrecision,
   type DateValue,

@@ -61,6 +61,7 @@ export {
 // Date helpers (NIP-52 calendar event dates)
 export {
   datePlugin,
+  CALENDAR_EVENT_MANIFEST,
   formatDateValue,
   dateValueFromTags,
   dayNumbers,

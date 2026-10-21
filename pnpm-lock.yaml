@@ -171,6 +171,9 @@ importers:
 
   packages/plugin-date:
     dependencies:
+      '@nostr-post/core':
+        specifier: workspace:*
+        version: link:../core
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins
@@ -493,6 +496,9 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@nostr-post/plugin-date':
+        specifier: workspace:*
+        version: link:../../packages/plugin-date
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../../packages/plugin-geo

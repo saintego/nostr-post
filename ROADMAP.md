@@ -52,7 +52,10 @@
         so relays can return our all-day events by day too. All-day or timed is the manifest's
         publish format; the input follows the selected one (`activeKinds`)
   - [ ] Date input: the time zone is a text field; a searchable picker (`Intl.supportedValuesOf('timeZone')`)
-  - [ ] Event manifests for 31922/31923 (title, summary, image, location/`g` via plugin-venue, `t`, `p`)
+  - [x] Event manifest for 31922/31923, `CALENDAR_EVENT_MANIFEST` in `@nostr-post/plugin-date` (title, date,
+        location/`g` via plugin-venue, description, summary, image, `t`); in the manifest creator's examples
+  - [ ] Event participants: `p` tags with a role (NIP-52), a profile picker field
+  - [ ] Event location as free text or a URL (online events); plugin-venue only takes OpenStreetMap places
   - [ ] Agenda in `<nostr-post-feed>`: a date window becomes a `#D` relay filter, events sorted by
         start (not `created_at`), grouped under day headings in the viewer's time zone, newest
         version per address only. Logic as framework-free functions in the plugin's main entry

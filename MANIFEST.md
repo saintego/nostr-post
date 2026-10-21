@@ -232,7 +232,9 @@ kind it is written to:
 `D` tags are unix day numbers (`floor(unix / 86400)`), at most 366 per event. NIP-52 defines them
 for timed events; on all-day events they are an extra tag, so relays can return those by day too.
 
-A calendar event manifest maps the field to `start` on both kinds and offers them as two publish
+`@nostr-post/plugin-date` exports a ready calendar event manifest, `CALENDAR_EVENT_MANIFEST`
+(title, date, location, description, summary, image, tags). A calendar event manifest maps the
+field to `start` on both kinds and offers them as two publish
 formats, so the composer's format picker chooses all-day or timed and the input follows:
 
 ```json

@@ -1,5 +1,6 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
+import { CALENDAR_EVENT_MANIFEST } from '@nostr-post/plugin-date';
 import { listField } from '@nostr-post/plugin-list';
 import type { WikiManifest } from '@nostr-post/wiki';
 import { BEER_LISTS, SAVE_PLACE_MANIFEST, VENUE_LISTS } from './listExamples';
@@ -81,6 +82,9 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       description: 'Review a place with star rating, map location, photos, and hashtags',
     },
   },
+
+  // NIP-52 calendar event (kinds 31922/31923), from @nostr-post/plugin-date
+  'calendar-event': CALENDAR_EVENT_MANIFEST,
 
   // The BJCP style list as a base manifest (lib/manifests/beerStyleBjcp2021.json).
   // The beer entity extends it by id; other apps by its address once it's published.

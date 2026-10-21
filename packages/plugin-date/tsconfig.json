@@ -7,6 +7,7 @@
     "useDefineForClassFields": false,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "paths": {
+      "@nostr-post/core/types": ["../core/dist/types.d.ts"],
       "@nostr-post/plugins/registry": ["../plugins/dist/registry.d.ts"],
       "@nostr-post/plugins/types": ["../plugins/dist/types.d.ts"]
     }

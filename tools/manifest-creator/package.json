@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@nostr-post/core": "workspace:*",
+    "@nostr-post/plugin-date": "workspace:*",
     "@nostr-post/plugin-geo": "workspace:*",
     "@nostr-post/plugin-hashtag": "workspace:*",
     "@nostr-post/plugin-identifier": "workspace:*",

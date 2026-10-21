@@ -36,6 +36,7 @@ relays can return them by day as well.
 
 | Export                                      | Does                                                                              |
 | ------------------------------------------- | --------------------------------------------------------------------------------- |
+| `CALENDAR_EVENT_MANIFEST`                   | NIP-52 calendar event: title, date, location (venue), description, summary, image, tags; all-day or timed by publish format |
 | `datePlugin`                                | The plugin: `validate`, `serializeValue`, `extraTags`, `resolveFromTags`          |
 | `datePrecision(field, activeKinds?)`        | `'day'` or `'time'` for the kind the field writes                                 |
 | `calendarExtraTags(value, precision)`       | `end`, time zone and `D` tags of a calendar event                                 |
@@ -46,8 +47,9 @@ relays can return them by day as well.
 | `valueTimeZone(value)`, `defaultTimeZone()`, `isValidTimeZone(tzid)` | Time zone helpers                                       |
 | `isDateValue(value)`, `wallForPrecision(wall, precision)` | Checks and conversions                                              |
 
-Manifest setup for calendar events (all-day or timed by publish format) is in
-[MANIFEST.md](../../MANIFEST.md#dates).
+`CALENDAR_EVENT_MANIFEST` is ready to use: `<nostr-post-composer .manifest=${CALENDAR_EVENT_MANIFEST}>`.
+Its fields use the `date`, `venue`, `media` and `hashtag` plugins, which the composer loads by
+itself. How to build your own is in [MANIFEST.md](../../MANIFEST.md#dates).
 
 ## `/web`
 

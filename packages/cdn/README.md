@@ -105,6 +105,7 @@ The bundle re-exports utilities for advanced usage:
 **Date helpers** (NIP-52 calendar event dates, see [plugin-date](../plugin-date/README.md))
 
 - `datePlugin`
+- `CALENDAR_EVENT_MANIFEST`: NIP-52 calendar event, all-day or timed by publish format
 - `formatDateValue(value, locale?)`, `dateValueFromTags(tags, tagName?)`, `dayNumbers(value, precision)`
 - `ALL_DAY_EVENT_KIND` (31922), `TIMED_EVENT_KIND` (31923)
 - `DateValue`
