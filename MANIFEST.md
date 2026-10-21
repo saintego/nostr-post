@@ -120,7 +120,7 @@ fields: [
 ```typescript
 {
   id: "rating",
-  type: "number",                 // string | number | boolean | enum | geo | ref
+  type: "number",                 // string | number | boolean | enum | geo | ref | date
   uiPlugin: "stars",              // the input/view: a plugin id or a built-in input
   mapTo: { kind: 1, target: "tag", tagName: "rating" },
   required: true,
@@ -209,12 +209,52 @@ styles, mapped to `t` for posts and wiki entities; the beer entity extends it an
 | `reference`          | `string` | `urlDedupeMode` (`'normalized'` \| `'exact'` \| `'origin-path'`)                                                                                                                                                               |
 | `identifier`         | `string` | `prefix` (NIP-73 namespace, e.g. `isbn`)                                                                                                                                                                                       |
 | `geo`                | `geo`    | `precision` (geohash length, default 6), `defaultZoom`, `allowSearch`                                                                                                                                                          |
+| `date`               | `date`   | `precision` (`'day'` default \| `'time'`), on kinds other than NIP-52 calendar events, see [dates](#dates)                                                                                                                      |
 | `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts)); `multiple` (several venues, a list)                                                                                  |
 | `list`               | `string` | `saveField`: the field whose wiki entity is saved (a `venue` field's page, a `wiki-entity-picker`'s entity); without it, the post itself. `relays`. The value: list addresses and `new:<title>`. See [lists](#lists) |
 | `wiki-entity-picker` | `ref`    | `entityManifest`: the entity type ([reference](#referencing-entity-manifests)), which limits search to it and enables "+ Create"; `relays`; `minSearchLength` (2); `emitExtraTags` (`false`: don't copy the entity's `i` tags); `multiple` (pick several; the value is a list) |
 
 Deprecated: `hashtag.autoExtractFrom`, `media.urlAutoExtractFrom` and `reference.enrichFrom`
 name the source field for manifests without `attachTo`.
+
+### Dates
+
+A `date` field's value is `{ start, end?, tzid? }`: wall-clock dates (`YYYY-MM-DD`) or times
+(`YYYY-MM-DDTHH:mm`) and an IANA time zone (default: the viewer's). How it is stored depends on the
+kind it is written to:
+
+| Kind            | `start` / `end`                                    | Also written                                  |
+| --------------- | -------------------------------------------------- | --------------------------------------------- |
+| 31922 (all-day) | `YYYY-MM-DD`; `end` is the day after the last day  | one `D` tag per day                           |
+| 31923 (timed)   | unix seconds                                       | `start_tzid`, `end_tzid`, one `D` tag per day |
+| any other       | its `mapTo` tag at `metadata.precision`, no `end`  | nothing                                       |
+
+`D` tags are unix day numbers (`floor(unix / 86400)`), at most 366 per event. NIP-52 defines them
+for timed events; on all-day events they are an extra tag, so relays can return those by day too.
+
+A calendar event manifest maps the field to `start` on both kinds and offers them as two publish
+formats, so the composer's format picker chooses all-day or timed and the input follows:
+
+```json
+{
+  "publishFormats": [
+    { "id": "all-day", "label": "All-day", "kinds": [31922], "default": true, "userSelectable": true },
+    { "id": "timed", "label": "Timed", "kinds": [31923], "userSelectable": true }
+  ],
+  "fields": [
+    {
+      "id": "when",
+      "type": "date",
+      "uiPlugin": "date",
+      "required": true,
+      "mapTo": [
+        { "kind": 31922, "target": "tag", "tagName": "start" },
+        { "kind": 31923, "target": "tag", "tagName": "start" }
+      ]
+    }
+  ]
+}
+```
 
 ## Wiki entity manifests
 

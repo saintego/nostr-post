@@ -17,6 +17,7 @@ import '@nostr-post/web';
 // ── All plugins (side-effect: defines custom elements + registers plugins) ──
 import '@nostr-post/plugin-stars/web';
 import '@nostr-post/plugin-geo/web';
+import '@nostr-post/plugin-date/web';
 import '@nostr-post/plugin-venue/web';
 import '@nostr-post/plugin-media/web';
 import '@nostr-post/plugin-reference/web';
@@ -56,6 +57,17 @@ export {
   type GeoPluginConfig,
   type GeoCoordinates,
 } from '@nostr-post/plugin-geo';
+
+// Date helpers (NIP-52 calendar event dates)
+export {
+  datePlugin,
+  formatDateValue,
+  dateValueFromTags,
+  dayNumbers,
+  ALL_DAY_EVENT_KIND,
+  TIMED_EVENT_KIND,
+  type DateValue,
+} from '@nostr-post/plugin-date';
 
 // Signing & relay utilities
 export {

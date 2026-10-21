@@ -46,10 +46,12 @@
 - [x] Comments support (kind 1) with manifest presets, examples, and protocol-standard reply tags
 - [ ] pool plugin
 - [ ] Calendar events support (NIP-52) with agenda-oriented rendering
-  - [ ] Date field plugin: all-day (kind 31922, `start`/`end` as `YYYY-MM-DD`) or timed (kind 31923,
+  - [x] Date field plugin (`@nostr-post/plugin-date`): all-day (kind 31922, `start`/`end` as `YYYY-MM-DD`) or timed (kind 31923,
         unix `start`/`end`, `start_tzid`/`end_tzid`), writing one `D` tag per covered day (unix days)
         on both kinds. NIP-52 only defines `D` for 31922's timed sibling; on 31922 it is an extra tag
-        so relays can return our all-day events by day too
+        so relays can return our all-day events by day too. All-day or timed is the manifest's
+        publish format; the input follows the selected one (`activeKinds`)
+  - [ ] Date input: the time zone is a text field; a searchable picker (`Intl.supportedValuesOf('timeZone')`)
   - [ ] Event manifests for 31922/31923 (title, summary, image, location/`g` via plugin-venue, `t`, `p`)
   - [ ] Agenda in `<nostr-post-feed>`: a date window becomes a `#D` relay filter, events sorted by
         start (not `created_at`), grouped under day headings in the viewer's time zone, newest

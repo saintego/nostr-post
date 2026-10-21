@@ -50,7 +50,7 @@ export interface MyPluginConfig {
 
 export const myPlugin: NostrUIPlugin = {
   id: "my-plugin", // Must match uiPlugin in manifests
-  type: "string", // or 'number', 'geo', 'boolean', 'enum', 'ref', or an array
+  type: "string", // or 'number', 'geo', 'boolean', 'enum', 'ref', 'date', or an array
 
   validate(value: unknown, field: PostField) {
     if (typeof value !== "string") {
@@ -310,7 +310,7 @@ The last import wins. The plugin registry logs a warning when overwriting.
 ```ts
 interface NostrUIPlugin {
   id: string; // Unique identifier, matches uiPlugin in manifests
-  type: FieldType | FieldType[]; // 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref'
+  type: FieldType | FieldType[]; // 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date'
 
   // Core (no DOM)
   validate?(value: unknown, field: PostField): Result<void, ValidationError>;
@@ -402,6 +402,7 @@ interface NostrUIPlugin {
 | `.field`    | `PostField`         | Full field definition from manifest (includes metadata)                   |
 | `.manifest` | `NostrPostManifest` | The whole manifest, for inputs that use other fields (e.g. `saveField`)   |
 | `.pubkey`   | `string`            | The author, when the composer knows it (its `pubkey`), so inputs needing the user's data don't ask the signer |
+| `.activeKinds` | `number[]`        | Kinds the selected publish format writes, e.g. the date input shows a date or a time by them |
 
 | Event              | Detail               | When                                  |
 | ------------------ | -------------------- | ------------------------------------- |
@@ -440,6 +441,7 @@ When a plugin reads a new key, add it there.
 | ------------------------------ | ----------- | -------- | -------------------------------------------------------------------------------- |
 | `@nostr-post/plugin-stars`     | `stars`     | `number` | Interactive star rating (configurable max via `metadata.max`)                    |
 | `@nostr-post/plugin-geo`       | `geo`       | `geo`    | Map location picker using Leaflet/OpenStreetMap (NIP-52 geohash)                 |
+| `@nostr-post/plugin-date`      | `date`      | `date`   | Date or date and time with time zone; on NIP-52 calendar events (31922/31923) also `end`, `start_tzid`/`end_tzid` and `D` day tags. Text overridable through `messages` (`DateMessages`, `DEFAULT_DATE_MESSAGES`) |
 | `@nostr-post/plugin-venue`     | `venue`     | `geo`    | OSM venue search + NIP-73 identity tags; wraps `plugin-geo`                      |
 | `@nostr-post/plugin-media`     | `media`     | `string` | Multi-file upload with NIP-98 auth; paste/drop on textarea via `attachTo`        |
 | `@nostr-post/plugin-markdown`  | `markdown`  | `string` | Markdown editor with live preview (WYSIWYG mode supported)                       |
@@ -451,7 +453,7 @@ When a plugin reads a new key, add it there.
 
 ## Custom Field Types
 
-The `FieldType` union currently supports `'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref'`.
+The `FieldType` union currently supports `'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date'`.
 
 If your plugin needs a custom type that doesn't fit these, you have two options:
 

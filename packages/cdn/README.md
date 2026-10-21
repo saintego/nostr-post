@@ -39,6 +39,7 @@ The plugins and their UI elements are also registered:
 
 - **Stars** — `@nostr-post/plugin-stars`
 - **Geo** — `@nostr-post/plugin-geo`
+- **Date** — `@nostr-post/plugin-date`: dates and times, NIP-52 calendar event tags
 - **Venue** — `@nostr-post/plugin-venue`
 - **Media** — `@nostr-post/plugin-media`
 - **Markdown** — `@nostr-post/plugin-markdown`
@@ -100,6 +101,13 @@ The bundle re-exports utilities for advanced usage:
 - `encodeGeohash(lat, lon, precision?)`
 - `decodeGeohash(hash)`
 - `GeoPluginConfig`, `GeoCoordinates`
+
+**Date helpers** (NIP-52 calendar event dates, see [plugin-date](../plugin-date/README.md))
+
+- `datePlugin`
+- `formatDateValue(value, locale?)`, `dateValueFromTags(tags, tagName?)`, `dayNumbers(value, precision)`
+- `ALL_DAY_EVENT_KIND` (31922), `TIMED_EVENT_KIND` (31923)
+- `DateValue`
 
 **Signing & Relays**
 

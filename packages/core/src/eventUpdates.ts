@@ -67,6 +67,7 @@ const parseFieldValue = (
     }
     case 'geo':
     case 'ref':
+    case 'date':
       return rawValue;
   }
 };

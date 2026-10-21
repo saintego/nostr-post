@@ -61,6 +61,8 @@ export interface FieldRenderContext {
   attachedByTarget: Map<string, PostField[]>;
   /** Full manifest — needed to look up attached fields. */
   manifest: NostrPostManifest;
+  /** Kinds the selected publish format writes (e.g. the date field's precision follows them) */
+  activeKinds: number[];
   /** The author, when the composer knows it (inputs that need the user's data use it) */
   pubkey?: string;
   isReadonly: (field: PostField) => boolean;
@@ -114,6 +116,7 @@ export function renderFieldInput(
         .value=${value}
         .field=${field}
         .manifest=${ctx.manifest}
+        .activeKinds=${ctx.activeKinds}
         .pubkey=${ctx.pubkey}
         @np-value-changed=${(e: CustomEvent) => ctx.onFieldChange(field.id, e.detail.value)}
       ></${tag}>`;

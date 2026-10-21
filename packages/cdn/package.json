@@ -16,6 +16,7 @@
     "@nostr-post/signer": "workspace:*",
     "@nostr-post/plugin-stars": "workspace:*",
     "@nostr-post/plugin-geo": "workspace:*",
+    "@nostr-post/plugin-date": "workspace:*",
     "@nostr-post/plugin-venue": "workspace:*",
     "@nostr-post/plugin-media": "workspace:*",
     "@nostr-post/plugin-reference": "workspace:*",

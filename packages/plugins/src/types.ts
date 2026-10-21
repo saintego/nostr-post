@@ -164,6 +164,8 @@ export interface NostrUIPlugin {
    * Set automatically when the plugin's /web entrypoint is imported.
    * The element must accept .value and .field properties
    * and dispatch 'np-value-changed' CustomEvent with { detail: { value } }.
+   * The composer also sets .manifest, .pubkey and .activeKinds (the kinds the
+   * selected publish format writes), for inputs that need them.
    */
   inputTagName?: string;
 

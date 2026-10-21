@@ -116,6 +116,9 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
+      '@nostr-post/plugin-date':
+        specifier: workspace:*
+        version: link:../plugin-date
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../plugin-geo
@@ -161,6 +164,19 @@ importers:
         version: 0.28.2
 
   packages/core:
+    devDependencies:
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/plugin-date:
+    dependencies:
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
     devDependencies:
       typescript:
         specifier: ^6.0.3
@@ -397,6 +413,9 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
+      '@nostr-post/plugin-date':
+        specifier: workspace:*
+        version: link:../plugin-date
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../plugin-geo
