@@ -46,7 +46,20 @@
 - [x] Comments support (kind 1) with manifest presets, examples, and protocol-standard reply tags
 - [ ] pool plugin
 - [ ] Calendar events support (NIP-52) with agenda-oriented rendering
-- [ ] calendar view
+  - [ ] Date field plugin: all-day (kind 31922, `start`/`end` as `YYYY-MM-DD`) or timed (kind 31923,
+        unix `start`/`end`, `start_tzid`/`end_tzid`), writing one `D` tag per covered day (unix days)
+        on both kinds. NIP-52 only defines `D` for 31922's timed sibling; on 31922 it is an extra tag
+        so relays can return our all-day events by day too
+  - [ ] Event manifests for 31922/31923 (title, summary, image, location/`g` via plugin-venue, `t`, `p`)
+  - [ ] Agenda in `<nostr-post-feed>`: a date window becomes a `#D` relay filter, events sorted by
+        start (not `created_at`), grouped under day headings in the viewer's time zone, newest
+        version per address only. Logic as framework-free functions in the plugin's main entry
+  - [ ] Other clients' all-day events (no `D` tag) can only be reached through a scope that bounds
+        the set: a calendar (kind 31924 `a` tags), authors, `t` or `g`
+  - [ ] Calendars (kind 31924): named lists of event `a` tags, likely on plugin-list; agenda of a calendar
+  - [ ] RSVP (kind 31925): accepted/tentative/declined (+ free/busy) on an event, attendee counts
+  - [ ] Propose `D` tags for kind 31922 to NIP-52
+- [ ] calendar view: month grid on the same day-grouping functions as the agenda
 - [ ] P2P offers support (NIP-69) with filtered feed presets/views
 - [ ] Zap support (NIP-57): zap requests/receipts with amount + payer views and filtering
 - [ ] Add scenario manifests for:
