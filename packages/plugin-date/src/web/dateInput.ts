@@ -48,6 +48,25 @@ export class NpDateInput extends LitElement {
       width: 12rem;
     }
 
+    :host-context(.dark) label {
+      color: #9ca3af;
+    }
+
+    :host-context(.dark) input {
+      background: #374151;
+      border-color: #4b5563;
+      color: #f3f4f6;
+      color-scheme: dark;
+    }
+
+    :host-context(.dark) button {
+      color: #a5b4fc;
+    }
+
+    :host-context(.dark) .error {
+      color: #fca5a5;
+    }
+
     .error {
       margin: 0.375rem 0 0;
       font-size: 0.8125rem;

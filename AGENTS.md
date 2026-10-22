@@ -84,6 +84,15 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
 - Keep `examples/*` and `tools/manifest-creator` thin: they compose package features. Logic or UI
   that other apps would need belongs in a package.
 
+## Dark theme
+
+- Every web component supports the dark theme, including plugins' `/web` components. Apps turn it
+  on with a `dark` class on an ancestor (the React wrappers' `dark` prop sets it).
+- In a component's styles, follow each light color with a `:host-context(.dark)` override, using the
+  dark values of `colors` in `packages/web/src/theme.ts` (e.g. `packages/web/src/feedStyle.ts`).
+  Text that inherits its color needs none.
+- When you add or restyle a component, check it with the `dark` class too.
+
 ## User-facing text
 
 - Shared components serve every manifest and entity type: keep their wording generic. Don't

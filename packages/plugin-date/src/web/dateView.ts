@@ -27,6 +27,10 @@ export class NpDateView extends LitElement {
       font-size: 0.8125rem;
       color: #6b7280;
     }
+
+    :host-context(.dark) .tz {
+      color: #9ca3af;
+    }
   `;
 
   @property({ type: Object }) value?: DateValue;

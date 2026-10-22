@@ -321,4 +321,7 @@ export const viewStyle = css`
   .tag-label {
     color: var(--nl-muted, #4b5563);
   }
+  :host-context(.dark) .tag-label {
+    color: #9ca3af;
+  }
 `;
