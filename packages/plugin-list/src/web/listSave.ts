@@ -58,7 +58,11 @@ export class NpListSave extends LitElement {
 
   override updated(changed: Map<string, unknown>): void {
     // Another target: whether it's saved is unknown until the lists are checked again
-    if (changed.has('target') && changed.get('target') !== undefined) this._my = NOT_LOADED;
+    if (changed.has('target') && changed.get('target') !== undefined) {
+      this._loads++;
+      this._my = NOT_LOADED;
+      if (this._open) void this._load();
+    }
   }
 
   async _toggleOpen(): Promise<void> {
@@ -66,9 +70,13 @@ export class NpListSave extends LitElement {
     if (this._open && !this._my.lists && !this._my.waitingForSigner) await this._load();
   }
 
+  /** Counts loads, so one replaced by a newer load (a retry, another target) is ignored */
+  _loads = 0;
+
   _load(): Promise<void> {
+    const load = ++this._loads;
     return loadMyLists(this.relays, this._m, (patch) => {
-      this._my = { ...this._my, ...patch };
+      if (load === this._loads) this._my = { ...this._my, ...patch };
     });
   }
 

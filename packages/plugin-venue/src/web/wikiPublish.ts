@@ -3,7 +3,8 @@
  * for a venue field with `metadata.wikiEntity`: whether the venue's wiki page
  * will be created, updated or just linked, with the checkbox to opt out. For a
  * new page it shows the slug (it can't be changed later) as an editable input
- * with its availability, plus suggested details when another venue has it.
+ * with its availability, plus suggested details when another venue has it, and
+ * the other map's link (Google Maps for an OSM venue, OSM for a Google one).
  */
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
@@ -19,6 +20,12 @@ import {
 import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { VenueData } from '../core';
+import {
+  missingVenueLink,
+  type VenueLinkKind,
+  type VenueLinkProblem,
+  venueLinkChange,
+} from '../venueLinks';
 import {
   OSM_COPYRIGHT_URL,
   slugBody,
@@ -47,6 +54,10 @@ export class NpVenueWikiPublish extends LitElement {
 
   @state() private _plan: Plan = { kind: 'checking' };
   @state() private _slug: DTagAvailability | 'checking' = 'checking';
+  /** The other map's link as typed; its kind stays while there's text (the venue then has it) */
+  @state() private _link: { kind?: VenueLinkKind; text: string; problem?: VenueLinkProblem } = {
+    text: '',
+  };
   private _plannedKey = '';
   private _checkedDTag = '';
   private _planId = 0;
@@ -196,6 +207,34 @@ export class NpVenueWikiPublish extends LitElement {
     `;
   }
 
+  /** For a new page: the link of the map the venue isn't from, e.g. Google Maps for an OSM venue */
+  private _renderExtraLink() {
+    if (!this._venue) return nothing;
+    const kind = this._link.text ? this._link.kind : missingVenueLink(this._venue);
+    if (!kind || (this._plan.kind !== 'create' && !this._link.text)) return nothing;
+    const m = this._m;
+    const { problem } = this._link;
+    const note = problem === 'short' ? m.googleShortLink : problem && m.extraLinkInvalid(kind);
+    return html`
+      <label class="extra-link">
+        ${m.extraLinkLabel(kind)}
+        <input
+          type="url"
+          .value=${this._link.text}
+          placeholder=${m.extraLinkPlaceholder(kind)}
+          @input=${(e: InputEvent) => this._setLink(kind, (e.target as HTMLInputElement).value)}
+        />
+      </label>
+      ${note ? html`<div class="link-note">${note}</div>` : nothing}
+    `;
+  }
+
+  private _setLink(kind: VenueLinkKind, text: string): void {
+    const result = venueLinkChange(kind, text);
+    this._link = { kind, text, problem: 'problem' in result ? result.problem : undefined };
+    if ('change' in result) this._emit(result.change);
+  }
+
   /** Only when another venue uses the slug: details to append to it */
   private _renderSuggestions(body: string) {
     if (!this._venue) return nothing;
@@ -248,7 +287,12 @@ export class NpVenueWikiPublish extends LitElement {
           />
           ${m.syncLabel}
         </label>
-        ${checked ? html`<p class="plan">${this._planText()}</p>${this._renderSlug()}` : nothing}
+        ${
+          checked
+            ? html`<p class="plan">${this._planText()}</p>
+                ${this._renderSlug()}${this._renderExtraLink()}`
+            : nothing
+        }
         <div class="attribution">
           <a href=${OSM_COPYRIGHT_URL} target="_blank" rel="noopener">${m.osmAttribution}</a>
         </div>

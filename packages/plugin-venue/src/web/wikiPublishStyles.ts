@@ -33,6 +33,36 @@ export const wikiPublishStyles = css`
     font-size: 0.8rem;
     cursor: pointer;
   }
+  .extra-link { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin: 0.35rem 0; }
+  .extra-link input {
+    flex: 1;
+    min-width: 12rem;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+  }
+  .link-note { margin-bottom: 0.35rem; color: #92400e; }
   .attribution { font-size: 0.7rem; color: var(--nl-text-secondary, #9ca3af); }
   .attribution a { color: inherit; }
+
+  :host-context(.dark) { color: #f3f4f6; }
+  :host-context(.dark) .wiki-publish {
+    border-color: var(--nl-border, #374151);
+    background: var(--nl-card-bg, #1f2937);
+  }
+  :host-context(.dark) .plan,
+  :host-context(.dark) .slug code,
+  :host-context(.dark) .attribution { color: var(--nl-text-secondary, #9ca3af); }
+  :host-context(.dark) .slug-input input,
+  :host-context(.dark) .extra-link input,
+  :host-context(.dark) .qualifier button {
+    border-color: #4b5563;
+    background: #111827;
+    color: #f3f4f6;
+  }
+  :host-context(.dark) .slug.free .slug-status { color: #86efac; }
+  :host-context(.dark) .slug.taken .slug-status { color: #fca5a5; }
+  :host-context(.dark) .link-note,
+  :host-context(.dark) .slug.unknown .slug-status,
+  :host-context(.dark) .slug.checking .slug-status { color: #fcd34d; }
 `;

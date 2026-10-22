@@ -77,17 +77,23 @@ export async function loadMyLists(
     return;
   }
   update({ ...NOT_LOADED, waitingForSigner: true });
+  const request = getPublicKey();
   let pubkey: string;
   try {
-    pubkey = await withTimeout(getPublicKey(), SIGNER_TIMEOUT_MS);
+    pubkey = await withTimeout(request, SIGNER_TIMEOUT_MS);
   } catch (error) {
+    if (error !== TIMED_OUT) {
+      update({ waitingForSigner: false, error: m.failed(reason(error)) });
+      return;
+    }
     // Ask the signer again on retry, instead of waiting for the same request
     clearPublicKeyCache();
-    const message = error === TIMED_OUT ? m.signerNoAnswer : m.failed(reason(error));
-    update({ waitingForSigner: false, error: message });
-    return;
+    update({ waitingForSigner: false, error: m.signerNoAnswer });
+    // It may still answer, e.g. once the user signed in: then load without a retry
+    pubkey = await request.catch(() => '');
+    if (!pubkey) return;
   }
-  update({ pubkey, waitingForSigner: false });
+  update({ pubkey, waitingForSigner: false, error: '' });
   await loadLists(pubkey, relays, m, update);
 }
 

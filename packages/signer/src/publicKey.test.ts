@@ -25,4 +25,21 @@ describe('getPublicKey', () => {
     window.nostr = { getPublicKey: async () => 'other', signEvent: vi.fn() as never };
     expect(await getPublicKey()).toBe('other');
   });
+
+  it('fails on an empty answer (no one signed in) and asks again', async () => {
+    clearPublicKeyCache();
+    const ask = vi.fn().mockResolvedValueOnce(undefined).mockResolvedValue('pk');
+    window.nostr = { getPublicKey: ask, signEvent: vi.fn() as never };
+    await expect(getPublicKey()).rejects.toThrow('no public key');
+    expect(await getPublicKey()).toBe('pk');
+  });
+
+  it('asks again after a nostr-login sign-in', async () => {
+    clearPublicKeyCache();
+    const ask = vi.fn().mockResolvedValueOnce('first').mockResolvedValue('second');
+    window.nostr = { getPublicKey: ask, signEvent: vi.fn() as never };
+    expect(await getPublicKey()).toBe('first');
+    document.dispatchEvent(new CustomEvent('nlAuth', { detail: { type: 'login' } }));
+    expect(await getPublicKey()).toBe('second');
+  });
 });

@@ -76,6 +76,13 @@ export async function signEvent(event: UnsignedNostrEvent): Promise<SignedEvent>
 /** The signer's answer to getPublicKey, asked once per signer */
 let pubkeyRequest: { provider: Nip07Provider; promise: Promise<string> } | undefined;
 
+const NO_PUBKEY = 'The signer gave no public key. Sign in, then try again.';
+
+// nostr-login keeps one window.nostr across sign-ins: forget the pubkey when the user changes
+if (typeof document !== 'undefined') {
+  document.addEventListener('nlAuth', () => clearPublicKeyCache());
+}
+
 /**
  * Get the current user's public key. The signer is asked once (also when several
  * components ask at the same time): signers that handle one request at a time, or ask
@@ -88,7 +95,11 @@ export async function getPublicKey(): Promise<string> {
     throw new Error('No Nostr signer available.');
   }
   if (pubkeyRequest?.provider !== provider) {
-    const promise = provider.getPublicKey();
+    // Some signers answer nothing while no one is signed in (e.g. nostr-login): not a pubkey to keep
+    const promise = provider.getPublicKey().then((pubkey) => {
+      if (typeof pubkey !== 'string' || !pubkey) throw new Error(NO_PUBKEY);
+      return pubkey;
+    });
     pubkeyRequest = { provider, promise };
     promise.catch(() => {
       if (pubkeyRequest?.promise === promise) pubkeyRequest = undefined;

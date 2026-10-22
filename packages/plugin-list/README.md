@@ -134,7 +134,9 @@ await loadMyLists(relays, messages, (patch) => {
 
 - `loadMyLists(relays, messages, update, knownPubkey?)`: reports `{ waitingForSigner }`, then
   `{ pubkey }`, then `{ lists }`, or `{ error }` (the signer didn't answer within `SIGNER_TIMEOUT_MS`,
-  20 s, or failed). With `knownPubkey` (e.g. the composer's) the signer isn't asked. `messages`:
+  20 s, or failed). A signer answering after the timeout (e.g. once the user signed in) still
+  loads: `{ pubkey, error: '' }`, then `{ lists }`, and the promise resolves only then. With
+  `knownPubkey` (e.g. the composer's) the signer isn't asked. `messages`:
   `noSigner`, `signerNoAnswer`, `failed(reason)` (`MyListsMessages`)
 - `shownLists(state, presets)`: the lists to offer, presets first (also while the user's lists load)
 - `listTitle(list, names)`, `listTitles(lists, names)`: what lists are called; `names`: `bookmarks`,
@@ -201,8 +203,10 @@ Importing it also:
   to the title, `<np-venue-view>` next to the venue's name.
 
 `<np-list-save>` and `<np-list-input>` show what they wait for: the signer (a remote signer or a
-permission prompt; after 20 s "Your signer didn't answer" with "Try again"), then the relays (the
-manifest's lists show meanwhile).
+permission prompt; after 20 s "Your signer didn't answer" with "Try again", replaced by the lists
+if the signer still answers), then the relays (the manifest's lists show meanwhile). A signer that
+answers without a pubkey (nobody signed in) is an error with "Try again", not an empty list; the
+signer package forgets the pubkey when nostr-login reports a sign-in or sign-out (`nlAuth`).
 
 ### `<np-list-save>`
 

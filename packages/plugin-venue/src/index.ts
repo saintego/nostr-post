@@ -23,6 +23,13 @@ export { geohashTags, resultLevel, type VenueLevel, venueLevels } from './levels
 export { configureVenuePlugin, googleEmbedUrl, type VenuePluginSettings } from './googleEmbed';
 export { fetchOsmElement, type OsmElement } from './osm';
 export {
+  missingVenueLink,
+  parseOsmUrl,
+  type VenueLinkKind,
+  type VenueLinkProblem,
+  venueLinkChange,
+} from './venueLinks';
+export {
   OSM_COPYRIGHT_URL,
   type EntitySyncAction,
   entitySyncAction,

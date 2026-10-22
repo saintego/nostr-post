@@ -1,4 +1,5 @@
 import type { VenueLevel } from '../levels';
+import type { VenueLinkKind } from '../venueLinks';
 
 /**
  * User-facing text of the venue field's wiki-page status. Apps can override it
@@ -19,6 +20,13 @@ export interface VenueWikiMessages {
   slugFree: string;
   slugTaken: string;
   slugUnknown: string;
+  /** For a new page: the other map's link (Google Maps for an OSM venue, OSM for a Google one) */
+  extraLinkLabel: (kind: VenueLinkKind) => string;
+  extraLinkPlaceholder: (kind: VenueLinkKind) => string;
+  /** The pasted text isn't a link to a place on that map */
+  extraLinkInvalid: (kind: VenueLinkKind) => string;
+  /** A short Google Maps share link: only Google could open it */
+  googleShortLink: string;
 }
 
 export const DEFAULT_VENUE_WIKI_MESSAGES: VenueWikiMessages = {
@@ -34,6 +42,18 @@ export const DEFAULT_VENUE_WIKI_MESSAGES: VenueWikiMessages = {
   slugFree: '✓ free',
   slugTaken: '✗ used by another venue: change it, e.g. add a detail',
   slugUnknown: "? couldn't verify (a relay didn't answer)",
+  extraLinkLabel: (kind) =>
+    kind === 'google' ? 'Google Maps link (optional):' : 'OpenStreetMap link (optional):',
+  extraLinkPlaceholder: (kind) =>
+    kind === 'google'
+      ? 'https://www.google.com/maps/place/…'
+      : 'https://www.openstreetmap.org/node/…',
+  extraLinkInvalid: (kind) =>
+    kind === 'google'
+      ? "Not a Google Maps link to a place: open the place on Google Maps and copy the address bar's link."
+      : 'Not an OpenStreetMap link to a place, e.g. https://www.openstreetmap.org/node/123',
+  googleShortLink:
+    'Short links can only be opened by Google: open it, then paste the full link from the address bar.',
 };
 
 /** User-facing text of <np-venue-view> (overridable via its `messages` property) */
