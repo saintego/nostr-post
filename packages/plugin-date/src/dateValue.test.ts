@@ -8,6 +8,7 @@ import {
   parseStoredDate,
   serializeAllDayEnd,
   serializeWall,
+  timeZones,
   unixToWall,
   wallForPrecision,
   wallToUnix,
@@ -136,5 +137,14 @@ describe('wallForPrecision', () => {
     expect(wallForPrecision('2026-10-21T19:00', 'day')).toBe('2026-10-21');
     expect(wallForPrecision('2026-10-21', 'time')).toBe('2026-10-21T00:00');
     expect(wallForPrecision('2026-10-21T19:00', 'time')).toBe('2026-10-21T19:00');
+  });
+});
+
+describe('timeZones', () => {
+  it('lists the known zones, sorted, with UTC', () => {
+    const zones = timeZones();
+    expect(zones).toContain('UTC');
+    expect(zones).toContain('Europe/Prague');
+    expect([...zones].sort()).toEqual(zones);
   });
 });

@@ -53,6 +53,7 @@ export {
   defaultTimeZone,
   isDateValue,
   isValidTimeZone,
+  timeZones,
   MAX_DAY_TAGS,
   unixToWall,
   valueTimeZone,

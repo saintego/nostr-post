@@ -24,6 +24,7 @@ import {
   endsBeforeStart,
   hasTime,
   isDateValue,
+  isValidTimeZone,
   parseStoredAllDayEnd,
   parseStoredDate,
   serializeAllDayEnd,
@@ -142,6 +143,14 @@ export const datePlugin: NostrUIPlugin = {
   type: 'date',
 
   validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
+    const tzid =
+      typeof value === 'object' && value !== null ? Reflect.get(value, 'tzid') : undefined;
+    if (typeof tzid === 'string' && !isValidTimeZone(tzid)) {
+      return {
+        success: false,
+        error: fieldError(field, `Unknown time zone: ${tzid}`, 'INVALID_TIME_ZONE'),
+      };
+    }
     if (!isDateValue(value)) {
       return {
         success: false,

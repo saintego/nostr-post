@@ -81,6 +81,16 @@ const wallFormatter = (tzid: string): Intl.DateTimeFormat | undefined => {
   }
 };
 
+/**
+ * The IANA time zones the runtime knows, e.g. for a picker; at least UTC and the viewer's
+ * (runtimes without `Intl.supportedValuesOf` list only those)
+ */
+export const timeZones = (): string[] => {
+  const supported =
+    typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [];
+  return [...new Set([...supported, defaultTimeZone(), 'UTC'])].sort();
+};
+
 /** Whether the runtime knows the IANA time zone */
 export const isValidTimeZone = (tzid: string): boolean => wallFormatter(tzid) !== undefined;
 

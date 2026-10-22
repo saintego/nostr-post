@@ -132,6 +132,12 @@ describe('dateValueFromTags', () => {
 });
 
 describe('validate / formatDateValue', () => {
+  it('names an unknown time zone', () => {
+    expect(
+      datePlugin.validate?.({ start: '2026-10-21T19:00', tzid: 'Europe/Pargue' }, calendarField)
+    ).toMatchObject({ success: false, error: { code: 'INVALID_TIME_ZONE' } });
+  });
+
   it('rejects bad dates and ends before the start', () => {
     expect(datePlugin.validate?.(value, calendarField).success).toBe(true);
     expect(datePlugin.validate?.({ start: '2026-13-01' }, calendarField).success).toBe(false);

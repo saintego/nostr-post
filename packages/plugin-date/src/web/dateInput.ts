@@ -11,7 +11,14 @@ import type { PostField } from '@nostr-post/plugins/types';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { datePrecision } from '../core';
-import { type DateValue, defaultTimeZone, endsBeforeStart, wallForPrecision } from '../dateValue';
+import {
+  type DateValue,
+  defaultTimeZone,
+  endsBeforeStart,
+  isValidTimeZone,
+  wallForPrecision,
+} from '../dateValue';
+import { renderDateProblems, renderTimeZoneInput } from './dateInputParts';
 import { type DateMessages, DEFAULT_DATE_MESSAGES } from './dateMessages';
 
 @customElement('np-date-input')
@@ -128,6 +135,8 @@ export class NpDateInput extends LitElement {
     const onDate = (key: 'start' | 'end') => (e: Event) =>
       this._update({ [key]: (e.target as HTMLInputElement).value }, timed);
     const endTooEarly = this.value ? endsBeforeStart(this.value, precision) : false;
+    const tzid = this.value?.tzid;
+    const badZone = timed && tzid !== undefined && !isValidTimeZone(tzid);
 
     return html`
       <div class="row">
@@ -156,22 +165,13 @@ export class NpDateInput extends LitElement {
         }
         ${
           timed
-            ? html`
-              <label>
-                ${m.timeZone}
-                <input
-                  class="tz"
-                  type="text"
-                  .value=${this.value?.tzid ?? defaultTimeZone()}
-                  @change=${(e: Event) =>
-                    this._update({ tzid: (e.target as HTMLInputElement).value.trim() }, timed)}
-                />
-              </label>
-            `
+            ? renderTimeZoneInput(tzid, badZone, m.timeZone, (zone) =>
+                this._update({ tzid: zone }, timed)
+              )
             : ''
         }
       </div>
-      ${endTooEarly && !this.error ? html`<p class="error" role="alert">${m.endBeforeStart}</p>` : ''}
+      ${renderDateProblems({ endTooEarly, unknownZone: badZone ? tzid : undefined }, this.error, m)}
     `;
   }
 }

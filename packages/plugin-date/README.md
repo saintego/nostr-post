@@ -44,7 +44,7 @@ relays can return them by day as well.
 | `formatDateValue(value, locale?)`           | Text in the locale, e.g. `Oct 21, 2026, 7:00 PM – 9:00 PM`                         |
 | `dayNumbers(value, precision)`              | The `D` tag values                                                                |
 | `wallToUnix(wall, tzid)`, `unixToWall(unix, tzid)` | Wall-clock time ↔ unix seconds in a time zone (DST aware, `Intl` only)    |
-| `valueTimeZone(value)`, `defaultTimeZone()`, `isValidTimeZone(tzid)` | Time zone helpers                                       |
+| `valueTimeZone(value)`, `defaultTimeZone()`, `isValidTimeZone(tzid)`, `timeZones()` | Time zone helpers; `timeZones()` lists the zones the runtime knows |
 | `isDateValue(value)`, `wallForPrecision(wall, precision)` | Checks and conversions                                              |
 
 ### Agenda
@@ -90,7 +90,7 @@ Defines `<np-date-input>` and `<np-date-view>` and registers the plugin with the
 loads it by itself for manifests with `uiPlugin: 'date'`.
 
 - `<np-date-input>`: `.value`, `.field`, `.activeKinds` (from the composer: a date picker for
-  all-day, date-time pickers and a time zone for timed), an optional end that can't be set before
+  all-day, date-time pickers and a time zone for timed, searchable through the known zones), an optional end that can't be set before
   the start (`min`, and a message while it is), `.error` (the composer's error; the input's own
   message hides while it shows). Dispatches `np-value-changed`.
 - `<np-date-view>`: the value in the viewer's locale, with the time zone of timed values.

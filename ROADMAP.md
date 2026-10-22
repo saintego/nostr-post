@@ -51,8 +51,9 @@
         on both kinds. NIP-52 only defines `D` for 31922's timed sibling; on 31922 it is an extra tag
         so relays can return our all-day events by day too. All-day or timed is the manifest's
         publish format; the input follows the selected one (`activeKinds`)
-  - [ ] Date input: time zone picker. Now a plain text field where people type `Europe/Prague`; a
-        searchable list of the zones the browser knows (`Intl.supportedValuesOf('timeZone')`) avoids typos
+  - [x] Date input: time zone picker. A text field searchable through the zones the browser knows
+        (`timeZones()`, a datalist); an unknown zone gets a message and blocks publishing
+        (`INVALID_TIME_ZONE`)
   - [x] Event manifest for 31922/31923, `CALENDAR_EVENT_MANIFEST` in `@nostr-post/plugin-date` (title, date,
         location/`g` via plugin-venue, description, summary, image, `t`); in the manifest creator's examples
   - [ ] Event participants: NIP-52 lists people on an event as `p` tags with a role, e.g. `speaker` or
