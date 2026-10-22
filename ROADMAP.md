@@ -51,21 +51,41 @@
         on both kinds. NIP-52 only defines `D` for 31922's timed sibling; on 31922 it is an extra tag
         so relays can return our all-day events by day too. All-day or timed is the manifest's
         publish format; the input follows the selected one (`activeKinds`)
-  - [ ] Date input: the time zone is a text field; a searchable picker (`Intl.supportedValuesOf('timeZone')`)
+  - [ ] Date input: time zone picker. Now a plain text field where people type `Europe/Prague`; a
+        searchable list of the zones the browser knows (`Intl.supportedValuesOf('timeZone')`) avoids typos
   - [x] Event manifest for 31922/31923, `CALENDAR_EVENT_MANIFEST` in `@nostr-post/plugin-date` (title, date,
         location/`g` via plugin-venue, description, summary, image, `t`); in the manifest creator's examples
-  - [ ] Event participants: `p` tags with a role (NIP-52), a profile picker field
-  - [ ] Event location as free text or a URL (online events); plugin-venue only takes OpenStreetMap places
+  - [ ] Event participants: NIP-52 lists people on an event as `p` tags with a role, e.g. `speaker` or
+        `host`. Needs a profile picker field (search users by name, pick a profile), which doesn't exist
+        yet; mentions could use it too
+  - [ ] Event location as free text or a URL: plugin-venue only takes OpenStreetMap places, but online
+        events need a link (`https://meet…`) and some places just text ("Room 3, 2nd floor"); NIP-52's
+        `location` tag is free text
+  - [x] Link an event's venue to its wiki page (venue hub, `metadata.wikiEntity`): the manifest creator's
+        `calendar-event` example adds it to `CALENDAR_EVENT_MANIFEST`'s location (the package can't name
+        the app's `venue-entity-v1`)
+  - [ ] A venue's wiki page lists its upcoming events: calendar events linked to the page (its `a` tag)
+        get an agenda section on the venue page
   - [x] Agenda in `<nostr-post-feed>` (`agenda`, `agenda-from`, `agenda-days`, `time-zone`): a date window becomes a `#D` relay filter, events sorted by
         start (not `created_at`), grouped under day headings in the viewer's time zone, newest
         version per address only. Logic as framework-free functions in the plugin's main entry
-  - [ ] Agenda navigation: previous/next window buttons, and an event listed once per day it spans
-        shows its reply composer on each of them
-  - [ ] Other clients' all-day events (no `D` tag) can only be reached through a scope that bounds
-        the set: a calendar (kind 31924 `a` tags), authors, `t` or `g`
-  - [ ] Calendars (kind 31924): named lists of event `a` tags, likely on plugin-list; agenda of a calendar
-  - [ ] RSVP (kind 31925): accepted/tentative/declined (+ free/busy) on an event, attendee counts
-  - [ ] Propose `D` tags for kind 31922 to NIP-52
+  - [x] Agenda navigation: Previous / Today / Next buttons move the date window (`shiftWindow`), the
+        `nostr-post-agenda-change` event reports it; an event spanning several days opens its reply
+        composer on its first day only
+  - [ ] Agenda: keep the buttons and days shown while the next window loads (the feed shows "Loading" now)
+  - [ ] Calendars (kind 31924): a named list of events someone publishes, e.g. "Prague tech meetups". It
+        points to events by address (`a` tags), anyone's events, not only the publisher's: a bookmark
+        list for events, close to plugin-list's bookmark sets (NIP-51). Brings:
+        - "Add to calendar" on events, like the list plugin's Save
+        - `<nostr-post-feed agenda calendar="31924:…">`: the agenda of one calendar (load its events by
+          address, sort them into the window's days)
+        - other clients' all-day events: they have no `D` tags, so a date filter doesn't find them;
+          a calendar names them, so they load directly (a short known list, not a network search).
+          Authors, `t` or `g` scopes work the same way
+  - [x] RSVP (kind 31925): Going / Maybe / Can't go on calendar events with counts (`<np-rsvp>`, an event
+        action of calendar manifests); one replaceable RSVP per person and event (`d` = the event's address)
+  - [ ] RSVP: highlight the user's own answer when the page loads (now only after answering here, so
+        reading doesn't ask the signer); who answered (names, avatars); a note with the answer
 - [ ] calendar view: month grid on the same day-grouping functions as the agenda
 - [ ] rich media preview - youtube with play, spotify/bandcamp/soundcloud with playlist if possible
 - [ ] P2P offers support (NIP-69) with filtered feed presets/views

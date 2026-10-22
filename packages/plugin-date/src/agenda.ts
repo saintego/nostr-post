@@ -199,3 +199,22 @@ export const formatAgendaDate = (date: string, locale?: string): string => {
         new Date(day * SECONDS_PER_DAY * 1000)
       );
 };
+
+/**
+ * The first day of the window `steps` windows later (negative: earlier), e.g. the next 30 days.
+ * With `steps` 0, the window's own first day (today when it has none).
+ */
+export const shiftWindow = (window: AgendaWindow, steps: number): string => {
+  const { first, last } = resolveWindow(window);
+  return dateOfDayNumber(first + steps * (last - first + 1));
+};
+
+/** The window's dates as a range in the locale, e.g. "Oct 21 – Nov 19, 2026" */
+export const formatWindowRange = (window: AgendaWindow, locale?: string): string => {
+  const { first, last } = resolveWindow(window);
+  const format = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeZone: 'UTC' });
+  const toDate = (day: number) => new Date(day * SECONDS_PER_DAY * 1000);
+  return first === last
+    ? format.format(toDate(first))
+    : format.formatRange(toDate(first), toDate(last));
+};

@@ -56,12 +56,25 @@ relays can return them by day as well.
 | `groupEventsByDay(events, window)`       | The window's days that have events, all-day first, then by start; one version per event |
 | `eventTiming(event)`, `eventDates(timing, tzid?)` | When an event takes place and on which local dates                    |
 | `windowDates(window)`, `todayIn(tzid?)`  | The window's dates; today's date in a time zone                                |
+| `shiftWindow(window, steps)`, `formatWindowRange(window, locale?)` | First day of the window `steps` windows on; the range as text |
 | `latestByAddress(events)`                | Newest version of each addressable event                                       |
 | `formatAgendaDate(date, locale?)`        | A day heading, e.g. `Wednesday, October 21, 2026`                              |
 
 A window is `{ from?, days?, tzid? }`: `days` days from `from` (`YYYY-MM-DD`, default today), in
 `tzid` (default the viewer's). `<nostr-post-feed agenda>` in `@nostr-post/web` is built on these;
 a month grid can use the same functions with a month as the window.
+
+### RSVP (kind 31925)
+
+| Export                                         | Does                                                                     |
+| ---------------------------------------------- | ------------------------------------------------------------------------ |
+| `rsvpEvent(address, status, pubkey, options?)` | An unsigned RSVP: `d` and `a` = the event's address (one per person, replaced by a new answer), `status`, `fb` `busy` unless declined, `p` the event's author |
+| `rsvpFilter(addresses)`, `fetchRsvps(addresses, options?)` | Relay filter for, and reading of, the RSVPs to events          |
+| `publishRsvp(address, status, options?)`       | Signs (asks the signer) and publishes the user's answer; a `Result`      |
+| `summarizeRsvps(events, address)`, `withAnswer(summary, pubkey, status)` | Counts per status, each person's newest answer |
+| `isCalendarEventAddress(address)`, `RSVP_KIND`, `RSVP_STATUSES` | Checks and constants                                    |
+
+`status` is `accepted`, `tentative` or `declined`.
 
 `CALENDAR_EVENT_MANIFEST` is ready to use: `<nostr-post-composer .manifest=${CALENDAR_EVENT_MANIFEST}>`.
 Its fields use the `date`, `venue`, `media` and `hashtag` plugins, which the composer loads by
@@ -81,6 +94,9 @@ loads it by itself for manifests with `uiPlugin: 'date'`.
   the start (`min`, and a message while it is), `.error` (the composer's error; the input's own
   message hides while it shows). Dispatches `np-value-changed`.
 - `<np-date-view>`: the value in the viewer's locale, with the time zone of timed values.
+- `<np-rsvp>`: Going / Maybe / Can't go with counts, for `.target` (a calendar event's address) and
+  `.relays`. Registered as an event action of manifests that publish calendar events, so
+  `<nostr-post-view>` shows it in the event's header. Loading the counts needs no signer.
 
-Both take `messages` (`Partial<DateMessages>`, defaults in `DEFAULT_DATE_MESSAGES`) for
-translations.
+They take `messages` for translations: `Partial<DateMessages>` (defaults in
+`DEFAULT_DATE_MESSAGES`), and for `<np-rsvp>` `Partial<RsvpMessages>` (`DEFAULT_RSVP_MESSAGES`).

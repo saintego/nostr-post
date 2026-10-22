@@ -73,7 +73,13 @@ export {
   eventTiming,
   eventDates,
   windowDates,
+  shiftWindow,
   type AgendaWindow,
+  fetchRsvps,
+  publishRsvp,
+  summarizeRsvps,
+  rsvpEvent,
+  type RsvpStatus,
 } from '@nostr-post/plugin-date';
 
 // Signing & relay utilities

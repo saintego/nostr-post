@@ -109,7 +109,10 @@ The bundle re-exports utilities for advanced usage:
 - `formatDateValue(value, locale?)`, `dateValueFromTags(tags, tagName?)`, `dayNumbers(value, precision)`
 - `ALL_DAY_EVENT_KIND` (31922), `TIMED_EVENT_KIND` (31923)
 - Agenda: `agendaFilter(window)` (relay filter of a date window), `groupEventsByDay(events, window)`,
-  `eventTiming(event)`, `eventDates(timing, tzid?)`, `windowDates(window)`, `AgendaWindow`
+  `eventTiming(event)`, `eventDates(timing, tzid?)`, `windowDates(window)`, `shiftWindow(window, steps)`,
+  `AgendaWindow`
+- RSVP (kind 31925): `fetchRsvps(addresses)`, `publishRsvp(address, status)`,
+  `summarizeRsvps(events, address)`, `rsvpEvent(address, status, pubkey)`, `RsvpStatus`
 - `DateValue`
 
 **Signing & Relays**
@@ -141,7 +144,7 @@ The bundle re-exports utilities for advanced usage:
 
 - `DEFAULT_COMPOSER_MESSAGES`: the composer's submit-area text (button, running step, errors); set
   `composer.messages = { submit: '…' }` to override any of it
-- `DEFAULT_FEED_MESSAGES`: the feed's text (loading, empty, empty agenda); set `feed.messages` to
+- `DEFAULT_FEED_MESSAGES`: the feed's text (loading, empty, agenda buttons); set `feed.messages` to
   override any of it
 
 **Publishing a submitted post yourself** (composer without `auto-publish`)
@@ -394,6 +397,9 @@ when they start (not when they were posted). Each version of an event counts onc
 - `time-zone`: IANA time zone of the days (default the viewer's)
 - Kinds: `kinds`, else the manifest's, else 31922 and 31923; `limit` defaults to 500 here
 - Other filters (`authors`, `tagFilters`, …) narrow it down; `filters` replaces the agenda's filter
+- Previous / Today / Next buttons move the window; the feed then fires `nostr-post-agenda-change`
+  with `{ from, days }` (`from` undefined: today)
+- With a calendar manifest, each event shows Going / Maybe / Can't go with counts (`<np-rsvp>`)
 
 The days become a `#D` filter, the day tags `@nostr-post/plugin-date` writes:
 

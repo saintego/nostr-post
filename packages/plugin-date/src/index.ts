@@ -15,6 +15,20 @@ export {
 } from './core';
 export { CALENDAR_EVENT_MANIFEST } from './calendarManifest';
 export {
+  isCalendarEventAddress,
+  RSVP_KIND,
+  RSVP_STATUSES,
+  type RsvpLike,
+  type RsvpStatus,
+  type RsvpSummary,
+  rsvpEvent,
+  rsvpFilter,
+  summarizeRsvps,
+  type UnsignedRsvp,
+  withAnswer,
+} from './rsvp';
+export { fetchRsvps, publishRsvp, type RsvpRelayOptions } from './rsvpRelays';
+export {
   type AgendaDay,
   type AgendaWindow,
   agendaDayTags,
@@ -25,8 +39,10 @@ export {
   eventDates,
   eventTiming,
   formatAgendaDate,
+  formatWindowRange,
   groupEventsByDay,
   latestByAddress,
+  shiftWindow,
   todayIn,
   windowDates,
 } from './agenda';

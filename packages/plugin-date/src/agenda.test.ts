@@ -5,8 +5,10 @@ import {
   eventDates,
   eventTiming,
   formatAgendaDate,
+  formatWindowRange,
   groupEventsByDay,
   latestByAddress,
+  shiftWindow,
   todayIn,
   windowDates,
 } from './agenda';
@@ -126,5 +128,21 @@ describe('groupEventsByDay', () => {
 describe('formatAgendaDate', () => {
   it('formats a day heading in the locale', () => {
     expect(formatAgendaDate('2026-10-21', 'en-US')).toBe('Wednesday, October 21, 2026');
+  });
+});
+
+describe('shiftWindow / formatWindowRange', () => {
+  it('moves by whole windows', () => {
+    const window = { from: '2026-10-21', days: 7, tzid: 'UTC' };
+    expect(shiftWindow(window, 1)).toBe('2026-10-28');
+    expect(shiftWindow(window, -1)).toBe('2026-10-14');
+    expect(shiftWindow(window, 0)).toBe('2026-10-21');
+  });
+
+  it('formats the range in the locale', () => {
+    expect(formatWindowRange({ from: '2026-10-21', days: 7 }, 'en-US')).toMatch(
+      /^Oct 21\s–\s27, 2026$/
+    );
+    expect(formatWindowRange({ from: '2026-10-21', days: 1 }, 'en-US')).toBe('Oct 21, 2026');
   });
 });

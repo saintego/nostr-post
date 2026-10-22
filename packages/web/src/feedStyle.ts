@@ -24,6 +24,41 @@ export const feedStyle = css`
     margin-bottom: 0.75rem;
   }
 
+  .agenda-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .agenda-nav button {
+    font: inherit;
+    font-size: 0.875rem;
+    cursor: pointer;
+    padding: 0.25rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+    background: #ffffff;
+    color: #1f2937;
+  }
+
+  .agenda-range {
+    margin-left: 0.25rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  :host-context(.dark) .agenda-nav button {
+    background: #374151;
+    border-color: #4b5563;
+    color: #f3f4f6;
+  }
+
+  :host-context(.dark) .agenda-range {
+    color: #9ca3af;
+  }
+
   .agenda-date {
     font-size: 0.9375rem;
     font-weight: 600;

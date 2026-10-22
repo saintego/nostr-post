@@ -73,6 +73,17 @@ describe('EXAMPLE_MANIFESTS', () => {
     });
   });
 
+  describe('calendar-event manifest', () => {
+    it("links the event's location to the venue's wiki page", () => {
+      const manifest = EXAMPLE_MANIFESTS['calendar-event'];
+      expect(manifest.id).toBe('calendar-event-venue-v1');
+      const location = manifest.fields.find((f) => f.id === 'location');
+      expect(location?.uiPlugin).toBe('venue');
+      expect(location?.metadata?.wikiEntity).toBe('venue-entity-v1');
+      expect(manifest.publishFormats?.map((f) => f.kinds)).toEqual([[31922], [31923]]);
+    });
+  });
+
   describe('venue-review manifest', () => {
     it('should have correct structure', () => {
       const manifest = EXAMPLE_MANIFESTS['venue-review'];

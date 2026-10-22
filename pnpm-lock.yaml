@@ -177,6 +177,9 @@ importers:
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins
+      '@nostr-post/signer':
+        specifier: workspace:*
+        version: link:../signer
       lit:
         specifier: ^3.3.3
         version: 3.3.3

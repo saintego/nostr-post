@@ -430,6 +430,12 @@ export class NostrPostFeed extends NostrPostElement {
     }
   }
 
+  /** Shows the agenda window starting at `from` (undefined: today) */
+  private _moveAgenda(from: string | undefined) {
+    this.agendaFrom = from;
+    this.dispatchCustomEvent('nostr-post-agenda-change', { from, days: this.agendaDays });
+  }
+
   private get _threadContext(): FeedThreadContext {
     return {
       manifest: this.manifest,
@@ -454,7 +460,11 @@ export class NostrPostFeed extends NostrPostElement {
     const threads = buildThreads(this.events, this.interactionEvents);
     const ctx = this._threadContext;
     const body = this.agenda
-      ? renderFeedAgenda(threads, this._agendaWindow, ctx, m.emptyAgenda)
+      ? renderFeedAgenda(threads, ctx, {
+          window: this._agendaWindow,
+          messages: m,
+          onMove: (from) => this._moveAgenda(from),
+        })
       : threads.length === 0
         ? html`<div class="empty">${m.empty}</div>`
         : threads.map((thread) => renderFeedThread(thread, ctx));
