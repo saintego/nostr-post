@@ -93,6 +93,18 @@ export class NpVenueView extends LitElement {
       padding: 0.125rem 0.5rem;
       border-radius: 9999px;
     }
+
+    :host-context(.dark) .venue-name,
+    :host-context(.dark) .venue-wiki summary {
+      color: #86efac;
+    }
+    :host-context(.dark) .venue-link {
+      color: #a5b4fc;
+    }
+    :host-context(.dark) .osm-badge {
+      color: #a7f3d0;
+      background: #064e3b;
+    }
   `;
 
   @property({ type: Object })
