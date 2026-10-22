@@ -80,6 +80,8 @@ export {
   summarizeRsvps,
   rsvpEvent,
   type RsvpStatus,
+  fetchCalendarItems,
+  calendarEventFilters,
 } from '@nostr-post/plugin-date';
 
 // Signing & relay utilities
@@ -190,6 +192,9 @@ export {
   deleteList,
   itemFor,
   hasItem,
+  BOOKMARK_LISTS,
+  CALENDAR_LISTS,
+  type ListKind,
   // The list field (uiPlugin "list"): what it saves after publishing
   saveToChoices,
   itemsToSave,

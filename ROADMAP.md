@@ -76,7 +76,7 @@
   - [x] Agenda: keep the buttons and days shown while the next window loads: the previous window's
         days stay (dimmed, `aria-busy`) with their comments until the new events arrive, the
         `loading` message next to the buttons; a slower earlier load no longer overwrites a later one
-  - [ ] Calendars (kind 31924): a named list of events someone publishes, e.g. "Prague tech meetups". It
+  - [x] Calendars (kind 31924): a named list of events someone publishes, e.g. "Prague tech meetups". It
         points to events by address (`a` tags), anyone's events, not only the publisher's: a bookmark
         list for events, close to plugin-list's bookmark sets (NIP-51). Brings:
         - "Add to calendar" on events, like the list plugin's Save
@@ -85,6 +85,10 @@
         - other clients' all-day events: they have no `D` tags, so a date filter doesn't find them;
           a calendar names them, so they load directly (a short known list, not a network search).
           Authors, `t` or `g` scopes work the same way
+        Done on plugin-list (`ListKind`: `BOOKMARK_LISTS`, `CALENDAR_LISTS`): `<np-calendar-save>` is its
+        Save with calendars; `fetchCalendarItems`, `calendarEventFilters` in plugin-date
+  - [ ] Calendars: a page or component listing a calendar (title, events, follow/share), and finding
+        other people's calendars; agenda of several calendars at once
   - [x] RSVP (kind 31925): Going / Maybe / Can't go on calendar events with counts (`<np-rsvp>`, an event
         action of calendar manifests); one replaceable RSVP per person and event (`d` = the event's address)
   - [ ] RSVP: highlight the user's own answer when the page loads (now only after answering here, so

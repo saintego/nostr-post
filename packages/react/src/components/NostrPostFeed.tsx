@@ -35,6 +35,7 @@ interface NostrPostFeedElement extends HTMLElement {
   agendaFrom?: string;
   agendaDays?: number;
   timeZone?: string;
+  calendar?: string;
   messages?: Partial<import('@nostr-post/web').FeedMessages>;
   refresh?: () => Promise<void>;
 }
@@ -111,6 +112,8 @@ export interface NostrPostFeedProps {
   agendaDays?: number;
   /** IANA time zone of the agenda's days. Default: the viewer's */
   timeZone?: string;
+  /** Agenda of one calendar (`31924:<pubkey>:<d-tag>`): its events, loaded by address */
+  calendar?: string;
   /** Overrides of the feed's text (e.g. translations) */
   messages?: Partial<import('@nostr-post/web').FeedMessages>;
   /** Called when the user clicks Edit on an addressable event */
@@ -149,6 +152,7 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       agendaFrom,
       agendaDays,
       timeZone,
+      calendar,
       messages,
       relays,
       filterTags,
@@ -205,6 +209,7 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       element.agendaFrom = agendaFrom;
       element.agendaDays = agendaDays;
       element.timeZone = timeZone;
+      element.calendar = calendar;
       element.messages = messages;
     };
 

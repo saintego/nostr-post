@@ -10,15 +10,16 @@
  *   // Now the date plugin is available in composer/view automatically
  */
 
-import { getFieldTargets } from '@nostr-post/core/manifestMappings';
 import { registerEventAction } from '@nostr-post/plugins/entities';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { ALL_DAY_EVENT_KIND, datePlugin, TIMED_EVENT_KIND } from './core';
+import { publishesCalendarEvents } from './calendars';
+import { datePlugin } from './core';
 
 // Import web components (side-effect: defines custom elements)
 import './web/dateInput';
 import './web/dateView';
 import './web/rsvpButtons';
+import './web/calendarSave';
 
 // Register the plugin with its web component tag names
 pluginRegistry.register({
@@ -27,21 +28,16 @@ pluginRegistry.register({
   viewTagName: 'np-date-view',
 });
 
-// RSVP on events made with manifests that publish calendar events
-registerEventAction({
-  tagName: 'np-rsvp',
-  matches: (manifest) =>
-    manifest.fields.some((field) =>
-      getFieldTargets(field).some(
-        (target) => target.kind === ALL_DAY_EVENT_KIND || target.kind === TIMED_EVENT_KIND
-      )
-    ),
-});
+// RSVP and Add to calendar on events made with manifests that publish calendar events
+registerEventAction({ tagName: 'np-rsvp', matches: publishesCalendarEvents });
+registerEventAction({ tagName: 'np-calendar-save', matches: publishesCalendarEvents });
 
 // Re-export components for direct usage
 export { NpDateInput } from './web/dateInput';
 export { NpDateView } from './web/dateView';
 export { DEFAULT_DATE_MESSAGES, type DateMessages } from './web/dateMessages';
 export { NpRsvp } from './web/rsvpButtons';
+export { NpCalendarSave } from './web/calendarSave';
+export { DEFAULT_CALENDAR_SAVE_MESSAGES } from './web/calendarMessages';
 export { DEFAULT_RSVP_MESSAGES, type RsvpMessages } from './web/rsvpMessages';
 export { datePlugin } from './core';

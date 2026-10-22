@@ -2,6 +2,8 @@
 export const BOOKMARKS_KIND = 10003;
 /** Named bookmark sets (NIP-51), many per user: "Want to go", "Favourite pubs" */
 export const BOOKMARK_SET_KIND = 30003;
+/** Calendars (NIP-52): named lists of calendar events, many per user */
+export const CALENDAR_KIND = 31924;
 /** Deletion requests (NIP-09) */
 export const DELETION_KIND = 5;
 /** Wiki pages (NIP-54): many authors publish versions of one entity under the same d-tag */
@@ -29,7 +31,7 @@ export interface ListItem {
   relay?: string;
 }
 
-/** A bookmarks list or bookmark set */
+/** A bookmarks list, bookmark set or calendar */
 export interface BookmarkList {
   /** `10003:<pubkey>:` or `30003:<pubkey>:<d-tag>` */
   address: string;
@@ -46,8 +48,25 @@ export interface BookmarkList {
   event: ListEvent;
 }
 
-/** Where lists are read from and published to */
+/**
+ * A kind of list: its named sets (many per user, with a d-tag), and the one standard list
+ * of the kind (no d-tag), if it has one
+ */
+export interface ListKind {
+  set: number;
+  standard?: number;
+}
+
+/** NIP-51 bookmarks: the bookmarks list (10003) and bookmark sets (30003); the default */
+export const BOOKMARK_LISTS: ListKind = { set: BOOKMARK_SET_KIND, standard: BOOKMARKS_KIND };
+
+/** NIP-52 calendars (31924): sets only */
+export const CALENDAR_LISTS: ListKind = { set: CALENDAR_KIND };
+
+/** Where lists are read from and published to, and which kind of list */
 export interface ListRelayOptions {
   /** Relays besides the user's own (NIP-65 / signer); default DEFAULT_RELAYS */
   relays?: string[];
+  /** Default BOOKMARK_LISTS */
+  listKind?: ListKind;
 }

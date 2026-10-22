@@ -76,6 +76,20 @@ a month grid can use the same functions with a month as the window.
 
 `status` is `accepted`, `tentative` or `declined`.
 
+### Calendars (kind 31924)
+
+A calendar is a named list of calendar events (`a` tags), anyone's events. It is edited with
+`@nostr-post/plugin-list`'s functions and `{ listKind: CALENDAR_LISTS }`; this package reads it:
+
+| Export                                    | Does                                                                    |
+| ----------------------------------------- | ----------------------------------------------------------------------- |
+| `fetchCalendarItems(address, options?)`   | The calendar event addresses in a calendar's newest version; empty when it's missing or deleted |
+| `calendarEventFilters(addresses)`         | Relay filters for events by address, one per kind and author            |
+| `publishesCalendarEvents(manifest)`       | Whether a manifest publishes kind 31922 or 31923                        |
+
+Loading events by address finds all-day events of clients that write no `D` tags, which a day
+filter misses. `<nostr-post-feed agenda calendar="31924:…">` is built on these.
+
 `CALENDAR_EVENT_MANIFEST` is ready to use: `<nostr-post-composer .manifest=${CALENDAR_EVENT_MANIFEST}>`.
 Its fields use the `date`, `venue`, `media` and `hashtag` plugins, which the composer loads by
 itself. How to build your own is in [MANIFEST.md](../../MANIFEST.md#dates).
@@ -94,6 +108,9 @@ loads it by itself for manifests with `uiPlugin: 'date'`.
   the start (`min`, and a message while it is), `.error` (the composer's error; the input's own
   message hides while it shows). Dispatches `np-value-changed`.
 - `<np-date-view>`: the value in the viewer's locale, with the time zone of timed values.
+- `<np-calendar-save>`: Add to calendar for `.target` (a calendar event's address): plugin-list's
+  `<np-list-save>` with the user's calendars and calendar wording (`DEFAULT_CALENDAR_SAVE_MESSAGES`
+  over `DEFAULT_LIST_MESSAGES`). Registered as an event action of calendar manifests, like `<np-rsvp>`.
 - `<np-rsvp>`: Going / Maybe / Can't go with counts, for `.target` (a calendar event's address) and
   `.relays`. Registered as an event action of manifests that publish calendar events, so
   `<nostr-post-view>` shows it in the event's header. Loading the counts needs no signer.

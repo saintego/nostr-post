@@ -52,12 +52,16 @@ export {
   removeFromList,
 } from './lists';
 export {
+  BOOKMARK_LISTS,
   BOOKMARK_SET_KIND,
   BOOKMARKS_KIND,
   type BookmarkList,
+  CALENDAR_KIND,
+  CALENDAR_LISTS,
   DELETION_KIND,
   type ListEvent,
   type ListItem,
+  type ListKind,
   type ListRelayOptions,
   WIKI_KIND,
 } from './types';

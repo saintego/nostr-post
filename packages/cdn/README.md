@@ -113,6 +113,8 @@ The bundle re-exports utilities for advanced usage:
   `AgendaWindow`
 - RSVP (kind 31925): `fetchRsvps(addresses)`, `publishRsvp(address, status)`,
   `summarizeRsvps(events, address)`, `rsvpEvent(address, status, pubkey)`, `RsvpStatus`
+- Calendars (kind 31924): `fetchCalendarItems(address)` (a calendar's event addresses),
+  `calendarEventFilters(addresses)`; edited with the list functions and `{ listKind: CALENDAR_LISTS }`
 - `DateValue`
 
 **Signing & Relays**
@@ -190,6 +192,8 @@ The bundle re-exports utilities for advanced usage:
   `deleteList(list)`: publish through the signer (test mode applies); they return a `Result`
 - `itemFor(addressOrId)`, `hasItem(list, item)`: wiki entities count as one item whichever author's
   version was saved
+- `BOOKMARK_LISTS` (default), `CALENDAR_LISTS`, `ListKind`: pass `{ listKind }` to the functions above
+  for another kind of list, e.g. NIP-52 calendars (31924)
 - `listField({ saveField, label })`: a `list` field for a manifest
 - `itemsToSave(field, { formData, events })`, `saveToChoices(choices, items)`: what a `list` field saves
   after publishing, and saving it (its `afterPublish` hook)
@@ -401,6 +405,10 @@ when they start (not when they were posted). Each version of an event counts onc
   with `{ from, days }` (`from` undefined: today). While the new window loads, the buttons and the
   previous window's days stay shown (dimmed), next to the `loading` message
 - With a calendar manifest, each event shows Going / Maybe / Can't go with counts (`<np-rsvp>`)
+- `calendar="31924:<pubkey>:<d-tag>"`: the agenda of one calendar (NIP-52): its events, loaded by
+  address, so also all-day events of clients that write no `D` tags
+- With a calendar manifest, events also get Add to calendar (`<np-calendar-save>`): the user's
+  calendars, to add the event to or start a new one
 
 The days become a `#D` filter, the day tags `@nostr-post/plugin-date` writes:
 

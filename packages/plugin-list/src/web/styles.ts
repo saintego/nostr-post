@@ -45,6 +45,12 @@ export const listStyles = css`
     gap: 0.375rem;
   }
 
+  /* In a view's header the button sits at the right edge: open the panel leftwards */
+  :host(.view-action) .panel {
+    left: auto;
+    right: 0;
+  }
+
   .list-option {
     display: flex;
     align-items: center;

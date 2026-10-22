@@ -15,6 +15,11 @@ export {
 } from './core';
 export { CALENDAR_EVENT_MANIFEST } from './calendarManifest';
 export {
+  calendarEventFilters,
+  fetchCalendarItems,
+  publishesCalendarEvents,
+} from './calendars';
+export {
   isCalendarEventAddress,
   RSVP_KIND,
   RSVP_STATUSES,

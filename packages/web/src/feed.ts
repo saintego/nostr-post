@@ -4,14 +4,8 @@
  * Displays a list of Nostr events
  */
 
-import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import {
-  type AgendaWindow,
-  ALL_DAY_EVENT_KIND,
-  agendaDayTags,
-  TIMED_EVENT_KIND,
-} from '@nostr-post/plugin-date';
+import { type AgendaWindow, fetchCalendarItems } from '@nostr-post/plugin-date';
 import { type FetchFilter, fetchEvents, fetchManifestByATag } from '@nostr-post/signer';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -20,7 +14,7 @@ import { renderEventActions } from './feedActions';
 import { renderFeedAgenda } from './feedAgenda';
 import { handleCommentPublished as handleCommentPublishedDetail } from './feedComments';
 import {
-  buildFetchFilters,
+  buildFeedFilters,
   buildInteractionLoadKey,
   FEED_LOAD_PROPERTIES,
   mergeUniqueEventsById,
@@ -41,10 +35,6 @@ import type { SignedEvent } from './signer';
 import { displayNameForPubkey, loadProfilesForEvents, type NostrProfile } from './userProfile';
 import './composer';
 import './view';
-
-/** Events asked for by default; an agenda gets more, so a whole window fits */
-const DEFAULT_LIMIT = 20;
-const AGENDA_LIMIT = 500;
 
 @customElement('nostr-post-feed')
 export class NostrPostFeed extends NostrPostElement {
@@ -164,6 +154,13 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Number, attribute: 'agenda-days' })
   agendaDays?: number;
 
+  /**
+   * Agenda of one calendar (`31924:<pubkey>:<d-tag>`): its events, loaded by address, instead
+   * of all events with the window's day tags
+   */
+  @property({ type: String })
+  calendar?: string;
+
   /** IANA time zone the agenda's days are in. Default: the viewer's */
   @property({ type: String, attribute: 'time-zone' })
   timeZone?: string;
@@ -270,36 +267,37 @@ export class NostrPostFeed extends NostrPostElement {
     const load = ++this._loadCount;
     const window = this.agenda ? this._agendaWindow : undefined;
     this.isLoading = true;
-    const resolvedKinds =
-      this.kinds && this.kinds.length > 0
-        ? this.kinds
-        : this.manifest
-          ? getManifestAvailableKinds(this.manifest)
-          : this.agenda
-            ? [ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND]
-            : [1];
-    // Agenda: the window's days as a `#D` filter, and enough events for the whole window
-    const tagFilters = this.agenda
-      ? { ...this.tagFilters, '#D': agendaDayTags(this._agendaWindow) }
-      : this.tagFilters;
 
     try {
+      // A calendar's events load by address: first which events it has
+      const calendarItems =
+        window && this.calendar
+          ? await fetchCalendarItems(this.calendar, { relays: this.relays })
+          : undefined;
+      const filters = buildFeedFilters({
+        filters: this.filters,
+        ids: this.ids,
+        authors: this.authors,
+        kinds: this.kinds,
+        manifest: this.manifest,
+        search: this.search,
+        limit: this.limit,
+        since: this.since,
+        until: this.until,
+        filterTags: this.filterTags,
+        tagFilters: this.tagFilters,
+        agenda: window ? { window, calendarItems } : undefined,
+      });
+      if (Array.isArray(filters) && filters.length === 0) {
+        this._showEvents(load, [], window);
+        return;
+      }
       const onUpdate = (arr: SignedEvent[]) => this._showEvents(load, arr, window);
-      const { events, readRelays } = await fetchFeedEvents(
-        buildFetchFilters({
-          filters: this.filters,
-          ids: this.ids,
-          authors: this.authors,
-          kinds: resolvedKinds,
-          search: this.search,
-          limit: this.limit ?? (this.agenda ? AGENDA_LIMIT : DEFAULT_LIMIT),
-          since: this.since,
-          until: this.until,
-          filterTags: this.filterTags,
-          tagFilters,
-        }),
-        { relays: this.relays, authors: this.authors, onUpdate }
-      );
+      const { events, readRelays } = await fetchFeedEvents(filters, {
+        relays: this.relays,
+        authors: this.authors,
+        onUpdate,
+      });
 
       // Final deduped list, in case it differs from the progressive updates
       if (load === this._loadCount) this.authorRelays = readRelays;
