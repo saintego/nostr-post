@@ -68,6 +68,12 @@ export {
   ALL_DAY_EVENT_KIND,
   TIMED_EVENT_KIND,
   type DateValue,
+  agendaFilter,
+  groupEventsByDay,
+  eventTiming,
+  eventDates,
+  windowDates,
+  type AgendaWindow,
 } from '@nostr-post/plugin-date';
 
 // Signing & relay utilities
@@ -117,6 +123,7 @@ export { runAfterPublish, runBeforePublish, runPublishHooks, withTags } from '@n
 
 // Composer text (submit button, steps, errors) for overriding via its `messages` property
 export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from '@nostr-post/web';
+export { DEFAULT_FEED_MESSAGES, type FeedMessages } from '@nostr-post/web';
 
 // Wiki (NIP-54 kind:30818)
 export {

@@ -6,18 +6,17 @@
 
 import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
+import { ALL_DAY_EVENT_KIND, agendaDayTags, TIMED_EVENT_KIND } from '@nostr-post/plugin-date';
 import { type FetchFilter, fetchEvents, fetchManifestByATag } from '@nostr-post/signer';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { baseStyles, NostrPostElement } from './baseComponent';
-import { renderEventActions, renderReactionSummary } from './feedActions';
-import {
-  handleCommentPublished as handleCommentPublishedDetail,
-  isReplyComposerOpen,
-  renderReplies,
-} from './feedComments';
+import { renderEventActions } from './feedActions';
+import { renderFeedAgenda } from './feedAgenda';
+import { handleCommentPublished as handleCommentPublishedDetail } from './feedComments';
 import { buildFetchFilters, buildInteractionLoadKey, mergeUniqueEventsById } from './feedData';
-import { publishReaction, summarizeReactionsWithAuthors } from './feedReactions';
+import { DEFAULT_FEED_MESSAGES, type FeedMessages } from './feedMessages';
+import { publishReaction } from './feedReactions';
 import { fetchFeedEvents } from './feedRelays';
 import {
   buildReplyTarget,
@@ -27,10 +26,15 @@ import {
   type ReplyTarget,
 } from './feedStandard';
 import { feedStyle } from './feedStyle';
+import { type FeedThreadContext, renderFeedThread } from './feedThread';
 import type { SignedEvent } from './signer';
 import { displayNameForPubkey, loadProfilesForEvents, type NostrProfile } from './userProfile';
 import './composer';
 import './view';
+
+/** Events asked for by default; an agenda gets more, so a whole window fits */
+const DEFAULT_LIMIT = 20;
+const AGENDA_LIMIT = 500;
 
 @customElement('nostr-post-feed')
 export class NostrPostFeed extends NostrPostElement {
@@ -131,9 +135,35 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Array })
   filters?: FetchFilter[];
 
+  /** Agenda: NIP-52 calendar events of a date window, by day (`#D` filter, sorted by start) */
+  @property({ type: Boolean })
+  agenda?: boolean;
+
+  /** Agenda's first day, `YYYY-MM-DD`. Default: today */
+  @property({ type: String, attribute: 'agenda-from' })
+  agendaFrom?: string;
+
+  /** Agenda's number of days (default 30, at most 366) */
+  @property({ type: Number, attribute: 'agenda-days' })
+  agendaDays?: number;
+
+  /** IANA time zone the agenda's days are in. Default: the viewer's */
+  @property({ type: String, attribute: 'time-zone' })
+  timeZone?: string;
+
+  @property({ type: Object, attribute: false })
+  messages?: Partial<FeedMessages>;
+
+  private get _m(): FeedMessages {
+    return { ...DEFAULT_FEED_MESSAGES, ...this.messages };
+  }
+
+  private get _agendaWindow() {
+    return { from: this.agendaFrom, days: this.agendaDays, tzid: this.timeZone };
+  }
+
   constructor() {
     super();
-    this.limit = 20;
     this.showKind = false;
     this.showTags = false;
     this.commentsEnabled = true;
@@ -165,6 +195,10 @@ export class NostrPostFeed extends NostrPostElement {
       changedProperties.has('filterTags') ||
       changedProperties.has('tagFilters') ||
       changedProperties.has('filters') ||
+      changedProperties.has('agenda') ||
+      changedProperties.has('agendaFrom') ||
+      changedProperties.has('agendaDays') ||
+      changedProperties.has('timeZone') ||
       changedProperties.has('commentsEnabled') ||
       changedProperties.has('reactionsEnabled')
     ) {
@@ -196,6 +230,7 @@ export class NostrPostFeed extends NostrPostElement {
   private shouldLoad(): boolean {
     // Only load if we have at least one meaningful filter set
     return !!(
+      this.agenda ||
       (this.authors && this.authors.length > 0) ||
       (this.kinds && this.kinds.length > 0) ||
       (this.ids && this.ids.length > 0) ||
@@ -230,7 +265,13 @@ export class NostrPostFeed extends NostrPostElement {
         ? this.kinds
         : this.manifest
           ? getManifestAvailableKinds(this.manifest)
-          : [1];
+          : this.agenda
+            ? [ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND]
+            : [1];
+    // Agenda: the window's days as a `#D` filter, and enough events for the whole window
+    const tagFilters = this.agenda
+      ? { ...this.tagFilters, '#D': agendaDayTags(this._agendaWindow) }
+      : this.tagFilters;
 
     try {
       const onUpdate = (arr: SignedEvent[]) => {
@@ -245,11 +286,11 @@ export class NostrPostFeed extends NostrPostElement {
           authors: this.authors,
           kinds: resolvedKinds,
           search: this.search,
-          limit: this.limit,
+          limit: this.limit ?? (this.agenda ? AGENDA_LIMIT : DEFAULT_LIMIT),
           since: this.since,
           until: this.until,
           filterTags: this.filterTags,
-          tagFilters: this.tagFilters,
+          tagFilters,
         }),
         { relays: this.relays, authors: this.authors, onUpdate }
       );
@@ -389,24 +430,34 @@ export class NostrPostFeed extends NostrPostElement {
     }
   }
 
-  render() {
-    if (this.isLoading) {
-      return html`
-        <div class="feed">
-          <div class="loading">Loading...</div>
-        </div>
-      `;
-    }
+  private get _threadContext(): FeedThreadContext {
+    return {
+      manifest: this.manifest,
+      commentManifest: this.commentManifest,
+      excludeFields: this.excludeFields,
+      editable: this.editable,
+      showKind: this.showKind,
+      showTags: this.showTags,
+      activeReplyTarget: this.activeReplyTarget,
+      displayName: (pubkey) => this.displayName(pubkey),
+      renderEventActions: (event, rootEvent) => this.renderEventActions(event, rootEvent),
+      onCommentPublished: (event) => this.handleCommentPublished(event),
+    };
+  }
 
-    if (this.events.length === 0) {
-      return html`
-        <div class="feed">
-          <div class="empty">No posts yet</div>
-        </div>
-      `;
+  render() {
+    const m = this._m;
+    if (this.isLoading) {
+      return html`<div class="feed"><div class="loading">${m.loading}</div></div>`;
     }
 
     const threads = buildThreads(this.events, this.interactionEvents);
+    const ctx = this._threadContext;
+    const body = this.agenda
+      ? renderFeedAgenda(threads, this._agendaWindow, ctx, m.emptyAgenda)
+      : threads.length === 0
+        ? html`<div class="empty">${m.empty}</div>`
+        : threads.map((thread) => renderFeedThread(thread, ctx));
 
     return html`
       <div class="feed">
@@ -415,57 +466,7 @@ export class NostrPostFeed extends NostrPostElement {
             ? html`<div class="status ${this.statusTone}">${this.statusMessage}</div>`
             : ''
         }
-        ${threads.map((thread) => {
-          const reactionSummaryWithAuthors = summarizeReactionsWithAuthors(
-            thread.reactions,
-            (pubkey) => this.displayName(pubkey)
-          );
-          const isReplyComposerVisible = isReplyComposerOpen(
-            this.activeReplyTarget,
-            thread.root.id
-          );
-
-          return html`
-            <div class="event-item">
-              <nostr-post-view
-                .event=${thread.root}
-                .manifest=${this.manifest}
-                .interactionEvents=${thread.replies}
-                .excludeFields=${this.excludeFields}
-                ?editable=${this.editable}
-                .showKind=${this.showKind}
-                .showTags=${this.showTags}
-              ></nostr-post-view>
-              ${renderReactionSummary(reactionSummaryWithAuthors)}
-              ${this.renderEventActions(thread.root, thread.root)}
-              ${
-                isReplyComposerVisible
-                  ? html`
-                    <div class="reply-composer">
-                      <nostr-post-composer
-                        auto-publish
-                        .manifest=${this.commentManifest}
-                        .excludeFields=${this.excludeFields}
-                        .replyToEventId=${this.activeReplyTarget?.replyToEventId}
-                        .replyToPubkey=${this.activeReplyTarget?.replyToPubkey}
-                        .rootEventId=${this.activeReplyTarget?.rootEventId}
-                        .rootPubkey=${this.activeReplyTarget?.rootPubkey}
-                        @nostr-post-published=${this.handleCommentPublished}
-                      ></nostr-post-composer>
-                    </div>
-                  `
-                  : ''
-              }
-              ${renderReplies(
-                thread.root,
-                thread.replies,
-                this.commentManifest,
-                this.excludeFields,
-                (event, rootEvent) => this.renderEventActions(event, rootEvent)
-              )}
-            </div>
-          `;
-        })}
+        ${body}
       </div>
     `;
   }

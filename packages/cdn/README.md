@@ -108,6 +108,8 @@ The bundle re-exports utilities for advanced usage:
 - `CALENDAR_EVENT_MANIFEST`: NIP-52 calendar event, all-day or timed by publish format
 - `formatDateValue(value, locale?)`, `dateValueFromTags(tags, tagName?)`, `dayNumbers(value, precision)`
 - `ALL_DAY_EVENT_KIND` (31922), `TIMED_EVENT_KIND` (31923)
+- Agenda: `agendaFilter(window)` (relay filter of a date window), `groupEventsByDay(events, window)`,
+  `eventTiming(event)`, `eventDates(timing, tzid?)`, `windowDates(window)`, `AgendaWindow`
 - `DateValue`
 
 **Signing & Relays**
@@ -139,6 +141,8 @@ The bundle re-exports utilities for advanced usage:
 
 - `DEFAULT_COMPOSER_MESSAGES`: the composer's submit-area text (button, running step, errors); set
   `composer.messages = { submit: '…' }` to override any of it
+- `DEFAULT_FEED_MESSAGES`: the feed's text (loading, empty, empty agenda); set `feed.messages` to
+  override any of it
 
 **Publishing a submitted post yourself** (composer without `auto-publish`)
 
@@ -376,6 +380,28 @@ This rewrites to a relay query like:
 <nostr-post-feed filter-tags="#g:u09tvw" limit="20"></nostr-post-feed>
 <nostr-post-feed filter-tags="#i:osm:node:123" limit="20"></nostr-post-feed>
 ```
+
+### Agenda (NIP-52 calendar events)
+
+With `agenda`, the feed shows calendar events of a date window under day headings, sorted by
+when they start (not when they were posted). Each version of an event counts once.
+
+```html
+<nostr-post-feed agenda agenda-from="2026-10-21" agenda-days="7"></nostr-post-feed>
+```
+
+- `agenda-from`: first day, `YYYY-MM-DD` (default today); `agenda-days`: number of days (default 30)
+- `time-zone`: IANA time zone of the days (default the viewer's)
+- Kinds: `kinds`, else the manifest's, else 31922 and 31923; `limit` defaults to 500 here
+- Other filters (`authors`, `tagFilters`, …) narrow it down; `filters` replaces the agenda's filter
+
+The days become a `#D` filter, the day tags `@nostr-post/plugin-date` writes:
+
+```json
+{ "kinds": [31922, 31923], "limit": 500, "#D": ["20746", "20747", "…"] }
+```
+
+All-day events from clients that don't write `D` tags aren't found this way.
 
 ### Advanced: Multiple REQ Filters
 

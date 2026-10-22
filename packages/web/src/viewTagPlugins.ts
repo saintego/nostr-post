@@ -1,13 +1,17 @@
 /**
  * Tag values of a post in <nostr-post-view>, rendered by the manifest fields' plugin views
- * (media, hashtags, stars, …). Values the note text already shows are left out.
+ * (media, hashtags, stars, …). Fields with a built-in input (text, number, select) show as
+ * text: a `title` tag as the post's heading, others as "label: value". Values the note text
+ * already shows are left out.
  */
 
+import { fieldOptionLabel } from '@nostr-post/core/enumOptions';
+import { fieldLabel } from '@nostr-post/core/manifest';
 import { getFieldsByKind } from '@nostr-post/core/manifestMappings';
 import { isShownInNote, type NoteToken } from '@nostr-post/core/noteContent';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import type { TemplateResult } from 'lit';
+import { html, type TemplateResult } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 
 type RegisteredPlugin = Exclude<ReturnType<typeof pluginRegistry.get>, undefined>;
@@ -70,10 +74,44 @@ const resolveTagPluginValue = (
   return deserializeTagValue(plugin, field, values[0] ?? '');
 };
 
+/** Inputs of the composer itself, without a plugin view: their values show as text */
+const BUILT_IN_INPUTS = new Set(['text', 'textarea', 'number', 'select']);
+
+const renderPlainTagField = (
+  field: PostField,
+  tagName: string,
+  values: string[]
+): TemplateResult => {
+  const text = values.map((value) => fieldOptionLabel(field, value)).join(', ');
+  return tagName === 'title'
+    ? html`<div class="tag-title">${text}</div>`
+    : html`<div class="tag-row"><span class="tag-label">${fieldLabel(field)}:</span> ${text}</div>`;
+};
+
+/** One field's values: its plugin's view, as text for a built-in input, else nothing */
+const renderTagField = (
+  field: PostField,
+  tagName: string,
+  values: string[],
+  tags: string[][]
+): TemplateResult | undefined => {
+  const plugin = pluginRegistry.get(field.uiPlugin);
+  if (!plugin) {
+    return BUILT_IN_INPUTS.has(field.uiPlugin)
+      ? renderPlainTagField(field, tagName, values)
+      : undefined;
+  }
+  if (!plugin.viewTagName) return undefined;
+  const value = resolveTagPluginValue(plugin, field, values, tags);
+  const viewTag = unsafeStatic(plugin.viewTagName);
+  return staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`;
+};
+
 /**
  * Render tag values using registered plugin view components.
  * Aggregates multi-value tags (hashtags, media) into arrays.
- * Skips fields without a plugin view, hidden in view, or in `excludeFields`.
+ * Skips fields without a plugin view (built-in inputs show as text), hidden in view, or in
+ * `excludeFields`.
  */
 export const renderTagPlugins = ({
   kind,
@@ -84,15 +122,13 @@ export const renderTagPlugins = ({
 }: TagPluginsInput): TemplateResult[] => {
   const fieldMap = tagFieldMap(manifest, kind);
   const results: TemplateResult[] = [];
+  const titles: TemplateResult[] = [];
   for (const [tagName, values] of groupTagValues(tags, fieldMap, tokens)) {
     for (const field of fieldMap.get(tagName) ?? []) {
       if (field.visibility?.view === 'hidden' || excludeFields?.includes(field.id)) continue;
-      const plugin = pluginRegistry.get(field.uiPlugin);
-      if (!plugin?.viewTagName) continue;
-      const value = resolveTagPluginValue(plugin, field, values, tags);
-      const viewTag = unsafeStatic(plugin.viewTagName);
-      results.push(staticHtml`<${viewTag} .value=${value} .field=${field}></${viewTag}>`);
+      const rendered = renderTagField(field, tagName, values, tags);
+      if (rendered) (tagName === 'title' ? titles : results).push(rendered);
     }
   }
-  return results;
+  return [...titles, ...results];
 };

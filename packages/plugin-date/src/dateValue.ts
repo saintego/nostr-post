@@ -144,13 +144,13 @@ export const wallForPrecision = (wall: string, precision: DatePrecision): string
   precision === 'day' ? datePart(wall) : hasTime(wall) ? wall : `${datePart(wall)}T00:00`;
 
 /** Unix day number of a calendar date (days since 1970-01-01), as NIP-52 `D` tags count */
-const dayNumberOfDate = (date: string): number | undefined => {
+export const dayNumberOfDate = (date: string): number | undefined => {
   const parts = parseWall(date);
   return parts ? Math.floor(wallAsUtcSeconds(parts) / SECONDS_PER_DAY) : undefined;
 };
 
 /** `YYYY-MM-DD` of a unix day number */
-const dateOfDayNumber = (day: number): string =>
+export const dateOfDayNumber = (day: number): string =>
   new Date(day * SECONDS_PER_DAY * 1000).toISOString().slice(0, 10);
 
 /** A wall-clock value as stored at a precision: `YYYY-MM-DD`, or unix seconds as a string */

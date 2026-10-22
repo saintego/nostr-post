@@ -56,9 +56,11 @@
         location/`g` via plugin-venue, description, summary, image, `t`); in the manifest creator's examples
   - [ ] Event participants: `p` tags with a role (NIP-52), a profile picker field
   - [ ] Event location as free text or a URL (online events); plugin-venue only takes OpenStreetMap places
-  - [ ] Agenda in `<nostr-post-feed>`: a date window becomes a `#D` relay filter, events sorted by
+  - [x] Agenda in `<nostr-post-feed>` (`agenda`, `agenda-from`, `agenda-days`, `time-zone`): a date window becomes a `#D` relay filter, events sorted by
         start (not `created_at`), grouped under day headings in the viewer's time zone, newest
         version per address only. Logic as framework-free functions in the plugin's main entry
+  - [ ] Agenda navigation: previous/next window buttons, and an event listed once per day it spans
+        shows its reply composer on each of them
   - [ ] Other clients' all-day events (no `D` tag) can only be reached through a scope that bounds
         the set: a calendar (kind 31924 `a` tags), authors, `t` or `g`
   - [ ] Calendars (kind 31924): named lists of event `a` tags, likely on plugin-list; agenda of a calendar

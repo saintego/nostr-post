@@ -24,6 +24,20 @@ export const feedStyle = css`
     margin-bottom: 0.75rem;
   }
 
+  .agenda-date {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    margin: 1.25rem 0 0.5rem;
+    padding-bottom: 0.25rem;
+    border-bottom: 1px solid var(--nl-border, #e5e7eb);
+    color: var(--nl-text, #111827);
+  }
+
+  :host-context(.dark) .agenda-date {
+    color: #f3f4f6;
+    border-bottom-color: #374151;
+  }
+
   .event-actions {
     display: flex;
     align-items: center;

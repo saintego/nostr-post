@@ -31,6 +31,11 @@ interface NostrPostFeedElement extends HTMLElement {
   reactionsEnabled?: boolean;
   reactionOptions?: string[];
   editable?: boolean;
+  agenda?: boolean;
+  agendaFrom?: string;
+  agendaDays?: number;
+  timeZone?: string;
+  messages?: Partial<import('@nostr-post/web').FeedMessages>;
   refresh?: () => Promise<void>;
 }
 
@@ -98,6 +103,16 @@ export interface NostrPostFeedProps {
   reactionOptions?: string[];
   /** Show Edit button on addressable events (30000-39999) */
   editable?: boolean;
+  /** Agenda: NIP-52 calendar events of a date window under day headings, sorted by start */
+  agenda?: boolean;
+  /** Agenda's first day, `YYYY-MM-DD`. Default: today */
+  agendaFrom?: string;
+  /** Agenda's number of days (default 30) */
+  agendaDays?: number;
+  /** IANA time zone of the agenda's days. Default: the viewer's */
+  timeZone?: string;
+  /** Overrides of the feed's text (e.g. translations) */
+  messages?: Partial<import('@nostr-post/web').FeedMessages>;
   /** Called when the user clicks Edit on an addressable event */
   onEditRequest?: (event: import('@nostr-post/web').SignedEvent, dTag: string | undefined) => void;
   /** Custom class name */
@@ -124,11 +139,17 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
     const {
       ids,
       authors,
-      kinds = [1],
+      agenda = false,
+      // An agenda asks for calendar events (or the manifest's kinds) and enough of them
+      kinds = agenda ? undefined : [1],
       since,
       until,
       search,
-      limit = 20,
+      limit = agenda ? undefined : 20,
+      agendaFrom,
+      agendaDays,
+      timeZone,
+      messages,
       relays,
       filterTags,
       tagFilters,
@@ -180,6 +201,11 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       element.reactionsEnabled = reactionsEnabled;
       element.reactionOptions = reactionOptions;
       element.editable = editable;
+      element.agenda = agenda;
+      element.agendaFrom = agendaFrom;
+      element.agendaDays = agendaDays;
+      element.timeZone = timeZone;
+      element.messages = messages;
     };
 
     // Attach edit-request listener via ref

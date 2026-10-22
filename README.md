@@ -391,7 +391,7 @@ override, e.g. for translations.
 - `commentManifest` (defaults to standard kind 1 manifest)
 - `reactionOptions` (defaults to `['+', '❤️', '🔥', '😂']`)
 
-`<nostr-post-feed>` supports direct Nostr filtering (`authors`, `kinds`, `ids`, `since`, `until`, `limit`, `search`) plus universal tag filters via `tagFilters` / `filter-tags` (for example `#g` geohash and `#i` OSM identity tags). It also supports advanced multi-filter `REQ` queries through the `filters` property.
+`<nostr-post-feed>` supports direct Nostr filtering (`authors`, `kinds`, `ids`, `since`, `until`, `limit`, `search`) plus universal tag filters via `tagFilters` / `filter-tags` (for example `#g` geohash and `#i` OSM identity tags). It also supports advanced multi-filter `REQ` queries through the `filters` property, and an `agenda` mode: NIP-52 calendar events of a date window under day headings (`agenda-from`, `agenda-days`, `time-zone`).
 
 Detailed examples: [packages/cdn/README.md](./packages/cdn/README.md)
 

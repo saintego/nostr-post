@@ -47,6 +47,22 @@ relays can return them by day as well.
 | `valueTimeZone(value)`, `defaultTimeZone()`, `isValidTimeZone(tzid)` | Time zone helpers                                       |
 | `isDateValue(value)`, `wallForPrecision(wall, precision)` | Checks and conversions                                              |
 
+### Agenda
+
+| Export                                   | Does                                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------ |
+| `agendaFilter(window, kinds?)`           | Relay filter of a date window: calendar kinds and its `#D` day tags            |
+| `agendaDayTags(window)`                  | The `D` values: UTC days the window's local days touch, plus its own dates     |
+| `groupEventsByDay(events, window)`       | The window's days that have events, all-day first, then by start; one version per event |
+| `eventTiming(event)`, `eventDates(timing, tzid?)` | When an event takes place and on which local dates                    |
+| `windowDates(window)`, `todayIn(tzid?)`  | The window's dates; today's date in a time zone                                |
+| `latestByAddress(events)`                | Newest version of each addressable event                                       |
+| `formatAgendaDate(date, locale?)`        | A day heading, e.g. `Wednesday, October 21, 2026`                              |
+
+A window is `{ from?, days?, tzid? }`: `days` days from `from` (`YYYY-MM-DD`, default today), in
+`tzid` (default the viewer's). `<nostr-post-feed agenda>` in `@nostr-post/web` is built on these;
+a month grid can use the same functions with a month as the window.
+
 `CALENDAR_EVENT_MANIFEST` is ready to use: `<nostr-post-composer .manifest=${CALENDAR_EVENT_MANIFEST}>`.
 Its fields use the `date`, `venue`, `media` and `hashtag` plugins, which the composer loads by
 itself. How to build your own is in [MANIFEST.md](../../MANIFEST.md#dates).

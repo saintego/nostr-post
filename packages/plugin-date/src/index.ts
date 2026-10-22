@@ -15,6 +15,22 @@ export {
 } from './core';
 export { CALENDAR_EVENT_MANIFEST } from './calendarManifest';
 export {
+  type AgendaDay,
+  type AgendaWindow,
+  agendaDayTags,
+  agendaFilter,
+  type CalendarEventLike,
+  DEFAULT_AGENDA_DAYS,
+  type EventTiming,
+  eventDates,
+  eventTiming,
+  formatAgendaDate,
+  groupEventsByDay,
+  latestByAddress,
+  todayIn,
+  windowDates,
+} from './agenda';
+export {
   type DatePrecision,
   type DateValue,
   dayNumbers,
