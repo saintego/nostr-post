@@ -30,8 +30,17 @@ const manifest: NostrPostManifest = {
   ],
 };
 
-const texts = (results: ReturnType<typeof renderTagPlugins>) =>
-  results.map((result) => [...result.strings].join('|') + result.values.join('|'));
+/** A template's text, nested templates included */
+const text = (part: unknown): string => {
+  if (Array.isArray(part)) return part.map(text).join('');
+  if (part && typeof part === 'object' && 'strings' in part && 'values' in part) {
+    const { strings, values } = part as { strings: readonly string[]; values: unknown[] };
+    return strings.map((s, i) => s + (i < values.length ? text(values[i]) : '')).join('');
+  }
+  return part === undefined || part === null ? '' : String(part);
+};
+
+const texts = (results: ReturnType<typeof renderTagPlugins>) => results.map(text);
 
 describe('renderTagPlugins', () => {
   it('shows built-in input fields as text, the title first', () => {
@@ -49,7 +58,30 @@ describe('renderTagPlugins', () => {
     const [title, mood] = texts(results);
     expect(title).toContain('tag-title');
     expect(title).toContain('Festival');
-    expect(mood).toContain('Mood');
+    expect(mood).toContain('Mood:');
     expect(mood).toContain('Calm');
+  });
+
+  it('makes web links in text fields clickable', () => {
+    const linkManifest: NostrPostManifest = {
+      id: 'event',
+      version: '1.0.0',
+      fields: [
+        {
+          id: 'link',
+          type: 'string',
+          uiPlugin: 'text',
+          mapTo: { kind: 31922, target: 'tag', tagName: 'r' },
+          metadata: { label: 'Link' },
+        },
+      ],
+    };
+    const [row] = renderTagPlugins({
+      kind: 31922,
+      manifest: linkManifest,
+      tags: [['r', 'https://meet.example/abc']],
+      tokens: [],
+    });
+    expect(text(row)).toContain('<a href=https://meet.example/abc');
   });
 });

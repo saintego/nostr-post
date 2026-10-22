@@ -66,6 +66,29 @@ export const CALENDAR_EVENT_MANIFEST: NostrPostManifest = {
       },
     },
     {
+      id: 'place',
+      type: 'string',
+      uiPlugin: 'text',
+      // NIP-52 `location` is free text: a room, an address without an OpenStreetMap place, "Online"
+      mapTo: bothKinds({ target: 'tag', tagName: 'location' }),
+      metadata: {
+        label: 'Place details',
+        description: 'A room or address, or "Online"; with or without a location above',
+      },
+    },
+    {
+      id: 'link',
+      type: 'string',
+      uiPlugin: 'text',
+      // NIP-52 `r`: links to web pages, video calls, recordings
+      mapTo: bothKinds({ target: 'tag', tagName: 'r' }),
+      metadata: {
+        label: 'Link',
+        description: 'A video call for online events, tickets or the event page',
+        placeholder: 'https://',
+      },
+    },
+    {
       id: 'description',
       type: 'string',
       uiPlugin: 'textarea',

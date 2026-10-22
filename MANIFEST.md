@@ -132,7 +132,7 @@ fields: [
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`           | Unique within the manifest; the key in form data                                                                                                  |
 | `type`         | Value type for validation                                                                                                                         |
-| `uiPlugin`     | Built-in inputs: `text`, `textarea`, `number` (`metadata.min`/`max`/`step`), `select` (with `options`). Plugins: see [below](#plugin-metadata). The view shows a built-in input's tag as text: `title` as the heading, others as "label: value" |
+| `uiPlugin`     | Built-in inputs: `text`, `textarea`, `number` (`metadata.min`/`max`/`step`), `select` (with `options`). Plugins: see [below](#plugin-metadata). The view shows a built-in input's tag as text: `title` as the heading, others as "label: value", web links clickable |
 | `mapTo`        | Where the value is stored, or an array of places (one per kind)                                                                                   |
 | `mapBehavior`  | With several `mapTo` entries: `first-active` (default) or `all-active` (write to every published kind)                                            |
 | `required`     | The post can't be published without a value                                                                                                       |

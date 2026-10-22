@@ -59,9 +59,11 @@
   - [ ] Event participants: NIP-52 lists people on an event as `p` tags with a role, e.g. `speaker` or
         `host`. Needs a profile picker field (search users by name, pick a profile), which doesn't exist
         yet; mentions could use it too
-  - [ ] Event location as free text or a URL: plugin-venue only takes OpenStreetMap places, but online
-        events need a link (`https://meet…`) and some places just text ("Room 3, 2nd floor"); NIP-52's
-        `location` tag is free text
+  - [x] Event location as free text or a URL: `CALENDAR_EVENT_MANIFEST` has "Place details" (NIP-52
+        `location` text: a room, an address, "Online") and "Link" (`r`: video call, tickets, event page)
+        next to the OpenStreetMap venue; the venue reads its name from its own, last, `location` tag;
+        the view makes web links in text fields clickable
+  - [ ] Several links per event (the Link field takes one)
   - [x] Link an event's venue to its wiki page (venue hub, `metadata.wikiEntity`): the manifest creator's
         `calendar-event` example adds it to `CALENDAR_EVENT_MANIFEST`'s location (the package can't name
         the app's `venue-entity-v1`)

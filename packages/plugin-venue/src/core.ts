@@ -462,8 +462,10 @@ export const venuePlugin: NostrUIPlugin = {
       }
     }
 
-    // Extract human-readable location
-    const locationTag = tags.find((t) => t[0] === 'location' && t[1]);
+    // Extract human-readable location: the last `location` tag, the venue's own (posts write
+    // their fields' tags first, then plugins' extra tags; e.g. a calendar event's free-text
+    // place comes before it)
+    const locationTag = [...tags].reverse().find((t) => t[0] === 'location' && t[1]);
     if (locationTag) {
       venue.name = locationTag[1];
     }

@@ -46,6 +46,21 @@ describe('CALENDAR_EVENT_MANIFEST', () => {
     );
   });
 
+  it('writes the free-text place and the link as NIP-52 location and r tags', () => {
+    const result = coordinateEvents(
+      CALENDAR_EVENT_MANIFEST,
+      { ...formData, place: 'Online', link: 'https://meet.example/abc' },
+      config
+    );
+    if (!result.success) throw new Error(JSON.stringify(result.error));
+    expect(result.data.events[0]?.tags).toEqual(
+      expect.arrayContaining([
+        ['location', 'Online'],
+        ['r', 'https://meet.example/abc'],
+      ])
+    );
+  });
+
   it('publishes a timed event with the timed format', () => {
     const result = coordinateEvents(CALENDAR_EVENT_MANIFEST, formData, {
       ...config,

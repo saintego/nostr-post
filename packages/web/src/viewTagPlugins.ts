@@ -82,10 +82,17 @@ const renderPlainTagField = (
   tagName: string,
   values: string[]
 ): TemplateResult => {
-  const text = values.map((value) => fieldOptionLabel(field, value)).join(', ');
-  return tagName === 'title'
-    ? html`<div class="tag-title">${text}</div>`
-    : html`<div class="tag-row"><span class="tag-label">${fieldLabel(field)}:</span> ${text}</div>`;
+  if (tagName === 'title') {
+    return html`<div class="tag-title">${values.map((v) => fieldOptionLabel(field, v)).join(', ')}</div>`;
+  }
+  // Web links open; other values show as text
+  const shown = values.map((value, index) => {
+    const separator = index > 0 ? ', ' : '';
+    return /^https?:\/\/\S+$/.test(value)
+      ? html`${separator}<a href=${value} target="_blank" rel="noopener noreferrer">${value}</a>`
+      : html`${separator}${fieldOptionLabel(field, value)}`;
+  });
+  return html`<div class="tag-row"><span class="tag-label">${fieldLabel(field)}:</span> ${shown}</div>`;
 };
 
 /** One field's values: its plugin's view, as text for a built-in input, else nothing */

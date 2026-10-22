@@ -36,7 +36,7 @@ relays can return them by day as well.
 
 | Export                                      | Does                                                                              |
 | ------------------------------------------- | --------------------------------------------------------------------------------- |
-| `CALENDAR_EVENT_MANIFEST`                   | NIP-52 calendar event: title, date, location (venue), description, summary, image, tags; all-day or timed by publish format |
+| `CALENDAR_EVENT_MANIFEST`                   | NIP-52 calendar event: title, date, location (venue), place details (`location` text), link (`r`), description, summary, image, tags; all-day or timed by publish format |
 | `datePlugin`                                | The plugin: `validate`, `serializeValue`, `extraTags`, `resolveFromTags`          |
 | `datePrecision(field, activeKinds?)`        | `'day'` or `'time'` for the kind the field writes                                 |
 | `calendarExtraTags(value, precision)`       | `end`, time zone and `D` tags of a calendar event                                 |
