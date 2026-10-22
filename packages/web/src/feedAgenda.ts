@@ -17,13 +17,22 @@ import type { FeedThread } from './feedStandard';
 import { type FeedThreadContext, renderFeedThread } from './feedThread';
 
 export interface FeedAgendaOptions {
+  /** Window the buttons show and move */
   window: AgendaWindow;
+  /** Window the threads were loaded for; while the next one loads, its days stay shown */
+  shownWindow?: AgendaWindow;
+  loading: boolean;
   messages: FeedMessages;
   /** Show the window starting at `from` (`YYYY-MM-DD`; undefined: today) */
   onMove: (from: string | undefined) => void;
 }
 
-const renderAgendaNav = ({ window, messages, onMove }: FeedAgendaOptions): TemplateResult => html`
+const renderAgendaNav = ({
+  window,
+  loading,
+  messages,
+  onMove,
+}: FeedAgendaOptions): TemplateResult => html`
   <nav class="agenda-nav" aria-label=${messages.agendaNavigation}>
     <button type="button" @click=${() => onMove(shiftWindow(window, -1))}>
       ‹ ${messages.previous}
@@ -33,6 +42,7 @@ const renderAgendaNav = ({ window, messages, onMove }: FeedAgendaOptions): Templ
       ${messages.next} ›
     </button>
     <span class="agenda-range">${formatWindowRange(window)}</span>
+    <span class="agenda-loading" role="status">${loading ? messages.loading : ''}</span>
   </nav>
 `;
 
@@ -41,11 +51,14 @@ export const renderFeedAgenda = (
   ctx: FeedThreadContext,
   options: FeedAgendaOptions
 ): TemplateResult => {
+  const { shownWindow, loading, messages } = options;
   const threadByRoot = new Map(threads.map((thread) => [thread.root, thread]));
-  const days = groupEventsByDay(
-    threads.map((thread) => thread.root),
-    options.window
-  );
+  const days = shownWindow
+    ? groupEventsByDay(
+        threads.map((thread) => thread.root),
+        shownWindow
+      )
+    : [];
   // An event spanning several days opens its reply composer only on its first day
   const shown = new Set<FeedThread>();
   const renderOnce = (thread: FeedThread) => {
@@ -56,20 +69,24 @@ export const renderFeedAgenda = (
 
   return html`
     ${renderAgendaNav(options)}
-    ${
-      days.length === 0
-        ? html`<div class="empty">${options.messages.emptyAgenda}</div>`
-        : days.map(
-            ({ date, events }) => html`
-              <section class="agenda-day">
-                <h3 class="agenda-date">${formatAgendaDate(date)}</h3>
-                ${events.map((event) => {
-                  const thread = threadByRoot.get(event);
-                  return thread ? renderOnce(thread) : '';
-                })}
-              </section>
-            `
-          )
-    }
+    <div class="agenda-days ${loading ? 'stale' : ''}" aria-busy=${loading ? 'true' : 'false'}>
+      ${
+        days.length === 0
+          ? loading
+            ? ''
+            : html`<div class="empty">${messages.emptyAgenda}</div>`
+          : days.map(
+              ({ date, events }) => html`
+                <section class="agenda-day">
+                  <h3 class="agenda-date">${formatAgendaDate(date)}</h3>
+                  ${events.map((event) => {
+                    const thread = threadByRoot.get(event);
+                    return thread ? renderOnce(thread) : '';
+                  })}
+                </section>
+              `
+            )
+      }
+    </div>
   `;
 };

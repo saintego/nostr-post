@@ -398,7 +398,8 @@ when they start (not when they were posted). Each version of an event counts onc
 - Kinds: `kinds`, else the manifest's, else 31922 and 31923; `limit` defaults to 500 here
 - Other filters (`authors`, `tagFilters`, …) narrow it down; `filters` replaces the agenda's filter
 - Previous / Today / Next buttons move the window; the feed then fires `nostr-post-agenda-change`
-  with `{ from, days }` (`from` undefined: today)
+  with `{ from, days }` (`from` undefined: today). While the new window loads, the buttons and the
+  previous window's days stay shown (dimmed), next to the `loading` message
 - With a calendar manifest, each event shows Going / Maybe / Can't go with counts (`<np-rsvp>`)
 
 The days become a `#D` filter, the day tags `@nostr-post/plugin-date` writes:

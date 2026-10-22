@@ -72,7 +72,9 @@
   - [x] Agenda navigation: Previous / Today / Next buttons move the date window (`shiftWindow`), the
         `nostr-post-agenda-change` event reports it; an event spanning several days opens its reply
         composer on its first day only
-  - [ ] Agenda: keep the buttons and days shown while the next window loads (the feed shows "Loading" now)
+  - [x] Agenda: keep the buttons and days shown while the next window loads: the previous window's
+        days stay (dimmed, `aria-busy`) with their comments until the new events arrive, the
+        `loading` message next to the buttons; a slower earlier load no longer overwrites a later one
   - [ ] Calendars (kind 31924): a named list of events someone publishes, e.g. "Prague tech meetups". It
         points to events by address (`a` tags), anyone's events, not only the publisher's: a bookmark
         list for events, close to plugin-list's bookmark sets (NIP-51). Brings:

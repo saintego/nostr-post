@@ -1,6 +1,28 @@
 import type { FetchFilter } from '@nostr-post/signer';
 import type { SignedEvent } from './signer';
 
+/** <nostr-post-feed> properties that change what it loads */
+export const FEED_LOAD_PROPERTIES = [
+  'authors',
+  'kinds',
+  'ids',
+  'limit',
+  'since',
+  'until',
+  'search',
+  'relays',
+  'manifest',
+  'filterTags',
+  'tagFilters',
+  'filters',
+  'agenda',
+  'agendaFrom',
+  'agendaDays',
+  'timeZone',
+  'commentsEnabled',
+  'reactionsEnabled',
+];
+
 export const parseFilterTags = (input?: string): Record<string, string[]> => {
   if (!input) return {};
 

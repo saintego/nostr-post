@@ -59,6 +59,21 @@ export const feedStyle = css`
     color: #9ca3af;
   }
 
+  .agenda-loading {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+
+  :host-context(.dark) .agenda-loading {
+    color: #9ca3af;
+  }
+
+  /* The previous window's days, while the next window loads */
+  .agenda-days.stale {
+    opacity: 0.5;
+    transition: opacity 0.15s;
+  }
+
   .agenda-date {
     font-size: 0.9375rem;
     font-weight: 600;

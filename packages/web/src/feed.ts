@@ -6,7 +6,12 @@
 
 import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { ALL_DAY_EVENT_KIND, agendaDayTags, TIMED_EVENT_KIND } from '@nostr-post/plugin-date';
+import {
+  type AgendaWindow,
+  ALL_DAY_EVENT_KIND,
+  agendaDayTags,
+  TIMED_EVENT_KIND,
+} from '@nostr-post/plugin-date';
 import { type FetchFilter, fetchEvents, fetchManifestByATag } from '@nostr-post/signer';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -14,7 +19,12 @@ import { baseStyles, NostrPostElement } from './baseComponent';
 import { renderEventActions } from './feedActions';
 import { renderFeedAgenda } from './feedAgenda';
 import { handleCommentPublished as handleCommentPublishedDetail } from './feedComments';
-import { buildFetchFilters, buildInteractionLoadKey, mergeUniqueEventsById } from './feedData';
+import {
+  buildFetchFilters,
+  buildInteractionLoadKey,
+  FEED_LOAD_PROPERTIES,
+  mergeUniqueEventsById,
+} from './feedData';
 import { DEFAULT_FEED_MESSAGES, type FeedMessages } from './feedMessages';
 import { publishReaction } from './feedReactions';
 import { fetchFeedEvents } from './feedRelays';
@@ -122,6 +132,13 @@ export class NostrPostFeed extends NostrPostElement {
 
   private interactionLoadKey = '';
 
+  /** Counts loads, so a slower earlier load doesn't overwrite a later one */
+  private _loadCount = 0;
+
+  /** Agenda window the shown events were loaded for; kept on screen while the next one loads */
+  @state()
+  private _shownWindow?: AgendaWindow;
+
   @property({ type: Object })
   tagFilters?: Record<string, string[]>;
 
@@ -182,29 +199,8 @@ export class NostrPostFeed extends NostrPostElement {
   }
 
   updated(changedProperties: Map<string, unknown>) {
-    if (
-      changedProperties.has('authors') ||
-      changedProperties.has('kinds') ||
-      changedProperties.has('ids') ||
-      changedProperties.has('limit') ||
-      changedProperties.has('since') ||
-      changedProperties.has('until') ||
-      changedProperties.has('search') ||
-      changedProperties.has('relays') ||
-      changedProperties.has('manifest') ||
-      changedProperties.has('filterTags') ||
-      changedProperties.has('tagFilters') ||
-      changedProperties.has('filters') ||
-      changedProperties.has('agenda') ||
-      changedProperties.has('agendaFrom') ||
-      changedProperties.has('agendaDays') ||
-      changedProperties.has('timeZone') ||
-      changedProperties.has('commentsEnabled') ||
-      changedProperties.has('reactionsEnabled')
-    ) {
-      if (this.shouldLoad()) {
-        this.loadEvents();
-      }
+    if (FEED_LOAD_PROPERTIES.some((name) => changedProperties.has(name)) && this.shouldLoad()) {
+      this.loadEvents();
     }
 
     if (changedProperties.has('manifestRef')) {
@@ -256,10 +252,24 @@ export class NostrPostFeed extends NostrPostElement {
     void this.loadInteractionsAndProfiles(events);
   }
 
+  /** Shows a load's events; the previous events (and their comments) stay until then */
+  private _showEvents(load: number, events: SignedEvent[], window?: AgendaWindow): boolean {
+    if (load !== this._loadCount) return false;
+    if (this.isLoading) {
+      this.interactionEvents = [];
+      this.interactionLoadKey = '';
+    }
+    this.events = events;
+    this._shownWindow = window;
+    this.isLoading = false;
+    this.scheduleInteractionsAndProfiles(events);
+    return true;
+  }
+
   private async loadEvents() {
+    const load = ++this._loadCount;
+    const window = this.agenda ? this._agendaWindow : undefined;
     this.isLoading = true;
-    this.interactionEvents = [];
-    this.interactionLoadKey = '';
     const resolvedKinds =
       this.kinds && this.kinds.length > 0
         ? this.kinds
@@ -274,11 +284,7 @@ export class NostrPostFeed extends NostrPostElement {
       : this.tagFilters;
 
     try {
-      const onUpdate = (arr: SignedEvent[]) => {
-        this.events = arr;
-        this.isLoading = false;
-        this.scheduleInteractionsAndProfiles(arr);
-      };
+      const onUpdate = (arr: SignedEvent[]) => this._showEvents(load, arr, window);
       const { events, readRelays } = await fetchFeedEvents(
         buildFetchFilters({
           filters: this.filters,
@@ -295,20 +301,12 @@ export class NostrPostFeed extends NostrPostElement {
         { relays: this.relays, authors: this.authors, onUpdate }
       );
 
-      // Ensure final deduped list
-      this.authorRelays = readRelays;
-      this.events = events;
-      this.isLoading = false;
-
-      // Ensure we process final root set if it differs from progressive updates
-      this.scheduleInteractionsAndProfiles(events);
+      // Final deduped list, in case it differs from the progressive updates
+      if (load === this._loadCount) this.authorRelays = readRelays;
+      this._showEvents(load, events, window);
     } catch (error) {
       console.error('Failed to load events:', error);
-      this.events = [];
-      this.interactionEvents = [];
-      this.interactionLoadKey = '';
-    } finally {
-      this.isLoading = false;
+      this._showEvents(load, [], window);
     }
   }
 
@@ -453,7 +451,7 @@ export class NostrPostFeed extends NostrPostElement {
 
   render() {
     const m = this._m;
-    if (this.isLoading) {
+    if (this.isLoading && !this.agenda) {
       return html`<div class="feed"><div class="loading">${m.loading}</div></div>`;
     }
 
@@ -462,6 +460,8 @@ export class NostrPostFeed extends NostrPostElement {
     const body = this.agenda
       ? renderFeedAgenda(threads, ctx, {
           window: this._agendaWindow,
+          shownWindow: this._shownWindow,
+          loading: this.isLoading,
           messages: m,
           onMove: (from) => this._moveAgenda(from),
         })
