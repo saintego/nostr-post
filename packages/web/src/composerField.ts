@@ -117,6 +117,7 @@ export function renderFieldInput(
         .field=${field}
         .manifest=${ctx.manifest}
         .activeKinds=${ctx.activeKinds}
+        .error=${ctx.errors[field.id]}
         .pubkey=${ctx.pubkey}
         @np-value-changed=${(e: CustomEvent) => ctx.onFieldChange(field.id, e.detail.value)}
       ></${tag}>`;

@@ -77,8 +77,9 @@ Defines `<np-date-input>` and `<np-date-view>` and registers the plugin with the
 loads it by itself for manifests with `uiPlugin: 'date'`.
 
 - `<np-date-input>`: `.value`, `.field`, `.activeKinds` (from the composer: a date picker for
-  all-day, date-time pickers and a time zone for timed), an optional end. Dispatches
-  `np-value-changed`.
+  all-day, date-time pickers and a time zone for timed), an optional end that can't be set before
+  the start (`min`, and a message while it is), `.error` (the composer's error; the input's own
+  message hides while it shows). Dispatches `np-value-changed`.
 - `<np-date-view>`: the value in the viewer's locale, with the time zone of timed values.
 
 Both take `messages` (`Partial<DateMessages>`, defaults in `DEFAULT_DATE_MESSAGES`) for

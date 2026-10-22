@@ -405,6 +405,7 @@ interface NostrUIPlugin {
 | `.manifest` | `NostrPostManifest` | The whole manifest, for inputs that use other fields (e.g. `saveField`)   |
 | `.pubkey`   | `string`            | The author, when the composer knows it (its `pubkey`), so inputs needing the user's data don't ask the signer |
 | `.activeKinds` | `number[]`        | Kinds the selected publish format writes, e.g. the date input shows a date or a time by them |
+| `.error`    | `string \| undefined` | The composer's validation error for the field, shown under it; an input with its own live message hides that one meanwhile |
 
 | Event              | Detail               | When                                  |
 | ------------------ | -------------------- | ------------------------------------- |

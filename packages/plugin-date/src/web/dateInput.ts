@@ -89,6 +89,8 @@ export class NpDateInput extends LitElement {
   /** Kinds of the composer's selected publish format */
   @property({ type: Array }) activeKinds?: number[];
   @property({ type: Object }) messages: Partial<DateMessages> = {};
+  /** The composer's error for the field: shown there, so the input doesn't repeat it */
+  @property({ type: String }) error?: string;
 
   @state() private _endShown = false;
 
@@ -141,7 +143,7 @@ export class NpDateInput extends LitElement {
                 <input
                   type=${type}
                   min=${shown(this.value?.start)}
-                  aria-invalid=${endTooEarly ? 'true' : 'false'}
+                  aria-invalid=${endTooEarly || this.error ? 'true' : 'false'}
                   .value=${shown(this.value?.end)}
                   @change=${onDate('end')}
                 />
@@ -169,7 +171,7 @@ export class NpDateInput extends LitElement {
             : ''
         }
       </div>
-      ${endTooEarly ? html`<p class="error" role="alert">${m.endBeforeStart}</p>` : ''}
+      ${endTooEarly && !this.error ? html`<p class="error" role="alert">${m.endBeforeStart}</p>` : ''}
     `;
   }
 }
