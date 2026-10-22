@@ -156,8 +156,10 @@ export const googleMapsUrl = (lat: number, lon: number): string =>
 export const searchNominatim = async (
   query: string,
   levels: VenueLevel[] = ['place'],
-  /** Only results in a small box around this point (e.g. from a pasted Google Maps link) */
-  near?: { lat: number; lon: number }
+  /** Only results in a box around this point (e.g. from a pasted Google Maps link) */
+  near?: { lat: number; lon: number },
+  /** Half the box's side in degrees; default ~300 m */
+  nearDegrees = 0.003
 ): Promise<NominatimResult[]> => {
   const url = new URL('https://nominatim.openstreetmap.org/search');
   url.searchParams.set('q', query);
@@ -168,7 +170,7 @@ export const searchNominatim = async (
   const featureType = searchFeatureType(levels);
   if (featureType) url.searchParams.set('featureType', featureType);
   if (near) {
-    const d = 0.003; // ~300 m
+    const d = nearDegrees;
     url.searchParams.set(
       'viewbox',
       `${near.lon - d},${near.lat + d},${near.lon + d},${near.lat - d}`

@@ -4,7 +4,7 @@
  * will be created, updated or just linked, with the checkbox to opt out. For a
  * new page it shows the slug (it can't be changed later) as an editable input
  * with its availability, plus suggested details when another venue has it, and
- * the other map's link (Google Maps for an OSM venue, OSM for a Google one).
+ * an optional Google Maps link for a venue from OpenStreetMap.
  */
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
@@ -20,12 +20,7 @@ import {
 import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { VenueData } from '../core';
-import {
-  missingVenueLink,
-  type VenueLinkKind,
-  type VenueLinkProblem,
-  venueLinkChange,
-} from '../venueLinks';
+import { type GoogleLinkProblem, googleLinkChange, lacksGoogleLink } from '../venueLinks';
 import {
   OSM_COPYRIGHT_URL,
   slugBody,
@@ -54,10 +49,8 @@ export class NpVenueWikiPublish extends LitElement {
 
   @state() private _plan: Plan = { kind: 'checking' };
   @state() private _slug: DTagAvailability | 'checking' = 'checking';
-  /** The other map's link as typed; its kind stays while there's text (the venue then has it) */
-  @state() private _link: { kind?: VenueLinkKind; text: string; problem?: VenueLinkProblem } = {
-    text: '',
-  };
+  /** The Google Maps link as typed (the field stays while there's text: the venue then has it) */
+  @state() private _link: { text: string; problem?: GoogleLinkProblem } = { text: '' };
   private _plannedKey = '';
   private _checkedDTag = '';
   private _planId = 0;
@@ -207,31 +200,30 @@ export class NpVenueWikiPublish extends LitElement {
     `;
   }
 
-  /** For a new page: the link of the map the venue isn't from, e.g. Google Maps for an OSM venue */
-  private _renderExtraLink() {
+  /** For a new page of a venue from OSM: its Google Maps link */
+  private _renderGoogleLink() {
     if (!this._venue) return nothing;
-    const kind = this._link.text ? this._link.kind : missingVenueLink(this._venue);
-    if (!kind || (this._plan.kind !== 'create' && !this._link.text)) return nothing;
+    const { text, problem } = this._link;
+    if (!text && (this._plan.kind !== 'create' || !lacksGoogleLink(this._venue))) return nothing;
     const m = this._m;
-    const { problem } = this._link;
-    const note = problem === 'short' ? m.googleShortLink : problem && m.extraLinkInvalid(kind);
+    const note = problem === 'short' ? m.googleShortLink : problem && m.googleLinkInvalid;
     return html`
       <label class="extra-link">
-        ${m.extraLinkLabel(kind)}
+        ${m.googleLinkLabel}
         <input
           type="url"
-          .value=${this._link.text}
-          placeholder=${m.extraLinkPlaceholder(kind)}
-          @input=${(e: InputEvent) => this._setLink(kind, (e.target as HTMLInputElement).value)}
+          .value=${text}
+          placeholder=${m.googleLinkPlaceholder}
+          @input=${(e: InputEvent) => this._setLink((e.target as HTMLInputElement).value)}
         />
       </label>
       ${note ? html`<div class="link-note">${note}</div>` : nothing}
     `;
   }
 
-  private _setLink(kind: VenueLinkKind, text: string): void {
-    const result = venueLinkChange(kind, text);
-    this._link = { kind, text, problem: 'problem' in result ? result.problem : undefined };
+  private _setLink(text: string): void {
+    const result = googleLinkChange(text);
+    this._link = { text, problem: 'problem' in result ? result.problem : undefined };
     if ('change' in result) this._emit(result.change);
   }
 
@@ -290,7 +282,7 @@ export class NpVenueWikiPublish extends LitElement {
         ${
           checked
             ? html`<p class="plan">${this._planText()}</p>
-                ${this._renderSlug()}${this._renderExtraLink()}`
+                ${this._renderSlug()}${this._renderGoogleLink()}`
             : nothing
         }
         <div class="attribution">

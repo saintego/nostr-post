@@ -158,6 +158,11 @@ export class NpVenueInput extends LitElement {
     this.searchQuery = (e.target as HTMLInputElement).value;
     if (this.searchTimeout) clearTimeout(this.searchTimeout);
 
+    if (!this.searchQuery.trim()) {
+      // A cleared search box drops a pasted Google link too
+      this._googleLink = undefined;
+      this._googleNote = undefined;
+    }
     if (this.searchQuery.length < 3) {
       this.searchResults = [];
       this.showResults = false;
@@ -171,6 +176,8 @@ export class NpVenueInput extends LitElement {
     if (this.searchQuery.length < 3) return;
     const link = parseGoogleMapsUrl(this.searchQuery);
     if (link) return this._searchGoogleLink(link);
+    // Searching by name for a pasted Google link's place: the link goes with the picked place
+    if (this._googleLink) this._googleNote = this.m.googleLinkKept;
     this.isSearching = true;
     this.showResults = true;
     try {
@@ -188,13 +195,14 @@ export class NpVenueInput extends LitElement {
     this._googleLink = link.short ? undefined : link;
     this.showResults = true;
     this.isSearching = true;
-    this.searchResults = link.short
-      ? []
-      : await searchGoogleLink(link, this.levels).catch(() => []);
+    const { results, spot } = link.short
+      ? { results: [], spot: false }
+      : await searchGoogleLink(link, this.levels).catch(() => ({ results: [], spot: false }));
+    this.searchResults = results;
     this.isSearching = false;
     if (link.short) this._googleNote = this.m.googleShortLink;
-    else
-      this._googleNote = this.searchResults.length ? undefined : this.m.googleNotOnOsm(link.name);
+    else if (results.length === 0) this._googleNote = this.m.googleNotOnOsm(link.name);
+    else this._googleNote = spot ? undefined : this.m.googleNearby(link.name);
   }
 
   private onSearchKeydown(e: KeyboardEvent) {
@@ -209,7 +217,9 @@ export class NpVenueInput extends LitElement {
   private selectResult(result: NominatimResult) {
     this.resolvedOsmId = null; // Reset resolution tracking since we have complete data
     const venue = nominatimToVenue(result, this.precision);
-    this.emitValue({ ...venue, googleCid: this._googleLink?.cid });
+    // A pasted link's CID, or the CID of a venue set on the map from one (now found on OSM)
+    const fromLink = this.value && !this.value.osmId ? this.value.googleCid : undefined;
+    this.emitValue({ ...venue, googleCid: this._googleLink?.cid ?? fromLink });
     this._googleLink = undefined;
     this._googleNote = undefined;
     this.searchQuery = '';
