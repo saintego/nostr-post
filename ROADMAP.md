@@ -67,6 +67,7 @@
   - [ ] RSVP (kind 31925): accepted/tentative/declined (+ free/busy) on an event, attendee counts
   - [ ] Propose `D` tags for kind 31922 to NIP-52
 - [ ] calendar view: month grid on the same day-grouping functions as the agenda
+- [ ] rich media preview - youtube with play, spotify/bandcamp/soundcloud with playlist if possible
 - [ ] P2P offers support (NIP-69) with filtered feed presets/views
 - [ ] Zap support (NIP-57): zap requests/receipts with amount + payer views and filtering
 - [ ] Add scenario manifests for:
