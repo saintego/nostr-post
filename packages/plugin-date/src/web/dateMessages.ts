@@ -9,6 +9,8 @@ export interface DateMessages {
   addEnd: string;
   removeEnd: string;
   timeZone: string;
+  /** Shown while the end is before the start */
+  endBeforeStart: string;
 }
 
 export const DEFAULT_DATE_MESSAGES: DateMessages = {
@@ -17,4 +19,5 @@ export const DEFAULT_DATE_MESSAGES: DateMessages = {
   addEnd: 'Add end',
   removeEnd: 'Remove end',
   timeZone: 'Time zone',
+  endBeforeStart: 'The end is before the start',
 };

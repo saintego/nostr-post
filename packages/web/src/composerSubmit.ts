@@ -6,7 +6,7 @@
 import { coordinateEvents } from '@nostr-post/core/coordinator';
 import { prepareFormData } from '@nostr-post/core/enrichment';
 import { fieldLabel, validateManifest } from '@nostr-post/core/manifest';
-import { getActiveKinds } from '@nostr-post/core/manifestMappings';
+import { getActiveKinds, getFieldTargets } from '@nostr-post/core/manifestMappings';
 import {
   type EventBundle,
   type FormData as NostrFormData,
@@ -65,6 +65,32 @@ export interface FieldValidationErrors {
 
 export type ValidationResult = ManifestValidationError | FieldValidationErrors | null;
 
+/**
+ * Plugins' own checks (their `validate` hook) of the fields that have a value, e.g. a date's
+ * end not before its start. Each field is checked as written for the selected format: its
+ * `mapTo` narrowed to the active kinds. Returns errors by field id.
+ */
+export const validateWithPlugins = (
+  manifest: NostrPostManifest,
+  formData: Record<string, unknown>,
+  selectedFormatId?: string
+): Record<string, string> => {
+  const activeKinds = getActiveKinds(manifest, { selectedFormatId: selectedFormatId || undefined });
+  const errors: Record<string, string> = {};
+  for (const field of manifest.fields) {
+    const value = formData[field.id];
+    const validate = pluginRegistry.get(field.uiPlugin)?.validate;
+    if (value === undefined || !validate) continue;
+    const activeTargets = getFieldTargets(field).filter((t) => activeKinds.includes(t.kind));
+    const result = validate(
+      value,
+      activeTargets.length > 0 ? { ...field, mapTo: activeTargets } : field
+    );
+    if (!result.success) errors[field.id] = result.error.message;
+  }
+  return errors;
+};
+
 export const validateAndCoordinate = (
   manifest: NostrPostManifest,
   formData: NostrFormData,
@@ -91,6 +117,11 @@ export const validateAndCoordinate = (
   const enrichedData = prepareFormData(manifest, formData, (pluginId) =>
     pluginRegistry.get(pluginId)
   );
+
+  const pluginErrors = validateWithPlugins(manifest, enrichedData, opts.selectedFormatId);
+  if (Object.keys(pluginErrors).length > 0) {
+    return { validationError: { type: 'fields', errors: pluginErrors } };
+  }
 
   const addressableDTag = resolveAddressableDTag(manifest, opts.selectedFormatId, opts.dTag);
 

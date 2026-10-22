@@ -130,7 +130,10 @@ export interface NostrUIPlugin {
   id: string;
   type: FieldType | FieldType[];
 
-  /** Validate field value */
+  /**
+   * Validate field value. The composer runs it on submit for fields with a value, with the
+   * field's mapTo narrowed to the selected publish format's kinds; an error blocks publishing.
+   */
   validate?: (value: unknown, field: PostField) => Result<void, ValidationError>;
 
   /** Format value for display as plain text */

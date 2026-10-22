@@ -11,7 +11,7 @@ import type { PostField } from '@nostr-post/plugins/types';
 import { css, html, LitElement } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { datePrecision } from '../core';
-import { type DateValue, defaultTimeZone, wallForPrecision } from '../dateValue';
+import { type DateValue, defaultTimeZone, endsBeforeStart, wallForPrecision } from '../dateValue';
 import { type DateMessages, DEFAULT_DATE_MESSAGES } from './dateMessages';
 
 @customElement('np-date-input')
@@ -46,6 +46,12 @@ export class NpDateInput extends LitElement {
 
     .tz {
       width: 12rem;
+    }
+
+    .error {
+      margin: 0.375rem 0 0;
+      font-size: 0.8125rem;
+      color: #dc2626;
     }
 
     button {
@@ -100,6 +106,7 @@ export class NpDateInput extends LitElement {
     const endShown = this._endShown || Boolean(this.value?.end);
     const onDate = (key: 'start' | 'end') => (e: Event) =>
       this._update({ [key]: (e.target as HTMLInputElement).value }, timed);
+    const endTooEarly = this.value ? endsBeforeStart(this.value, precision) : false;
 
     return html`
       <div class="row">
@@ -112,7 +119,13 @@ export class NpDateInput extends LitElement {
             ? html`
               <label>
                 ${m.end}
-                <input type=${type} .value=${shown(this.value?.end)} @change=${onDate('end')} />
+                <input
+                  type=${type}
+                  min=${shown(this.value?.start)}
+                  aria-invalid=${endTooEarly ? 'true' : 'false'}
+                  .value=${shown(this.value?.end)}
+                  @change=${onDate('end')}
+                />
               </label>
               <button type="button" @click=${this._removeEnd}>${m.removeEnd}</button>
             `
@@ -137,6 +150,7 @@ export class NpDateInput extends LitElement {
             : ''
         }
       </div>
+      ${endTooEarly ? html`<p class="error" role="alert">${m.endBeforeStart}</p>` : ''}
     `;
   }
 }

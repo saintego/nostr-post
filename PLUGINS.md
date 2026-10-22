@@ -313,6 +313,8 @@ interface NostrUIPlugin {
   type: FieldType | FieldType[]; // 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date'
 
   // Core (no DOM)
+  // The composer runs it on submit for fields with a value; the field's mapTo is narrowed to
+  // the selected publish format's kinds. An error blocks publishing and shows at the field.
   validate?(value: unknown, field: PostField): Result<void, ValidationError>;
   formatValue?(value: unknown): string;
   serializeValue?(value: unknown): string;
