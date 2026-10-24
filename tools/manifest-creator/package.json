@@ -32,7 +32,7 @@
     "@nostr-post/wiki": "workspace:*",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "next": "^16.4.0",
+    "next": "^16.4.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "typescript": "^6.0.3"
