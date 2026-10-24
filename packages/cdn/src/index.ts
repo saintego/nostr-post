@@ -17,6 +17,8 @@ import '@nostr-post/web';
 // ── All plugins (side-effect: defines custom elements + registers plugins) ──
 import '@nostr-post/plugin-stars/web';
 import '@nostr-post/plugin-geo/web';
+import '@nostr-post/plugin-date/web';
+import '@nostr-post/plugin-profile/web';
 import '@nostr-post/plugin-venue/web';
 import '@nostr-post/plugin-media/web';
 import '@nostr-post/plugin-reference/web';
@@ -56,6 +58,46 @@ export {
   type GeoPluginConfig,
   type GeoCoordinates,
 } from '@nostr-post/plugin-geo';
+
+// People fields: `p` tags with roles, profile search (NIP-50)
+export {
+  profilePlugin,
+  personFromText,
+  mentionsIn,
+  peopleFromTags,
+  personTag,
+  searchProfiles,
+  profileName,
+  DEFAULT_SEARCH_RELAYS,
+  type Person,
+  type FoundProfile,
+} from '@nostr-post/plugin-profile';
+
+// Date helpers (NIP-52 calendar event dates)
+export {
+  datePlugin,
+  CALENDAR_EVENT_MANIFEST,
+  formatDateValue,
+  dateValueFromTags,
+  dayNumbers,
+  ALL_DAY_EVENT_KIND,
+  TIMED_EVENT_KIND,
+  type DateValue,
+  agendaFilter,
+  groupEventsByDay,
+  eventTiming,
+  eventDates,
+  windowDates,
+  shiftWindow,
+  type AgendaWindow,
+  fetchRsvps,
+  publishRsvp,
+  summarizeRsvps,
+  rsvpEvent,
+  type RsvpStatus,
+  fetchCalendarItems,
+  calendarEventFilters,
+} from '@nostr-post/plugin-date';
 
 // Signing & relay utilities
 export {
@@ -104,6 +146,7 @@ export { runAfterPublish, runBeforePublish, runPublishHooks, withTags } from '@n
 
 // Composer text (submit button, steps, errors) for overriding via its `messages` property
 export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from '@nostr-post/web';
+export { DEFAULT_FEED_MESSAGES, type FeedMessages } from '@nostr-post/web';
 
 // Wiki (NIP-54 kind:30818)
 export {
@@ -164,6 +207,9 @@ export {
   deleteList,
   itemFor,
   hasItem,
+  BOOKMARK_LISTS,
+  CALENDAR_LISTS,
+  type ListKind,
   // The list field (uiPlugin "list"): what it saves after publishing
   saveToChoices,
   itemsToSave,

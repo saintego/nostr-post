@@ -156,8 +156,10 @@ export const googleMapsUrl = (lat: number, lon: number): string =>
 export const searchNominatim = async (
   query: string,
   levels: VenueLevel[] = ['place'],
-  /** Only results in a small box around this point (e.g. from a pasted Google Maps link) */
-  near?: { lat: number; lon: number }
+  /** Only results in a box around this point (e.g. from a pasted Google Maps link) */
+  near?: { lat: number; lon: number },
+  /** Half the box's side in degrees; default ~300 m */
+  nearDegrees = 0.003
 ): Promise<NominatimResult[]> => {
   const url = new URL('https://nominatim.openstreetmap.org/search');
   url.searchParams.set('q', query);
@@ -168,7 +170,7 @@ export const searchNominatim = async (
   const featureType = searchFeatureType(levels);
   if (featureType) url.searchParams.set('featureType', featureType);
   if (near) {
-    const d = 0.003; // ~300 m
+    const d = nearDegrees;
     url.searchParams.set(
       'viewbox',
       `${near.lon - d},${near.lat + d},${near.lon + d},${near.lat - d}`
@@ -460,8 +462,10 @@ export const venuePlugin: NostrUIPlugin = {
       }
     }
 
-    // Extract human-readable location
-    const locationTag = tags.find((t) => t[0] === 'location' && t[1]);
+    // Extract human-readable location: the last `location` tag, the venue's own (posts write
+    // their fields' tags first, then plugins' extra tags; e.g. a calendar event's free-text
+    // place comes before it)
+    const locationTag = [...tags].reverse().find((t) => t[0] === 'location' && t[1]);
     if (locationTag) {
       venue.name = locationTag[1];
     }

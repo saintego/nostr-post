@@ -18,7 +18,7 @@ import { hasItem, itemFor, listWithTitle, manifestListPresets } from '../core';
 import { addToList, createList, removeFromList } from '../lists';
 import { listTitle, listTitles } from '../listTitles';
 import { loadMyLists, type MyListsState, NOT_LOADED, shownLists } from '../myLists';
-import type { BookmarkList } from '../types';
+import { BOOKMARK_LISTS, type BookmarkList, type ListKind } from '../types';
 import { DEFAULT_LIST_MESSAGES, type ListMessages } from './listMessages';
 import { renderLoadState } from './loadState';
 import { listStyles } from './styles';
@@ -36,6 +36,8 @@ export class NpListSave extends LitElement {
   /** The manifest the target was made with: its lists (`lists`) come first */
   @property({ attribute: false }) manifest?: NostrPostManifest;
   @property({ type: Object }) messages: Partial<ListMessages> = {};
+  /** Which lists: bookmarks (default) or e.g. calendars (`CALENDAR_LISTS`) */
+  @property({ attribute: false }) listKind: ListKind = BOOKMARK_LISTS;
 
   @state() _open = false;
   @state() _my: MyListsState = NOT_LOADED;
@@ -53,12 +55,18 @@ export class NpListSave extends LitElement {
   }
 
   get _lists(): BookmarkList[] {
-    return shownLists(this._my, manifestListPresets(this.manifest));
+    // A manifest's `lists` are bookmark sets
+    const presets = this.listKind === BOOKMARK_LISTS ? manifestListPresets(this.manifest) : [];
+    return shownLists(this._my, presets, this.listKind);
   }
 
   override updated(changed: Map<string, unknown>): void {
     // Another target: whether it's saved is unknown until the lists are checked again
-    if (changed.has('target') && changed.get('target') !== undefined) this._my = NOT_LOADED;
+    if (changed.has('target') && changed.get('target') !== undefined) {
+      this._loads++;
+      this._my = NOT_LOADED;
+      if (this._open) void this._load();
+    }
   }
 
   async _toggleOpen(): Promise<void> {
@@ -66,10 +74,20 @@ export class NpListSave extends LitElement {
     if (this._open && !this._my.lists && !this._my.waitingForSigner) await this._load();
   }
 
+  /** Counts loads, so one replaced by a newer load (a retry, another target) is ignored */
+  _loads = 0;
+
   _load(): Promise<void> {
-    return loadMyLists(this.relays, this._m, (patch) => {
-      this._my = { ...this._my, ...patch };
-    });
+    const load = ++this._loads;
+    return loadMyLists(
+      this.relays,
+      this._m,
+      (patch) => {
+        if (load === this._loads) this._my = { ...this._my, ...patch };
+      },
+      undefined,
+      this.listKind
+    );
   }
 
   _published(list: BookmarkList): void {
@@ -88,7 +106,7 @@ export class NpListSave extends LitElement {
   async _toggle(list: BookmarkList): Promise<void> {
     this._busy = list.address;
     this._error = '';
-    const options = { relays: this.relays };
+    const options = { relays: this.relays, listKind: this.listKind };
     const result = hasItem(list, this._item)
       ? await removeFromList(list, this._item, options)
       : await addToList(list, this._item, options);
@@ -110,7 +128,10 @@ export class NpListSave extends LitElement {
     }
     this._busy = 'new';
     this._error = '';
-    const result = await createList({ title, items: [this._item] }, { relays: this.relays });
+    const result = await createList(
+      { title, items: [this._item] },
+      { relays: this.relays, listKind: this.listKind }
+    );
     this._busy = '';
     if (result.success) {
       this._newTitle = '';

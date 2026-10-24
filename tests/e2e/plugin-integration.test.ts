@@ -4,7 +4,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { coordinateEvents } from '../../packages/core/src/coordinator';
 import { prepareFormData } from '../../packages/core/src/enrichment';
-import type { FormData, NostrPostManifest } from '../../packages/core/src/types';
+import type { FormData, NostrPostManifest, PostField } from '../../packages/core/src/types';
+import { datePlugin } from '../../packages/plugin-date/src/core';
 import { encodeGeohash, geoPlugin } from '../../packages/plugin-geo/src/core';
 import { hashtagPlugin, normalizeTag } from '../../packages/plugin-hashtag/src/core';
 import { generateMockKeypair, MockNostrRelay, mockSignEvent } from '../helpers/mock-relay';
@@ -344,5 +345,81 @@ describe('E2E: Plugin Integration', () => {
     const geoFormatted = geoPlugin.formatValue(geohash);
     expect(geoFormatted).toContain('📍');
     expect(geoFormatted).toMatch(/\d+\.\d+, -?\d+\.\d+/);
+  });
+
+  it('should publish a calendar event as all-day or timed, by publish format', () => {
+    const manifest: NostrPostManifest = {
+      id: 'calendar-event',
+      version: '1.0.0',
+      publishFormats: [
+        { id: 'all-day', label: 'All-day', kinds: [31922], default: true, userSelectable: true },
+        { id: 'timed', label: 'Timed', kinds: [31923], userSelectable: true },
+      ],
+      fields: [
+        {
+          id: 'title',
+          type: 'string',
+          uiPlugin: 'text',
+          mapTo: [
+            { kind: 31922, target: 'tag', tagName: 'title' },
+            { kind: 31923, target: 'tag', tagName: 'title' },
+          ],
+        },
+        {
+          id: 'when',
+          type: 'date',
+          uiPlugin: 'date',
+          required: true,
+          mapTo: [
+            { kind: 31922, target: 'tag', tagName: 'start' },
+            { kind: 31923, target: 'tag', tagName: 'start' },
+          ],
+        },
+      ],
+    };
+    const formData: FormData = {
+      title: 'Meetup',
+      when: { start: '2026-10-21T19:00', end: '2026-10-21T21:00', tzid: 'Europe/Prague' },
+    };
+    const config = {
+      pubkey: keypair.pubkey,
+      dTag: 'meetup',
+      tagSerializer: (value: unknown, field: PostField) =>
+        field.uiPlugin === 'date' ? datePlugin.serializeValue?.(value, field) : undefined,
+      extraTagsFn: (value: unknown, field: PostField) =>
+        field.uiPlugin === 'date' ? datePlugin.extraTags?.(value, field) : undefined,
+    };
+    const dayTag = String(Date.UTC(2026, 9, 21) / 86400000);
+
+    const allDay = coordinateEvents(manifest, formData, config);
+    expect(allDay.success).toBe(true);
+    if (!allDay.success) return;
+    expect(allDay.data.events).toHaveLength(1);
+    expect(allDay.data.events[0]?.kind).toBe(31922);
+    expect(allDay.data.events[0]?.tags).toEqual(
+      expect.arrayContaining([
+        ['d', 'meetup'],
+        ['title', 'Meetup'],
+        ['start', '2026-10-21'],
+        ['end', '2026-10-22'],
+        ['D', dayTag],
+      ])
+    );
+
+    const timed = coordinateEvents(manifest, formData, { ...config, selectedFormatId: 'timed' });
+    expect(timed.success).toBe(true);
+    if (!timed.success) return;
+    expect(timed.data.events[0]?.kind).toBe(31923);
+    expect(timed.data.events[0]?.tags).toEqual(
+      expect.arrayContaining([
+        ['start', String(Date.UTC(2026, 9, 21, 17) / 1000)],
+        ['end', String(Date.UTC(2026, 9, 21, 19) / 1000)],
+        ['start_tzid', 'Europe/Prague'],
+        ['D', dayTag],
+      ])
+    );
+
+    const missing = coordinateEvents(manifest, { title: 'Meetup', when: { start: '' } }, config);
+    expect(missing.success).toBe(false);
   });
 });

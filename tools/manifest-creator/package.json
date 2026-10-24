@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@nostr-post/core": "workspace:*",
+    "@nostr-post/plugin-date": "workspace:*",
     "@nostr-post/plugin-geo": "workspace:*",
     "@nostr-post/plugin-hashtag": "workspace:*",
     "@nostr-post/plugin-identifier": "workspace:*",
@@ -31,7 +32,7 @@
     "@nostr-post/wiki": "workspace:*",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
-    "next": "^16.4.0",
+    "next": "^16.4.3",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
     "typescript": "^6.0.3"
@@ -41,10 +42,10 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@vitejs/plugin-react": "^6.1.2",
-    "@vitest/coverage-v8": "^5.0.4",
-    "@vitest/ui": "^5.0.4",
-    "happy-dom": "^21.0.1",
+    "@vitest/coverage-v8": "^5.0.5",
+    "@vitest/ui": "^5.0.5",
+    "happy-dom": "^21.0.4",
     "jsdom": "^30.1.2",
-    "vitest": "^5.0.4"
+    "vitest": "^5.0.5"
   }
 }

@@ -5,6 +5,7 @@ vi.mock('@nostr-post/signer', () => import('./testRelay.testHelpers').then((m) =
 import { itemFor } from './core';
 import { addToList, createList, deleteList, fetchMyLists, removeFromList } from './lists';
 import { relay, signerMock } from './testRelay.testHelpers';
+import { CALENDAR_LISTS } from './types';
 
 const beer = itemFor('30818:pk1:pliny-beer');
 const venue = itemFor('30818:pk1:tap-house-venue');
@@ -75,5 +76,28 @@ describe('lists on relays', () => {
     signerMock.signAndPublish.mockRejectedValueOnce(new Error('User rejected'));
     const result = await createList({ title: 'Want to go' });
     expect(!result.success && result.error.message).toBe('User rejected');
+  });
+
+  it('keeps calendars (kind 31924) apart from bookmarks', async () => {
+    const event = itemFor('31923:pk1:meetup');
+    const options = { listKind: CALENDAR_LISTS };
+    // No standard list for calendars: none until one is created
+    expect(await fetchMyLists(options)).toEqual([]);
+
+    const created = await createList({ title: 'Prague tech', items: [event] }, options);
+    if (!created.success) throw created.error;
+    expect(created.data).toMatchObject({
+      kind: 31924,
+      address: '31924:me:nostr-post:prague-tech',
+      items: [event],
+    });
+    expect((await fetchMyLists(options)).map((l) => l.title)).toEqual(['Prague tech']);
+    // Bookmarks don't see it
+    expect((await fetchMyLists()).map((l) => l.address)).toEqual(['10003:me:']);
+
+    const removed = await removeFromList(created.data, event, options);
+    expect(removed.success && removed.data.items).toEqual([]);
+    expect((await deleteList(created.data, options)).success).toBe(true);
+    expect(await fetchMyLists(options)).toEqual([]);
   });
 });

@@ -16,6 +16,16 @@ describe('venuePlugin.resolveFromTags', () => {
     expect(venue.wikiEntity).toEqual({ pubkey: '39feb678', dTag: 'paralelná-polis-košice-venue' });
   });
 
+  it("names the venue by its own location tag, the last, after a post's free-text place", () => {
+    const venue = resolve([
+      ['location', 'Room 3, 2nd floor'],
+      ['g', 'u2xj5t'],
+      ['i', 'osm:node:9740899349'],
+      ['location', 'Paralelná Polis, Košice'],
+    ]);
+    expect(venue.name).toBe('Paralelná Polis, Košice');
+  });
+
   it('ignores `a` tags of other kinds', () => {
     expect(
       resolve([

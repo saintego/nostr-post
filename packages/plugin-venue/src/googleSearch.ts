@@ -17,13 +17,33 @@ import {
 import type { GoogleMapsLink } from './googleLink';
 import type { VenueLevel } from './levels';
 
-/** OSM places matching the link: its name near its point */
+/** OSM places the link may be: at its point, or nearby (`spot` false; OSM's point may be off) */
+export interface GoogleLinkMatches {
+  results: NominatimResult[];
+  /** The results are at the link's point (~300 m), not only in its area (~5 km) */
+  spot: boolean;
+}
+
+/** The area searched when nothing matches at the link's point: ~5 km around it */
+const AREA_DEGREES = 0.045;
+
+const distance = (r: NominatimResult, lat: number, lon: number): number =>
+  (Number(r.lat) - lat) ** 2 + (Number(r.lon) - lon) ** 2;
+
+/** OSM places matching the link: its name at its point, else in its area, closest first */
 export async function searchGoogleLink(
   link: GoogleMapsLink,
   levels: VenueLevel[]
-): Promise<NominatimResult[]> {
-  if (!link.name || link.lat === undefined || link.lon === undefined) return [];
-  return searchNominatim(link.name, levels, { lat: link.lat, lon: link.lon });
+): Promise<GoogleLinkMatches> {
+  const { name, lat, lon } = link;
+  if (!name || lat === undefined || lon === undefined) return { results: [], spot: false };
+  const atSpot = await searchNominatim(name, levels, { lat, lon });
+  if (atSpot.length > 0) return { results: atSpot, spot: true };
+  const around = await searchNominatim(name, levels, { lat, lon }, AREA_DEGREES);
+  return {
+    results: [...around].sort((a, b) => distance(a, lat, lon) - distance(b, lat, lon)),
+    spot: false,
+  };
 }
 
 /**

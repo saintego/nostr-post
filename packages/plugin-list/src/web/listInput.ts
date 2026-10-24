@@ -69,13 +69,17 @@ export class NpListInput extends LitElement {
     }
   }
 
+  /** Counts loads, so one replaced by a newer load (a retry, the composer's pubkey) is ignored */
+  _loads = 0;
+
   _load(): Promise<void> {
     const relays = this.field?.metadata?.relays as string[] | undefined;
+    const load = ++this._loads;
     return loadMyLists(
       relays,
       this._m,
       (patch) => {
-        this._my = { ...this._my, ...patch };
+        if (load === this._loads) this._my = { ...this._my, ...patch };
       },
       this.pubkey
     );

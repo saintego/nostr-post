@@ -307,4 +307,21 @@ export const viewStyle = css`
     cursor: pointer;
     color: var(--nl-muted, #4b5563);
   }
+
+  /* Tag fields with a built-in input: a title tag as heading, others as label: value */
+  .tag-title {
+    font-size: 1.0625rem;
+    font-weight: 600;
+    margin: 0.25rem 0;
+  }
+  .tag-row {
+    font-size: 0.875rem;
+    margin: 0.25rem 0;
+  }
+  .tag-label {
+    color: var(--nl-muted, #4b5563);
+  }
+  :host-context(.dark) .tag-label {
+    color: #9ca3af;
+  }
 `;

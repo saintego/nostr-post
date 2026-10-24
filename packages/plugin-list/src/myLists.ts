@@ -10,7 +10,7 @@
 import { clearPublicKeyCache, getPublicKey, hasNostrSigner } from '@nostr-post/signer';
 import { type ListPreset, withBookmarks, withPresets } from './core';
 import { fetchLists } from './lists';
-import type { BookmarkList } from './types';
+import { BOOKMARK_LISTS, type BookmarkList, type ListKind } from './types';
 /** The words loading needs (error messages) */
 export interface MyListsMessages {
   noSigner: string;
@@ -58,18 +58,19 @@ const withTimeout = <T>(promise: Promise<T>, ms: number): Promise<T> =>
 const reason = (error: unknown) => (error instanceof Error ? error.message : String(error));
 
 /**
- * Loads the user's lists, reporting each step through `update`. With `knownPubkey` (e.g.
- * the composer's) the signer isn't asked.
+ * Loads the user's lists (of `listKind`, default bookmarks), reporting each step through
+ * `update`. With `knownPubkey` (e.g. the composer's) the signer isn't asked.
  */
 export async function loadMyLists(
   relays: string[] | undefined,
   m: MyListsMessages,
   update: (patch: Partial<MyListsState>) => void,
-  knownPubkey?: string
+  knownPubkey?: string,
+  listKind: ListKind = BOOKMARK_LISTS
 ): Promise<void> {
   if (knownPubkey) {
     update({ ...NOT_LOADED, pubkey: knownPubkey });
-    await loadLists(knownPubkey, relays, m, update);
+    await loadLists(knownPubkey, { relays, listKind }, m, update);
     return;
   }
   if (!hasNostrSigner()) {
@@ -77,35 +78,50 @@ export async function loadMyLists(
     return;
   }
   update({ ...NOT_LOADED, waitingForSigner: true });
+  const request = getPublicKey();
   let pubkey: string;
   try {
-    pubkey = await withTimeout(getPublicKey(), SIGNER_TIMEOUT_MS);
+    pubkey = await withTimeout(request, SIGNER_TIMEOUT_MS);
   } catch (error) {
+    if (error !== TIMED_OUT) {
+      update({ waitingForSigner: false, error: m.failed(reason(error)) });
+      return;
+    }
     // Ask the signer again on retry, instead of waiting for the same request
     clearPublicKeyCache();
-    const message = error === TIMED_OUT ? m.signerNoAnswer : m.failed(reason(error));
-    update({ waitingForSigner: false, error: message });
-    return;
+    update({ waitingForSigner: false, error: m.signerNoAnswer });
+    // It may still answer, e.g. once the user signed in: then load without a retry
+    pubkey = await request.catch(() => '');
+    if (!pubkey) return;
   }
-  update({ pubkey, waitingForSigner: false });
-  await loadLists(pubkey, relays, m, update);
+  update({ pubkey, waitingForSigner: false, error: '' });
+  await loadLists(pubkey, { relays, listKind }, m, update);
 }
 
 async function loadLists(
   pubkey: string,
-  relays: string[] | undefined,
+  options: { relays?: string[]; listKind: ListKind },
   m: MyListsMessages,
   update: (patch: Partial<MyListsState>) => void
 ): Promise<void> {
   try {
-    update({ lists: await fetchLists(pubkey, { relays }) });
+    update({ lists: await fetchLists(pubkey, options) });
   } catch (error) {
     update({ error: m.failed(reason(error)) });
   }
 }
 
 /** The lists to offer: the presets first (also while the user's lists load), then theirs */
-export const shownLists = (state: MyListsState, presets: ListPreset[]): BookmarkList[] =>
+export const shownLists = (
+  state: MyListsState,
+  presets: ListPreset[],
+  listKind: ListKind = BOOKMARK_LISTS
+): BookmarkList[] =>
   state.pubkey
-    ? withPresets(state.lists ?? withBookmarks([], state.pubkey), presets, state.pubkey)
+    ? withPresets(
+        state.lists ?? withBookmarks([], state.pubkey, listKind),
+        presets,
+        state.pubkey,
+        listKind
+      )
     : [];

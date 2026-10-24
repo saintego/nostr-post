@@ -5,6 +5,8 @@
  * in its own file, separate from lifecycle, state, and event publishing.
  */
 
+import type { Completer } from './composerCompletion';
+import './composerCompletion';
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
@@ -61,6 +63,8 @@ export interface FieldRenderContext {
   attachedByTarget: Map<string, PostField[]>;
   /** Full manifest — needed to look up attached fields. */
   manifest: NostrPostManifest;
+  /** Kinds the selected publish format writes (e.g. the date field's precision follows them) */
+  activeKinds: number[];
   /** The author, when the composer knows it (inputs that need the user's data use it) */
   pubkey?: string;
   isReadonly: (field: PostField) => boolean;
@@ -114,6 +118,8 @@ export function renderFieldInput(
         .value=${value}
         .field=${field}
         .manifest=${ctx.manifest}
+        .activeKinds=${ctx.activeKinds}
+        .error=${ctx.errors[field.id]}
         .pubkey=${ctx.pubkey}
         @np-value-changed=${(e: CustomEvent) => ctx.onFieldChange(field.id, e.detail.value)}
       ></${tag}>`;
@@ -133,16 +139,7 @@ export function renderFieldInput(
   switch (field.type) {
     case 'string':
       if (field.uiPlugin === 'textarea' || field.uiPlugin === 'markdown') {
-        // Check if any plugin wants to handle textarea paste/drop events
-        const handlers = getTextareaEventHandlers(field, ctx);
-
-        return html`<textarea
-          @input=${handleInput}
-          @paste=${(e: ClipboardEvent) => handlers.onPaste?.(e)}
-          @drop=${(e: DragEvent) => handlers.onDrop?.(e)}
-          @dragover=${(e: DragEvent) => e.preventDefault()}
-          .value=${String(value)}
-        ></textarea>`;
+        return renderTextarea(field, value, ctx, handleInput);
       }
       return html`<input type="text" @input=${handleInput} .value=${String(value)} />`;
 
@@ -170,6 +167,43 @@ export function renderFieldInput(
     default:
       return html`<input type="text" @input=${handleInput} .value=${String(value)} />`;
   }
+}
+
+/** A text field: with completions (e.g. `@` mentions) when attached plugins offer them */
+function renderTextarea(
+  field: PostField,
+  value: unknown,
+  ctx: FieldRenderContext,
+  handleInput: (e: Event) => void
+): TemplateResult {
+  // Check if any plugin wants to handle textarea paste/drop events
+  const handlers = getTextareaEventHandlers(field, ctx);
+  const completers = getTextareaCompleters(field, ctx);
+  if (completers.length > 0) {
+    return html`<np-completing-textarea
+        .value=${String(value)}
+        .completers=${completers}
+        .onInput=${(text: string) => ctx.onFieldChange(field.id, text)}
+        .onPaste=${handlers.onPaste}
+        .onDrop=${handlers.onDrop}
+      ></np-completing-textarea>`;
+  }
+
+  return html`<textarea
+      @input=${handleInput}
+      @paste=${(e: ClipboardEvent) => handlers.onPaste?.(e)}
+      @drop=${(e: DragEvent) => handlers.onDrop?.(e)}
+      @dragover=${(e: DragEvent) => e.preventDefault()}
+      .value=${String(value)}
+    ></textarea>`;
+}
+
+/** Completions while typing (e.g. `@` mentions) from the plugins attached to this field */
+function getTextareaCompleters(field: PostField, ctx: FieldRenderContext): Completer[] {
+  return (ctx.attachedByTarget.get(field.id) ?? []).flatMap((attachedField) => {
+    const completion = pluginRegistry.get(attachedField.uiPlugin)?.textareaCompletion;
+    return completion ? [{ ...completion, field: attachedField }] : [];
+  });
 }
 
 /**

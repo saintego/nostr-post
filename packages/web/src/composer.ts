@@ -4,7 +4,7 @@
  * Supports automatic signing and publishing via NIP-07
  */
 
-import { getSelectablePublishFormats } from '@nostr-post/core/manifestMappings';
+import { getActiveKinds, getSelectablePublishFormats } from '@nostr-post/core/manifestMappings';
 import { type NostrPostManifest, STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -424,6 +424,9 @@ export class NostrPostComposer extends NostrPostElement {
       errors: this.errors,
       expandedFields: this._expandedFields,
       manifest,
+      activeKinds: getActiveKinds(manifest, {
+        selectedFormatId: this.selectedPublishFormatId || undefined,
+      }),
       pubkey: this.pubkey,
       isReadonly: (f) => isFieldReadonly(f, this.readonlyFields),
       onFieldChange: (id, val) => this.handleFieldChange(id, val),

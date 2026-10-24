@@ -14,6 +14,8 @@
 - [ ] add style customization options for web components (CSS custom properties, theming)
 - [ ] Dark mode in the manifest creator (follow `prefers-color-scheme`, with a toggle); the web components' colors need CSS custom properties for it (see theming above)
 - [ ] fix pwa example shared image/text, it's not getting to post input now
+- [ ] preview of kind1 with photo
+- [ ] custom nostr-post relay(paid or run) or reupload(similar as shard-signer)
 - [x] fix list plugin to use lists(nip-51?) instead of manifests (NIP-51 bookmark lists, see the rewrite below)
 - [x] Rewrite `plugin-list` and test it as a whole: it's now save-to-list for wiki entities and other events, on NIP-51 bookmark lists (the bookmarks list, kind 10003, and bookmark sets, kind 30003; items as `a`/`e` tags). `<np-list-save target=…>` adds/removes the target in the user's lists or starts a new one; `<np-list-view>` shows lists with item titles, removing items and deleting sets. Wiki entities are one item whichever author's version was saved (compared and shown by d-tag); edits start from the newest copy on relays and keep other clients' tags and content; deleting sends a NIP-09 request. Publishes through the signer (`signAndPublish`: test mode, the user's relays). `<np-venue-view>` shows Save for a venue with a wiki page. The old audience-picker composer field (`np-list-input`, made-up `i list:` tags, never used) is gone. Tested with an in-memory relay (core, publishing, both components)
 - [x] plugin-list in manifests: any manifest names lists for its events (`lists`; d-tag `nostr-post:<listType>:<id>`, `listType` default the manifest id, set it for versioned ids so versions and extending manifests share the user's lists; or a fixed `dTag` to share one across manifests; `lists` merge by id with `extends`). Save shows only for such events and offers them first: `<nostr-post-view>`, `<nostr-wiki-view>`, `<np-venue-view>` render plugins' event actions (`@nostr-post/plugins/entities`, `registerEventAction`). `list` field: `metadata.saveField` saves that field's entity (its manifest's lists), without it the post itself (the post manifest's lists); value: list addresses and `new:<title>`; saved after publishing by the new `afterPublish` plugin hook (`runAfterPublish`; both composers run it, a failure is shown and doesn't undo the post). Publish formats may have `kinds: []` (hooks only): the "Save a place" example finds a place, creates its page if needed and saves it. Plugins meet the wiki package through the hub: plugin-list depends on neither the wiki nor the venue plugin, the venue plugin not on plugin-list. The list components show each loading step (signer with a 20 s timeout, relays) with a retry, and take the composer's `pubkey` (composers pass `.manifest` and `.pubkey` to plugin inputs); the signer asks `getPublicKey` once (`clearPublicKeyCache` on sign-in changes); relay reads end on `CLOSED`; the plugin auto-loader loads a web entry also when the main entry registered the plugin first
@@ -46,7 +48,64 @@
 - [x] Comments support (kind 1) with manifest presets, examples, and protocol-standard reply tags
 - [ ] pool plugin
 - [ ] Calendar events support (NIP-52) with agenda-oriented rendering
-- [ ] calendar view
+  - [x] Date field plugin (`@nostr-post/plugin-date`): all-day (kind 31922, `start`/`end` as `YYYY-MM-DD`) or timed (kind 31923,
+        unix `start`/`end`, `start_tzid`/`end_tzid`), writing one `D` tag per covered day (unix days)
+        on both kinds. NIP-52 only defines `D` for 31922's timed sibling; on 31922 it is an extra tag
+        so relays can return our all-day events by day too. All-day or timed is the manifest's
+        publish format; the input follows the selected one (`activeKinds`)
+  - [x] Date input: time zone picker. A text field searchable through the zones the browser knows
+        (`timeZones()`, a datalist); an unknown zone gets a message and blocks publishing
+        (`INVALID_TIME_ZONE`)
+  - [x] Event manifest for 31922/31923, `CALENDAR_EVENT_MANIFEST` in `@nostr-post/plugin-date` (title, date,
+        location/`g` via plugin-venue, description, summary, image, `t`); in the manifest creator's examples
+  - [x] Event participants: NIP-52 lists people on an event as `p` tags with a role, e.g. `speaker` or
+        `host`. New `@nostr-post/plugin-profile` (field type `profile`): search profiles by name (NIP-50
+        search relays) or paste an npub, a role each; `CALENDAR_EVENT_MANIFEST` has a Participants field
+  - [x] Mentions with the people picker: `@` in the text field searching profiles, inserting
+        `nostr:npub…` (plugin `textareaCompletion` hook, core `textCompletion`); the standard kind 1
+        post has a `mentions` field (plugin-profile attached to the text), the people mentioned get `p` tags
+  - [ ] `@` mentions in the markdown editor (its WYSIWYG mode has its own editor; only the plain text
+        field completes now)
+  - [ ] People search only finds profiles on NIP-50 relays (`DEFAULT_SEARCH_RELAYS`); also search the
+        user's follows and recently seen profiles locally
+  - [ ] View: the title heading comes after the note text (content); show `title` first
+  - [x] Event location as free text or a URL: `CALENDAR_EVENT_MANIFEST` has "Place details" (NIP-52
+        `location` text: a room, an address, "Online") and "Link" (`r`: video call, tickets, event page)
+        next to the OpenStreetMap venue; the venue reads its name from its own, last, `location` tag;
+        the view makes web links in text fields clickable
+  - [ ] Several links per event (the Link field takes one)
+  - [x] Link an event's venue to its wiki page (venue hub, `metadata.wikiEntity`): the manifest creator's
+        `calendar-event` example adds it to `CALENDAR_EVENT_MANIFEST`'s location (the package can't name
+        the app's `venue-entity-v1`)
+  - [ ] A venue's wiki page lists its upcoming events: calendar events linked to the page (its `a` tag)
+        get an agenda section on the venue page
+  - [x] Agenda in `<nostr-post-feed>` (`agenda`, `agenda-from`, `agenda-days`, `time-zone`): a date window becomes a `#D` relay filter, events sorted by
+        start (not `created_at`), grouped under day headings in the viewer's time zone, newest
+        version per address only. Logic as framework-free functions in the plugin's main entry
+  - [x] Agenda navigation: Previous / Today / Next buttons move the date window (`shiftWindow`), the
+        `nostr-post-agenda-change` event reports it; an event spanning several days opens its reply
+        composer on its first day only
+  - [x] Agenda: keep the buttons and days shown while the next window loads: the previous window's
+        days stay (dimmed, `aria-busy`) with their comments until the new events arrive, the
+        `loading` message next to the buttons; a slower earlier load no longer overwrites a later one
+  - [x] Calendars (kind 31924): a named list of events someone publishes, e.g. "Prague tech meetups". It
+        points to events by address (`a` tags), anyone's events, not only the publisher's: a bookmark
+        list for events, close to plugin-list's bookmark sets (NIP-51). Brings: - "Add to calendar" on events, like the list plugin's Save - `<nostr-post-feed agenda calendar="31924:…">`: the agenda of one calendar (load its events by
+        address, sort them into the window's days) - other clients' all-day events: they have no `D` tags, so a date filter doesn't find them;
+        a calendar names them, so they load directly (a short known list, not a network search).
+        Authors, `t` or `g` scopes work the same way
+        Done on plugin-list (`ListKind`: `BOOKMARK_LISTS`, `CALENDAR_LISTS`): `<np-calendar-save>` is its
+        Save with calendars; `fetchCalendarItems`, `calendarEventFilters` in plugin-date
+  - [ ] Calendars: a page or component listing a calendar (title, events, follow/share), and finding
+        other people's calendars; agenda of several calendars at once
+  - [x] RSVP (kind 31925): Going / Maybe / Can't go on calendar events with counts (`<np-rsvp>`, an event
+        action of calendar manifests); one replaceable RSVP per person and event (`d` = the event's address)
+  - [x] RSVP: who answered: "Who" opens the people of each answer with avatars and names
+        (`peopleByStatus`, plugin-profile's `<np-profile-view>`)
+  - [ ] RSVP: highlight the user's own answer when the page loads (now only after answering here, so
+        reading doesn't ask the signer); a note with the answer
+- [ ] calendar view: month grid on the same day-grouping functions as the agenda
+- [ ] rich media preview - youtube with play, spotify/bandcamp/soundcloud with playlist if possible
 - [ ] P2P offers support (NIP-69) with filtered feed presets/views
 - [ ] Zap support (NIP-57): zap requests/receipts with amount + payer views and filtering
 - [ ] Add scenario manifests for:
@@ -102,6 +161,12 @@
 - [ ] Import your own Google Maps reviews and photos from Google Takeout (Reviews.json): your text, stars, date and photos become review events; the place's Google link → `gcid:`, matched to OSM; photos uploaded via the media plugin; Google's place details only used to find the place
 - [x] Related sections: review stats, `stats: { tag: 'rating', max: 5 }` → "12 reviews · ★ 4.3" above the list (count + average of that tag over the section's posts; computed when shown, not stored; fetched up to ~500 for the numbers, the list stays at `limit`). For any entity type: a venue's or a beer's reviews
 - [x] Related sections: photo gallery, `gallery: true` → the images (`r`/`imeta` tags) of the section's posts, e.g. a venue's or a beer's review photos
+- [x] List field stuck at "Waiting for your signer…", or showing only the new-list input (found on worldtrip.guide with nostr-login): `getPublicKey` treats an empty answer (nobody signed in) as a failure instead of caching it, and forgets the pubkey on nostr-login's `nlAuth` (sign-in/out); a signer answering after the 20 s timeout still loads the lists; `<np-list-input>`/`<np-list-save>` ignore a load replaced by a newer one; `<np-list-save>` reloads when its target changes while open. Not reproduced with a real signer yet (see "plugin-list: try it with a real signer")
+- [x] Venue wiki panel: a new page of a venue from OSM can get its Google Maps link (`i gcid:`; `lacksGoogleLink`, `googleLinkChange`). Only for new pages; an existing page lacking the link isn't updated for it
+- [x] Venue input: a pasted Google Maps link whose place isn't at the link's point on OSM (e.g. OSM's node ~2 km off, or named "apostrophe's" for Google's "Apostrophe s") is searched in ~5 km around it, closest first, with a note that it's nearby; searching by name afterwards keeps the link's CID for the picked place (also after setting it on the map); clearing the search drops it
+- [ ] Venue hub: add a Google Maps link to an existing venue page (a new version when the review's venue has an identifier the page lacks; now only new pages get it)
+- [x] Venue wiki panel ("No wiki page yet: it will be created from OpenStreetMap.") has dark styles (`:host-context(.dark)`)
+- [x] Dark styles for the rest of plugin-venue: `<np-venue-input>`, `<np-venue-list>`, `<np-venue-entity-create>` (shared `venueInputStyles`) and `<np-venue-view>` have `:host-context(.dark)` rules. Left: `:host-context()` support (Firefox and Safari lacked it), CSS custom properties would work everywhere (see theming above)
 - [ ] Venue hub: area search ("venues near me") via the entity's `g` prefix tags
 - [x] Venue hub: create a venue entity from an OSM search directly in the wiki picker: plugins register their own "+ Create" form (`registerEntityCreator`); the venue plugin's searches OSM and runs the venue hub
 - [x] Venue hub: add btc payment availability from btcmap data. BTC Map's data are OSM tags (`currency:XBT`, `payment:lightning`, `payment:onchain`, `payment:lightning_contactless`, `check_date:currency:XBT`), so `venue-entity-v1` maps them to infobox rows via `sources.osm`. The BTC Map link isn't stored: entity manifests can declare derived links (`wikiConfig.links`, e.g. `https://btcmap.org/merchant/{i:osm}` when `bitcoin` is "yes"), shown in the wiki view's Links row (which also shows `r` URLs). Existing entities get the rows on their next OSM-triggered update

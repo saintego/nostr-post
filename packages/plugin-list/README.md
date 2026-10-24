@@ -66,7 +66,10 @@ if (!saved.success) console.error(saved.error.message);
 await createList({ title: "Want to go", items: [item] });
 ```
 
-They take `{ relays? }` and return a `Result` instead of throwing:
+They take `{ relays?, listKind? }` and return a `Result` instead of throwing. `listKind` picks the
+kind of list: `BOOKMARK_LISTS` (default: the bookmarks list 10003 and bookmark sets 30003) or
+`CALENDAR_LISTS` (NIP-52 calendars, 31924: sets only, no standard list), or your own
+`{ set, standard? }`.
 
 - `fetchLists(pubkey, options)`, `fetchMyLists(options)`: the bookmarks list first (empty, `createdAt`
   0, until first used), then sets by title; deleted sets left out
@@ -74,7 +77,7 @@ They take `{ relays? }` and return a `Result` instead of throwing:
   `removeFromList(list, item, options)`
 - `createList({ title, description?, items? }, options)`: a set with the d-tag `nostr-post:<slug of the
   title>`; when the user has it already, the items are added to it
-- `deleteList(list, options)`: sets only
+- `deleteList(list, options)`: sets only (a calendar is a set too)
 
 ### The list field
 
@@ -134,7 +137,9 @@ await loadMyLists(relays, messages, (patch) => {
 
 - `loadMyLists(relays, messages, update, knownPubkey?)`: reports `{ waitingForSigner }`, then
   `{ pubkey }`, then `{ lists }`, or `{ error }` (the signer didn't answer within `SIGNER_TIMEOUT_MS`,
-  20 s, or failed). With `knownPubkey` (e.g. the composer's) the signer isn't asked. `messages`:
+  20 s, or failed). A signer answering after the timeout (e.g. once the user signed in) still
+  loads: `{ pubkey, error: '' }`, then `{ lists }`, and the promise resolves only then. With
+  `knownPubkey` (e.g. the composer's) the signer isn't asked. `messages`:
   `noSigner`, `signerNoAnswer`, `failed(reason)` (`MyListsMessages`)
 - `shownLists(state, presets)`: the lists to offer, presets first (also while the user's lists load)
 - `listTitle(list, names)`, `listTitles(lists, names)`: what lists are called; `names`: `bookmarks`,
@@ -160,7 +165,7 @@ interface ListItem {
 }
 
 interface BookmarkList {
-  address: string; // "10003:<pubkey>:" or "30003:<pubkey>:<d-tag>"
+  address: string; // "10003:<pubkey>:", "30003:<pubkey>:<d-tag>" or "31924:<pubkey>:<d-tag>"
   kind: number;
   pubkey: string;
   dTag: string;
@@ -201,8 +206,10 @@ Importing it also:
   to the title, `<np-venue-view>` next to the venue's name.
 
 `<np-list-save>` and `<np-list-input>` show what they wait for: the signer (a remote signer or a
-permission prompt; after 20 s "Your signer didn't answer" with "Try again"), then the relays (the
-manifest's lists show meanwhile).
+permission prompt; after 20 s "Your signer didn't answer" with "Try again", replaced by the lists
+if the signer still answers), then the relays (the manifest's lists show meanwhile). A signer that
+answers without a pubkey (nobody signed in) is an error with "Try again", not an empty list; the
+signer package forgets the pubkey when nostr-login reports a sign-in or sign-out (`nlAuth`).
 
 ### `<np-list-save>`
 
@@ -213,8 +220,10 @@ manifest's lists show meanwhile).
 | `relays`             | `string[]`              | Relays besides the user's own (default `DEFAULT_RELAYS`)        |
 | `manifest`           | `NostrPostManifest`     | The manifest the target was made with: its `lists` come first   |
 | `messages`           | `Partial<ListMessages>` | Overrides for the user-facing text (`DEFAULT_LIST_MESSAGES`)    |
+| `listKind`           | `ListKind`              | Which lists (default `BOOKMARK_LISTS`); `@nostr-post/plugin-date`'s `<np-calendar-save>` is this with `CALENDAR_LISTS` |
 
-Lists load when it's first opened, since feeds show many. Typing the name of a list the user has
+In a view's header (class `view-action`) the panel opens leftwards, since the button sits at the
+right edge. Lists load when it's first opened, since feeds show many. Typing the name of a list the user has
 saves to that list. Fires `np-list-change` (`{ list }`) after a list was published.
 
 ### `<np-list-view>`

@@ -26,8 +26,7 @@ import {
   withoutItem,
 } from './core';
 import {
-  BOOKMARK_SET_KIND,
-  BOOKMARKS_KIND,
+  BOOKMARK_LISTS,
   type BookmarkList,
   DELETION_KIND,
   type ListEvent,
@@ -41,23 +40,25 @@ const readRelays = (pubkey: string, options: ListRelayOptions): Promise<string[]
   fetchUserRelays(pubkey, options.relays ?? DEFAULT_RELAYS);
 
 /**
- * `pubkey`'s bookmarks list and bookmark sets, without deleted ones. The bookmarks list
- * is always there (empty if they have none yet).
+ * `pubkey`'s lists of `options.listKind` (default: the bookmarks list and bookmark sets),
+ * without deleted ones. The bookmarks list is always there (empty if they have none yet).
  */
 export async function fetchLists(
   pubkey: string,
   options: ListRelayOptions = {}
 ): Promise<BookmarkList[]> {
+  const listKind = options.listKind ?? BOOKMARK_LISTS;
   const relays = await readRelays(pubkey, options);
+  const kinds = listKind.standard ? [listKind.standard, listKind.set] : [listKind.set];
   const events = await fetchEvents(
     [
-      { kinds: [BOOKMARKS_KIND, BOOKMARK_SET_KIND], authors: [pubkey] },
-      { kinds: [DELETION_KIND], authors: [pubkey], '#k': [String(BOOKMARK_SET_KIND)] },
+      { kinds, authors: [pubkey] },
+      { kinds: [DELETION_KIND], authors: [pubkey], '#k': [String(listKind.set)] },
     ],
     relays,
     { waitForAll: true }
   );
-  return withBookmarks(currentLists(events), pubkey);
+  return withBookmarks(currentLists(events), pubkey, listKind);
 }
 
 /** The signed-in user's lists */
@@ -68,7 +69,7 @@ export async function fetchMyLists(options: ListRelayOptions = {}): Promise<Book
 /** The newest copy of `list` on relays, so an edit doesn't undo one made elsewhere */
 async function latestEvent(list: BookmarkList, options: ListRelayOptions): Promise<ListEvent> {
   const filter: FetchFilter =
-    list.kind === BOOKMARK_SET_KIND
+    list.dTag !== ''
       ? { kinds: [list.kind], authors: [list.pubkey], '#d': [list.dTag] }
       : { kinds: [list.kind], authors: [list.pubkey] };
   const events = await fetchEvents(filter, await readRelays(list.pubkey, options), {
@@ -149,7 +150,8 @@ export async function removeFromList(
 }
 
 /**
- * Create a bookmark set for the signed-in user, optionally with its first items. Its d-tag
+ * Create a set (bookmark set, or of `options.listKind`, e.g. a calendar) for the signed-in
+ * user, optionally with its first items. Its d-tag
  * comes from the title (newSetDTag): when the user has that list already, the items are
  * added to it (it keeps its title).
  */
@@ -160,7 +162,8 @@ export async function createList(
   try {
     const pubkey = await getPublicKey();
     const dTag = newSetDTag(params.title, Math.random().toString(36).slice(2, 8));
-    const list = parseList(newSetEvent({ ...params, pubkey, dTag }, 0));
+    const kind = (options.listKind ?? BOOKMARK_LISTS).set;
+    const list = parseList(newSetEvent({ ...params, pubkey, dTag, kind }, 0));
     if (!list) return failure(new Error('Not a list event'));
     // Unpublished (createdAt 0): addItemsToList starts from the user's copy if there is one
     return addItemsToList(list, params.items ?? [], options);
@@ -169,13 +172,13 @@ export async function createList(
   }
 }
 
-/** Ask relays to delete a bookmark set (NIP-09). The bookmarks list itself can't be deleted. */
+/** Ask relays to delete a set (NIP-09). The bookmarks list itself can't be deleted. */
 export async function deleteList(
   list: BookmarkList,
   options: ListRelayOptions = {}
 ): Promise<Result<void>> {
-  if (list.kind !== BOOKMARK_SET_KIND) {
-    return failure(new Error('Only bookmark sets can be deleted'));
+  if (list.dTag === '') {
+    return failure(new Error('Only sets can be deleted'));
   }
   const published = await publish(deletionEvent(list, now()), options);
   return published.success ? { success: true, data: undefined } : published;

@@ -50,7 +50,7 @@ export interface MyPluginConfig {
 
 export const myPlugin: NostrUIPlugin = {
   id: "my-plugin", // Must match uiPlugin in manifests
-  type: "string", // or 'number', 'geo', 'boolean', 'enum', 'ref', or an array
+  type: "string", // or 'number', 'geo', 'boolean', 'enum', 'ref', 'date', or an array
 
   validate(value: unknown, field: PostField) {
     if (typeof value !== "string") {
@@ -310,9 +310,11 @@ The last import wins. The plugin registry logs a warning when overwriting.
 ```ts
 interface NostrUIPlugin {
   id: string; // Unique identifier, matches uiPlugin in manifests
-  type: FieldType | FieldType[]; // 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref'
+  type: FieldType | FieldType[]; // 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date' | 'profile'
 
   // Core (no DOM)
+  // The composer runs it on submit for fields with a value; the field's mapTo is narrowed to
+  // the selected publish format's kinds. An error blocks publishing and shows at the field.
   validate?(value: unknown, field: PostField): Result<void, ValidationError>;
   formatValue?(value: unknown): string;
   serializeValue?(value: unknown): string;
@@ -372,6 +374,15 @@ interface NostrUIPlugin {
   // Web-only: toolbar action buttons rendered in the target field's toolbar when attachTo is set
   getFieldActions?(field: PostField): FieldAction[];
 
+  // Completions while typing in the text field this field is attached to (attachTo), e.g.
+  // @mentions: after `trigger` and 2+ characters the composer shows what `search` finds
+  // (label, detail, image) and replaces the trigger and query with the picked `insert`.
+  // The finding/replacing is @nostr-post/core/textCompletion (completionAt, applyCompletion).
+  textareaCompletion?: {
+    trigger: string;
+    search(query: string, field: PostField): Promise<TextCompletion[]>; // { label, detail?, image?, insert }
+  };
+
   // Web-only: intercept clipboard paste on textarea fields (e.g. media plugin handles image paste)
   handleTextareaPaste?(
     e: ClipboardEvent,
@@ -402,6 +413,8 @@ interface NostrUIPlugin {
 | `.field`    | `PostField`         | Full field definition from manifest (includes metadata)                   |
 | `.manifest` | `NostrPostManifest` | The whole manifest, for inputs that use other fields (e.g. `saveField`)   |
 | `.pubkey`   | `string`            | The author, when the composer knows it (its `pubkey`), so inputs needing the user's data don't ask the signer |
+| `.activeKinds` | `number[]`        | Kinds the selected publish format writes, e.g. the date input shows a date or a time by them |
+| `.error`    | `string \| undefined` | The composer's validation error for the field, shown under it; an input with its own live message hides that one meanwhile |
 
 | Event              | Detail               | When                                  |
 | ------------------ | -------------------- | ------------------------------------- |
@@ -440,6 +453,8 @@ When a plugin reads a new key, add it there.
 | ------------------------------ | ----------- | -------- | -------------------------------------------------------------------------------- |
 | `@nostr-post/plugin-stars`     | `stars`     | `number` | Interactive star rating (configurable max via `metadata.max`)                    |
 | `@nostr-post/plugin-geo`       | `geo`       | `geo`    | Map location picker using Leaflet/OpenStreetMap (NIP-52 geohash)                 |
+| `@nostr-post/plugin-date`      | `date`      | `date`   | Date or date and time with time zone; on NIP-52 calendar events (31922/31923) also `end`, `start_tzid`/`end_tzid` and `D` day tags. Text overridable through `messages` (`DateMessages`, `DEFAULT_DATE_MESSAGES`) |
+| `@nostr-post/plugin-profile`   | `profile`   | `profile` | People picker: search profiles (NIP-50) or paste an npub, a role each; `p` tags `["p", pubkey, relay, role]` (NIP-52 participants). Text overridable through `messages` (`ProfileMessages`) |
 | `@nostr-post/plugin-venue`     | `venue`     | `geo`    | OSM venue search + NIP-73 identity tags; wraps `plugin-geo`                      |
 | `@nostr-post/plugin-media`     | `media`     | `string` | Multi-file upload with NIP-98 auth; paste/drop on textarea via `attachTo`        |
 | `@nostr-post/plugin-markdown`  | `markdown`  | `string` | Markdown editor with live preview (WYSIWYG mode supported)                       |
@@ -451,7 +466,7 @@ When a plugin reads a new key, add it there.
 
 ## Custom Field Types
 
-The `FieldType` union currently supports `'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref'`.
+The `FieldType` union currently supports `'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date' | 'profile'`.
 
 If your plugin needs a custom type that doesn't fit these, you have two options:
 

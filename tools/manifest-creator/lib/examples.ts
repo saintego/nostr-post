@@ -1,5 +1,6 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
+import { CALENDAR_EVENT_MANIFEST } from '@nostr-post/plugin-date';
 import { listField } from '@nostr-post/plugin-list';
 import type { WikiManifest } from '@nostr-post/wiki';
 import { BEER_LISTS, SAVE_PLACE_MANIFEST, VENUE_LISTS } from './listExamples';
@@ -80,6 +81,26 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       name: 'Location Review',
       description: 'Review a place with star rating, map location, photos, and hashtags',
     },
+  },
+
+  // NIP-52 calendar event (kinds 31922/31923) from @nostr-post/plugin-date, its location
+  // linked to the venue's wiki page (venue hub): the package can't name this app's venue manifest
+  'calendar-event': {
+    ...CALENDAR_EVENT_MANIFEST,
+    id: 'calendar-event-venue-v1',
+    fields: CALENDAR_EVENT_MANIFEST.fields.map((field) =>
+      field.id === 'location'
+        ? {
+            ...field,
+            metadata: {
+              ...field.metadata,
+              description:
+                'Where it takes place: search OpenStreetMap; its venue page is created or linked',
+              wikiEntity: 'venue-entity-v1',
+            },
+          }
+        : field
+    ),
   },
 
   // The BJCP style list as a base manifest (lib/manifests/beerStyleBjcp2021.json).

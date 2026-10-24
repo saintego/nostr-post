@@ -91,10 +91,20 @@ export function encodeNaddr(address: string): string | undefined {
     ...tlv(2, hexBytes(pubkey)),
     ...tlv(3, [(k >>> 24) & 255, (k >>> 16) & 255, (k >>> 8) & 255, k & 255]),
   ];
+  return encodeBech32('naddr', bytes);
+}
+
+/** Bytes as a NIP-19 entity with `prefix` (`npub`, `naddr`, …) */
+const encodeBech32 = (prefix: string, bytes: number[]): string => {
   const words = convertBits(bytes, 8, 5, true) ?? [];
-  const mod = polymod([...hrpExpand('naddr'), ...words, 0, 0, 0, 0, 0, 0]) ^ 1;
+  const mod = polymod([...hrpExpand(prefix), ...words, 0, 0, 0, 0, 0, 0]) ^ 1;
   const checksum = Array.from({ length: 6 }, (_, i) => (mod >>> (5 * (5 - i))) & 31);
-  return `naddr1${[...words, ...checksum].map((w) => CHARSET[w]).join('')}`;
+  return `${prefix}1${[...words, ...checksum].map((w) => CHARSET[w]).join('')}`;
+};
+
+/** A hex pubkey as a NIP-19 `npub`; undefined for anything but 64 hex characters */
+export function encodeNpub(pubkey: string): string | undefined {
+  return /^[0-9a-f]{64}$/.test(pubkey) ? encodeBech32('npub', hexBytes(pubkey)) : undefined;
 }
 
 /** Bech32 data of a NIP-19 entity: its prefix (`npub`, `naddr`, …) and bytes; undefined if invalid */

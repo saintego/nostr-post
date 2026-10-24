@@ -19,6 +19,13 @@ export interface VenueWikiMessages {
   slugFree: string;
   slugTaken: string;
   slugUnknown: string;
+  /** For a new page of a venue from OSM: its Google Maps link */
+  googleLinkLabel: string;
+  googleLinkPlaceholder: string;
+  /** The pasted text isn't a Google Maps link to a place */
+  googleLinkInvalid: string;
+  /** A short Google Maps share link: only Google could open it */
+  googleShortLink: string;
 }
 
 export const DEFAULT_VENUE_WIKI_MESSAGES: VenueWikiMessages = {
@@ -34,6 +41,12 @@ export const DEFAULT_VENUE_WIKI_MESSAGES: VenueWikiMessages = {
   slugFree: '✓ free',
   slugTaken: '✗ used by another venue: change it, e.g. add a detail',
   slugUnknown: "? couldn't verify (a relay didn't answer)",
+  googleLinkLabel: 'Google Maps link (optional):',
+  googleLinkPlaceholder: 'https://www.google.com/maps/place/…',
+  googleLinkInvalid:
+    "Not a Google Maps link to a place: open the place on Google Maps and copy the address bar's link.",
+  googleShortLink:
+    'Short links can only be opened by Google: open it, then paste the full link from the address bar.',
 };
 
 /** User-facing text of <np-venue-view> (overridable via its `messages` property) */
@@ -63,8 +76,12 @@ export interface VenueInputMessages {
   levelLabel: Record<VenueLevel, string>;
   /** A short Google Maps share link: only Google could open it */
   googleShortLink: string;
-  /** A pasted Google Maps link whose place isn't on OpenStreetMap */
+  /** A pasted Google Maps link whose place isn't found on OpenStreetMap around its point */
   googleNotOnOsm: (name: string | undefined) => string;
+  /** Not found at the link's point, but places with its name in the area */
+  googleNearby: (name: string | undefined) => string;
+  /** Searching by name after pasting a Google Maps link */
+  googleLinkKept: string;
 }
 
 export const DEFAULT_VENUE_INPUT_MESSAGES: VenueInputMessages = {
@@ -78,7 +95,11 @@ export const DEFAULT_VENUE_INPUT_MESSAGES: VenueInputMessages = {
   googleShortLink:
     'Short links can only be opened by Google: open it, then paste the full link from the address bar.',
   googleNotOnOsm: (name) =>
-    `${name ? `"${name}" isn't` : "This place isn't"} on OpenStreetMap yet: click its spot on the map to add it.`,
+    `${name ? `"${name}" wasn't` : "This place wasn't"} found on OpenStreetMap around the link's spot: search for it by name (the Google link is kept), or click its spot on the map.`,
+  googleNearby: (name) =>
+    `Not found at the link's spot, but ${name ? `"${name}"` : 'places with its name'} nearby on OpenStreetMap: pick it if it's the same place, search by name, or click its spot on the map.`,
+  googleLinkKept:
+    'The Google Maps link goes with the place you pick (clear the search to drop it).',
 };
 
 /** User-facing text of <np-venue-entity-create> (overridable via its `messages` property) */

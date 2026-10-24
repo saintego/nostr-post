@@ -7,16 +7,20 @@
 
 import type { ManifestList, NostrPostManifest } from '@nostr-post/core/types';
 import {
+  BOOKMARK_LISTS,
   BOOKMARK_SET_KIND,
   BOOKMARKS_KIND,
   type BookmarkList,
+  CALENDAR_KIND,
   DELETION_KIND,
   type ListEvent,
   type ListItem,
+  type ListKind,
   WIKI_KIND,
 } from './types';
 
-const LIST_KINDS = [BOOKMARKS_KIND, BOOKMARK_SET_KIND];
+const STANDARD_KINDS = [BOOKMARKS_KIND];
+const SET_KINDS = [BOOKMARK_SET_KIND, CALENDAR_KIND];
 
 const tagValue = (tags: string[][], name: string): string | undefined =>
   tags.find((t) => t[0] === name)?.[1];
@@ -24,11 +28,15 @@ const tagValue = (tags: string[][], name: string): string | undefined =>
 export const listAddress = (kind: number, pubkey: string, dTag: string): string =>
   `${kind}:${pubkey}:${dTag}`;
 
-/** The list in a kind 10003 or 30003 event; null for other events or a set without d-tag */
+/**
+ * The list in a kind 10003, 30003 or 31924 (calendar) event; null for other events or a set
+ * without d-tag
+ */
 export function parseList(event: ListEvent): BookmarkList | null {
-  if (!LIST_KINDS.includes(event.kind)) return null;
-  const dTag = event.kind === BOOKMARK_SET_KIND ? (tagValue(event.tags, 'd') ?? '') : '';
-  if (event.kind === BOOKMARK_SET_KIND && !dTag) return null;
+  const isSet = SET_KINDS.includes(event.kind);
+  if (!isSet && !STANDARD_KINDS.includes(event.kind)) return null;
+  const dTag = isSet ? (tagValue(event.tags, 'd') ?? '') : '';
+  if (isSet && !dTag) return null;
   const items: ListItem[] = [];
   for (const [tag, value, relay] of event.tags) {
     if ((tag === 'a' || tag === 'e') && value)
@@ -137,9 +145,9 @@ export const listWithTitle = <T extends { title?: string }>(
   return lists.find((l) => titleOf(l)?.trim().toLowerCase() === wanted);
 };
 
-/** A new bookmark set */
+/** A new set: a bookmark set, or of `kind` (e.g. a calendar) */
 export function newSetEvent(
-  params: { pubkey: string; dTag: string; title: string; description?: string },
+  params: { pubkey: string; dTag: string; title: string; description?: string; kind?: number },
   now: number
 ): ListEvent {
   const tags = [
@@ -147,7 +155,8 @@ export function newSetEvent(
     ['title', params.title],
   ];
   if (params.description) tags.push(['description', params.description]);
-  return { kind: BOOKMARK_SET_KIND, pubkey: params.pubkey, created_at: now, content: '', tags };
+  const kind = params.kind ?? BOOKMARK_SET_KIND;
+  return { kind, pubkey: params.pubkey, created_at: now, content: '', tags };
 }
 
 /** A deletion request (NIP-09) for a list */
@@ -202,7 +211,13 @@ export function currentLists(events: ListEvent[]): BookmarkList[] {
  * `lists` with the user's bookmarks list first: an empty one (never published, createdAt 0)
  * when they have none yet, so it can be saved to like any other list.
  */
-export function withBookmarks(lists: BookmarkList[], pubkey: string): BookmarkList[] {
+export function withBookmarks(
+  lists: BookmarkList[],
+  pubkey: string,
+  listKind: ListKind = BOOKMARK_LISTS
+): BookmarkList[] {
+  // Kinds without a standard list (calendars) have nothing to add
+  if (listKind.standard !== BOOKMARKS_KIND) return lists;
   if (lists.some((l) => l.kind === BOOKMARKS_KIND && l.pubkey === pubkey)) return lists;
   const empty = parseList(newBookmarksEvent(pubkey, 0));
   return empty ? [empty, ...lists] : lists;
@@ -227,8 +242,8 @@ export function listAtAddress(address: string, title?: string): BookmarkList | n
   const [kind, pubkey = '', ...rest] = address.split(':');
   const dTag = rest.join(':');
   if (Number(kind) === BOOKMARKS_KIND) return parseList(newBookmarksEvent(pubkey, 0));
-  if (Number(kind) !== BOOKMARK_SET_KIND || !pubkey || !dTag) return null;
-  return parseList(newSetEvent({ pubkey, dTag, title: title ?? dTag }, 0));
+  if (!SET_KINDS.includes(Number(kind)) || !pubkey || !dTag) return null;
+  return parseList(newSetEvent({ pubkey, dTag, title: title ?? dTag, kind: Number(kind) }, 0));
 }
 
 /**
@@ -238,10 +253,11 @@ export function listAtAddress(address: string, title?: string): BookmarkList | n
 export function withPresets(
   lists: BookmarkList[],
   presets: ListPreset[],
-  pubkey: string
+  pubkey: string,
+  listKind: ListKind = BOOKMARK_LISTS
 ): BookmarkList[] {
   const presetLists = presets.flatMap((preset) => {
-    const address = listAddress(BOOKMARK_SET_KIND, pubkey, preset.dTag);
+    const address = listAddress(listKind.set, pubkey, preset.dTag);
     const list = lists.find((l) => l.address === address) ?? listAtAddress(address, preset.label);
     return list ? [list] : [];
   });

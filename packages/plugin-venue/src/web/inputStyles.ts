@@ -153,4 +153,58 @@ export const venueInputStyles = css`
     font-size: 0.8125rem;
     line-height: 1.4;
   }
+
+  :host-context(.dark) {
+    color: #f3f4f6;
+  }
+  :host-context(.dark) .search-input,
+  :host-context(.dark) .btn {
+    border-color: #4b5563;
+    background: #111827;
+    color: #f3f4f6;
+  }
+  :host-context(.dark) .btn:hover {
+    background: #1f2937;
+  }
+  :host-context(.dark) .search-input:focus {
+    border-color: #818cf8;
+  }
+  :host-context(.dark) .results {
+    border-color: #374151;
+    background: #1f2937;
+  }
+  :host-context(.dark) .result-item {
+    border-color: #374151;
+  }
+  :host-context(.dark) .result-item:hover {
+    background: #312e81;
+  }
+  :host-context(.dark) .venue-card {
+    border-color: #166534;
+    background: #052e16;
+  }
+  :host-context(.dark) .venue-name {
+    color: #86efac;
+  }
+  :host-context(.dark) .venue-meta,
+  :host-context(.dark) .loading,
+  :host-context(.dark) .result-type {
+    color: #9ca3af;
+  }
+  :host-context(.dark) .venue-meta a {
+    color: #a5b4fc;
+  }
+  :host-context(.dark) .clear-btn {
+    color: #fca5a5;
+  }
+  :host-context(.dark) .error-message {
+    border-color: #7f1d1d;
+    background: #450a0a;
+    color: #fecaca;
+  }
+  :host-context(.dark) .resolving {
+    border-color: #1e3a8a;
+    background: #172554;
+    color: #bfdbfe;
+  }
 `;

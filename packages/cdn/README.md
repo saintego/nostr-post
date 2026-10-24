@@ -39,6 +39,8 @@ The plugins and their UI elements are also registered:
 
 - **Stars** — `@nostr-post/plugin-stars`
 - **Geo** — `@nostr-post/plugin-geo`
+- **Date** — `@nostr-post/plugin-date`: dates and times, NIP-52 calendar event tags
+- **Profile** — `@nostr-post/plugin-profile`: people picker (`p` tags with roles)
 - **Venue** — `@nostr-post/plugin-venue`
 - **Media** — `@nostr-post/plugin-media`
 - **Markdown** — `@nostr-post/plugin-markdown`
@@ -101,6 +103,28 @@ The bundle re-exports utilities for advanced usage:
 - `decodeGeohash(hash)`
 - `GeoPluginConfig`, `GeoCoordinates`
 
+**People helpers** (see [plugin-profile](../plugin-profile/README.md))
+
+- `profilePlugin`, `personFromText(text)`, `peopleFromTags(tags)`, `personTag(person)`, `Person`
+- `mentionsIn(text)`: the people in a text's `nostr:npub…` mentions; the composer completes `@name` in
+  text fields with an attached `profile` field (the standard kind 1 post has one)
+- `searchProfiles(query, { relays? })`, `profileName(pubkey, profile?)`, `DEFAULT_SEARCH_RELAYS`, `FoundProfile`
+
+**Date helpers** (NIP-52 calendar event dates, see [plugin-date](../plugin-date/README.md))
+
+- `datePlugin`
+- `CALENDAR_EVENT_MANIFEST`: NIP-52 calendar event, all-day or timed by publish format
+- `formatDateValue(value, locale?)`, `dateValueFromTags(tags, tagName?)`, `dayNumbers(value, precision)`
+- `ALL_DAY_EVENT_KIND` (31922), `TIMED_EVENT_KIND` (31923)
+- Agenda: `agendaFilter(window)` (relay filter of a date window), `groupEventsByDay(events, window)`,
+  `eventTiming(event)`, `eventDates(timing, tzid?)`, `windowDates(window)`, `shiftWindow(window, steps)`,
+  `AgendaWindow`
+- RSVP (kind 31925): `fetchRsvps(addresses)`, `publishRsvp(address, status)`,
+  `summarizeRsvps(events, address)`, `rsvpEvent(address, status, pubkey)`, `RsvpStatus`
+- Calendars (kind 31924): `fetchCalendarItems(address)` (a calendar's event addresses),
+  `calendarEventFilters(addresses)`; edited with the list functions and `{ listKind: CALENDAR_LISTS }`
+- `DateValue`
+
 **Signing & Relays**
 
 - `signEvent`, `signAndPublish`, `publishToRelay`, `publishToRelays` (`signAndPublish` without
@@ -130,6 +154,8 @@ The bundle re-exports utilities for advanced usage:
 
 - `DEFAULT_COMPOSER_MESSAGES`: the composer's submit-area text (button, running step, errors); set
   `composer.messages = { submit: '…' }` to override any of it
+- `DEFAULT_FEED_MESSAGES`: the feed's text (loading, empty, agenda buttons); set `feed.messages` to
+  override any of it
 
 **Publishing a submitted post yourself** (composer without `auto-publish`)
 
@@ -174,6 +200,8 @@ The bundle re-exports utilities for advanced usage:
   `deleteList(list)`: publish through the signer (test mode applies); they return a `Result`
 - `itemFor(addressOrId)`, `hasItem(list, item)`: wiki entities count as one item whichever author's
   version was saved
+- `BOOKMARK_LISTS` (default), `CALENDAR_LISTS`, `ListKind`: pass `{ listKind }` to the functions above
+  for another kind of list, e.g. NIP-52 calendars (31924)
 - `listField({ saveField, label })`: a `list` field for a manifest
 - `itemsToSave(field, { formData, events })`, `saveToChoices(choices, items)`: what a `list` field saves
   after publishing, and saving it (its `afterPublish` hook)
@@ -367,6 +395,36 @@ This rewrites to a relay query like:
 <nostr-post-feed filter-tags="#g:u09tvw" limit="20"></nostr-post-feed>
 <nostr-post-feed filter-tags="#i:osm:node:123" limit="20"></nostr-post-feed>
 ```
+
+### Agenda (NIP-52 calendar events)
+
+With `agenda`, the feed shows calendar events of a date window under day headings, sorted by
+when they start (not when they were posted). Each version of an event counts once.
+
+```html
+<nostr-post-feed agenda agenda-from="2026-10-21" agenda-days="7"></nostr-post-feed>
+```
+
+- `agenda-from`: first day, `YYYY-MM-DD` (default today); `agenda-days`: number of days (default 30)
+- `time-zone`: IANA time zone of the days (default the viewer's)
+- Kinds: `kinds`, else the manifest's, else 31922 and 31923; `limit` defaults to 500 here
+- Other filters (`authors`, `tagFilters`, …) narrow it down; `filters` replaces the agenda's filter
+- Previous / Today / Next buttons move the window; the feed then fires `nostr-post-agenda-change`
+  with `{ from, days }` (`from` undefined: today). While the new window loads, the buttons and the
+  previous window's days stay shown (dimmed), next to the `loading` message
+- With a calendar manifest, each event shows Going / Maybe / Can't go with counts (`<np-rsvp>`)
+- `calendar="31924:<pubkey>:<d-tag>"`: the agenda of one calendar (NIP-52): its events, loaded by
+  address, so also all-day events of clients that write no `D` tags
+- With a calendar manifest, events also get Add to calendar (`<np-calendar-save>`): the user's
+  calendars, to add the event to or start a new one
+
+The days become a `#D` filter, the day tags `@nostr-post/plugin-date` writes:
+
+```json
+{ "kinds": [31922, 31923], "limit": 500, "#D": ["20746", "20747", "…"] }
+```
+
+All-day events from clients that don't write `D` tags aren't found this way.
 
 ### Advanced: Multiple REQ Filters
 

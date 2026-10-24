@@ -49,6 +49,18 @@ export interface PostField {
   attachTo?: string;
 }
 
+/** A completion offered while typing (see NostrUIPlugin.textareaCompletion) */
+export interface TextCompletion {
+  /** What the list shows, e.g. a name */
+  label: string;
+  /** Shown after the label, e.g. a NIP-05 address */
+  detail?: string;
+  /** An image URL shown before the label, e.g. an avatar */
+  image?: string;
+  /** The text that replaces the trigger and the typed query, e.g. `nostr:npub1…` */
+  insert: string;
+}
+
 /** Context passed to FieldAction.onClick handlers. */
 export interface FieldActionContext {
   /** The attached plugin's own field definition. */
@@ -130,7 +142,10 @@ export interface NostrUIPlugin {
   id: string;
   type: FieldType | FieldType[];
 
-  /** Validate field value */
+  /**
+   * Validate field value. The composer runs it on submit for fields with a value, with the
+   * field's mapTo narrowed to the selected publish format's kinds; an error blocks publishing.
+   */
   validate?: (value: unknown, field: PostField) => Result<void, ValidationError>;
 
   /** Format value for display as plain text */
@@ -164,6 +179,9 @@ export interface NostrUIPlugin {
    * Set automatically when the plugin's /web entrypoint is imported.
    * The element must accept .value and .field properties
    * and dispatch 'np-value-changed' CustomEvent with { detail: { value } }.
+   * The composer also sets .manifest, .pubkey, .activeKinds (the kinds the
+   * selected publish format writes) and .error (its error for the field, shown
+   * under it), for inputs that need them.
    */
   inputTagName?: string;
 
@@ -238,6 +256,16 @@ export interface NostrUIPlugin {
    * @returns The resolved value to pass to the view component's .value property
    */
   resolveFromTags?: (tags: string[][], field: PostField) => unknown;
+
+  /**
+   * Completions while typing in the text field this plugin's field is attached to
+   * (`attachTo`), e.g. `@name` mentions: after `trigger`, the composer shows what `search`
+   * finds for the typed text and inserts the picked one's `insert`.
+   */
+  textareaCompletion?: {
+    trigger: string;
+    search: (query: string, field: PostField) => Promise<TextCompletion[]>;
+  };
 
   /**
    * Handle clipboard paste events on textarea fields.
