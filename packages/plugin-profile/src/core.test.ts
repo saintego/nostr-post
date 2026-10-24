@@ -2,6 +2,8 @@ import type { PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
 import {
   fieldRoles,
+  mentionCompletion,
+  mentionsIn,
   peopleFromTags,
   personFromText,
   personTag,
@@ -80,5 +82,42 @@ describe('editing and checking people', () => {
       error: { code: 'TOO_MANY_PEOPLE' },
     });
     expect(fieldRoles(field)).toEqual(['host', 'speaker']);
+  });
+});
+
+describe('mentions', () => {
+  const mentions: PostField = {
+    id: 'mentions',
+    type: 'profile',
+    uiPlugin: 'profile',
+    attachTo: 'content',
+    mapTo: { kind: 1, target: 'tag', tagName: 'p' },
+  };
+
+  it('finds nostr: mentions in a text, each once', () => {
+    expect(mentionsIn(`hi nostr:${NPUB} and nostr:${NPUB}, ${NPUB} alone`)).toEqual([
+      { pubkey: HEX },
+    ]);
+    expect(mentionsIn('no mentions')).toEqual([]);
+  });
+
+  it('completes a profile as its nostr:npub', () => {
+    expect(mentionCompletion(HEX, { name: 'fiatjaf', nip05: 'f@x', picture: 'https://p' })).toEqual(
+      {
+        label: 'fiatjaf',
+        detail: 'f@x',
+        image: 'https://p',
+        insert: `nostr:${NPUB}`,
+      }
+    );
+  });
+
+  it('adds the people mentioned in the text it is attached to', () => {
+    const enriched = profilePlugin.enrichFormData?.(
+      { content: `thanks nostr:${NPUB}`, mentions: [{ pubkey: other }] },
+      mentions
+    );
+    expect(enriched).toEqual({ mentions: [{ pubkey: other }, { pubkey: HEX }] });
+    expect(profilePlugin.enrichFormData?.({ content: 'nothing' }, mentions)).toEqual({});
   });
 });

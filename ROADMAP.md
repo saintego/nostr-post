@@ -61,8 +61,11 @@
   - [x] Event participants: NIP-52 lists people on an event as `p` tags with a role, e.g. `speaker` or
         `host`. New `@nostr-post/plugin-profile` (field type `profile`): search profiles by name (NIP-50
         search relays) or paste an npub, a role each; `CALENDAR_EVENT_MANIFEST` has a Participants field
-  - [ ] Mentions with the people picker: `@` in the text field searching profiles (plugin-profile's
-        `searchProfiles`), inserting `nostr:npub…`
+  - [x] Mentions with the people picker: `@` in the text field searching profiles, inserting
+        `nostr:npub…` (plugin `textareaCompletion` hook, core `textCompletion`); the standard kind 1
+        post has a `mentions` field (plugin-profile attached to the text), the people mentioned get `p` tags
+  - [ ] `@` mentions in the markdown editor (its WYSIWYG mode has its own editor; only the plain text
+        field completes now)
   - [ ] People search only finds profiles on NIP-50 relays (`DEFAULT_SEARCH_RELAYS`); also search the
         user's follows and recently seen profiles locally
   - [ ] View: the title heading comes after the note text (content); show `title` first

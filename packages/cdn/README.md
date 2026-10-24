@@ -106,6 +106,8 @@ The bundle re-exports utilities for advanced usage:
 **People helpers** (see [plugin-profile](../plugin-profile/README.md))
 
 - `profilePlugin`, `personFromText(text)`, `peopleFromTags(tags)`, `personTag(person)`, `Person`
+- `mentionsIn(text)`: the people in a text's `nostr:npub…` mentions; the composer completes `@name` in
+  text fields with an attached `profile` field (the standard kind 1 post has one)
 - `searchProfiles(query, { relays? })`, `profileName(pubkey, profile?)`, `DEFAULT_SEARCH_RELAYS`, `FoundProfile`
 
 **Date helpers** (NIP-52 calendar event dates, see [plugin-date](../plugin-date/README.md))

@@ -377,6 +377,17 @@ export const STANDARD_KIND1_POST_MANIFEST: NostrPostManifest = {
       },
     },
     {
+      id: 'mentions',
+      type: 'profile',
+      uiPlugin: 'profile',
+      // Attaches to content field: typing @name suggests profiles and inserts nostr:npub…
+      // (NIP-27); the people mentioned get p tags. The text shows them, so the view doesn't.
+      attachTo: 'content',
+      mapTo: { kind: 1, target: 'tag', tagName: 'p' },
+      visibility: { view: 'hidden' },
+      metadata: { label: 'Mentions' },
+    },
+    {
       id: 'tags',
       type: 'string',
       uiPlugin: 'hashtag',
@@ -391,7 +402,8 @@ export const STANDARD_KIND1_POST_MANIFEST: NostrPostManifest = {
   ],
   metadata: {
     name: 'Standard Kind 1 Post',
-    description: 'Standard kind 1 post/comment with text, media attachments, and hashtags.',
+    description:
+      'Standard kind 1 post/comment with text, media attachments, @mentions and hashtags.',
     tags: ['kind1', 'standard', 'comment', 'reply'],
   },
 };

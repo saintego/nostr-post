@@ -57,6 +57,10 @@
     "./noteContent": {
       "types": "./dist/noteContent.d.ts",
       "import": "./dist/noteContent.js"
+    },
+    "./textCompletion": {
+      "types": "./dist/textCompletion.d.ts",
+      "import": "./dist/textCompletion.js"
     }
   },
   "scripts": {

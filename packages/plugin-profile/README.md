@@ -36,6 +36,19 @@ Few relays search profiles (NIP-50), so `DEFAULT_SEARCH_RELAYS` (`wss://relay.no
 `wss://search.nos.today`) can be replaced per field with `metadata.searchRelays`. Pasting an
 `npub` works without search.
 
+### Mentions
+
+Attached to a text field (`attachTo: 'content'`), the field gives `@` mentions: typing `@` and a
+name suggests profiles (`textareaCompletion`), and the picked one goes into the text as
+`nostr:npub…` (NIP-27), which clients show as the person's name. Its `enrichFormData` adds the
+people mentioned in the text to the field, so they get `p` tags. The standard kind 1 post manifest
+has such a field (`mentions`, hidden in the view: the text shows them).
+
+| Export                                 | Does                                                        |
+| -------------------------------------- | ----------------------------------------------------------- |
+| `mentionsIn(text)`                     | The people in a text's `nostr:npub…` / `nostr:nprofile…`    |
+| `mentionCompletion(pubkey, profile)`   | A suggestion: the profile's name, inserting `nostr:npub…`   |
+
 Manifest keys are in [MANIFEST.md](../../MANIFEST.md#plugin-metadata).
 
 ## `/web`

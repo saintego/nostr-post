@@ -63,6 +63,7 @@ export {
 export {
   profilePlugin,
   personFromText,
+  mentionsIn,
   peopleFromTags,
   personTag,
   searchProfiles,

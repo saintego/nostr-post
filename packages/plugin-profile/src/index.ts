@@ -6,6 +6,8 @@
  */
 export {
   fieldRoles,
+  mentionCompletion,
+  mentionsIn,
   type Person,
   peopleFromTags,
   peopleOf,

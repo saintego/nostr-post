@@ -1,6 +1,72 @@
 import { css } from 'lit';
 
 export const composerStyle = css`
+  /* <np-completing-textarea>: suggestions while typing, e.g. @mentions */
+  .completing {
+    position: relative;
+  }
+
+  .completions {
+    position: absolute;
+    z-index: 20;
+    left: 0;
+    right: 0;
+    top: calc(100% + 0.25rem);
+    margin: 0;
+    padding: 0.25rem;
+    list-style: none;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .completions li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    color: #1f2937;
+  }
+
+  .completions li.active {
+    background: #eef2ff;
+  }
+
+  .completions img,
+  .completions .no-image {
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #e5e7eb;
+    flex: none;
+  }
+
+  .completions .detail {
+    color: #6b7280;
+    font-size: 0.8125rem;
+  }
+
+  :host-context(.dark) .completions {
+    background: #1f2937;
+    border-color: #4b5563;
+  }
+
+  :host-context(.dark) .completions li {
+    color: #f3f4f6;
+  }
+
+  :host-context(.dark) .completions li.active {
+    background: #374151;
+  }
+
+  :host-context(.dark) .completions .detail {
+    color: #9ca3af;
+  }
+
   .composer {
     padding: 1rem;
     border: 1px solid var(--nl-border, #e5e7eb);

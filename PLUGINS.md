@@ -374,6 +374,15 @@ interface NostrUIPlugin {
   // Web-only: toolbar action buttons rendered in the target field's toolbar when attachTo is set
   getFieldActions?(field: PostField): FieldAction[];
 
+  // Completions while typing in the text field this field is attached to (attachTo), e.g.
+  // @mentions: after `trigger` and 2+ characters the composer shows what `search` finds
+  // (label, detail, image) and replaces the trigger and query with the picked `insert`.
+  // The finding/replacing is @nostr-post/core/textCompletion (completionAt, applyCompletion).
+  textareaCompletion?: {
+    trigger: string;
+    search(query: string, field: PostField): Promise<TextCompletion[]>; // { label, detail?, image?, insert }
+  };
+
   // Web-only: intercept clipboard paste on textarea fields (e.g. media plugin handles image paste)
   handleTextareaPaste?(
     e: ClipboardEvent,

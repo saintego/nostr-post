@@ -6,8 +6,15 @@
  * mention). No DOM dependencies — safe for SSR/Node.
  */
 
-import { decodeProfile } from '@nostr-post/core/nip19';
-import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
+import { decodeProfile, encodeNpub } from '@nostr-post/core/nip19';
+import type {
+  NostrUIPlugin,
+  PostField,
+  Result,
+  TextCompletion,
+  ValidationError,
+} from '@nostr-post/plugins/types';
+import { profileName, searchProfiles } from './search';
 
 /** A person in a people field */
 export interface Person {
@@ -77,6 +84,38 @@ export const withPerson = (people: Person[], person: Person): Person[] =>
 export const withoutPerson = (people: Person[], pubkey: string): Person[] =>
   people.filter((p) => p.pubkey !== pubkey);
 
+/** The people mentioned in a text: its `nostr:npub…` and `nostr:nprofile…` references */
+export const mentionsIn = (text: string): Person[] => {
+  const people: Person[] = [];
+  for (const [, entity = ''] of text.matchAll(/nostr:((?:npub1|nprofile1)[02-9ac-hj-np-z]+)/gi)) {
+    const person = personFromText(entity);
+    if (person && !people.some((p) => p.pubkey === person.pubkey)) people.push(person);
+  }
+  return people;
+};
+
+/** A mention completion: the profile's name, inserting its `nostr:npub…` */
+export const mentionCompletion = (
+  pubkey: string,
+  profile: { name?: string; display_name?: string; picture?: string; nip05?: string }
+): TextCompletion | undefined => {
+  const npub = encodeNpub(pubkey);
+  if (!npub) return undefined;
+  return {
+    label: profileName(pubkey, profile),
+    insert: `nostr:${npub}`,
+    ...(profile.nip05 ? { detail: profile.nip05 } : {}),
+    ...(profile.picture ? { image: profile.picture } : {}),
+  };
+};
+
+const searchRelaysOf = (field: PostField): string[] | undefined => {
+  const relays = field.metadata?.searchRelays;
+  return Array.isArray(relays)
+    ? relays.filter((r): r is string => typeof r === 'string')
+    : undefined;
+};
+
 const invalid = (field: PostField, message: string, code: string) => ({
   success: false as const,
   error: { field: field.id, message, code },
@@ -108,6 +147,26 @@ export const profilePlugin: NostrUIPlugin = {
   serializeValue: (): string => '',
 
   extraTags: (value: unknown): [string, ...string[]][] => peopleOf(value).map(personTag),
+
+  /**
+   * Attached to a text field (`attachTo`): typing `@` and a name searches profiles and
+   * inserts the picked one as `nostr:npub…` (NIP-27)
+   */
+  textareaCompletion: {
+    trigger: '@',
+    search: async (query: string, field: PostField): Promise<TextCompletion[]> => {
+      const found = await searchProfiles(query, { relays: searchRelaysOf(field) });
+      return found.flatMap(({ pubkey, profile }) => mentionCompletion(pubkey, profile) ?? []);
+    },
+  },
+
+  /** Attached to a text field: the people mentioned in it, besides those picked */
+  enrichFormData: (formData: Record<string, unknown>, field: PostField) => {
+    const text = field.attachTo ? formData[field.attachTo] : undefined;
+    if (typeof text !== 'string') return {};
+    const people = mentionsIn(text).reduce(withPerson, peopleOf(formData[field.id]));
+    return people.length > 0 ? { [field.id]: people } : {};
+  },
 
   resolveFromTags: (tags: string[][], field: PostField): unknown => {
     const target = Array.isArray(field.mapTo) ? field.mapTo[0] : field.mapTo;
