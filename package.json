@@ -44,11 +44,11 @@
   "homepage": "https://github.com/saintego/nostr-post#readme",
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
-    "@vitest/ui": "^5.0.4",
-    "happy-dom": "^21.0.1",
+    "@vitest/ui": "^5.0.5",
+    "happy-dom": "^21.0.4",
     "lefthook": "^2.2.2",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.4"
+    "vitest": "^5.0.5"
   },
   "engines": {
     "node": ">=22.12.0",
@@ -57,7 +57,8 @@
   "packageManager": "pnpm@9.14.4",
   "pnpm": {
     "overrides": {
-      "typescript": "^6.0.3"
+      "typescript": "^6.0.3",
+      "yaml": "^2.8.3"
     }
   }
 }
