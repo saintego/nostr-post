@@ -1,0 +1,43 @@
+{
+  "name": "@nostr-post/plugin-profile",
+  "version": "0.1.0",
+  "description": "People picker plugin for nostr-post: search profiles, p tags with roles (e.g. NIP-52 event participants)",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
+    "test:watch": "vitest --dir src",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "nostr",
+    "plugin",
+    "profile",
+    "people",
+    "participants",
+    "nip-52"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nostr-post/core": "workspace:*",
+    "@nostr-post/plugins": "workspace:*",
+    "@nostr-post/signer": "workspace:*",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

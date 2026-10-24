@@ -40,6 +40,7 @@ The plugins and their UI elements are also registered:
 - **Stars** — `@nostr-post/plugin-stars`
 - **Geo** — `@nostr-post/plugin-geo`
 - **Date** — `@nostr-post/plugin-date`: dates and times, NIP-52 calendar event tags
+- **Profile** — `@nostr-post/plugin-profile`: people picker (`p` tags with roles)
 - **Venue** — `@nostr-post/plugin-venue`
 - **Media** — `@nostr-post/plugin-media`
 - **Markdown** — `@nostr-post/plugin-markdown`
@@ -101,6 +102,11 @@ The bundle re-exports utilities for advanced usage:
 - `encodeGeohash(lat, lon, precision?)`
 - `decodeGeohash(hash)`
 - `GeoPluginConfig`, `GeoCoordinates`
+
+**People helpers** (see [plugin-profile](../plugin-profile/README.md))
+
+- `profilePlugin`, `personFromText(text)`, `peopleFromTags(tags)`, `personTag(person)`, `Person`
+- `searchProfiles(query, { relays? })`, `profileName(pubkey, profile?)`, `DEFAULT_SEARCH_RELAYS`, `FoundProfile`
 
 **Date helpers** (NIP-52 calendar event dates, see [plugin-date](../plugin-date/README.md))
 

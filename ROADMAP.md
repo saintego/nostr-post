@@ -14,6 +14,8 @@
 - [ ] add style customization options for web components (CSS custom properties, theming)
 - [ ] Dark mode in the manifest creator (follow `prefers-color-scheme`, with a toggle); the web components' colors need CSS custom properties for it (see theming above)
 - [ ] fix pwa example shared image/text, it's not getting to post input now
+- [ ] preview of kind1 with photo
+- [ ] custom nostr-post relay(paid or run) or reupload(similar as shard-signer)
 - [x] fix list plugin to use lists(nip-51?) instead of manifests (NIP-51 bookmark lists, see the rewrite below)
 - [x] Rewrite `plugin-list` and test it as a whole: it's now save-to-list for wiki entities and other events, on NIP-51 bookmark lists (the bookmarks list, kind 10003, and bookmark sets, kind 30003; items as `a`/`e` tags). `<np-list-save target=…>` adds/removes the target in the user's lists or starts a new one; `<np-list-view>` shows lists with item titles, removing items and deleting sets. Wiki entities are one item whichever author's version was saved (compared and shown by d-tag); edits start from the newest copy on relays and keep other clients' tags and content; deleting sends a NIP-09 request. Publishes through the signer (`signAndPublish`: test mode, the user's relays). `<np-venue-view>` shows Save for a venue with a wiki page. The old audience-picker composer field (`np-list-input`, made-up `i list:` tags, never used) is gone. Tested with an in-memory relay (core, publishing, both components)
 - [x] plugin-list in manifests: any manifest names lists for its events (`lists`; d-tag `nostr-post:<listType>:<id>`, `listType` default the manifest id, set it for versioned ids so versions and extending manifests share the user's lists; or a fixed `dTag` to share one across manifests; `lists` merge by id with `extends`). Save shows only for such events and offers them first: `<nostr-post-view>`, `<nostr-wiki-view>`, `<np-venue-view>` render plugins' event actions (`@nostr-post/plugins/entities`, `registerEventAction`). `list` field: `metadata.saveField` saves that field's entity (its manifest's lists), without it the post itself (the post manifest's lists); value: list addresses and `new:<title>`; saved after publishing by the new `afterPublish` plugin hook (`runAfterPublish`; both composers run it, a failure is shown and doesn't undo the post). Publish formats may have `kinds: []` (hooks only): the "Save a place" example finds a place, creates its page if needed and saves it. Plugins meet the wiki package through the hub: plugin-list depends on neither the wiki nor the venue plugin, the venue plugin not on plugin-list. The list components show each loading step (signer with a 20 s timeout, relays) with a retry, and take the composer's `pubkey` (composers pass `.manifest` and `.pubkey` to plugin inputs); the signer asks `getPublicKey` once (`clearPublicKeyCache` on sign-in changes); relay reads end on `CLOSED`; the plugin auto-loader loads a web entry also when the main entry registered the plugin first
@@ -56,9 +58,14 @@
         (`INVALID_TIME_ZONE`)
   - [x] Event manifest for 31922/31923, `CALENDAR_EVENT_MANIFEST` in `@nostr-post/plugin-date` (title, date,
         location/`g` via plugin-venue, description, summary, image, `t`); in the manifest creator's examples
-  - [ ] Event participants: NIP-52 lists people on an event as `p` tags with a role, e.g. `speaker` or
-        `host`. Needs a profile picker field (search users by name, pick a profile), which doesn't exist
-        yet; mentions could use it too
+  - [x] Event participants: NIP-52 lists people on an event as `p` tags with a role, e.g. `speaker` or
+        `host`. New `@nostr-post/plugin-profile` (field type `profile`): search profiles by name (NIP-50
+        search relays) or paste an npub, a role each; `CALENDAR_EVENT_MANIFEST` has a Participants field
+  - [ ] Mentions with the people picker: `@` in the text field searching profiles (plugin-profile's
+        `searchProfiles`), inserting `nostr:npub…`
+  - [ ] People search only finds profiles on NIP-50 relays (`DEFAULT_SEARCH_RELAYS`); also search the
+        user's follows and recently seen profiles locally
+  - [ ] View: the title heading comes after the note text (content); show `title` first
   - [x] Event location as free text or a URL: `CALENDAR_EVENT_MANIFEST` has "Place details" (NIP-52
         `location` text: a room, an address, "Online") and "Link" (`r`: video call, tickets, event page)
         next to the OpenStreetMap venue; the venue reads its name from its own, last, `location` tag;
@@ -80,13 +87,10 @@
         `loading` message next to the buttons; a slower earlier load no longer overwrites a later one
   - [x] Calendars (kind 31924): a named list of events someone publishes, e.g. "Prague tech meetups". It
         points to events by address (`a` tags), anyone's events, not only the publisher's: a bookmark
-        list for events, close to plugin-list's bookmark sets (NIP-51). Brings:
-        - "Add to calendar" on events, like the list plugin's Save
-        - `<nostr-post-feed agenda calendar="31924:…">`: the agenda of one calendar (load its events by
-          address, sort them into the window's days)
-        - other clients' all-day events: they have no `D` tags, so a date filter doesn't find them;
-          a calendar names them, so they load directly (a short known list, not a network search).
-          Authors, `t` or `g` scopes work the same way
+        list for events, close to plugin-list's bookmark sets (NIP-51). Brings: - "Add to calendar" on events, like the list plugin's Save - `<nostr-post-feed agenda calendar="31924:…">`: the agenda of one calendar (load its events by
+        address, sort them into the window's days) - other clients' all-day events: they have no `D` tags, so a date filter doesn't find them;
+        a calendar names them, so they load directly (a short known list, not a network search).
+        Authors, `t` or `g` scopes work the same way
         Done on plugin-list (`ListKind`: `BOOKMARK_LISTS`, `CALENDAR_LISTS`): `<np-calendar-save>` is its
         Save with calendars; `fetchCalendarItems`, `calendarEventFilters` in plugin-date
   - [ ] Calendars: a page or component listing a calendar (title, events, follow/share), and finding

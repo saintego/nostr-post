@@ -310,7 +310,7 @@ The last import wins. The plugin registry logs a warning when overwriting.
 ```ts
 interface NostrUIPlugin {
   id: string; // Unique identifier, matches uiPlugin in manifests
-  type: FieldType | FieldType[]; // 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date'
+  type: FieldType | FieldType[]; // 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date' | 'profile'
 
   // Core (no DOM)
   // The composer runs it on submit for fields with a value; the field's mapTo is narrowed to
@@ -445,6 +445,7 @@ When a plugin reads a new key, add it there.
 | `@nostr-post/plugin-stars`     | `stars`     | `number` | Interactive star rating (configurable max via `metadata.max`)                    |
 | `@nostr-post/plugin-geo`       | `geo`       | `geo`    | Map location picker using Leaflet/OpenStreetMap (NIP-52 geohash)                 |
 | `@nostr-post/plugin-date`      | `date`      | `date`   | Date or date and time with time zone; on NIP-52 calendar events (31922/31923) also `end`, `start_tzid`/`end_tzid` and `D` day tags. Text overridable through `messages` (`DateMessages`, `DEFAULT_DATE_MESSAGES`) |
+| `@nostr-post/plugin-profile`   | `profile`   | `profile` | People picker: search profiles (NIP-50) or paste an npub, a role each; `p` tags `["p", pubkey, relay, role]` (NIP-52 participants). Text overridable through `messages` (`ProfileMessages`) |
 | `@nostr-post/plugin-venue`     | `venue`     | `geo`    | OSM venue search + NIP-73 identity tags; wraps `plugin-geo`                      |
 | `@nostr-post/plugin-media`     | `media`     | `string` | Multi-file upload with NIP-98 auth; paste/drop on textarea via `attachTo`        |
 | `@nostr-post/plugin-markdown`  | `markdown`  | `string` | Markdown editor with live preview (WYSIWYG mode supported)                       |
@@ -456,7 +457,7 @@ When a plugin reads a new key, add it there.
 
 ## Custom Field Types
 
-The `FieldType` union currently supports `'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date'`.
+The `FieldType` union currently supports `'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date' | 'profile'`.
 
 If your plugin needs a custom type that doesn't fit these, you have two options:
 

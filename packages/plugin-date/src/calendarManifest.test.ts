@@ -61,6 +61,31 @@ describe('CALENDAR_EVENT_MANIFEST', () => {
     );
   });
 
+  it('writes participants as NIP-52 p tags with their role', () => {
+    const host = 'c'.repeat(64);
+    const config2 = {
+      ...config,
+      tagSerializer: (value: unknown, field: PostField) =>
+        field.uiPlugin === 'profile' ? '' : config.tagSerializer(value, field),
+      extraTagsFn: (value: unknown, field: PostField) =>
+        field.uiPlugin === 'profile'
+          ? (value as { pubkey: string; role?: string }[]).map((p): [string, ...string[]] => [
+              'p',
+              p.pubkey,
+              '',
+              p.role ?? '',
+            ])
+          : config.extraTagsFn(value, field),
+    };
+    const result = coordinateEvents(
+      CALENDAR_EVENT_MANIFEST,
+      { ...formData, participants: [{ pubkey: host, role: 'host' }] },
+      config2
+    );
+    if (!result.success) throw new Error(JSON.stringify(result.error));
+    expect(result.data.events[0]?.tags).toContainEqual(['p', host, '', 'host']);
+  });
+
   it('publishes a timed event with the timed format', () => {
     const result = coordinateEvents(CALENDAR_EVENT_MANIFEST, formData, {
       ...config,

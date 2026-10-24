@@ -286,4 +286,5 @@ export {
   fetchProfile,
   fetchProfiles,
   getCachedProfile,
+  newestProfiles,
 } from './profiles';

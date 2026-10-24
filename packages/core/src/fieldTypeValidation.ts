@@ -133,6 +133,27 @@ export function validateFieldType(field: PostField, value: unknown): Result<void
       }
       break;
     }
+
+    case 'profile': {
+      // People: `{ pubkey, role?, relay? }` or a list of them, each with a hex pubkey
+      const people = Array.isArray(value) ? value : [value];
+      const valid = people.every((person) => {
+        const pubkey =
+          typeof person === 'object' && person !== null ? Reflect.get(person, 'pubkey') : '';
+        return typeof pubkey === 'string' && /^[0-9a-f]{64}$/.test(pubkey);
+      });
+      if (!valid) {
+        return {
+          success: false,
+          error: {
+            field: field.id,
+            message: `Field "${field.id}" must name people by their public key`,
+            code: 'INVALID_PROFILE',
+          },
+        };
+      }
+      break;
+    }
   }
 
   return { success: true, data: undefined };

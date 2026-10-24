@@ -81,6 +81,7 @@ This keeps relay I/O in one place and avoids duplicate network requests.
 | **@nostr-post/cdn**     | ✅ **Complete** | Single-file CDN bundle (ESM + IIFE, no npm required)                  |
 | **plugin-stars**        | ✅ **Complete** | Star rating (1-5 scale, customizable)                                 |
 | **plugin-geo**          | ✅ **Complete** | Geohash location picker with NIP-52 prefix tags                       |
+| **plugin-profile**      | ✅ **Complete** | People picker: profile search or npub, `p` tags with roles             |
 | **plugin-date**         | ✅ **Complete** | Date / date-time input; NIP-52 calendar event dates and `D` day tags  |
 | **plugin-venue**        | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo                    |
 | **plugin-media**        | ✅ **Complete** | Multi-file upload with NIP-98 auth to nostr.build                     |
@@ -167,6 +168,7 @@ Ready-to-use UI components via Web Components or React:
 
 - **plugin-geo** - Location picker (Leaflet map + geohash, NIP-52)
 - **plugin-date** - Date or date and time with time zone (NIP-52 calendar event dates)
+- **plugin-profile** - People picker: search profiles or paste an npub, roles (NIP-52 participants)
 - **plugin-venue** - Business/POI search (Nominatim OSM, NIP-73)
 - **plugin-media** - Photo/video upload (drag-drop, multi-file, NIP-98)
 - **plugin-markdown** - Rich text editor with live preview
@@ -345,7 +347,7 @@ Built-in plugin loading:
 
 - `@nostr-post/web` lazy-loads built-in plugin UI modules when a manifest uses them.
 - This keeps SSR safe while still making built-in manifest plugins work automatically.
-- Built-in plugin ids supported automatically: `media`, `hashtag`, `stars`, `geo`, `date`, `venue`, `markdown`, `list`.
+- Built-in plugin ids supported automatically: `media`, `hashtag`, `stars`, `geo`, `date`, `profile`, `venue`, `markdown`, `list`.
 - You only need manual plugin imports for custom or external plugin packages.
 
 Default behavior when no `manifest` is provided:

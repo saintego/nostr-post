@@ -41,7 +41,15 @@ export interface PublishFormat {
  * Supported field types for the manifest system.
  * Each type corresponds to a validation schema and UI plugin interface.
  */
-export type FieldType = 'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date';
+export type FieldType =
+  | 'string'
+  | 'number'
+  | 'boolean'
+  | 'enum'
+  | 'geo'
+  | 'ref'
+  | 'date'
+  | 'profile';
 
 /**
  * Defines a single field in a post manifest.

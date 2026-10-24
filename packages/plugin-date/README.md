@@ -36,7 +36,7 @@ relays can return them by day as well.
 
 | Export                                      | Does                                                                              |
 | ------------------------------------------- | --------------------------------------------------------------------------------- |
-| `CALENDAR_EVENT_MANIFEST`                   | NIP-52 calendar event: title, date, location (venue), place details (`location` text), link (`r`), description, summary, image, tags; all-day or timed by publish format |
+| `CALENDAR_EVENT_MANIFEST`                   | NIP-52 calendar event: title, date, location (venue), place details (`location` text), link (`r`), participants (`p` with roles, plugin-profile), description, summary, image, tags; all-day or timed by publish format |
 | `datePlugin`                                | The plugin: `validate`, `serializeValue`, `extraTags`, `resolveFromTags`          |
 | `datePrecision(field, activeKinds?)`        | `'day'` or `'time'` for the kind the field writes                                 |
 | `calendarExtraTags(value, precision)`       | `end`, time zone and `D` tags of a calendar event                                 |
@@ -91,7 +91,7 @@ Loading events by address finds all-day events of clients that write no `D` tags
 filter misses. `<nostr-post-feed agenda calendar="31924:…">` is built on these.
 
 `CALENDAR_EVENT_MANIFEST` is ready to use: `<nostr-post-composer .manifest=${CALENDAR_EVENT_MANIFEST}>`.
-Its fields use the `date`, `venue`, `media` and `hashtag` plugins, which the composer loads by
+Its fields use the `date`, `venue`, `profile`, `media` and `hashtag` plugins, which the composer loads by
 itself. How to build your own is in [MANIFEST.md](../../MANIFEST.md#dates).
 
 ## `/web`

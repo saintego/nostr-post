@@ -18,6 +18,7 @@ import '@nostr-post/web';
 import '@nostr-post/plugin-stars/web';
 import '@nostr-post/plugin-geo/web';
 import '@nostr-post/plugin-date/web';
+import '@nostr-post/plugin-profile/web';
 import '@nostr-post/plugin-venue/web';
 import '@nostr-post/plugin-media/web';
 import '@nostr-post/plugin-reference/web';
@@ -57,6 +58,19 @@ export {
   type GeoPluginConfig,
   type GeoCoordinates,
 } from '@nostr-post/plugin-geo';
+
+// People fields: `p` tags with roles, profile search (NIP-50)
+export {
+  profilePlugin,
+  personFromText,
+  peopleFromTags,
+  personTag,
+  searchProfiles,
+  profileName,
+  DEFAULT_SEARCH_RELAYS,
+  type Person,
+  type FoundProfile,
+} from '@nostr-post/plugin-profile';
 
 // Date helpers (NIP-52 calendar event dates)
 export {

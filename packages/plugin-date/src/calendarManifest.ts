@@ -89,6 +89,19 @@ export const CALENDAR_EVENT_MANIFEST: NostrPostManifest = {
       },
     },
     {
+      id: 'participants',
+      type: 'profile',
+      uiPlugin: 'profile',
+      // NIP-52: `["p", <pubkey>, <relay>, <role>]`
+      mapTo: bothKinds({ target: 'tag', tagName: 'p' }),
+      metadata: {
+        label: 'Participants',
+        description: 'People taking part, e.g. hosts and speakers: search by name or paste an npub',
+        roles: ['host', 'speaker', 'organizer', 'performer', 'participant'],
+        expandable: true,
+      },
+    },
+    {
       id: 'description',
       type: 'string',
       uiPlugin: 'textarea',
