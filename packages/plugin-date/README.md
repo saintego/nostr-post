@@ -71,7 +71,7 @@ a month grid can use the same functions with a month as the window.
 | `rsvpEvent(address, status, pubkey, options?)` | An unsigned RSVP: `d` and `a` = the event's address (one per person, replaced by a new answer), `status`, `fb` `busy` unless declined, `p` the event's author |
 | `rsvpFilter(addresses)`, `fetchRsvps(addresses, options?)` | Relay filter for, and reading of, the RSVPs to events          |
 | `publishRsvp(address, status, options?)`       | Signs (asks the signer) and publishes the user's answer; a `Result`      |
-| `summarizeRsvps(events, address)`, `withAnswer(summary, pubkey, status)` | Counts per status, each person's newest answer |
+| `summarizeRsvps(events, address)`, `withAnswer(summary, pubkey, status)`, `peopleByStatus(summary)` | Counts per status, each person's newest answer; who gave each |
 | `isCalendarEventAddress(address)`, `RSVP_KIND`, `RSVP_STATUSES` | Checks and constants                                    |
 
 `status` is `accepted`, `tentative` or `declined`.
@@ -111,7 +111,8 @@ loads it by itself for manifests with `uiPlugin: 'date'`.
 - `<np-calendar-save>`: Add to calendar for `.target` (a calendar event's address): plugin-list's
   `<np-list-save>` with the user's calendars and calendar wording (`DEFAULT_CALENDAR_SAVE_MESSAGES`
   over `DEFAULT_LIST_MESSAGES`). Registered as an event action of calendar manifests, like `<np-rsvp>`.
-- `<np-rsvp>`: Going / Maybe / Can't go with counts, for `.target` (a calendar event's address) and
+- `<np-rsvp>`: Going / Maybe / Can't go with counts, and "Who" (once someone answered): the people of
+  each answer with avatars and names (plugin-profile's `<np-profile-view>`), for `.target` (a calendar event's address) and
   `.relays`. Registered as an event action of manifests that publish calendar events, so
   `<nostr-post-view>` shows it in the event's header. Loading the counts needs no signer.
 

@@ -12,6 +12,10 @@ export interface RsvpMessages {
   saving: string;
   /** The answer wasn't published; the reason follows */
   failed: (reason: string) => string;
+  /** Button that shows who answered; the number of answers follows */
+  who: (count: number) => string;
+  /** Nobody answered yet */
+  noAnswers: string;
 }
 
 export const DEFAULT_RSVP_MESSAGES: RsvpMessages = {
@@ -21,4 +25,6 @@ export const DEFAULT_RSVP_MESSAGES: RsvpMessages = {
   label: 'Will you attend?',
   saving: 'Saving…',
   failed: (reason) => `Couldn't save your answer: ${reason}`,
+  who: (count) => `Who (${count})`,
+  noAnswers: 'No answers yet',
 };

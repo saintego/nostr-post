@@ -19,6 +19,7 @@ import {
 import { fetchRsvps, publishRsvp } from '../rsvpRelays';
 import { DEFAULT_RSVP_MESSAGES, type RsvpMessages } from './rsvpMessages';
 import { rsvpStyles } from './rsvpStyles';
+import { renderRsvpWho } from './rsvpWho';
 
 @customElement('np-rsvp')
 export class NpRsvp extends LitElement {
@@ -35,6 +36,7 @@ export class NpRsvp extends LitElement {
   @state() _mine?: RsvpStatus;
   @state() _busy = false;
   @state() _error = '';
+  @state() _whoOpen = false;
 
   /** Counts loads, so one replaced by a newer load (another target) is ignored */
   _loads = 0;
@@ -73,6 +75,7 @@ export class NpRsvp extends LitElement {
     if (!isCalendarEventAddress(this.target)) return nothing;
     const m = this._m;
     const counts = this._summary?.counts;
+    const answers = counts ? counts.accepted + counts.tentative + counts.declined : 0;
     return html`
       <div class="rsvp" role="group" aria-label=${m.label}>
         ${RSVP_STATUSES.map(
@@ -88,8 +91,23 @@ export class NpRsvp extends LitElement {
             </button>
           `
         )}
+        ${
+          answers > 0
+            ? html`<button
+                type="button"
+                class="who-button"
+                aria-expanded=${this._whoOpen ? 'true' : 'false'}
+                @click=${() => {
+                  this._whoOpen = !this._whoOpen;
+                }}
+              >
+                ${m.who(answers)}
+              </button>`
+            : ''
+        }
         ${this._busy ? html`<span class="note">${m.saving}</span>` : ''}
       </div>
+      ${this._whoOpen ? renderRsvpWho(this._summary, m) : ''}
       ${this._error ? html`<p class="error" role="alert">${this._error}</p>` : ''}
     `;
   }

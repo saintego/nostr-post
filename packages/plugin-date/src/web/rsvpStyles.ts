@@ -3,6 +3,37 @@ import { css } from 'lit';
 export const rsvpStyles = css`
   :host {
     display: inline-block;
+    position: relative;
+  }
+
+  .who-button {
+    border-style: dashed;
+  }
+
+  /* Opens leftwards: <np-rsvp> sits at the right of a view's header */
+  .who {
+    position: absolute;
+    z-index: 10;
+    right: 0;
+    top: calc(100% + 0.25rem);
+    min-width: 14rem;
+    max-height: 20rem;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  }
+
+  .who-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
   }
 
   .rsvp {
@@ -67,6 +98,15 @@ export const rsvpStyles = css`
 
   :host-context(.dark) .count,
   :host-context(.dark) .note {
+    color: #9ca3af;
+  }
+
+  :host-context(.dark) .who {
+    background: #1f2937;
+    border-color: #4b5563;
+  }
+
+  :host-context(.dark) .who-title {
     color: #9ca3af;
   }
 

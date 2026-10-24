@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { isCalendarEventAddress, rsvpEvent, rsvpFilter, summarizeRsvps, withAnswer } from './rsvp';
+import {
+  isCalendarEventAddress,
+  peopleByStatus,
+  rsvpEvent,
+  rsvpFilter,
+  summarizeRsvps,
+  withAnswer,
+} from './rsvp';
 
 const author = 'b'.repeat(64);
 const address = `31923:${author}:meetup`;
@@ -73,5 +80,18 @@ describe('summarizeRsvps / withAnswer', () => {
       'accepted'
     );
     expect(summary.counts).toEqual({ accepted: 1, tentative: 0, declined: 0 });
+  });
+
+  it('lists who gave each answer', () => {
+    const summary = summarizeRsvps(
+      [rsvp('x', 'accepted', 1), rsvp('y', 'accepted', 1), rsvp('z', 'declined', 1)],
+      address
+    );
+    expect(peopleByStatus(summary)).toEqual({
+      accepted: ['x', 'y'],
+      tentative: [],
+      declined: ['z'],
+    });
+    expect(peopleByStatus(undefined)).toEqual({ accepted: [], tentative: [], declined: [] });
   });
 });

@@ -21,6 +21,7 @@ export {
 } from './calendars';
 export {
   isCalendarEventAddress,
+  peopleByStatus,
   RSVP_KIND,
   RSVP_STATUSES,
   type RsvpLike,

@@ -180,6 +180,9 @@ importers:
       '@nostr-post/plugin-list':
         specifier: workspace:*
         version: link:../plugin-list
+      '@nostr-post/plugin-profile':
+        specifier: workspace:*
+        version: link:../plugin-profile
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins

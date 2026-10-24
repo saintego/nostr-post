@@ -112,3 +112,10 @@ export const withAnswer = (
   for (const answer of byPubkey.values()) counts[answer] += 1;
   return { counts, byPubkey };
 };
+
+/** Who gave each answer, in the order they answered */
+export const peopleByStatus = (summary: RsvpSummary | undefined): Record<RsvpStatus, string[]> => {
+  const people: Record<RsvpStatus, string[]> = { accepted: [], tentative: [], declined: [] };
+  for (const [pubkey, status] of summary?.byPubkey ?? []) people[status].push(pubkey);
+  return people;
+};

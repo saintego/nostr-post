@@ -97,8 +97,10 @@
         other people's calendars; agenda of several calendars at once
   - [x] RSVP (kind 31925): Going / Maybe / Can't go on calendar events with counts (`<np-rsvp>`, an event
         action of calendar manifests); one replaceable RSVP per person and event (`d` = the event's address)
+  - [x] RSVP: who answered: "Who" opens the people of each answer with avatars and names
+        (`peopleByStatus`, plugin-profile's `<np-profile-view>`)
   - [ ] RSVP: highlight the user's own answer when the page loads (now only after answering here, so
-        reading doesn't ask the signer); who answered (names, avatars); a note with the answer
+        reading doesn't ask the signer); a note with the answer
 - [ ] calendar view: month grid on the same day-grouping functions as the agenda
 - [ ] rich media preview - youtube with play, spotify/bandcamp/soundcloud with playlist if possible
 - [ ] P2P offers support (NIP-69) with filtered feed presets/views

@@ -12,6 +12,7 @@
       "@nostr-post/signer": ["../signer/dist/index.d.ts"],
       "@nostr-post/plugin-list": ["../plugin-list/dist/index.d.ts"],
       "@nostr-post/plugin-list/web": ["../plugin-list/dist/web.d.ts"],
+      "@nostr-post/plugin-profile/web": ["../plugin-profile/dist/web.d.ts"],
       "@nostr-post/plugins/entities": ["../plugins/dist/entities.d.ts"],
       "@nostr-post/plugins/registry": ["../plugins/dist/registry.d.ts"],
       "@nostr-post/plugins/types": ["../plugins/dist/types.d.ts"]
