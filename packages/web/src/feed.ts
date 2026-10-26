@@ -5,16 +5,13 @@
  */
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { type AgendaWindow, fetchCalendarItems } from '@nostr-post/plugin-date';
 import { type FetchFilter, fetchEvents, fetchManifestByATag } from '@nostr-post/signer';
 import { html } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { baseStyles, NostrPostElement } from './baseComponent';
 import { renderEventActions } from './feedActions';
-import { renderFeedAgenda } from './feedAgenda';
 import { handleCommentPublished as handleCommentPublishedDetail } from './feedComments';
 import {
-  agendaWindowOf,
   buildFeedFilters,
   buildInteractionLoadKey,
   FEED_LOAD_PROPERTIES,
@@ -32,7 +29,7 @@ import {
   type ReplyTarget,
 } from './feedStandard';
 import { feedStyle } from './feedStyle';
-import { type FeedThreadContext, renderFeedThread } from './feedThread';
+import { type FeedLayout, type FeedThreadContext, renderFeedThread } from './feedThread';
 import type { SignedEvent } from './signer';
 import { displayNameForPubkey, loadProfilesForEvents, type NostrProfile } from './userProfile';
 import './composer';
@@ -127,10 +124,6 @@ export class NostrPostFeed extends NostrPostElement {
   /** Counts loads, so a slower earlier load doesn't overwrite a later one */
   private _loadCount = 0;
 
-  /** Agenda window the shown events were loaded for; kept on screen while the next one loads */
-  @state()
-  private _shownWindow?: AgendaWindow;
-
   @property({ type: Object })
   tagFilters?: Record<string, string[]>;
 
@@ -144,42 +137,25 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Array })
   filters?: FetchFilter[];
 
-  /** Agenda: NIP-52 calendar events of a date window, by day (`#D` filter, sorted by start) */
-  @property({ type: Boolean })
-  agenda?: boolean;
-
-  /** Agenda's first day, `YYYY-MM-DD`. Default: today */
-  @property({ type: String, attribute: 'agenda-from' })
-  agendaFrom?: string;
-
-  /** Agenda's number of days (default 30, at most 366) */
-  @property({ type: Number, attribute: 'agenda-days' })
-  agendaDays?: number;
-
-  /** `month`: the month of `agenda-from` as a grid above its list; default a list of days */
-  @property({ type: String, attribute: 'agenda-view' })
-  agendaView?: 'list' | 'month';
+  /**
+   * How the posts are laid out, instead of one under another: e.g. @nostr-post/calendar's agenda
+   * puts them under day headings. Gets the threads and what renders one (`renderFeedThread`)
+   */
+  @property({ attribute: false })
+  layout?: FeedLayout;
 
   /**
-   * Agenda of one calendar (`31924:<pubkey>:<d-tag>`): its events, loaded by address, instead
-   * of all events with the window's day tags
+   * Whose update comments apply to every post besides its author and the editors it names, e.g.
+   * the maintainer of a calendar shown
    */
-  @property({ type: String })
-  calendar?: string;
-
-  /** IANA time zone the agenda's days are in. Default: the viewer's */
-  @property({ type: String, attribute: 'time-zone' })
-  timeZone?: string;
+  @property({ type: Array, attribute: false })
+  trustedEditors?: string[];
 
   @property({ type: Object, attribute: false })
   messages?: Partial<FeedMessages>;
 
   private get _m(): FeedMessages {
     return { ...DEFAULT_FEED_MESSAGES, ...this.messages };
-  }
-
-  private get _agendaWindow() {
-    return agendaWindowOf(this.agendaFrom, this.agendaDays, this.timeZone, this.agendaView);
   }
 
   constructor() {
@@ -229,7 +205,6 @@ export class NostrPostFeed extends NostrPostElement {
   private shouldLoad(): boolean {
     // Only load if we have at least one meaningful filter set
     return !!(
-      this.agenda ||
       (this.authors && this.authors.length > 0) ||
       (this.kinds && this.kinds.length > 0) ||
       (this.ids && this.ids.length > 0) ||
@@ -256,14 +231,13 @@ export class NostrPostFeed extends NostrPostElement {
   }
 
   /** Shows a load's events; the previous events (and their comments) stay until then */
-  private _showEvents(load: number, events: SignedEvent[], window?: AgendaWindow): boolean {
+  private _showEvents(load: number, events: SignedEvent[]): boolean {
     if (load !== this._loadCount) return false;
     if (this.isLoading) {
       this.interactionEvents = [];
       this.interactionLoadKey = '';
     }
     this.events = events;
-    this._shownWindow = window;
     this.isLoading = false;
     this.scheduleInteractionsAndProfiles(events);
     return true;
@@ -271,15 +245,9 @@ export class NostrPostFeed extends NostrPostElement {
 
   private async loadEvents() {
     const load = ++this._loadCount;
-    const window = this.agenda ? this._agendaWindow : undefined;
     this.isLoading = true;
 
     try {
-      // A calendar's events load by address: first which events it has
-      const calendarItems =
-        window && this.calendar
-          ? await fetchCalendarItems(this.calendar, { relays: this.relays })
-          : undefined;
       const filters = buildFeedFilters({
         filters: this.filters,
         ids: this.ids,
@@ -292,13 +260,8 @@ export class NostrPostFeed extends NostrPostElement {
         until: this.until,
         filterTags: this.filterTags,
         tagFilters: this.tagFilters,
-        agenda: window ? { window, calendarItems } : undefined,
       });
-      if (Array.isArray(filters) && filters.length === 0) {
-        this._showEvents(load, [], window);
-        return;
-      }
-      const onUpdate = (arr: SignedEvent[]) => this._showEvents(load, arr, window);
+      const onUpdate = (arr: SignedEvent[]) => this._showEvents(load, arr);
       const { events, readRelays } = await fetchFeedEvents(filters, {
         relays: this.relays,
         authors: this.authors,
@@ -307,10 +270,10 @@ export class NostrPostFeed extends NostrPostElement {
 
       // Final deduped list, in case it differs from the progressive updates
       if (load === this._loadCount) this.authorRelays = readRelays;
-      this._showEvents(load, events, window);
+      this._showEvents(load, events);
     } catch (error) {
       console.error('Failed to load events:', error);
-      this._showEvents(load, [], window);
+      this._showEvents(load, []);
     }
   }
 
@@ -422,12 +385,6 @@ export class NostrPostFeed extends NostrPostElement {
     }
   }
 
-  /** Shows the agenda window starting at `from` (undefined: today) */
-  private _moveAgenda(from: string | undefined) {
-    this.agendaFrom = from;
-    this.dispatchCustomEvent('nostr-post-agenda-change', { from, days: this.agendaDays });
-  }
-
   private get _threadContext(): FeedThreadContext {
     return {
       manifest: this.manifest,
@@ -437,9 +394,7 @@ export class NostrPostFeed extends NostrPostElement {
       showKind: this.showKind,
       showTags: this.showTags,
       activeReplyTarget: this.activeReplyTarget,
-      // A calendar's agenda: its maintainer's corrections apply too
-      trustedEditors:
-        this.agenda && this.calendar ? [this.calendar.split(':')[1] ?? ''] : undefined,
+      trustedEditors: this.trustedEditors,
       displayName: (pubkey) => this.displayName(pubkey),
       renderEventActions: (event, rootEvent) => this.renderEventActions(event, rootEvent),
       onCommentPublished: (event) => this.handleCommentPublished(event),
@@ -448,21 +403,15 @@ export class NostrPostFeed extends NostrPostElement {
 
   render() {
     const m = this._m;
-    if (this.isLoading && !this.agenda) {
+    // A layout shows its own loading state, keeping the previous posts meanwhile
+    if (this.isLoading && !this.layout) {
       return html`<div class="feed"><div class="loading">${m.loading}</div></div>`;
     }
 
     const threads = buildThreads(this.events, this.interactionEvents);
     const ctx = this._threadContext;
-    const body = this.agenda
-      ? renderFeedAgenda(threads, ctx, {
-          window: this._agendaWindow,
-          shownWindow: this._shownWindow,
-          month: this.agendaView === 'month',
-          loading: this.isLoading,
-          messages: m,
-          onMove: (from) => this._moveAgenda(from),
-        })
+    const body = this.layout
+      ? this.layout(threads, ctx, { loading: this.isLoading })
       : threads.length === 0
         ? html`<div class="empty">${m.empty}</div>`
         : threads.map((thread) => renderFeedThread(thread, ctx));

@@ -83,7 +83,8 @@ This keeps relay I/O in one place and avoids duplicate network requests.
 | **plugin-geo**          | ✅ **Complete** | Geohash location picker with NIP-52 prefix tags                       |
 | **plugin-embed**        | ✅ **Complete** | Players for links: YouTube, Spotify, SoundCloud, Vimeo, Bandcamp       |
 | **plugin-profile**      | ✅ **Complete** | People picker: profile search or npub, `p` tags with roles             |
-| **plugin-date**         | ✅ **Complete** | Date / date-time input; NIP-52 calendar event dates and `D` day tags  |
+| **plugin-date**         | ✅ **Complete** | Date / date-time input; NIP-52 date and `D` day tags                  |
+| **calendar**            | ✅ **Complete** | NIP-52 calendars: agenda/month, RSVP, calendars, iCalendar            |
 | **plugin-venue**        | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo                    |
 | **plugin-media**        | ✅ **Complete** | Multi-file upload with NIP-98 auth to nostr.build                     |
 | **plugin-markdown**     | ✅ **Complete** | Markdown editor with live preview                                     |
@@ -394,7 +395,7 @@ override, e.g. for translations.
 - `commentManifest` (defaults to standard kind 1 manifest)
 - `reactionOptions` (defaults to `['+', '❤️', '🔥', '😂']`)
 
-`<nostr-post-feed>` supports direct Nostr filtering (`authors`, `kinds`, `ids`, `since`, `until`, `limit`, `search`) plus universal tag filters via `tagFilters` / `filter-tags` (for example `#g` geohash and `#i` OSM identity tags). It also supports advanced multi-filter `REQ` queries through the `filters` property, and an `agenda` mode: NIP-52 calendar events of a date window under day headings (`agenda-from`, `agenda-days`, `time-zone`), or of a month as a grid (`agenda-view="month"`).
+`<nostr-post-feed>` supports direct Nostr filtering (`authors`, `kinds`, `ids`, `since`, `until`, `limit`, `search`) plus universal tag filters via `tagFilters` / `filter-tags` (for example `#g` geohash and `#i` OSM identity tags). It also supports advanced multi-filter `REQ` queries through the `filters` property, a `layout` hook (how posts are laid out) and `trustedEditors`. NIP-52 calendars are [`@nostr-post/calendar`](./packages/calendar/README.md): `<nostr-calendar-agenda>` (a date window or a month, by day), RSVP, calendars and iCalendar.
 
 Detailed examples: [packages/cdn/README.md](./packages/cdn/README.md)
 

@@ -112,8 +112,42 @@ importers:
         specifier: ^8.3.4
         version: 8.3.4(@types/node@25.0.3)(esbuild@0.28.2)
 
+  packages/calendar:
+    dependencies:
+      '@nostr-post/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nostr-post/plugin-date':
+        specifier: workspace:*
+        version: link:../plugin-date
+      '@nostr-post/plugin-list':
+        specifier: workspace:*
+        version: link:../plugin-list
+      '@nostr-post/plugin-profile':
+        specifier: workspace:*
+        version: link:../plugin-profile
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      '@nostr-post/signer':
+        specifier: workspace:*
+        version: link:../signer
+      '@nostr-post/web':
+        specifier: workspace:*
+        version: link:../web
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
   packages/cdn:
     dependencies:
+      '@nostr-post/calendar':
+        specifier: workspace:*
+        version: link:../calendar
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
@@ -181,18 +215,9 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
-      '@nostr-post/plugin-list':
-        specifier: workspace:*
-        version: link:../plugin-list
-      '@nostr-post/plugin-profile':
-        specifier: workspace:*
-        version: link:../plugin-profile
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins
-      '@nostr-post/signer':
-        specifier: workspace:*
-        version: link:../signer
       lit:
         specifier: ^3.3.3
         version: 3.3.3
@@ -550,12 +575,12 @@ importers:
 
   tools/manifest-creator:
     dependencies:
+      '@nostr-post/calendar':
+        specifier: workspace:*
+        version: link:../../packages/calendar
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@nostr-post/plugin-date':
-        specifier: workspace:*
-        version: link:../../packages/plugin-date
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../../packages/plugin-geo

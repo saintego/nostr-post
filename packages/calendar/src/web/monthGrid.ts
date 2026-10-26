@@ -1,21 +1,12 @@
 /**
- * <nostr-post-feed agenda agenda-view="month">: the month as a grid of weeks with each day's
- * event titles, above the month's agenda list. A day with events jumps to its place in the
- * list. The grid comes from @nostr-post/plugin-date (`monthGrid`, `groupEventsByDay`).
+ * The month view of <nostr-calendar-agenda>: a grid of weeks with each day's event titles,
+ * above the month's list. A day with events jumps to its place in the list.
  */
 
-import {
-  type AgendaWindow,
-  type CalendarEventLike,
-  groupEventsByDay,
-  monthGrid,
-  monthOf,
-  todayIn,
-  weekdayNames,
-  weekStartOf,
-} from '@nostr-post/plugin-date';
 import { html, nothing, type TemplateResult } from 'lit';
-import type { FeedMessages } from './feedMessages';
+import { type AgendaWindow, type CalendarEventLike, groupEventsByDay, todayIn } from '../agenda';
+import { monthGrid, monthOf, weekdayNames, weekStartOf } from '../month';
+import type { AgendaMessages } from './agendaMessages';
 
 /** Titles shown in a day's cell before "+n more" */
 const TITLES_PER_DAY = 3;
@@ -32,7 +23,7 @@ const showDay = (e: Event, date: string) => {
 export const renderMonthGrid = (
   events: CalendarEventLike[],
   window: AgendaWindow,
-  messages: FeedMessages
+  messages: AgendaMessages
 ): TemplateResult => {
   const month = monthOf(window.from, window.tzid);
   const byDate = new Map(groupEventsByDay(events, window).map((day) => [day.date, day.events]));

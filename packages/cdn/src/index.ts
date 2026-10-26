@@ -18,6 +18,7 @@ import '@nostr-post/web';
 import '@nostr-post/plugin-stars/web';
 import '@nostr-post/plugin-geo/web';
 import '@nostr-post/plugin-date/web';
+import '@nostr-post/calendar/web';
 import '@nostr-post/plugin-profile/web';
 import '@nostr-post/plugin-embed/web';
 import '@nostr-post/plugin-venue/web';
@@ -77,16 +78,21 @@ export {
 // Players for links (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp)
 export { embedFor, linkProvider, embedPlugin, type Embed } from '@nostr-post/plugin-embed';
 
-// Date helpers (NIP-52 calendar event dates)
+// Date field (NIP-52 date tags)
 export {
   datePlugin,
-  CALENDAR_EVENT_MANIFEST,
   formatDateValue,
   dateValueFromTags,
   dayNumbers,
   ALL_DAY_EVENT_KIND,
   TIMED_EVENT_KIND,
   type DateValue,
+} from '@nostr-post/plugin-date';
+
+// Calendars (NIP-52): <nostr-calendar-agenda>, RSVP, calendars, duplicates, iCalendar
+export {
+  CALENDAR_EVENT_MANIFEST,
+  agendaFilters,
   agendaFilter,
   groupEventsByDay,
   eventTiming,
@@ -101,18 +107,15 @@ export {
   type RsvpStatus,
   fetchCalendarItems,
   calendarEventFilters,
-  eventsToIcs,
-  icsToDrafts,
-  icsDTag,
   fetchEventsAsIcs,
-  type IcsDraft,
   similarEvents,
   titleSimilarity,
   monthWindow,
   monthGrid,
   shiftMonth,
   formatMonth,
-} from '@nostr-post/plugin-date';
+} from '@nostr-post/calendar';
+export { eventsToIcs, icsToDrafts, icsDTag, type IcsDraft } from '@nostr-post/calendar/ics';
 
 // Signing & relay utilities
 export {

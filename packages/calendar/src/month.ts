@@ -5,8 +5,8 @@
  * window and day grouping (`groupEventsByDay`). No DOM dependencies.
  */
 
+import { dateOfDayNumber, dayNumberOfDate, defaultTimeZone } from '@nostr-post/plugin-date';
 import { type AgendaWindow, todayIn } from './agenda';
-import { dateOfDayNumber, dayNumberOfDate, defaultTimeZone } from './dateValue';
 
 /** What `Intl.Locale` says about weeks (`getWeekInfo()` in newer runtimes, `weekInfo` before) */
 type LocaleWeeks = { getWeekInfo?: () => { firstDay?: number }; weekInfo?: { firstDay?: number } };
@@ -85,3 +85,12 @@ export const weekdayNames = (weekStart = weekStartOf(), locale?: string): string
     format.format(new Date(Date.UTC(2026, 5, 1 + ((weekStart + 6 + i) % 7))))
   );
 };
+
+/** An agenda's window: `days` from `from`, or in month view the month of `from` */
+export const agendaWindowFor = (
+  from: string | undefined,
+  days: number | undefined,
+  tzid: string | undefined,
+  view?: 'list' | 'month'
+): AgendaWindow =>
+  view === 'month' ? monthWindow(monthOf(from, tzid), tzid) : { from, days, tzid };

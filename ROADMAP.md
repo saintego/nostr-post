@@ -123,7 +123,11 @@
   - [ ] Artist wiki entity manifest (name, genres, media links as `embed` field with `r`/NIP-73 `i`) and a
         gig manifest with Performers (wiki-entity picker, role `performer`)
   - [ ] Add flow: paste text or a poster → AI with the user's own key (browser call) or a copy-paste
-        prompt → prefill → duplicate hint (`similarEvents`) → sign
+        prompt → prefill → duplicate hint (`similarEvents`) → preview → sign. The AI's result is never
+        published directly: it shows as the event preview (and in the composer) for the user to check
+  - [ ] Preview / test mode: the whole app usable without publishing (the signer's dry run,
+        `setDryRun`): events are signed and shown as they would be, nothing reaches relays; a banner
+        says so
   - [ ] `.ics` import UI (`icsToDrafts`, confirm each event); share the current filter as link + text
   - [ ] In `build:pages`, so PR previews show it; its own nsite
   - [ ] Cron worker (own repo): Open Graph pages and `.ics` feeds into the nsite; Facebook `.ics`
@@ -210,8 +214,9 @@
 
 - [ ] Package taxonomy, decided (AGENTS.md "Package tiers"): field plugins `plugin-*`, domains
       `@nostr-post/<domain>` next to the wiki, `web` knows only posts and the registries
-      (`registerKindView` done). Moves left: calendar code out of plugin-date and the agenda out of
-      `<nostr-post-feed>` into `@nostr-post/calendar`; plugin-list → `@nostr-post/list`; plugin-venue →
+      (`registerKindView` done). Done: `@nostr-post/calendar` (calendar code out of plugin-date;
+      the agenda out of `<nostr-post-feed>` into `<nostr-calendar-agenda>`, a feed `layout`; the event card
+      `<nostr-calendar-event>` as kind view of 31922/31923). Moves left: plugin-list → `@nostr-post/list`; plugin-venue →
       `@nostr-post/venue` (it depends on the wiki domain and most of it is the venue hub: OSM/Google search,
       wiki page sync; it keeps providing the `venue` field, as list provides `list`). Background: plugin-date has grown into NIP-52 calendar code
       (manifest, agenda/month, RSVP, calendars, iCalendar, duplicates) next to its date field. Decide

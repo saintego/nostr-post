@@ -10,6 +10,10 @@ export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from './composerMess
 export { NostrPostView } from './view';
 export { NostrPostFeed } from './feed';
 export { DEFAULT_FEED_MESSAGES, type FeedMessages } from './feedMessages';
+// For feed layouts (`<nostr-post-feed .layout>`, e.g. @nostr-post/calendar's agenda)
+export type { FeedThread } from './feedStandard';
+export { feedStyle } from './feedStyle';
+export { type FeedLayout, type FeedThreadContext, renderFeedThread } from './feedThread';
 export { NostrPostElement } from './baseComponent';
 
 // Theme (single source of truth for colors and styles)

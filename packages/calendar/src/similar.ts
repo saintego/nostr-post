@@ -7,8 +7,13 @@
  */
 
 import { textWords } from '@nostr-post/core/textNormalize';
+import {
+  type DateValue,
+  dateOfDayNumber,
+  dayNumberOfDate,
+  defaultTimeZone,
+} from '@nostr-post/plugin-date';
 import { type CalendarEventLike, eventDates, eventTiming, latestByAddress } from './agenda';
-import { type DateValue, dateOfDayNumber, dayNumberOfDate, defaultTimeZone } from './dateValue';
 
 /** What's known of the event being created: its title and date (the date field's value) */
 export interface EventDraft {

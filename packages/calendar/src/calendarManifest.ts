@@ -6,7 +6,7 @@
  */
 
 import type { NostrPostManifest, NostrTarget } from '@nostr-post/core/types';
-import { ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND } from './core';
+import { ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND } from '@nostr-post/plugin-date';
 
 const bothKinds = (target: Omit<NostrTarget, 'kind'>): NostrTarget[] => [
   { kind: ALL_DAY_EVENT_KIND, ...target },

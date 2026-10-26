@@ -9,9 +9,9 @@
 
 import { getFieldTargets } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
+import { ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND } from '@nostr-post/plugin-date';
 import { CALENDAR_KIND, currentLists, type ListRelayOptions } from '@nostr-post/plugin-list';
 import { DEFAULT_RELAYS, type FetchFilter, fetchEvents } from '@nostr-post/signer';
-import { ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND } from './core';
 import { isCalendarEventAddress } from './rsvp';
 
 /** Whether a manifest publishes calendar events (kind 31922 or 31923) */

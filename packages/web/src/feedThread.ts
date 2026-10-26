@@ -25,6 +25,17 @@ export interface FeedThreadContext {
   onCommentPublished: (event: Event) => void;
 }
 
+/**
+ * A feed's layout (`<nostr-post-feed .layout>`): renders the loaded threads, e.g. under day
+ * headings, with `renderFeedThread` for each. `loading`: newer posts are on their way (the
+ * threads are the previous ones until then).
+ */
+export type FeedLayout = (
+  threads: FeedThread[],
+  ctx: FeedThreadContext,
+  state: { loading: boolean }
+) => TemplateResult;
+
 export const renderFeedThread = (thread: FeedThread, ctx: FeedThreadContext): TemplateResult => {
   const reactionSummaryWithAuthors = summarizeReactionsWithAuthors(
     thread.reactions,

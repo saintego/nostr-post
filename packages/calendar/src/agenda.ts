@@ -6,15 +6,16 @@
  * agenda list and a month grid share it. No DOM dependencies.
  */
 
-import { ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND } from './core';
 import {
+  ALL_DAY_EVENT_KIND,
   dateOfDayNumber,
   dayNumberOfDate,
   defaultTimeZone,
   MAX_DAY_TAGS,
+  TIMED_EVENT_KIND,
   unixToWall,
   wallToUnix,
-} from './dateValue';
+} from '@nostr-post/plugin-date';
 
 const SECONDS_PER_DAY = 86400;
 const UNIX_PATTERN = /^\d+$/;

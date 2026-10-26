@@ -1,14 +1,5 @@
 import { getManifestAvailableKinds } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import {
-  type AgendaWindow,
-  ALL_DAY_EVENT_KIND,
-  agendaDayTags,
-  calendarEventFilters,
-  monthOf,
-  monthWindow,
-  TIMED_EVENT_KIND,
-} from '@nostr-post/plugin-date';
 import type { FetchFilter } from '@nostr-post/signer';
 import { addressOf } from './feedStandard';
 import type { SignedEvent } from './signer';
@@ -27,12 +18,6 @@ export const FEED_LOAD_PROPERTIES = [
   'filterTags',
   'tagFilters',
   'filters',
-  'agenda',
-  'agendaFrom',
-  'agendaDays',
-  'timeZone',
-  'agendaView',
-  'calendar',
   'commentsEnabled',
   'reactionsEnabled',
 ];
@@ -146,18 +131,8 @@ export const buildFetchFilters = ({
   });
 };
 
-/** The agenda's window: `days` from `from`, or in month view the month of `from` */
-export const agendaWindowOf = (
-  from: string | undefined,
-  days: number | undefined,
-  tzid: string | undefined,
-  view?: 'list' | 'month'
-): AgendaWindow =>
-  view === 'month' ? monthWindow(monthOf(from, tzid), tzid) : { from, days, tzid };
-
-/** Events asked for by default; an agenda gets more, so a whole window fits */
+/** Events asked for by default */
 const DEFAULT_LIMIT = 20;
-const AGENDA_LIMIT = 500;
 
 /** What <nostr-post-feed> asks relays for */
 export interface FeedQuery {
@@ -172,36 +147,19 @@ export interface FeedQuery {
   until?: number;
   filterTags?: string;
   tagFilters?: Record<string, string[]>;
-  /**
-   * Agenda: its date window becomes a `#D` filter; with `calendarItems` (a calendar's event
-   * addresses) those events are asked for by address instead, whatever their tags
-   */
-  agenda?: { window: AgendaWindow; calendarItems?: string[] };
 }
 
-/**
- * The feed's relay filters. Kinds: `kinds`, else the manifest's, else calendar events for an
- * agenda, else notes. An empty list: nothing to ask for (an empty calendar).
- */
-export const buildFeedFilters = (query: FeedQuery): FetchFilter | FetchFilter[] => {
-  const { agenda } = query;
-  if (agenda?.calendarItems) return calendarEventFilters(agenda.calendarItems);
-  const kinds = query.kinds?.length
-    ? query.kinds
-    : query.manifest
-      ? getManifestAvailableKinds(query.manifest)
-      : agenda
-        ? [ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND]
-        : [1];
-  return buildFetchFilters({
+/** The feed's relay filters. Kinds: `kinds`, else the manifest's, else notes */
+export const buildFeedFilters = (query: FeedQuery): FetchFilter | FetchFilter[] =>
+  buildFetchFilters({
     ...query,
-    kinds,
-    limit: query.limit ?? (agenda ? AGENDA_LIMIT : DEFAULT_LIMIT),
-    tagFilters: agenda
-      ? { ...query.tagFilters, '#D': agendaDayTags(agenda.window) }
-      : query.tagFilters,
+    kinds: query.kinds?.length
+      ? query.kinds
+      : query.manifest
+        ? getManifestAvailableKinds(query.manifest)
+        : [1],
+    limit: query.limit ?? DEFAULT_LIMIT,
   });
-};
 
 export const buildInteractionLoadKey = (events: SignedEvent[]): string => {
   return events

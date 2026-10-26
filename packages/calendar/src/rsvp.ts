@@ -5,7 +5,7 @@
  * `d` tag is the event's address, so a new answer replaces the old one. No DOM dependencies.
  */
 
-import { ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND } from './core';
+import { ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND } from '@nostr-post/plugin-date';
 
 export const RSVP_KIND = 31925;
 

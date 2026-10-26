@@ -53,6 +53,8 @@ export const PreviewPane = ({ manifest, manifestRef, isResolvingParents }: Previ
     import('@nostr-post/plugin-markdown/web');
     import('@nostr-post/plugin-hashtag/web');
     import('@nostr-post/plugin-venue/web');
+    // RSVP, Add to calendar and .ics on calendar events
+    import('@nostr-post/calendar/web');
     import('@nostr-post/plugin-wiki-entity/web');
   }, []);
 

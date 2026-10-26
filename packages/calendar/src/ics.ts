@@ -7,16 +7,17 @@
  * No DOM dependencies.
  */
 
-import { type CalendarEventLike, eventTiming } from './agenda';
-import { ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND } from './core';
 import {
+  ALL_DAY_EVENT_KIND,
   type DateValue,
   dateOfDayNumber,
   dayNumberOfDate,
   defaultTimeZone,
   isValidTimeZone,
+  TIMED_EVENT_KIND,
   unixToWall,
-} from './dateValue';
+} from '@nostr-post/plugin-date';
+import { type CalendarEventLike, eventTiming } from './agenda';
 
 /** A calendar event with what an `.ics` entry needs (a signed Nostr event fits) */
 export interface IcsEventSource extends CalendarEventLike {

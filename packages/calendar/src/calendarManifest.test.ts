@@ -1,9 +1,9 @@
 import { coordinateEvents } from '@nostr-post/core/coordinator';
 import { validateManifest } from '@nostr-post/core/manifest';
 import type { PostField } from '@nostr-post/core/types';
+import { datePlugin } from '@nostr-post/plugin-date';
 import { describe, expect, it } from 'vitest';
 import { CALENDAR_EVENT_MANIFEST } from './calendarManifest';
-import { datePlugin } from './core';
 
 const config = {
   pubkey: 'a'.repeat(64),
