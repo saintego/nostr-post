@@ -1,5 +1,12 @@
 // Entity manifests for plugins (the list field finding a venue type's lists)
 import '../entityManifests';
+import { registerKindView } from '@nostr-post/plugins/entities';
+import { WIKI_KIND } from '../nip54';
+import './wikiView';
+
+// A post linking a wiki page (`nostr:naddr…`) shows the page
+registerKindView({ kinds: [WIKI_KIND], tagName: 'nostr-wiki-view' });
+
 export { NostrWikiView } from './wikiView';
 export { NostrWikiComposer } from './wikiComposer';
 export {

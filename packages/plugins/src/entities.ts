@@ -5,6 +5,8 @@
  * - event actions: a plugin's control shown with events made with a manifest it works
  *   with (e.g. the list plugin's Save button for manifests with `lists`), by
  *   `<nostr-post-view>`, `<nostr-wiki-view>` and the venue view;
+ * - kind views: a domain package's element for events of its kinds (a calendar event, a list,
+ *   a wiki page), shown where a post links such an event (`nostr:naddr…`);
  * - entity manifests: `@nostr-post/wiki` provides how to resolve an entity manifest
  *   reference, for plugins that need one (e.g. the list field finding a venue's lists).
  */
@@ -32,6 +34,29 @@ export function registerEventAction(action: EventAction): void {
 /** The actions for events made with a manifest, in the order they registered */
 export function eventActionsFor(manifest: NostrPostManifest): EventAction[] {
   return actions.filter((a) => a.matches(manifest));
+}
+
+/**
+ * A domain package's element for events of `kinds`, e.g. `@nostr-post/calendar`'s event card
+ * for 31922/31923. A custom element with an `address` property (`kind:pubkey:d-tag`): it loads
+ * and shows the event itself.
+ */
+export interface KindView {
+  kinds: number[];
+  tagName: string;
+}
+
+// Module state: views register once when their package's web entry loads
+const kindViews: KindView[] = [];
+
+/** Registers a kind view; a later one for the same kind wins (an app can replace a package's) */
+export function registerKindView(view: KindView): void {
+  kindViews.unshift(view);
+}
+
+/** The view registered for a kind, if any */
+export function kindViewFor(kind: number): KindView | undefined {
+  return kindViews.find((view) => view.kinds.includes(kind));
 }
 
 /** What the wiki package provides about entity manifests */

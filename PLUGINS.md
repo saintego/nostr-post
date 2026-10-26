@@ -437,6 +437,11 @@ depending on them (or on each other):
   or its id) and `manifest` properties. `<nostr-post-view>` (in its header), `<nostr-wiki-view>` (next to
   the title) and the venue view show them (`eventActionsFor(manifest)`); the list plugin's Save button,
   for manifests with `lists`, is one.
+- `registerKindView({ kinds, tagName })`: a domain package's element for events of its kinds, a custom
+  element with an `address` property (`kind:pubkey:d-tag`) that loads and shows the event. A post linking
+  such an event (`nostr:naddr…`) shows it in place of the link (`kindViewFor(kind)`); a later
+  registration for the same kind wins, so an app can replace a package's. The wiki registers
+  `<nostr-wiki-view>` for 30818, the list plugin `<np-list-view>` for 10003/30003.
 - `entityManifests()`: once `@nostr-post/wiki` is loaded, `resolve(ref)`, an entity manifest from its id,
   `30078:` address or the manifest itself. The list field uses it for the lists of the venue it saves.
 

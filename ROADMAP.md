@@ -31,7 +31,8 @@
 - [ ] User profile view: a `<nostr-profile>` web component (+ React wrapper) with picture, name, about, NIP-05, website and the user's posts (optionally filtered by manifest, e.g. their reviews); post and comment author names link to it (app-overridable link target)
 - [x] `<nostr-post-view>` shows kind 1 text like other clients: links, images/videos (extension or `imeta`), `#hashtags` and `nostr:` references in place (`@nostr-post/core/noteContent`), HTML-escaped; `r`/`t` tag values the text already shows aren't repeated below it
 - [x] Inline note text: `nostr:npub`/`nprofile` mentions show the profile name (`@name`), fetched in one batch per post, newest kind 0 per pubkey (`fetchProfiles`); core decodes them without dependencies (`@nostr-post/core/nip19`, which now also holds the `naddr` helpers)
-- [ ] Inline note text, follow-ups: `nevent`/`naddr` link out instead of embedding the quoted event; hashtags aren't clickable (app-overridable target, e.g. a `#t` feed filter); image galleries for several images in a row
+- [ ] Inline note text, follow-ups: `nevent` links out instead of embedding the quoted event, and so does
+      `naddr` of kinds without a registered kind view (lists and wiki pages show in place: `registerKindView`); hashtags aren't clickable (app-overridable target, e.g. a `#t` feed filter); image galleries for several images in a row
 - [ ] add link to library in web component footers for better discoverability
 - [ ] Publish npm packages for each package (packages/\*) with CI, semantic
       versioning, and automated releases to the npm registry
@@ -207,7 +208,12 @@
 
 ### Quality, Tooling & Docs (from DEVELOPMENT_GUIDE.md)
 
-- [ ] Package taxonomy (discussion first, then move code): plugin-date has grown into NIP-52 calendar code
+- [ ] Package taxonomy, decided (AGENTS.md "Package tiers"): field plugins `plugin-*`, domains
+      `@nostr-post/<domain>` next to the wiki, `web` knows only posts and the registries
+      (`registerKindView` done). Moves left: calendar code out of plugin-date and the agenda out of
+      `<nostr-post-feed>` into `@nostr-post/calendar`; plugin-list → `@nostr-post/list`; plugin-venue →
+      `@nostr-post/venue` (it depends on the wiki domain and most of it is the venue hub: OSM/Google search,
+      wiki page sync; it keeps providing the `venue` field, as list provides `list`). Background: plugin-date has grown into NIP-52 calendar code
       (manifest, agenda/month, RSVP, calendars, iCalendar, duplicates) next to its date field. Decide
       the tier between field plugins (`plugin-*` with one `uiPlugin`) and engines (`@nostr-post/wiki`:
       own composer, view, versioning): list, venue and calendar mix domain logic, fields, event

@@ -83,6 +83,7 @@ A wiki entity is a collaborative document where **many pubkeys each publish thei
 
 <!-- 3. Drop in the elements -->
 <nostr-wiki-view id="view" entity-id="pliny-the-elder"></nostr-wiki-view>
+<!-- or by address, e.g. from a link: address="30818:<pubkey>:pliny-the-elder" (the entity, any author's version) -->
 <nostr-wiki-composer id="composer" auto-publish></nostr-wiki-composer>
 
 <script type="module">
@@ -108,7 +109,7 @@ npm install @nostr-post/wiki
 | Import                   | Contents                                                     |
 | ------------------------ | ------------------------------------------------------------ |
 | `@nostr-post/wiki`       | Coordinator functions, types                                 |
-| `@nostr-post/wiki/web`   | `<nostr-wiki-view>` and `<nostr-wiki-composer>` Lit elements |
+| `@nostr-post/wiki/web`   | `<nostr-wiki-view>` and `<nostr-wiki-composer>` Lit elements; registers `<nostr-wiki-view>` as the kind view of 30818, so posts linking a page (`nostr:naddr…`) show it |
 | `@nostr-post/wiki/react` | `<WikiView>` and `<WikiComposer>` React wrappers             |
 
 ---

@@ -70,6 +70,18 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
 - Biome for linting and formatting: `pnpm lint`, `pnpm lint:fix`, `pnpm format`. The pre-commit
   hook (lefthook) formats staged files.
 
+## Package tiers
+
+- `@nostr-post/core`, `signer`, `plugins`, `web` (and `react`, `cdn`): the base. `web` knows posts
+  (kind 1 and manifest-made events, NIP-78 included) and the registries; it never depends on a
+  domain package.
+- `@nostr-post/plugin-*`: field plugins, one `uiPlugin` field type each (main entry: the field's logic;
+  `/web`: its input and view).
+- `@nostr-post/<domain>` (`wiki`, `calendar`, `list`): a NIP or domain of its own: its kinds, reading
+  and publishing, event actions, and its own elements. Domains plug into `web` through
+  `@nostr-post/plugins/entities` (`registerKindView`, `registerEventAction`, entity manifests), and may
+  provide fields and depend on field plugins, never the other way round.
+
 ## Packages are the product
 
 - Packages (`packages/*`) must work standalone, as they will be published to npm and in the CDN

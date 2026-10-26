@@ -234,6 +234,7 @@ saves to that list. Fires `np-list-change` (`{ list }`) after a list was publish
 | `relays`             | `string[]`              | Relays besides the list owner's own                            |
 | `messages`           | `Partial<ListMessages>` | Overrides for the user-facing text                             |
 
+Registered as the kind view of lists (10003, 30003): a post linking a list (`nostr:naddr…`) shows it.
 Items show the title of their event (a wiki entity's newest version, by d-tag). The owner can remove
 items and delete sets. Fires `np-list-item-select` (`{ item, list, title }`) when an item is clicked
 and `np-list-change` (`{ list, deleted? }`) after a change.

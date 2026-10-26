@@ -49,6 +49,10 @@ export class NostrWikiView extends LitElement {
   @property({ type: String, attribute: 'entity-i-id' })
   entityIId?: string;
 
+  /** An entity's address (`30818:<pubkey>:<d-tag>`, e.g. a post's link): its d-tag as `entity-id` */
+  @property({ type: String })
+  address?: string;
+
   @property({ type: Object })
   manifest?: NostrPostManifest;
 
@@ -84,6 +88,13 @@ export class NostrWikiView extends LitElement {
 
   // First fetch happens in the initial updated() call, which reports every
   // property set before the first render — no separate connectedCallback fetch.
+  override willUpdate(changed: Map<string, unknown>): void {
+    // The wiki shows the entity, whichever author's version the address names
+    if (changed.has('address') && this.address) {
+      this.entityId = this.address.split(':').slice(2).join(':') || this.entityId;
+    }
+  }
+
   override updated(changed: Map<string, unknown>): void {
     if (changed.has('manifest')) this._resolveGiven();
     if (changed.has('_winningEvent') || changed.has('manifest')) void this._findManifest();
