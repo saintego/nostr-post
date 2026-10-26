@@ -17,6 +17,8 @@ export interface FeedThreadContext {
   editable?: boolean;
   showKind?: boolean;
   showTags?: boolean;
+  /** Besides the author and the organizers it names: whose update comments apply */
+  trustedEditors?: string[];
   activeReplyTarget?: ReplyTarget;
   displayName: (pubkey: string) => string;
   renderEventActions: (event: SignedEvent, rootEvent?: SignedEvent) => TemplateResult;
@@ -40,6 +42,7 @@ export const renderFeedThread = (thread: FeedThread, ctx: FeedThreadContext): Te
         ?editable=${ctx.editable}
         .showKind=${ctx.showKind}
         .showTags=${ctx.showTags}
+        .trustedEditors=${ctx.trustedEditors}
       ></nostr-post-view>
       ${renderReactionSummary(reactionSummaryWithAuthors)}
       ${ctx.renderEventActions(thread.root, thread.root)}
@@ -55,6 +58,7 @@ export const renderFeedThread = (thread: FeedThread, ctx: FeedThreadContext): Te
                 .replyToPubkey=${ctx.activeReplyTarget?.replyToPubkey}
                 .rootEventId=${ctx.activeReplyTarget?.rootEventId}
                 .rootPubkey=${ctx.activeReplyTarget?.rootPubkey}
+                .rootAddress=${ctx.activeReplyTarget?.rootAddress}
                 @nostr-post-published=${ctx.onCommentPublished}
               ></nostr-post-composer>
             </div>

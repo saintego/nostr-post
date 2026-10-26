@@ -104,6 +104,7 @@ export const validateAndCoordinate = (
     replyToPubkey?: string;
     rootEventId?: string;
     rootPubkey?: string;
+    rootAddress?: string;
   }
 ):
   | { bundle: EventBundle; addressableDTag: string | undefined }
@@ -154,6 +155,7 @@ export const validateAndCoordinate = (
     replyToPubkey: opts.replyToPubkey,
     rootEventId: opts.rootEventId,
     rootPubkey: opts.rootPubkey,
+    rootAddress: opts.rootAddress,
   });
 
   const parsedExtraTags = parseExtraTags(opts.extraTags);

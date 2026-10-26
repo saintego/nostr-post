@@ -14,9 +14,11 @@ import { renderEventActions } from './feedActions';
 import { renderFeedAgenda } from './feedAgenda';
 import { handleCommentPublished as handleCommentPublishedDetail } from './feedComments';
 import {
+  agendaWindowOf,
   buildFeedFilters,
   buildInteractionLoadKey,
   FEED_LOAD_PROPERTIES,
+  interactionFilters,
   mergeUniqueEventsById,
 } from './feedData';
 import { DEFAULT_FEED_MESSAGES, type FeedMessages } from './feedMessages';
@@ -154,6 +156,10 @@ export class NostrPostFeed extends NostrPostElement {
   @property({ type: Number, attribute: 'agenda-days' })
   agendaDays?: number;
 
+  /** `month`: the month of `agenda-from` as a grid above its list; default a list of days */
+  @property({ type: String, attribute: 'agenda-view' })
+  agendaView?: 'list' | 'month';
+
   /**
    * Agenda of one calendar (`31924:<pubkey>:<d-tag>`): its events, loaded by address, instead
    * of all events with the window's day tags
@@ -173,7 +179,7 @@ export class NostrPostFeed extends NostrPostElement {
   }
 
   private get _agendaWindow() {
-    return { from: this.agendaFrom, days: this.agendaDays, tzid: this.timeZone };
+    return agendaWindowOf(this.agendaFrom, this.agendaDays, this.timeZone, this.agendaView);
   }
 
   constructor() {
@@ -313,20 +319,10 @@ export class NostrPostFeed extends NostrPostElement {
   }
 
   private async loadInteractions(events: SignedEvent[]) {
-    const rootIds = events.map((event) => event.id);
-    if (rootIds.length === 0) return;
-
-    const filters: FetchFilter[] = [];
-    const interactionLimit = Math.max(rootIds.length * 10, 50);
-
-    if (this.commentsEnabled) {
-      filters.push({ kinds: [1], '#e': rootIds, limit: interactionLimit });
-    }
-
-    if (this.reactionsEnabled) {
-      filters.push({ kinds: [7], '#e': rootIds, limit: interactionLimit });
-    }
-
+    const filters = interactionFilters(events, {
+      comments: this.commentsEnabled,
+      reactions: this.reactionsEnabled,
+    });
     if (filters.length === 0) return;
 
     try {
@@ -441,6 +437,9 @@ export class NostrPostFeed extends NostrPostElement {
       showKind: this.showKind,
       showTags: this.showTags,
       activeReplyTarget: this.activeReplyTarget,
+      // A calendar's agenda: its maintainer's corrections apply too
+      trustedEditors:
+        this.agenda && this.calendar ? [this.calendar.split(':')[1] ?? ''] : undefined,
       displayName: (pubkey) => this.displayName(pubkey),
       renderEventActions: (event, rootEvent) => this.renderEventActions(event, rootEvent),
       onCommentPublished: (event) => this.handleCommentPublished(event),
@@ -459,6 +458,7 @@ export class NostrPostFeed extends NostrPostElement {
       ? renderFeedAgenda(threads, ctx, {
           window: this._agendaWindow,
           shownWindow: this._shownWindow,
+          month: this.agendaView === 'month',
           loading: this.isLoading,
           messages: m,
           onMove: (from) => this._moveAgenda(from),

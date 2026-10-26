@@ -5,9 +5,12 @@ import {
   ALL_DAY_EVENT_KIND,
   agendaDayTags,
   calendarEventFilters,
+  monthOf,
+  monthWindow,
   TIMED_EVENT_KIND,
 } from '@nostr-post/plugin-date';
 import type { FetchFilter } from '@nostr-post/signer';
+import { addressOf } from './feedStandard';
 import type { SignedEvent } from './signer';
 
 /** <nostr-post-feed> properties that change what it loads */
@@ -28,6 +31,7 @@ export const FEED_LOAD_PROPERTIES = [
   'agendaFrom',
   'agendaDays',
   'timeZone',
+  'agendaView',
   'calendar',
   'commentsEnabled',
   'reactionsEnabled',
@@ -142,6 +146,15 @@ export const buildFetchFilters = ({
   });
 };
 
+/** The agenda's window: `days` from `from`, or in month view the month of `from` */
+export const agendaWindowOf = (
+  from: string | undefined,
+  days: number | undefined,
+  tzid: string | undefined,
+  view?: 'list' | 'month'
+): AgendaWindow =>
+  view === 'month' ? monthWindow(monthOf(from, tzid), tzid) : { from, days, tzid };
+
 /** Events asked for by default; an agenda gets more, so a whole window fits */
 const DEFAULT_LIMIT = 20;
 const AGENDA_LIMIT = 500;
@@ -206,4 +219,25 @@ export const mergeUniqueEventsById = (
     mergedById.set(event.id, event);
   }
   return [...mergedById.values()];
+};
+
+/**
+ * Relay filters for the comments and reactions of `events`: by id, and for addressable events
+ * by address too, so comments on their earlier versions come along
+ */
+export const interactionFilters = (
+  events: SignedEvent[],
+  options: { comments?: boolean; reactions?: boolean }
+): FetchFilter[] => {
+  const ids = events.map((event) => event.id);
+  if (ids.length === 0) return [];
+  const addresses = events.flatMap((event) => addressOf(event) ?? []);
+  const limit = Math.max(ids.length * 10, 50);
+  const filters: FetchFilter[] = [];
+  if (options.comments) {
+    filters.push({ kinds: [1], '#e': ids, limit });
+    if (addresses.length > 0) filters.push({ kinds: [1], '#a': addresses, limit });
+  }
+  if (options.reactions) filters.push({ kinds: [7], '#e': ids, limit });
+  return filters;
 };

@@ -11,7 +11,21 @@ export interface ReplyTarget {
   replyToPubkey?: string;
   rootEventId?: string;
   rootPubkey?: string;
+  /** The root's address when it's addressable */
+  rootAddress?: string;
 }
+
+/** An addressable event's address (`kind:pubkey:d`); undefined for other events */
+export const addressOf = (event: SignedEvent): string | undefined => {
+  const dTag = event.tags.find((tag) => tag[0] === 'd')?.[1];
+  return event.kind >= 30000 && event.kind < 40000 && dTag !== undefined
+    ? `${event.kind}:${event.pubkey}:${dTag}`
+    : undefined;
+};
+
+/** The address a reply's `a` root tag names, if it has one */
+const getRootAddress = (event: SignedEvent): string | undefined =>
+  event.tags.find((tag) => tag[0] === 'a' && tag[3] === 'root')?.[1];
 
 export interface FeedThread {
   root: SignedEvent;
@@ -59,11 +73,13 @@ export const mergeUniqueEvents = (
 
 export const buildReplyTarget = (event: SignedEvent, rootEvent?: SignedEvent): ReplyTarget => {
   const resolvedRootId = getRootTagValue(event) ?? rootEvent?.id ?? event.id;
+  const rootAddress = addressOf(rootEvent ?? event) ?? getRootAddress(event);
   return {
     replyToEventId: event.id,
     replyToPubkey: event.pubkey,
     rootEventId: resolvedRootId,
     rootPubkey: rootEvent?.pubkey ?? (resolvedRootId === event.id ? event.pubkey : undefined),
+    ...(rootAddress ? { rootAddress } : {}),
   };
 };
 
@@ -91,6 +107,19 @@ export const buildThreads = (
   const dedupedPrimary = filterLatestAddressableEvents(primaryEvents);
   const allEvents = [...dedupedPrimary, ...interactionEvents];
   const primaryIds = new Set(dedupedPrimary.map((event) => event.id));
+  // Replies to an earlier version of an addressable root reach it through its address
+  const rootIdByAddress = new Map(
+    dedupedPrimary.flatMap((event) => {
+      const address = addressOf(event);
+      return address ? [[address, event.id] as const] : [];
+    })
+  );
+  const currentRootId = (reply: SignedEvent): string | undefined => {
+    const rootId = getRootTagValue(reply);
+    if (rootId && primaryIds.has(rootId)) return rootId;
+    const address = getRootAddress(reply);
+    return address ? rootIdByAddress.get(address) : undefined;
+  };
   const repliesByRoot = new Map<string, SignedEvent[]>();
   const reactionsByTarget = new Map<string, SignedEvent[]>();
 
@@ -106,8 +135,8 @@ export const buildThreads = (
 
     if (!isReplyEvent(event)) continue;
 
-    const rootId = getRootTagValue(event);
-    if (!rootId || rootId === event.id || !primaryIds.has(rootId)) continue;
+    const rootId = currentRootId(event);
+    if (!rootId || rootId === event.id) continue;
 
     const replies = repliesByRoot.get(rootId) ?? [];
     if (!replies.some((reply) => reply.id === event.id)) {

@@ -42,7 +42,7 @@ import { DEFAULT_RAW_DATA_MESSAGES, type RawDataMessages, renderRawData } from '
 import { postRoleView } from './viewRoles';
 import { viewStyle } from './viewStyle';
 import { renderTagPlugins } from './viewTagPlugins';
-import { applyUpdateCommentsToEvent, renderUpdateComments } from './viewUpdates';
+import { applyUpdateCommentsToEvent, eventEditors, renderUpdateComments } from './viewUpdates';
 
 /** Event type that can be either unsigned or signed — re-exported from core for convenience */
 export type { DisplayableEvent } from '@nostr-post/core/types';
@@ -115,6 +115,13 @@ export class NostrPostView extends NostrPostElement {
   nostrLinkBase = DEFAULT_NOSTR_LINK_BASE;
 
   /** Field IDs to exclude from the rendered view */
+  /**
+   * People whose update comments apply besides the author and the people the event names as
+   * organizers (e.g. the maintainer of the calendar it's shown from)
+   */
+  @property({ type: Array, attribute: false })
+  trustedEditors?: string[];
+
   @property({ type: Array, attribute: 'exclude-fields' })
   excludeFields?: string[];
 
@@ -343,7 +350,8 @@ export class NostrPostView extends NostrPostElement {
     const event = applyUpdateCommentsToEvent(
       this.event,
       this.effectiveManifest,
-      this.interactionEvents
+      this.interactionEvents,
+      this.trustedEditors
     );
     const { kind, created_at, pubkey } = event;
     // Role lines (`Tasted at: nostr:naddr1…`) show as rows, not in the text
@@ -417,7 +425,10 @@ export class NostrPostView extends NostrPostElement {
         }
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
-        ${renderUpdateComments(this.interactionEvents, this.event.pubkey)}
+        ${renderUpdateComments(
+          this.interactionEvents,
+          eventEditors(this.event, this.trustedEditors)
+        )}
         ${showTechnicalMeta ? renderRawData(event, { ...DEFAULT_RAW_DATA_MESSAGES, ...this.messages }) : ''}
         ${renderEditButton(event, this.editable, this._showInlineComposer, (ev) => this.handleEditRequest(ev))}
         ${renderInlineComposer(event, this.editState)}

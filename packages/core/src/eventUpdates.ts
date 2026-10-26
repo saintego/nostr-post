@@ -186,10 +186,29 @@ const applySingleUpdateComment = (
   return current;
 };
 
+/** Roles of `p` tags whose people the author lets update the event (e.g. NIP-52 organizers) */
+export const EDITOR_ROLES = ['host', 'co-host', 'organizer', 'editor'];
+
+/**
+ * Who may update an event with update comments: its author, the people it names with an
+ * editor role (`["p", pubkey, relay, "organizer"]`), and `extra` (e.g. the maintainer of the
+ * calendar it's shown from)
+ */
+export const eventEditors = (
+  event: Pick<DisplayableEvent, 'pubkey' | 'tags'>,
+  extra: readonly string[] = []
+): Set<string> => {
+  const named = event.tags
+    .filter((tag) => tag[0] === 'p' && tag[1] && EDITOR_ROLES.includes(tag[3]?.toLowerCase() ?? ''))
+    .map((tag) => tag[1] as string);
+  return new Set([event.pubkey, ...named, ...extra]);
+};
+
 export const applyUpdateCommentsToEvent = (
   event: DisplayableEvent,
   manifest: NostrPostManifest | undefined,
-  interactionEvents: DisplayableEvent[] | undefined
+  interactionEvents: DisplayableEvent[] | undefined,
+  extraEditors: readonly string[] = []
 ): DisplayableEvent => {
   if (!manifest || !interactionEvents || interactionEvents.length === 0) return event;
 
@@ -198,10 +217,11 @@ export const applyUpdateCommentsToEvent = (
   );
   if (fieldsById.size === 0) return event;
 
-  // Only trust update-comment events authored by the same pubkey as the original.
-  // This prevents third parties from injecting `update:...` lines that alter rendering.
+  // Only trust update comments of the event's editors (eventEditors): third parties can't
+  // inject `update:...` lines that alter rendering
+  const editors = eventEditors(event, extraEditors);
   const trustedUpdates = interactionEvents.filter(
-    (ie) => ie.pubkey === event.pubkey && isUpdateComment(ie.content)
+    (ie) => editors.has(ie.pubkey) && isUpdateComment(ie.content)
   );
 
   const sorted = [...trustedUpdates].sort((a, b) => a.created_at - b.created_at);

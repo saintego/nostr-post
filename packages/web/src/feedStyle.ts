@@ -74,6 +74,93 @@ export const feedStyle = css`
     transition: opacity 0.15s;
   }
 
+  .month-grid {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+    font-size: 0.75rem;
+  }
+
+  .month-grid th {
+    padding: 0.25rem;
+    font-weight: 600;
+    color: #6b7280;
+  }
+
+  .month-grid td {
+    height: 4.5rem;
+    vertical-align: top;
+    border: 1px solid #e5e7eb;
+    padding: 0.125rem;
+  }
+
+  .month-grid td.outside {
+    color: #9ca3af;
+    background: #f9fafb;
+  }
+
+  .month-grid .day-number {
+    align-self: flex-start;
+  }
+
+  .month-grid td.today .day-number {
+    color: #ffffff;
+    background: #6366f1;
+    border-radius: 999px;
+    padding: 0 0.375rem;
+  }
+
+  .month-grid .day {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.125rem;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    text-align: left;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .month-grid .day-event {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    background: #eef2ff;
+    color: #3730a3;
+    border-radius: 3px;
+    padding: 0 0.25rem;
+  }
+
+  .month-grid .day-more {
+    color: #6b7280;
+  }
+
+  :host-context(.dark) .month-grid td {
+    border-color: #374151;
+  }
+
+  :host-context(.dark) .month-grid td.outside {
+    background: #111827;
+    color: #6b7280;
+  }
+
+  :host-context(.dark) .month-grid th,
+  :host-context(.dark) .month-grid .day-more {
+    color: #9ca3af;
+  }
+
+  :host-context(.dark) .month-grid .day-event {
+    background: #312e81;
+    color: #e0e7ff;
+  }
+
   .agenda-date {
     font-size: 0.9375rem;
     font-weight: 600;

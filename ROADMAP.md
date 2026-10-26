@@ -104,8 +104,30 @@
         (`peopleByStatus`, plugin-profile's `<np-profile-view>`)
   - [ ] RSVP: highlight the user's own answer when the page loads (now only after answering here, so
         reading doesn't ask the signer); a note with the answer
-- [ ] calendar view: month grid on the same day-grouping functions as the agenda
-- [ ] rich media preview - youtube with play, spotify/bandcamp/soundcloud with playlist if possible
+  - [x] iCalendar: `eventsToIcs`, `icsToDrafts` (d-tag `ics:<UID>`, so re-imports replace), `.ics`
+        download on calendar events (`<np-ics-download>`)
+  - [x] Duplicate check before creating: `similarEvents` (same day, alike title)
+  - [x] Trusted editors: update comments of the people an event names as organizers (`p` + role) and
+        of the calendar's maintainer (`trustedEditors`) apply; comments on addressable events carry
+        an `a` root tag and are fetched and threaded by address, so they survive republishing
+- [x] calendar view: month grid on the same day-grouping functions as the agenda
+      (`<nostr-post-feed agenda agenda-view="month">`, `monthGrid`)
+- [ ] rich media preview - youtube with play, spotify/bandcamp/soundcloud with playlist if possible.
+      Done for link fields: `@nostr-post/plugin-embed` (`uiPlugin: 'embed'`, click-to-load players).
+      Left: players for links inside note text; Bandcamp page links (the album id is only on the
+      page: store it with the link, or read it through a proxy)
+- [ ] Gig platform example (`examples/gigs`, plan: static nsite now, cron worker later in its own repo)
+  - [ ] Static app: city + genre + date browser (agenda/month with `#g`/`#t`), event and artist pages,
+        "add gig" composer
+  - [ ] Artist wiki entity manifest (name, genres, media links as `embed` field with `r`/NIP-73 `i`) and a
+        gig manifest with Performers (wiki-entity picker, role `performer`)
+  - [ ] Add flow: paste text or a poster → AI with the user's own key (browser call) or a copy-paste
+        prompt → prefill → duplicate hint (`similarEvents`) → sign
+  - [ ] `.ics` import UI (`icsToDrafts`, confirm each event); share the current filter as link + text
+  - [ ] In `build:pages`, so PR previews show it; its own nsite
+  - [ ] Cron worker (own repo): Open Graph pages and `.ics` feeds into the nsite; Facebook `.ics`
+        subscriptions (URL encrypted to the cron with NIP-44 as app data, events signed through the
+        user's NIP-46 signer or as drafts to confirm)
 - [ ] P2P offers support (NIP-69) with filtered feed presets/views
 - [ ] Zap support (NIP-57): zap requests/receipts with amount + payer views and filtering
 - [ ] Add scenario manifests for:
@@ -184,6 +206,26 @@
 - [ ] Reputation/trust scoring
 
 ### Quality, Tooling & Docs (from DEVELOPMENT_GUIDE.md)
+
+- [ ] Package taxonomy (discussion first, then move code): plugin-date has grown into NIP-52 calendar code
+      (manifest, agenda/month, RSVP, calendars, iCalendar, duplicates) next to its date field. Decide
+      the tier between field plugins (`plugin-*` with one `uiPlugin`) and engines (`@nostr-post/wiki`:
+      own composer, view, versioning): list, venue and calendar mix domain logic, fields, event
+      actions and `/web` components. A starting idea: "domain plugins" (`plugin-calendar` next to
+      `plugin-list`, `plugin-venue`), plugin-date back to the date field only, iCalendar as a subpath
+      (`…/ics`). Do the move right after the decision
+- [x] One text normalization in core (`@nostr-post/core/textNormalize`: `slugify`, `nip54DTag`,
+      `textWords`, `foldAccents`): wiki's `normalizeDTag` (now `nip54DTag`), plugin-list's
+      `newSetDTag` and plugin-date's `titleSimilarity` use it; their outputs are unchanged
+- [ ] Who may update a post (update comments, kind 1 and addressable alike), in layers:
+      - the post decides what's allowed: the author, editors it names (`p` + role, done), and an open
+        flag as a NIP-32 self-label, `["L", "nostr-post.updates"], ["l", "anyone", "nostr-post.updates"]`
+        (not a NIP of its own: other clients ignore it), e.g. for imported gigs that should "live their
+        own life" until the promoter takes over
+      - the manifest only sets the composer's default for that label
+      - the viewer filters open posts: everyone's updates, or only their web of trust (follow list
+        first); viewers with different follows can see different versions of an open post
+      - others' updates show as suggestions in any case
 
 - [x] Set up Vitest for unit testing
 - [x] Unit tests for validation functions in @nostr-post/core

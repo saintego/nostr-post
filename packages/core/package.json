@@ -61,6 +61,10 @@
     "./textCompletion": {
       "types": "./dist/textCompletion.d.ts",
       "import": "./dist/textCompletion.js"
+    },
+    "./textNormalize": {
+      "types": "./dist/textNormalize.d.ts",
+      "import": "./dist/textNormalize.js"
     }
   },
   "scripts": {

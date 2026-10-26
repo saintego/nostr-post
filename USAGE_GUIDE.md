@@ -276,7 +276,7 @@ Create and publish Nostr posts.
 - `exclude-fields`, `readonly-fields` - JSON arrays of field IDs
 - `extra-tags` - Extra tags added to the post
 - `default-format-id`, `hide-publish-format-selector` - Publish format choice
-- `reply-to-event-id`, `reply-to-pubkey`, `root-event-id`, `root-pubkey`, `show-reply-target`, `editable-reply-target` - Replies
+- `reply-to-event-id`, `reply-to-pubkey`, `root-event-id`, `root-pubkey`, `root-address`, `show-reply-target`, `editable-reply-target` - Replies
 
 **Properties:**
 
@@ -369,6 +369,8 @@ Set `editable` to show an "Edit" button. The button's behaviour depends on the e
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Addressable** (30000–39999) | Opens an inline composer pre-filled with current values. On submit the component publishes a replacement event (NIP-33 overwrite).                                                                                                                                                                                                                 |
 | **Kind 1**                    | Opens an inline composer pre-filled with current values. On submit the component publishes a kind-1 _update-comment_ reply in the format `update:{fieldId}:{value}` (one changed field per line). The view applies these comments client-side so the post appears updated, while the comment remains visible as plain text in other Nostr clients. |
+
+Update comments apply when the event's editors wrote them (`eventEditors`): its author, the people it names in `p` tags with an editor role (`host`, `co-host`, `organizer`, `editor`, as NIP-52 events list organizers), and the view's `trustedEditors` (e.g. the maintainer of the calendar an agenda shows). Others' update comments stay ordinary comments. Comments on addressable events also carry the event's address (`["a", address, "", "root"]`; the composer's `root-address`), so they stay with the event when it's republished.
 
 When the user clicks "Edit", a cancelable `nostr-post-edit-request` CustomEvent is dispatched:
 

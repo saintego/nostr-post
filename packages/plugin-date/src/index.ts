@@ -15,6 +15,22 @@ export {
 } from './core';
 export { CALENDAR_EVENT_MANIFEST } from './calendarManifest';
 export {
+  draftFormatId,
+  draftKind,
+  eventsToIcs,
+  type IcsDraft,
+  type IcsEventSource,
+  icsDTag,
+  icsToDrafts,
+} from './ics';
+export { fetchEventsAsIcs } from './icsRelays';
+export {
+  type EventDraft,
+  type SimilarEvent,
+  similarEvents,
+  titleSimilarity,
+} from './similar';
+export {
   calendarEventFilters,
   fetchCalendarItems,
   publishesCalendarEvents,
@@ -52,6 +68,15 @@ export {
   todayIn,
   windowDates,
 } from './agenda';
+export {
+  formatMonth,
+  monthGrid,
+  monthOf,
+  monthWindow,
+  shiftMonth,
+  weekdayNames,
+  weekStartOf,
+} from './month';
 export {
   type DatePrecision,
   type DateValue,

@@ -5,6 +5,7 @@
  * create and delete lists. No relays, signer or DOM here (see lists.ts for those).
  */
 
+import { slugify } from '@nostr-post/core/textNormalize';
 import type { ManifestList, NostrPostManifest } from '@nostr-post/core/types';
 import {
   BOOKMARK_LISTS,
@@ -119,12 +120,7 @@ export const newBookmarksEvent = (pubkey: string, now: number): ListEvent => ({
  * letters or digits gets `fallback` (e.g. a random part)
  */
 export const newSetDTag = (title: string, fallback: string): string => {
-  const slug = title
-    .toLowerCase()
-    .normalize('NFKD')
-    .replace(/\p{M}/gu, '')
-    .replace(/[^\p{L}\p{N}]+/gu, '-')
-    .replace(/^-+|-+$/g, '');
+  const slug = slugify(title, { foldAccents: true, punctuation: 'separate' });
   return `nostr-post:${slug || fallback}`;
 };
 

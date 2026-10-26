@@ -81,6 +81,7 @@ This keeps relay I/O in one place and avoids duplicate network requests.
 | **@nostr-post/cdn**     | ✅ **Complete** | Single-file CDN bundle (ESM + IIFE, no npm required)                  |
 | **plugin-stars**        | ✅ **Complete** | Star rating (1-5 scale, customizable)                                 |
 | **plugin-geo**          | ✅ **Complete** | Geohash location picker with NIP-52 prefix tags                       |
+| **plugin-embed**        | ✅ **Complete** | Players for links: YouTube, Spotify, SoundCloud, Vimeo, Bandcamp       |
 | **plugin-profile**      | ✅ **Complete** | People picker: profile search or npub, `p` tags with roles             |
 | **plugin-date**         | ✅ **Complete** | Date / date-time input; NIP-52 calendar event dates and `D` day tags  |
 | **plugin-venue**        | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo                    |
@@ -347,7 +348,7 @@ Built-in plugin loading:
 
 - `@nostr-post/web` lazy-loads built-in plugin UI modules when a manifest uses them.
 - This keeps SSR safe while still making built-in manifest plugins work automatically.
-- Built-in plugin ids supported automatically: `media`, `hashtag`, `stars`, `geo`, `date`, `profile`, `venue`, `markdown`, `list`.
+- Built-in plugin ids supported automatically: `media`, `hashtag`, `stars`, `geo`, `date`, `profile`, `embed`, `venue`, `markdown`, `list`.
 - You only need manual plugin imports for custom or external plugin packages.
 
 Default behavior when no `manifest` is provided:
@@ -365,7 +366,7 @@ Tag values the text already shows (`r` URLs, `t` hashtags) aren't repeated below
 
 `<nostr-post-composer>` extended reply context API:
 
-- `reply-to-event-id`, `reply-to-pubkey`, `root-event-id`, `root-pubkey`
+- `reply-to-event-id`, `reply-to-pubkey`, `root-event-id`, `root-pubkey`, `root-address` (an addressable root: replies get its `a` tag too)
 - `show-reply-target` to show current reply target
 - `editable-reply-target` to allow editing reply target directly in the composer
 
@@ -393,7 +394,7 @@ override, e.g. for translations.
 - `commentManifest` (defaults to standard kind 1 manifest)
 - `reactionOptions` (defaults to `['+', '❤️', '🔥', '😂']`)
 
-`<nostr-post-feed>` supports direct Nostr filtering (`authors`, `kinds`, `ids`, `since`, `until`, `limit`, `search`) plus universal tag filters via `tagFilters` / `filter-tags` (for example `#g` geohash and `#i` OSM identity tags). It also supports advanced multi-filter `REQ` queries through the `filters` property, and an `agenda` mode: NIP-52 calendar events of a date window under day headings (`agenda-from`, `agenda-days`, `time-zone`).
+`<nostr-post-feed>` supports direct Nostr filtering (`authors`, `kinds`, `ids`, `since`, `until`, `limit`, `search`) plus universal tag filters via `tagFilters` / `filter-tags` (for example `#g` geohash and `#i` OSM identity tags). It also supports advanced multi-filter `REQ` queries through the `filters` property, and an `agenda` mode: NIP-52 calendar events of a date window under day headings (`agenda-from`, `agenda-days`, `time-zone`), or of a month as a grid (`agenda-view="month"`).
 
 Detailed examples: [packages/cdn/README.md](./packages/cdn/README.md)
 

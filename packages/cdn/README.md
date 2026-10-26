@@ -105,6 +105,7 @@ The bundle re-exports utilities for advanced usage:
 
 **People helpers** (see [plugin-profile](../plugin-profile/README.md))
 
+- Embeds: `embedFor(link)` (a link's player), `linkProvider(link)`, `embedPlugin`, `Embed`
 - `profilePlugin`, `personFromText(text)`, `peopleFromTags(tags)`, `personTag(person)`, `Person`
 - `mentionsIn(text)`: the people in a text's `nostr:npub…` mentions; the composer completes `@name` in
   text fields with an attached `profile` field (the standard kind 1 post has one)
@@ -121,6 +122,10 @@ The bundle re-exports utilities for advanced usage:
   `AgendaWindow`
 - RSVP (kind 31925): `fetchRsvps(addresses)`, `publishRsvp(address, status)`,
   `summarizeRsvps(events, address)`, `rsvpEvent(address, status, pubkey)`, `RsvpStatus`
+- iCalendar: `eventsToIcs(events, name?)`, `icsToDrafts(text)` (an `.ics` file as drafts for
+  CALENDAR_EVENT_MANIFEST, d-tag `ics:<UID>`), `icsDTag(uid)`, `fetchEventsAsIcs(addresses)`
+- Duplicates: `similarEvents(draft, events)`, `titleSimilarity(a, b)`
+- Months: `monthWindow(month)`, `monthGrid(month)`, `shiftMonth(month, steps)`, `formatMonth(month)`
 - Calendars (kind 31924): `fetchCalendarItems(address)` (a calendar's event addresses),
   `calendarEventFilters(addresses)`; edited with the list functions and `{ listKind: CALENDAR_LISTS }`
 - `DateValue`
@@ -406,6 +411,8 @@ when they start (not when they were posted). Each version of an event counts onc
 ```
 
 - `agenda-from`: first day, `YYYY-MM-DD` (default today); `agenda-days`: number of days (default 30)
+- `agenda-view="month"`: the month of `agenda-from` as a grid of weeks with each day's event titles
+  (a day jumps to its place in the list below); Previous / Next move by months
 - `time-zone`: IANA time zone of the days (default the viewer's)
 - Kinds: `kinds`, else the manifest's, else 31922 and 31923; `limit` defaults to 500 here
 - Other filters (`authors`, `tagFilters`, …) narrow it down; `filters` replaces the agenda's filter
@@ -416,7 +423,9 @@ when they start (not when they were posted). Each version of an event counts onc
 - `calendar="31924:<pubkey>:<d-tag>"`: the agenda of one calendar (NIP-52): its events, loaded by
   address, so also all-day events of clients that write no `D` tags
 - With a calendar manifest, events also get Add to calendar (`<np-calendar-save>`): the user's
-  calendars, to add the event to or start a new one
+  calendars, to add the event to or start a new one, and `.ics` (`<np-ics-download>`): the event as
+  a file for calendar apps
+- Update comments of a calendar's maintainer apply to its events (`trustedEditors`)
 
 The days become a `#D` filter, the day tags `@nostr-post/plugin-date` writes:
 

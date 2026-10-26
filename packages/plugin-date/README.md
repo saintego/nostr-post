@@ -64,6 +64,35 @@ A window is `{ from?, days?, tzid? }`: `days` days from `from` (`YYYY-MM-DD`, de
 `tzid` (default the viewer's). `<nostr-post-feed agenda>` in `@nostr-post/web` is built on these;
 a month grid can use the same functions with a month as the window.
 
+### Months
+
+| Export                                           | Does                                                     |
+| ------------------------------------------------ | -------------------------------------------------------- |
+| `monthWindow(month, tzid?)`, `monthOf(date?)`    | A month (`YYYY-MM`) as an agenda window; the month of a date (today by default) |
+| `monthGrid(month, weekStart?)`, `weekStartOf(locale?)` | The month's weeks of 7 dates from the locale's first weekday (`Intl.Locale` week info; Monday where unknown), with the days of the months around it |
+| `shiftMonth(month, steps)`, `formatMonth(month, locale?)`, `weekdayNames(weekStart?, locale?)` | Moving and naming months; short weekday names |
+
+`<nostr-post-feed agenda agenda-view="month">` shows a month as a grid on these.
+
+### iCalendar (.ics)
+
+| Export                                   | Does                                                                     |
+| ---------------------------------------- | ------------------------------------------------------------------------ |
+| `eventsToIcs(events, name?)`             | An `.ics` file (RFC 5545) of calendar events: UID = the event's address, all-day dates or UTC times, title, description, location, link |
+| `icsToDrafts(text, viewerZone?)`         | The entries of an `.ics` file (e.g. a Facebook events export) as drafts: `{ uid, dTag, allDay, formData, private }`, `formData` for CALENDAR_EVENT_MANIFEST (title, when, place, link, description). `CLASS:PRIVATE` entries are flagged, not left out |
+| `icsDTag(uid)`                           | `ics:<UID>`: publishing a draft with it replaces the event on a later import instead of adding a copy |
+| `draftFormatId(draft)`, `draftKind(draft)` | The publish format (`all-day` / `timed`) and kind of a draft            |
+| `fetchEventsAsIcs(addresses, options?)`  | The `.ics` of events loaded from relays by address                       |
+
+### Duplicates
+
+| Export                                    | Does                                                                     |
+| ----------------------------------------- | ------------------------------------------------------------------------ |
+| `similarEvents(draft, events, options?)`  | Events sharing a day with a draft (`{ title, when }`) whose titles are alike (`minScore`, default 0.5), most alike first: before creating an event, offer the existing one |
+| `titleSimilarity(a, b)`                   | 0–1: shared words over the shorter title's (case, accents, punctuation and filler words ignored) |
+
+Ask relays for the candidates with `agendaFilter` for the draft's days, plus `#g` for its area.
+
 ### RSVP (kind 31925)
 
 | Export                                         | Does                                                                     |
@@ -111,6 +140,8 @@ loads it by itself for manifests with `uiPlugin: 'date'`.
 - `<np-calendar-save>`: Add to calendar for `.target` (a calendar event's address): plugin-list's
   `<np-list-save>` with the user's calendars and calendar wording (`DEFAULT_CALENDAR_SAVE_MESSAGES`
   over `DEFAULT_LIST_MESSAGES`). Registered as an event action of calendar manifests, like `<np-rsvp>`.
+- `<np-ics-download>`: `.ics` for `.target`: loads the event and downloads it as a file for calendar
+  apps. An event action of calendar manifests (`DEFAULT_ICS_MESSAGES` for its text).
 - `<np-rsvp>`: Going / Maybe / Can't go with counts, and "Who" (once someone answered): the people of
   each answer with avatars and names (plugin-profile's `<np-profile-view>`), for `.target` (a calendar event's address) and
   `.relays`. Registered as an event action of manifests that publish calendar events, so

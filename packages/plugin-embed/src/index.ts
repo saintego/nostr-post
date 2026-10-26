@@ -1,0 +1,14 @@
+/**
+ * @nostr-post/plugin-embed - Core entrypoint
+ *
+ * Import this for headless usage (link → player URL).
+ * Import '@nostr-post/plugin-embed/web' for the input and view components.
+ */
+export {
+  type Embed,
+  type EmbedProvider,
+  embedFor,
+  embedPlugin,
+  linkProvider,
+  linksOf,
+} from './core';

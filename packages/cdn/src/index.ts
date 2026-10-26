@@ -19,6 +19,7 @@ import '@nostr-post/plugin-stars/web';
 import '@nostr-post/plugin-geo/web';
 import '@nostr-post/plugin-date/web';
 import '@nostr-post/plugin-profile/web';
+import '@nostr-post/plugin-embed/web';
 import '@nostr-post/plugin-venue/web';
 import '@nostr-post/plugin-media/web';
 import '@nostr-post/plugin-reference/web';
@@ -73,6 +74,9 @@ export {
   type FoundProfile,
 } from '@nostr-post/plugin-profile';
 
+// Players for links (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp)
+export { embedFor, linkProvider, embedPlugin, type Embed } from '@nostr-post/plugin-embed';
+
 // Date helpers (NIP-52 calendar event dates)
 export {
   datePlugin,
@@ -97,6 +101,17 @@ export {
   type RsvpStatus,
   fetchCalendarItems,
   calendarEventFilters,
+  eventsToIcs,
+  icsToDrafts,
+  icsDTag,
+  fetchEventsAsIcs,
+  type IcsDraft,
+  similarEvents,
+  titleSimilarity,
+  monthWindow,
+  monthGrid,
+  shiftMonth,
+  formatMonth,
 } from '@nostr-post/plugin-date';
 
 // Signing & relay utilities

@@ -13,6 +13,8 @@ export interface FeedMessages {
   today: string;
   /** Accessible name of the agenda's buttons */
   agendaNavigation: string;
+  /** Month view: a day's events not listed in its cell */
+  moreEvents: (count: number) => string;
 }
 
 export const DEFAULT_FEED_MESSAGES: FeedMessages = {
@@ -23,4 +25,5 @@ export const DEFAULT_FEED_MESSAGES: FeedMessages = {
   next: 'Next',
   today: 'Today',
   agendaNavigation: 'Agenda period',
+  moreEvents: (count) => `+${count} more`,
 };

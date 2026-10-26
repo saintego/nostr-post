@@ -2,7 +2,12 @@
  * Unit tests for eventUpdates utilities
  */
 import { describe, expect, it } from 'vitest';
-import { applyUpdateCommentsToEvent, isUpdateComment, parseUpdateComment } from './eventUpdates';
+import {
+  applyUpdateCommentsToEvent,
+  eventEditors,
+  isUpdateComment,
+  parseUpdateComment,
+} from './eventUpdates';
 import type { DisplayableEvent, NostrPostManifest } from './types';
 
 // ---------------------------------------------------------------------------
@@ -181,5 +186,61 @@ describe('applyUpdateCommentsToEvent', () => {
     const ie = interactionEvent('update:review:new', { kind: 7 });
     const result = applyUpdateCommentsToEvent(event, MANIFEST, [ie]);
     expect(result).toBe(event);
+  });
+});
+
+describe('update comments by the event editors', () => {
+  const author = 'a'.repeat(64);
+  const organizer = 'b'.repeat(64);
+  const speaker = 'c'.repeat(64);
+  const curator = 'd'.repeat(64);
+  const manifest: NostrPostManifest = {
+    id: 'event',
+    version: '1.0.0',
+    fields: [
+      {
+        id: 'title',
+        type: 'string',
+        uiPlugin: 'text',
+        mapTo: { kind: 31922, target: 'tag', tagName: 'title' },
+      },
+    ],
+  };
+  const event: DisplayableEvent = {
+    kind: 31922,
+    pubkey: author,
+    created_at: 1,
+    content: '',
+    tags: [
+      ['d', 'gig'],
+      ['title', 'Old title'],
+      ['p', organizer, '', 'organizer'],
+      ['p', speaker, '', 'speaker'],
+    ],
+  };
+  const update = (pubkey: string, title: string, at: number): DisplayableEvent => ({
+    kind: 1,
+    pubkey,
+    created_at: at,
+    content: `update:title:${title}`,
+    tags: [],
+  });
+  const title = (e: DisplayableEvent) => e.tags.find((t) => t[0] === 'title')?.[1];
+
+  it('knows the author, organizers and extra editors', () => {
+    expect([...eventEditors(event)]).toEqual([author, organizer]);
+    expect(eventEditors(event, [curator]).has(curator)).toBe(true);
+  });
+
+  it("applies an organizer's update, not a speaker's or a stranger's", () => {
+    expect(
+      title(applyUpdateCommentsToEvent(event, manifest, [update(organizer, 'Fixed', 2)]))
+    ).toBe('Fixed');
+    expect(title(applyUpdateCommentsToEvent(event, manifest, [update(speaker, 'Hijack', 2)]))).toBe(
+      'Old title'
+    );
+    expect(
+      title(applyUpdateCommentsToEvent(event, manifest, [update(curator, 'Curated', 2)], [curator]))
+    ).toBe('Curated');
   });
 });
