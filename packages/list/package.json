@@ -1,5 +1,5 @@
 {
-  "name": "@nostr-post/plugin-list",
+  "name": "@nostr-post/list",
   "version": "0.1.0",
   "description": "NIP-51 bookmark lists for nostr-post: save wiki entities and events to lists",
   "type": "module",

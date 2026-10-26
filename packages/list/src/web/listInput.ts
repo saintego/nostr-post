@@ -1,5 +1,5 @@
 /**
- * @nostr-post/plugin-list - <np-list-input>, the list field's input
+ * @nostr-post/list - <np-list-input>, the list field's input
  *
  * The signed-in user's lists to tick, with the lists to save to first (`lists` of the
  * entity manifest of `metadata.saveField`, or of the post's manifest), and new lists by

@@ -13,7 +13,7 @@ const builtInPluginLoaders: Record<string, () => Promise<unknown>> = {
   reference: () => import('@nostr-post/plugin-reference/web'),
   markdown: () => import('@nostr-post/plugin-markdown/web'),
   hashtag: () => import('@nostr-post/plugin-hashtag/web'),
-  list: () => import('@nostr-post/plugin-list/web'),
+  list: () => import('@nostr-post/list/web'),
 };
 
 const pendingPluginLoads = new Map<string, Promise<unknown>>();

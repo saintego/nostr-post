@@ -117,12 +117,12 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
+      '@nostr-post/list':
+        specifier: workspace:*
+        version: link:../list
       '@nostr-post/plugin-date':
         specifier: workspace:*
         version: link:../plugin-date
-      '@nostr-post/plugin-list':
-        specifier: workspace:*
-        version: link:../plugin-list
       '@nostr-post/plugin-profile':
         specifier: workspace:*
         version: link:../plugin-profile
@@ -151,6 +151,9 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
+      '@nostr-post/list':
+        specifier: workspace:*
+        version: link:../list
       '@nostr-post/plugin-date':
         specifier: workspace:*
         version: link:../plugin-date
@@ -163,9 +166,6 @@ importers:
       '@nostr-post/plugin-hashtag':
         specifier: workspace:*
         version: link:../plugin-hashtag
-      '@nostr-post/plugin-list':
-        specifier: workspace:*
-        version: link:../plugin-list
       '@nostr-post/plugin-markdown':
         specifier: workspace:*
         version: link:../plugin-markdown
@@ -209,6 +209,31 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
+
+  packages/list:
+    dependencies:
+      '@nostr-post/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      '@nostr-post/signer':
+        specifier: workspace:*
+        version: link:../signer
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.5
+        version: 5.0.5(@types/node@22.20.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(happy-dom@21.0.4)(jsdom@30.1.2(@noble/hashes@2.0.1))(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2))
 
   packages/plugin-date:
     dependencies:
@@ -283,31 +308,6 @@ importers:
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
-
-  packages/plugin-list:
-    dependencies:
-      '@nostr-post/core':
-        specifier: workspace:*
-        version: link:../core
-      '@nostr-post/plugins':
-        specifier: workspace:*
-        version: link:../plugins
-      '@nostr-post/signer':
-        specifier: workspace:*
-        version: link:../signer
-      lit:
-        specifier: ^3.3.3
-        version: 3.3.3
-    devDependencies:
-      '@types/node':
-        specifier: ^22.20.5
-        version: 22.20.5
-      typescript:
-        specifier: ^6.0.3
-        version: 6.0.3
-      vitest:
-        specifier: ^5.0.5
-        version: 5.0.5(@types/node@22.20.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(happy-dom@21.0.4)(jsdom@30.1.2(@noble/hashes@2.0.1))(vite@8.3.4(@types/node@22.20.5)(esbuild@0.28.2))
 
   packages/plugin-markdown:
     dependencies:
@@ -492,6 +492,9 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
+      '@nostr-post/list':
+        specifier: workspace:*
+        version: link:../list
       '@nostr-post/plugin-date':
         specifier: workspace:*
         version: link:../plugin-date
@@ -507,9 +510,6 @@ importers:
       '@nostr-post/plugin-identifier':
         specifier: workspace:*
         version: link:../plugin-identifier
-      '@nostr-post/plugin-list':
-        specifier: workspace:*
-        version: link:../plugin-list
       '@nostr-post/plugin-markdown':
         specifier: workspace:*
         version: link:../plugin-markdown
@@ -581,6 +581,9 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@nostr-post/list':
+        specifier: workspace:*
+        version: link:../../packages/list
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../../packages/plugin-geo
@@ -590,9 +593,6 @@ importers:
       '@nostr-post/plugin-identifier':
         specifier: workspace:*
         version: link:../../packages/plugin-identifier
-      '@nostr-post/plugin-list':
-        specifier: workspace:*
-        version: link:../../packages/plugin-list
       '@nostr-post/plugin-markdown':
         specifier: workspace:*
         version: link:../../packages/plugin-markdown

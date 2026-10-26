@@ -1,5 +1,5 @@
 /**
- * @nostr-post/plugin-list - what a list item is called
+ * @nostr-post/list - what a list item is called
  *
  * Items are addresses or ids; to show them, fetch their events and take a title.
  * Wiki entities are looked up by d-tag (every author's version), like the list compares them.

@@ -1,7 +1,7 @@
 import { CALENDAR_EVENT_MANIFEST } from '@nostr-post/calendar';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
-import { listField } from '@nostr-post/plugin-list';
+import { listField } from '@nostr-post/list';
 import type { WikiManifest } from '@nostr-post/wiki';
 import { BEER_LISTS, SAVE_PLACE_MANIFEST, VENUE_LISTS } from './listExamples';
 import bjcpStyleManifest from './manifests/beerStyleBjcp2021.json';

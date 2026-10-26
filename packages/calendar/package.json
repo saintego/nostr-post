@@ -38,7 +38,7 @@
   "dependencies": {
     "@nostr-post/core": "workspace:*",
     "@nostr-post/plugin-date": "workspace:*",
-    "@nostr-post/plugin-list": "workspace:*",
+    "@nostr-post/list": "workspace:*",
     "@nostr-post/plugin-profile": "workspace:*",
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/signer": "workspace:*",

@@ -26,7 +26,7 @@ import '@nostr-post/plugin-media/web';
 import '@nostr-post/plugin-reference/web';
 import '@nostr-post/plugin-markdown/web';
 import '@nostr-post/plugin-hashtag/web';
-import '@nostr-post/plugin-list/web';
+import '@nostr-post/list/web';
 import '@nostr-post/wiki/web';
 import '@nostr-post/plugin-wiki-entity/web';
 
@@ -232,4 +232,4 @@ export {
   saveToChoices,
   itemsToSave,
   listField,
-} from '@nostr-post/plugin-list';
+} from '@nostr-post/list';

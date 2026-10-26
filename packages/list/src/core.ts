@@ -1,5 +1,5 @@
 /**
- * @nostr-post/plugin-list - Core
+ * @nostr-post/list - Core
  *
  * NIP-51 bookmark lists as pure functions: read list events, add and remove items,
  * create and delete lists. No relays, signer or DOM here (see lists.ts for those).

@@ -2,15 +2,15 @@
  * @nostr-post/plugin-date - Calendars (NIP-52 kind 31924)
  *
  * A calendar is a named list of calendar events (`a` tags), anyone's events. Creating and
- * editing them is @nostr-post/plugin-list's (`CALENDAR_LISTS`); this module reads a
+ * editing them is @nostr-post/list's (`CALENDAR_LISTS`); this module reads a
  * calendar's events, e.g. for an agenda. Events load by address, so all-day events of
  * clients that write no `D` day tags are found too. No DOM dependencies.
  */
 
 import { getFieldTargets } from '@nostr-post/core/manifestMappings';
 import type { NostrPostManifest } from '@nostr-post/core/types';
+import { CALENDAR_KIND, currentLists, type ListRelayOptions } from '@nostr-post/list';
 import { ALL_DAY_EVENT_KIND, TIMED_EVENT_KIND } from '@nostr-post/plugin-date';
-import { CALENDAR_KIND, currentLists, type ListRelayOptions } from '@nostr-post/plugin-list';
 import { DEFAULT_RELAYS, type FetchFilter, fetchEvents } from '@nostr-post/signer';
 import { isCalendarEventAddress } from './rsvp';
 

@@ -1,5 +1,5 @@
 /**
- * @nostr-post/plugin-list - web components
+ * @nostr-post/list - web components
  *
  * <np-list-save> saves something to the user's lists; <np-list-view> shows lists;
  * <np-list-input> is the list field's input (`uiPlugin: "list"`). Importing this entry

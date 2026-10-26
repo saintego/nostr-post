@@ -1,5 +1,5 @@
 /**
- * @nostr-post/plugin-list - <np-list-save>
+ * @nostr-post/list - <np-list-save>
  *
  * A Save button for one thing (`target`: an `a` address such as a wiki entity, or an event
  * id): it opens the signed-in user's lists, to add it to or remove it from each, or to

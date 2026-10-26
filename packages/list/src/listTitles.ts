@@ -1,5 +1,5 @@
 /**
- * @nostr-post/plugin-list - what lists are called
+ * @nostr-post/list - what lists are called
  *
  * Framework-free, for any UI: the names come in (e.g. from the web components'
  * messages, or an app's translations).

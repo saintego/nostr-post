@@ -1,5 +1,5 @@
 /**
- * @nostr-post/plugin-list - loading the signed-in user's lists
+ * @nostr-post/list - loading the signed-in user's lists
  *
  * Step by step, so a UI can show what it waits for: the signer (a remote signer or a
  * permission prompt can take a while), then the relays. The manifest's lists show as soon

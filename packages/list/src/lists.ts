@@ -1,5 +1,5 @@
 /**
- * @nostr-post/plugin-list - reading and publishing lists
+ * @nostr-post/list - reading and publishing lists
  *
  * Reads lists from the user's relays and publishes changes through the signer
  * (`signAndPublish`), so test mode (dry run) and the user's relays apply.

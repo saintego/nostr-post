@@ -4,7 +4,7 @@ NIP-52 calendars for nostr-post: calendar events (all-day 31922, timed 31923) wi
 agenda and month views, RSVPs (31925), calendars (31924), duplicate checks and iCalendar import and
 export. A domain package next to `@nostr-post/wiki`: the date field itself is
 [`@nostr-post/plugin-date`](../plugin-date/README.md), calendars are lists of
-[`@nostr-post/plugin-list`](../plugin-list/README.md) (`CALENDAR_LISTS`).
+[`@nostr-post/list`](../list/README.md) (`CALENDAR_LISTS`).
 
 | Entry                         | What                                                                |
 | ----------------------------- | ------------------------------------------------------------------- |
@@ -84,7 +84,7 @@ Ask relays for the candidates with `agendaFilter` for the draft's days, plus `#g
 ### Calendars (kind 31924)
 
 A calendar is a named list of calendar events (`a` tags), anyone's events. It is edited with
-`@nostr-post/plugin-list`'s functions and `{ listKind: CALENDAR_LISTS }`; this package reads it:
+`@nostr-post/list`'s functions and `{ listKind: CALENDAR_LISTS }`; this package reads it:
 
 | Export                                    | Does                                                                    |
 | ----------------------------------------- | ----------------------------------------------------------------------- |
@@ -148,7 +148,7 @@ On events made with manifests that publish calendar events (`publishesCalendarEv
 - `<np-rsvp>`: Going / Maybe / Can't go with counts, and "Who" (once someone answered): the people of
   each answer with avatars and names (plugin-profile's `<np-profile-view>`). Loading the counts needs
   no signer. `Partial<RsvpMessages>` (`DEFAULT_RSVP_MESSAGES`).
-- `<np-calendar-save>`: Add to calendar: plugin-list's `<np-list-save>` with the user's calendars and
+- `<np-calendar-save>`: Add to calendar: `@nostr-post/list`'s `<np-list-save>` with the user's calendars and
   calendar wording (`DEFAULT_CALENDAR_SAVE_MESSAGES` over `DEFAULT_LIST_MESSAGES`).
 - `<np-ics-download>`: `.ics`: loads the event and downloads it for calendar apps
   (`DEFAULT_ICS_MESSAGES`).

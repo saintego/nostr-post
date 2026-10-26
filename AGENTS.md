@@ -74,7 +74,9 @@ Apply them to new and changed code; existing exceptions are listed so you don't 
 
 - `@nostr-post/core`, `signer`, `plugins`, `web` (and `react`, `cdn`): the base. `web` knows posts
   (kind 1 and manifest-made events, NIP-78 included) and the registries; it never depends on a
-  domain package.
+  domain package. One exception: plugin autoload (`pluginAutoLoad.ts`) lazy-loads a field's `/web`
+  entry by its `uiPlugin` id, also from a domain package that provides the field (`list`), so a
+  manifest's fields work in any app; it never imports a domain's code statically.
 - `@nostr-post/plugin-*`: field plugins, one `uiPlugin` field type each (main entry: the field's logic;
   `/web`: its input and view).
 - `@nostr-post/<domain>` (`wiki`, `calendar`, `list`): a NIP or domain of its own: its kinds, reading

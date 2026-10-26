@@ -1,5 +1,5 @@
 /**
- * @nostr-post/plugin-list - <np-list-view>
+ * @nostr-post/list - <np-list-view>
  *
  * Shows a list (`address`: `30003:<pubkey>:<d-tag>` or `10003:<pubkey>:`), or without it
  * the signed-in user's lists, with the title of each item. The owner can remove items

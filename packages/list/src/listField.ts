@@ -1,5 +1,5 @@
 /**
- * @nostr-post/plugin-list - the list field (`uiPlugin: "list"`)
+ * @nostr-post/list - the list field (`uiPlugin: "list"`)
  *
  * A field of a post manifest where the author picks lists; once the post is published,
  * its afterPublish hook saves to them the wiki entity of the field named by

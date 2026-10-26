@@ -71,7 +71,7 @@ unformatted.
 ## Lists
 
 `lists` names the lists people save events made with the manifest to (see
-[plugin-list](./packages/plugin-list/README.md)): any events, posts as well as wiki pages. They are
+[`@nostr-post/list`](./packages/list/README.md)): any events, posts as well as wiki pages. They are
 offered first, before the user's other lists and a new one, by the Save button on those events
 (`<nostr-post-view>`, `<nostr-wiki-view>`, `<np-venue-view>`) and by `list` fields. Without `lists`
 the events have no Save button.
@@ -109,7 +109,7 @@ publishFormats: [{ id: "save", label: "Save only", kinds: [], default: true }],
 fields: [
   { id: "venue", type: "geo", uiPlugin: "venue", mapTo: { kind: 1, target: "tag", tagName: "g" },
     metadata: { wikiEntity: "venue-entity-v1" } },
-  // listField({ saveField: "venue", label: "Save to lists" }) from @nostr-post/plugin-list
+  // listField({ saveField: "venue", label: "Save to lists" }) from @nostr-post/list
   { id: "venue_lists", type: "string", uiPlugin: "list", mapTo: { kind: 1, target: "tag", tagName: "lists" },
     metadata: { label: "Save to lists", saveField: "venue" } },
 ]

@@ -331,7 +331,7 @@ Displays a resolved wiki entity as a read-only infobox and its article, with:
 - contributors and all versions;
 - a collapsed "All data" section: infobox rows the manifest doesn't know, all tags and the source;
 - next to the title, plugins' controls for the manifest (`registerEventAction`), e.g. Save to lists for
-  manifests with [`lists`](../../MANIFEST.md#lists) (`@nostr-post/plugin-list/web`).
+  manifests with [`lists`](../../MANIFEST.md#lists) (`@nostr-post/list/web`).
 
 | Attribute / Property        | Type                        | Description                                                   |
 | --------------------------- | --------------------------- | ------------------------------------------------------------- |

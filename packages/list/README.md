@@ -1,4 +1,4 @@
-# @nostr-post/plugin-list
+# @nostr-post/list
 
 Bookmark lists ([NIP-51](https://github.com/nostr-protocol/nips/blob/master/51.md)) for `@nostr-post`:
 save wiki entities (a venue, a beer), posts and other events to the user's lists, like saved places
@@ -6,10 +6,10 @@ in a map app ("Want to go", "Favourite pubs").
 
 The package has two entry points:
 
-- [`@nostr-post/plugin-list`](#nostr-postplugin-list-the-logic): the logic, with no UI and no Lit:
+- [`@nostr-post/list`](#nostr-postlist-the-logic): the logic, with no UI and no Lit:
   reading and editing lists, the `list` field plugin, and helpers for building your own UI (React,
   another framework, or none);
-- [`@nostr-post/plugin-list/web`](#nostr-postplugin-listweb-the-web-components): the Lit web
+- [`@nostr-post/list/web`](#nostr-postlistweb-the-web-components): the Lit web
   components (`<np-list-save>`, `<np-list-view>` and the list field's input), built on the logic.
 
 Using only the logic, you never import `/web`. (Lit is still installed with the package as a
@@ -44,10 +44,10 @@ Private (encrypted) items aren't read or written yet.
 ## Installation
 
 ```bash
-pnpm add @nostr-post/plugin-list
+pnpm add @nostr-post/list
 ```
 
-## `@nostr-post/plugin-list`: the logic
+## `@nostr-post/list`: the logic
 
 Importing it registers the `list` field plugin (without an input: the web entry adds that, or you
 register your own, see [your own UI](#building-your-own-ui)).
@@ -55,7 +55,7 @@ register your own, see [your own UI](#building-your-own-ui)).
 ### Reading and editing lists
 
 ```typescript
-import { addToList, createList, fetchMyLists, itemFor } from "@nostr-post/plugin-list";
+import { addToList, createList, fetchMyLists, itemFor } from "@nostr-post/list";
 
 const item = itemFor("30818:<pubkey>:tap-house-venue");
 const [bookmarks, ...sets] = await fetchMyLists();
@@ -82,7 +82,7 @@ kind of list: `BOOKMARK_LISTS` (default: the bookmarks list 10003 and bookmark s
 ### The list field
 
 ```js
-import { listField } from "@nostr-post/plugin-list";
+import { listField } from "@nostr-post/list";
 
 listField({ saveField: "venue", label: "Save the venue to lists" });
 // {
@@ -119,7 +119,7 @@ import {
   loadMyLists,
   NOT_LOADED,
   shownLists,
-} from "@nostr-post/plugin-list";
+} from "@nostr-post/list";
 
 // Your input for the list field (the composer then doesn't load the web entry)
 pluginRegistry.register({ ...listFieldPlugin, inputTagName: "my-list-input" });
@@ -177,11 +177,11 @@ interface BookmarkList {
 }
 ```
 
-## `@nostr-post/plugin-list/web`: the web components
+## `@nostr-post/list/web`: the web components
 
 ```html
 <script type="module">
-  import "@nostr-post/plugin-list/web";
+  import "@nostr-post/list/web";
 </script>
 
 <!-- A Save button: opens the user's lists to add it to or remove it from, or start a new list -->

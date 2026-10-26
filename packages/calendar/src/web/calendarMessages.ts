@@ -1,4 +1,4 @@
-import type { ListMessages } from '@nostr-post/plugin-list/web';
+import type { ListMessages } from '@nostr-post/list/web';
 
 /**
  * Calendar wording of <np-calendar-save> over the list messages it is built on. Apps can

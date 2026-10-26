@@ -47,7 +47,7 @@ The plugins and their UI elements are also registered:
 - **Media** — `@nostr-post/plugin-media`
 - **Markdown** — `@nostr-post/plugin-markdown`
 - **Hashtag** — `@nostr-post/plugin-hashtag`
-- **Lists** — `@nostr-post/plugin-list`: the `list` field, `<np-list-save target="30818:<pubkey>:<d-tag>">`
+- **Lists** — `@nostr-post/list`: the `list` field, `<np-list-save target="30818:<pubkey>:<d-tag>">`
   (Save to the user's lists; also on events made with manifests that have `lists`) and
   `<np-list-view>` (the user's lists, or one list by `address`)
 
