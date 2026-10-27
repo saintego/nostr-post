@@ -48,6 +48,14 @@ const store = {
   },
 };
 
+// ── Dark theme ────────────────────────────────────────────────────────
+
+// The components turn dark with a `dark` class on an ancestor; follow the system setting
+const darkQuery = matchMedia('(prefers-color-scheme: dark)');
+const syncDark = () => document.body.classList.toggle('dark', darkQuery.matches);
+syncDark();
+darkQuery.addEventListener('change', syncDark);
+
 // ── Test mode ─────────────────────────────────────────────────────────
 
 const testToggle = document.getElementById('test-mode');

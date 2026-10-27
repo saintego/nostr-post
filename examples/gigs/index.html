@@ -58,6 +58,9 @@
     .drafts li { margin: 0.25rem 0; }
     .switch { flex-direction: row; align-items: center; gap: 0.375rem; color: var(--text); }
   </style>
+  <!-- nostr-shard-signer sign-in (the button in the bottom-right corner): Nostr-only (extension,
+       NIP-46 bunker) without a client ID -->
+  <script src="https://saintego.github.io/nostr-shard-signer/nostr-bridge.js"></script>
   <script type="module" src="../../nostr-post.js"></script>
 </head>
 <body>
@@ -72,7 +75,8 @@
     <label class="switch"><input type="checkbox" id="test-mode" /> Test mode</label>
   </header>
   <div class="banner" id="test-banner" hidden>
-    Test mode: events are signed and shown, but nothing is sent to relays. Turn it off to publish.
+    Test mode: sign in (bottom-right) to try adding gigs. Events are signed and shown, but nothing
+    is sent to relays. Turn it off to publish.
   </div>
   <main id="main"></main>
   <script type="module" src="./app.js"></script>
