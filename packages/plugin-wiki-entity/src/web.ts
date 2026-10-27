@@ -16,7 +16,6 @@ import {
   DEFAULT_WIKI_RELAYS,
   defaultResolver,
   entityCreatorFor,
-  extractExternalIds,
   resolveEntityManifest,
 } from '@nostr-post/wiki';
 import type { CreatedEntity, WikiEvent } from '@nostr-post/wiki';
@@ -30,6 +29,7 @@ import {
   type WikiEntityData,
   type WikiEntityPickerConfig,
   createTarget,
+  entityDataOf,
   entityPrefill,
   entitySnippet,
   entityTypeAffixes,
@@ -175,15 +175,7 @@ export class WikiEntityPicker extends LitElement {
     const winner = defaultResolver([event]);
     if (!winner) return;
 
-    const dTag = winner.tags.find((t) => t[0] === 'd')?.[1] ?? '';
-    const titleTag = winner.tags.find((t) => t[0] === 'title')?.[1];
-
-    const entityData: WikiEntityData = {
-      dTag,
-      resolvedPubkey: winner.pubkey,
-      externalIds: extractExternalIds(winner),
-      displayName: titleTag ?? dTag,
-    };
+    const entityData = entityDataOf(winner);
 
     this._results = [];
     this._query = '';

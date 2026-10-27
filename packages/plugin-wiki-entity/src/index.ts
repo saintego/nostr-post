@@ -7,6 +7,7 @@
 
 export {
   createTarget,
+  entityDataOf,
   entityPrefill,
   entitySnippet,
   entityTypeAffixes,
@@ -26,4 +27,5 @@ export {
   DEFAULT_WIKI_ENTITY_PICKER_MESSAGES,
   type WikiEntityPickerMessages,
 } from './pickerMessages';
+export { resolveEntityNames } from './resolveNames';
 export { type EntitySearchResult, searchEntities } from './search';

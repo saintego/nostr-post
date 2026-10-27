@@ -5,25 +5,22 @@
  * draft: the app shows it as a preview and in the composer before anything is published.
  */
 
-/** The JSON the AI is asked for */
-const SHAPE = `{
-  "title": string,
-  "allDay": boolean,            // true when no start time is known
-  "start": "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm" (local time at the venue),
-  "end": same form or null,
-  "timeZone": IANA zone of the venue, e.g. "America/Bogota", or null,
-  "place": venue name and address as written, or null,
-  "link": ticket or event page URL, or null,
-  "description": short description, or null,
-  "genres": [lowercase words],
-  "performers": [artist or band names]
-}`;
+import { answerSchema, answerToFormData } from '../../nostr-post.js';
+import { GIG_MANIFEST } from './manifests.js';
+
+/**
+ * The gig form's schema: built from the gig manifest (its fields' labels and descriptions),
+ * with what each field plugin asks for, e.g. the date's `{ start, end, tzid }` and the
+ * performers' names (looked up as artist pages afterwards).
+ */
+export const gigSchema = () => answerSchema(GIG_MANIFEST);
 
 /** The prompt for a gig's text (and, sent separately, its poster) */
 export const gigPrompt = (text, today = new Date().toISOString().slice(0, 10)) =>
   `Extract the event from this post about a concert or party. Today is ${today}: a date without a
-year is the next one. Answer with JSON only, no other text, in this shape:
-${SHAPE}
+year is the next one. Use only what the post says; null when it doesn't say. Answer with JSON only,
+no other text, valid against this JSON Schema:
+${JSON.stringify(gigSchema())}
 
 Post:
 ${text || '(see the poster image)'}`;
@@ -36,54 +33,15 @@ export const parseAnswer = (answer) => {
   return JSON.parse(answer.slice(start, end + 1));
 };
 
-/** The gig form's values and publish format from the AI's JSON */
-export const toFormData = (gig) => {
-  const allDay = gig.allDay || !/T\d\d:\d\d/.test(gig.start ?? '');
-  const day = (value) => (value ? String(value).slice(0, allDay ? 10 : 16) : undefined);
-  const when = { start: day(gig.start) };
-  if (gig.end) when.end = day(gig.end);
-  if (!allDay && gig.timeZone) when.tzid = gig.timeZone;
-  const formData = { title: gig.title, when };
-  if (gig.place) formData.place = gig.place;
-  if (gig.link) formData.link = gig.link;
-  if (gig.description) formData.description = gig.description;
-  if (gig.genres?.length) formData.tags = gig.genres.map((g) => String(g).toLowerCase());
-  return {
-    formatId: allDay ? 'all-day' : 'timed',
-    formData,
-    performers: Array.isArray(gig.performers) ? gig.performers : [],
-  };
-};
-
-/** The JSON Schema of the answer (structured outputs: Claude's answer is valid against it) */
-const nullable = (type) => ({ anyOf: [{ type }, { type: 'null' }] });
-export const GIG_SCHEMA = {
-  type: 'object',
-  properties: {
-    title: { type: 'string' },
-    allDay: { type: 'boolean' },
-    start: { type: 'string' },
-    end: nullable('string'),
-    timeZone: nullable('string'),
-    place: nullable('string'),
-    link: nullable('string'),
-    description: nullable('string'),
-    genres: { type: 'array', items: { type: 'string' } },
-    performers: { type: 'array', items: { type: 'string' } },
-  },
-  required: [
-    'title',
-    'allDay',
-    'start',
-    'end',
-    'timeZone',
-    'place',
-    'link',
-    'description',
-    'genres',
-    'performers',
-  ],
-  additionalProperties: false,
+/**
+ * The gig form's values and publish format from the AI's JSON: performers become their artist
+ * pages (`unresolved.performers`: names without a page yet). A start with a time is published
+ * as a timed event, whatever format the answer chose.
+ */
+export const toFormData = async (gig) => {
+  const { formatId, formData, unresolved } = await answerToFormData(GIG_MANIFEST, gig);
+  const timed = /T\d\d:\d\d/.test(formData.when?.start ?? '');
+  return { formatId: timed ? 'timed' : (formatId ?? 'all-day'), formData, unresolved };
 };
 
 /** The official SDK, loaded only when someone asks Claude (pinned; ESM from jsDelivr) */
@@ -101,7 +59,7 @@ const base64Of = (file) =>
 /**
  * Asks Claude with the user's own API key, from the browser (`dangerouslyAllowBrowser`: the key
  * is the user's and stays in their browser). The answer is the gig as JSON, valid against
- * GIG_SCHEMA. On a safety decline the API retries on Anthropic's recommended fallback model
+ * gigSchema(). On a safety decline the API retries on Anthropic's recommended fallback model
  * (`fallbacks: "default"`); a refusal of the whole chain throws.
  */
 export async function askClaude({ apiKey, model = 'claude-opus-5-5', text, poster }) {
@@ -121,7 +79,7 @@ export async function askClaude({ apiKey, model = 'claude-opus-5-5', text, poste
     betas: ['server-side-fallback-2026-07-01'],
     fallbacks: 'default',
     // A short extraction: low effort is enough
-    output_config: { effort: 'low', format: { type: 'json_schema', schema: GIG_SCHEMA } },
+    output_config: { effort: 'low', format: { type: 'json_schema', schema: gigSchema() } },
     messages: [{ role: 'user', content }],
   });
   if (response.stop_reason === 'refusal') {

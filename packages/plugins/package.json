@@ -20,6 +20,10 @@
       "types": "./dist/publish.d.ts",
       "import": "./dist/publish.js"
     },
+    "./answer": {
+      "types": "./dist/answer.d.ts",
+      "import": "./dist/answer.js"
+    },
     "./entities": {
       "types": "./dist/entities.d.ts",
       "import": "./dist/entities.js"
@@ -29,6 +33,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
     "clean": "rm -rf dist"
   },
   "keywords": [

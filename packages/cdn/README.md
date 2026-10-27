@@ -98,6 +98,14 @@ The bundle re-exports utilities for advanced usage:
 
 - `pluginRegistry`
 
+**Filling a post in from JSON** (e.g. an AI's structured output; see [PLUGINS.md](../../PLUGINS.md#filling-a-post-in-from-an-answer))
+
+- `answerSchema(manifest)`: the JSON Schema of a manifest's form data, with the registered plugins' value schemas
+- `answerToFormData(manifest, answer)`: `{ formatId?, formData, unresolved }` from an answer in that shape
+  (e.g. performer names turned into their wiki pages)
+- `formDataSchema(manifest, options?)`, `formDataFromAnswer(manifest, answer)`, `PUBLISH_FORMAT_KEY`: the same
+  without plugins
+
 **Geo helpers**
 
 - `geoPlugin`
@@ -197,6 +205,8 @@ The bundle re-exports utilities for advanced usage:
 - `registerEventAction({ tagName, matches })`, `eventActionsFor(manifest)`: a plugin's control shown with
   events made with a manifest, in `<nostr-post-view>` and `<nostr-wiki-view>` (the list plugin's Save button)
 - `searchEntities`, `entityTypeAffixes`
+- `resolveEntityNames(names, { entityManifest, relays })`: the wiki pages of entities by name, and the
+  names without a page
 
 **Venues and the venue hub**
 

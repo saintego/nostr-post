@@ -9,7 +9,12 @@
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
-import { type EntityTypeAffixes, normalizeDTag } from '@nostr-post/wiki';
+import {
+  type EntityTypeAffixes,
+  extractExternalIds,
+  normalizeDTag,
+  type WikiEvent,
+} from '@nostr-post/wiki';
 
 /**
  * Data shape stored for a wiki-entity-picker field.
@@ -56,6 +61,17 @@ export interface WikiEntityPickerConfig {
 
 const isMultiple = (field: PostField): boolean =>
   (field.metadata as WikiEntityPickerConfig | undefined)?.multiple === true;
+
+/** A picked entity's value from its (resolved) wiki event */
+export const entityDataOf = (event: WikiEvent): WikiEntityData => {
+  const dTag = event.tags.find((t) => t[0] === 'd')?.[1] ?? '';
+  return {
+    dTag,
+    resolvedPubkey: event.pubkey,
+    externalIds: extractExternalIds(event),
+    displayName: event.tags.find((t) => t[0] === 'title')?.[1] ?? dTag,
+  };
+};
 
 /** The picked entities as a list, whether the field holds one or several */
 export const pickedEntities = (value: unknown): WikiEntityData[] =>
@@ -250,6 +266,24 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
       entity.externalIds = tags.filter((t) => t[0] === 'i' && t[1]).map((t) => t[1]);
     }
     return entity;
+  },
+
+  /** In an answer: the entities' names; `fromAnswer` looks their pages up */
+  valueSchema: (field: PostField) => {
+    const name = { type: 'string', description: 'A name, as written' };
+    return isMultiple(field) ? { type: 'array', items: name } : name;
+  },
+
+  /** Names to the entities with a page of the field's type; names without one are unresolved */
+  fromAnswer: async (value: unknown, field: PostField) => {
+    const names = (Array.isArray(value) ? value : [value]).filter(
+      (name): name is string => typeof name === 'string' && name.trim() !== ''
+    );
+    const config = field.metadata as WikiEntityPickerConfig | undefined;
+    const { resolveEntityNames } = await import('./resolveNames');
+    const { entities, unresolved } = await resolveEntityNames(names, config ?? {});
+    const picked = isMultiple(field) ? entities : entities[0];
+    return { value: entities.length ? picked : undefined, unresolved };
   },
 
   /**

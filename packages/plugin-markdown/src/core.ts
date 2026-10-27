@@ -68,6 +68,8 @@ export const markdownPlugin: NostrUIPlugin = {
     return { success: true, data: undefined };
   },
 
+  valueSchema: () => ({ type: 'string', description: 'Markdown' }),
+
   formatValue: (value: unknown): string => {
     return typeof value === 'string' ? value : '';
   },

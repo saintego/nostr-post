@@ -326,6 +326,14 @@ interface NostrUIPlugin {
   // Reconstruct a rich view value from all event tags (e.g. venue reconstructs from geohash + "i" + "location")
   resolveFromTags?(tags: string[][], field: PostField): unknown;
 
+  // Filling a post in from a JSON answer (see "Filling a post in from an answer"): the JSON
+  // Schema of the field's value (null: leave the field out; without the hook it's left out),
+  // strict like structured outputs (every property required, optional ones nullable, no others)
+  valueSchema?(field: PostField): Record<string, unknown> | null;
+  // Turns the answer's value into the field's value when they differ (e.g. names into picked
+  // wiki entities); `unresolved`: what it couldn't turn (e.g. names without a page)
+  fromAnswer?(value: unknown, field: PostField): Promise<{ value?: unknown; unresolved?: string[] }>;
+
   // Pre-coordinate: auto-extract values from other fields (e.g. read content to extract #hashtags or URLs)
   // Only runs for fields with `attachTo` pointing at a source field that has data
   enrichFormData?(
@@ -426,6 +434,31 @@ interface NostrUIPlugin {
 | -------- | ----------- | ----------------------------------- |
 | `.value` | `unknown`   | Deserialized field value            |
 | `.field` | `PostField` | Full field definition from manifest |
+
+## Filling a post in from an answer
+
+A post can be filled in from text by anything that answers in JSON, e.g. an AI with structured
+outputs. `@nostr-post/plugins/answer` (also in the CDN bundle) builds the JSON Schema from the
+manifest and turns the answer into form data for a composer's `prefill`:
+
+```ts
+import { answerSchema, answerToFormData } from '@nostr-post/plugins/answer';
+
+const schema = answerSchema(manifest); // fields' labels and descriptions describe the properties
+const answer = await askSomeAi(text, schema); // JSON in that shape
+const { formatId, formData, unresolved } = await answerToFormData(manifest, answer);
+composer.defaultFormatId = formatId;
+composer.prefill = formData;
+```
+
+Fields get their schema from their plugin's `valueSchema`; fields without a plugin (`text`,
+`textarea`, `number`, `select`) from their type (`string`, `number`, `boolean`, `enum`, an array
+with `metadata.multiple`). A plugin without `valueSchema` is left out: its value's shape isn't
+known. With several user-selectable publish formats the schema adds `publishFormat`. The plugins
+that have it: `date` (`{ start, end, tzid }`), `hashtag`, `markdown`, `stars`, `identifier`,
+`embed`, `media`, and `wiki-entity-picker` (asks for names; `fromAnswer` looks up the pages of the
+entity type by d-tag and reports names without a page as `unresolved`). The core part without
+plugins is `formDataSchema` / `formDataFromAnswer` in `@nostr-post/core/formDataSchema`.
 
 ## Event actions and entity manifests
 

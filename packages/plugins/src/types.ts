@@ -258,6 +258,25 @@ export interface NostrUIPlugin {
   resolveFromTags?: (tags: string[][], field: PostField) => unknown;
 
   /**
+   * The JSON Schema of this field's value, for filling a post in from text (e.g. an AI's
+   * structured answer; `answerSchema` in `@nostr-post/plugins/answer`). `null` leaves the
+   * field out. Without this hook the field is left out, as its value's shape is unknown.
+   * Strict like structured outputs: objects list every property in `required` (optional ones
+   * accept `null`) and set `additionalProperties: false`.
+   */
+  valueSchema?: (field: PostField) => Record<string, unknown> | null;
+
+  /**
+   * Turns a value in `valueSchema`'s shape into the field's value, when they differ (e.g.
+   * names into picked wiki entities). `unresolved`: the parts it couldn't turn, for the user to
+   * handle (e.g. names without a page).
+   */
+  fromAnswer?: (
+    value: unknown,
+    field: PostField
+  ) => Promise<{ value?: unknown; unresolved?: string[] }>;
+
+  /**
    * Completions while typing in the text field this plugin's field is attached to
    * (`attachTo`), e.g. `@name` mentions: after `trigger`, the composer shows what `search`
    * finds for the typed text and inserts the picked one's `insert`.

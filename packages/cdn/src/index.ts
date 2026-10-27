@@ -54,6 +54,13 @@ export { encodeNaddr, decodeNaddr } from '@nostr-post/core/nip19';
 
 // Plugin registry
 export { pluginRegistry } from '@nostr-post/plugins/registry';
+// Filling a post in from a JSON answer (e.g. an AI's structured output)
+export { answerSchema, answerToFormData } from '@nostr-post/plugins/answer';
+export {
+  formDataFromAnswer,
+  formDataSchema,
+  PUBLISH_FORMAT_KEY,
+} from '@nostr-post/core/formDataSchema';
 
 // Geo helpers
 export {
@@ -206,7 +213,11 @@ export {
 } from '@nostr-post/wiki';
 
 // Wiki entity picker (search, create)
-export { searchEntities, entityTypeAffixes } from '@nostr-post/plugin-wiki-entity';
+export {
+  entityTypeAffixes,
+  resolveEntityNames,
+  searchEntities,
+} from '@nostr-post/plugin-wiki-entity';
 
 // Venues and the venue hub (wiki entity filled from OpenStreetMap)
 export {

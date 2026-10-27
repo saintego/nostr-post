@@ -142,6 +142,11 @@
   - [ ] Artist page lists the artist's gigs (events with its `a` tag: a related section, `wikiConfig.related`)
   - [ ] Cities: a map/search picker instead of the fixed list (geohash prefix of any place)
   - [ ] The Claude call (`askClaude`) is untested against the real API: try it with a key and a poster
+  - [x] The AI's answer schema comes from the gig manifest (`answerSchema`, plugins' `valueSchema`), and
+        performers' names become their artist pages (`fromAnswer`); names without a page link to
+        "Add an artist" with the name filled in
+  - [ ] Value schemas for the fields still left out of AI answers: venue (a place name → OpenStreetMap
+        search), participants (names → NIP-50 profile search), reference, list
   - [ ] Cron worker (own repo): Open Graph pages and `.ics` feeds into the nsite; Facebook `.ics`
         subscriptions (URL encrypted to the cron with NIP-44 as app data, events signed through the
         user's NIP-46 signer or as drafts to confirm)

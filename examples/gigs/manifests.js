@@ -79,7 +79,15 @@ export const GIG_MANIFEST = {
   fields: [
     ...CALENDAR_EVENT_MANIFEST.fields.map((field) =>
       field.id === 'tags'
-        ? { ...field, metadata: { ...field.metadata, label: 'Genres', suggestions: GENRES } }
+        ? {
+            ...field,
+            metadata: {
+              ...field.metadata,
+              label: 'Genres',
+              description: 'Music genres, e.g. punk or techno',
+              suggestions: GENRES,
+            },
+          }
         : field
     ),
     {
@@ -93,7 +101,7 @@ export const GIG_MANIFEST = {
       ],
       metadata: {
         label: 'Performers',
-        description: 'Search the artists, or create their page',
+        description: 'The artists or bands playing',
         entityManifest: ARTIST_MANIFEST,
         multiple: true,
       },

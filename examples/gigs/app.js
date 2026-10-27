@@ -149,13 +149,15 @@ function artistPage(dTag) {
   view.entityId = decodeURIComponent(dTag);
 }
 
-function newArtist() {
+/** A new artist's page, with the name filled in when given (`#/artist-new/<name>`) */
+function newArtist(name) {
   main.innerHTML = html`
     <h2>Add an artist</h2>
     <nostr-wiki-composer id="composer" auto-publish></nostr-wiki-composer>
   `;
   const composer = document.getElementById('composer');
   composer.manifest = ARTIST_MANIFEST;
+  if (name) composer.prefill = { title: name };
   composer.addEventListener('nostr-wiki-published', (e) => {
     const dTag = e.detail?.dTag;
     if (dTag) location.hash = `#/artist/${encodeURIComponent(dTag)}`;
@@ -254,7 +256,9 @@ function addGig() {
   $('use').addEventListener('click', async () => {
     let draft;
     try {
-      draft = toFormData(parseAnswer($('answer').value));
+      status('Reading the answer…');
+      draft = await toFormData(parseAnswer($('answer').value));
+      status('');
     } catch (error) {
       return status(`Couldn't read the answer: ${error.message}`);
     }
@@ -266,8 +270,15 @@ function addGig() {
     } catch (error) {
       status(`Preview: ${error.message}`);
     }
-    $('performers-hint').textContent = draft.performers.length
-      ? `Performers in the post: ${draft.performers.join(', ')}. Pick their pages in the form (or create them).`
+    // Performers with an artist page are picked in the form; the others need a page first
+    const missing = draft.unresolved.performers ?? [];
+    $('performers-hint').innerHTML = missing.length
+      ? `No artist page yet for: ${missing
+          .map(
+            (name) =>
+              `<a href="#/artist-new/${encodeURIComponent(name)}" target="_blank">${escapeHtml(name)}</a>`
+          )
+          .join(', ')}. Create them (opens a new tab), then pick them in the form.`
       : '';
     const composer = $('composer');
     composer.manifest = GIG_MANIFEST;
@@ -342,7 +353,7 @@ function importIcs() {
 const routes = [
   [/^#\/event\/(.+)$/, (m) => eventPage(m[1])],
   [/^#\/artist\/(.+)$/, (m) => artistPage(m[1])],
-  [/^#\/artist-new$/, newArtist],
+  [/^#\/artist-new(?:\/(.+))?$/, (m) => newArtist(m[1] && decodeURIComponent(m[1]))],
   [/^#\/add$/, addGig],
   [/^#\/import$/, importIcs],
 ];
