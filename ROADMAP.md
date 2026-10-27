@@ -86,6 +86,10 @@
   - [x] Agenda navigation: Previous / Today / Next buttons move the date window (`shiftWindow`), the
         `nostr-post-agenda-change` event reports it; an event spanning several days opens its reply
         composer on its first day only
+  - [x] Agenda rows: compact rows (`agendaItem`) instead of full event views, one opening in full under its
+        row; with hundreds of events a full view each (venue maps, RSVP requests) used gigabytes and
+        crashed the month view. The feed loads comments, reactions and profiles once per load, not on
+        every partial update, and renders partial updates at most every 300 ms
   - [x] Agenda: keep the buttons and days shown while the next window loads: the previous window's
         days stay (dimmed, `aria-busy`) with their comments until the new events arrive, the
         `loading` message next to the buttons; a slower earlier load no longer overwrites a later one
@@ -132,7 +136,7 @@
   - [x] In `build:pages`, so `preview:pages` and PR previews show it (`/examples/gigs/`)
   - [ ] Its own nsite (deploy separately from the library's pages)
   - [ ] Share the current filter (city, genre, week) as a link plus text, and as an image
-  - [ ] Gigs in the agenda link to their page (`#/event/<naddr>`); the views have no link to hook into yet
+  - [x] Gigs in the agenda link to their page (`#/event/<naddr>`): `<nostr-calendar-agenda>`'s `eventHref`
   - [ ] The add flow's preview shows event actions (RSVP, Add to calendar, .ics) that would act on a
         placeholder address: a view option to hide actions
   - [ ] Artist page lists the artist's gigs (events with its `a` tag: a related section, `wikiConfig.related`)

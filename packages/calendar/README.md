@@ -101,6 +101,7 @@ filter misses. `<nostr-calendar-agenda calendar="31924:…">` is built on these.
 | Export                        | Does                                                                     |
 | ----------------------------- | ------------------------------------------------------------------------ |
 | `agendaFilters(query)`        | Relay filters of an agenda: `{ window, kinds?, authors?, tagFilters?, calendarItems?, limit? }` → the window's `#D` day tags with the tag filters (e.g. `#g` area, `#t` genre), or a calendar's events by address; none for an empty calendar |
+| `agendaItem(event, date, tzid?)` | An event as an agenda row on a day: `{ address, title, allDay, time?, continued, place?, topics }` |
 | `agendaWindowFor(from, days, tzid, view)` | The window: `days` from `from`, or in month view the month of `from` |
 | `AGENDA_LIMIT`                | 500: events asked for at most                                            |
 
@@ -129,12 +130,15 @@ on events made with calendar manifests, and the kind view of 31922/31923.
 | `calendar`           | One calendar (`31924:…`): its events by address, so also all-day events of clients that write no `D` tags; its maintainer's update comments apply |
 | `kinds`, `authors`, `tagFilters` | Narrow the events, e.g. `{ '#g': ['u09t'], '#t': ['punk'] }` |
 | `relays`, `manifest` (default `CALENDAR_EVENT_MANIFEST`), `editable`, `comments-enabled`, `reactions-enabled` | Passed to the feed |
+| `eventHref`          | `(address) => string`: rows link to the app's page of an event (e.g. `#/event/<naddr>`); without it a row's title opens the event under it |
 | `messages`           | `Partial<AgendaMessages>` (`DEFAULT_AGENDA_MESSAGES`) |
 
 Previous / Today / Next move the window (by months in month view) and fire
 `nostr-calendar-agenda-change` (`{ from, days, view }`). It is a `<nostr-post-feed>` with the agenda
-as its layout (`<nostr-calendar-days>`): events keep their comments, reactions and actions, and while
-the next window loads the shown days stay, dimmed.
+as its layout (`<nostr-calendar-days>`). Events show as compact rows (time, title, place, topics:
+`agendaItem`), so a month of hundreds of events stays light; one at a time opens in full under its row
+("Details", or its title without `eventHref`) with its comments, actions and venue map. While the next
+window loads, the shown days stay, dimmed.
 
 ### `<nostr-calendar-event>`
 

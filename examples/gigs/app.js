@@ -100,6 +100,8 @@ function browse() {
   ).join('');
   const agenda = document.getElementById('agenda');
   agenda.manifest = GIG_MANIFEST;
+  // Rows link to the gig's page; "Details" opens it in place
+  agenda.eventHref = (address) => eventLink(address);
   const apply = () => {
     const tagFilters = {};
     if (form.city.value) tagFilters['#g'] = [form.city.value];

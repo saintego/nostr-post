@@ -23,6 +23,7 @@ export {
   todayIn,
   windowDates,
 } from './agenda';
+export { type AgendaItem, agendaItem } from './agendaItem';
 export { AGENDA_LIMIT, type AgendaQuery, agendaFilters } from './agendaQuery';
 export { CALENDAR_EVENT_MANIFEST } from './calendarManifest';
 export {

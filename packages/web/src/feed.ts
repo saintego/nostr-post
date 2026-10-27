@@ -231,7 +231,11 @@ export class NostrPostFeed extends NostrPostElement {
   }
 
   /** Shows a load's events; the previous events (and their comments) stay until then */
-  private _showEvents(load: number, events: SignedEvent[]): boolean {
+  /**
+   * Shows a load's events. Comments, reactions and profiles load once the load is `final`: not
+   * again on every partial update, which with hundreds of events (an agenda) floods the relays
+   */
+  private _showEvents(load: number, events: SignedEvent[], final = true): boolean {
     if (load !== this._loadCount) return false;
     if (this.isLoading) {
       this.interactionEvents = [];
@@ -239,7 +243,7 @@ export class NostrPostFeed extends NostrPostElement {
     }
     this.events = events;
     this.isLoading = false;
-    this.scheduleInteractionsAndProfiles(events);
+    if (final) this.scheduleInteractionsAndProfiles(events);
     return true;
   }
 
@@ -261,7 +265,17 @@ export class NostrPostFeed extends NostrPostElement {
         filterTags: this.filterTags,
         tagFilters: this.tagFilters,
       });
-      const onUpdate = (arr: SignedEvent[]) => this._showEvents(load, arr);
+      // Partial updates at most every 300 ms: each one renders every event again
+      let pending: SignedEvent[] | undefined;
+      const onUpdate = (arr: SignedEvent[]) => {
+        if (pending === undefined) {
+          setTimeout(() => {
+            if (pending) this._showEvents(load, pending, false);
+            pending = undefined;
+          }, 300);
+        }
+        pending = arr;
+      };
       const { events, readRelays } = await fetchFeedEvents(filters, {
         relays: this.relays,
         authors: this.authors,
@@ -270,6 +284,8 @@ export class NostrPostFeed extends NostrPostElement {
 
       // Final deduped list, in case it differs from the progressive updates
       if (load === this._loadCount) this.authorRelays = readRelays;
+      // A partial update still waiting would replace the final list
+      pending = undefined;
       this._showEvents(load, events);
     } catch (error) {
       console.error('Failed to load events:', error);

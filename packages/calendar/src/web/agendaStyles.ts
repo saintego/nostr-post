@@ -143,6 +143,102 @@ export const agendaStyles = css`
     color: #e0e7ff;
   }
 
+  .agenda-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    padding: 0.375rem 0.25rem;
+    border-bottom: 1px solid #f3f4f6;
+  }
+
+  .agenda-row.open {
+    background: #eef2ff;
+  }
+
+  .agenda-time {
+    flex: none;
+    width: 4.5rem;
+    font-variant-numeric: tabular-nums;
+    color: #6b7280;
+    font-size: 0.875rem;
+  }
+
+  .agenda-main {
+    flex: 1;
+    min-width: 12rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .agenda-title {
+    font: inherit;
+    font-weight: 600;
+    color: #1f2937;
+    text-align: left;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-decoration: none;
+    /* Some titles are whole paragraphs: two lines here, all of it under Details */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  a.agenda-title:hover,
+  button.agenda-title:hover {
+    text-decoration: underline;
+  }
+
+  .agenda-place,
+  .agenda-topics {
+    font-size: 0.8125rem;
+    color: #6b7280;
+  }
+
+  .agenda-topics {
+    display: flex;
+    gap: 0.375rem;
+  }
+
+  .agenda-more {
+    font: inherit;
+    font-size: 0.8125rem;
+    background: none;
+    border: none;
+    color: #6366f1;
+    cursor: pointer;
+  }
+
+  .agenda-open {
+    padding: 0.5rem 0 1rem;
+  }
+
+  :host-context(.dark) .agenda-row {
+    border-bottom-color: #1f2937;
+  }
+
+  :host-context(.dark) .agenda-row.open {
+    background: #1e1b4b;
+  }
+
+  :host-context(.dark) .agenda-title {
+    color: #f3f4f6;
+  }
+
+  :host-context(.dark) .agenda-time,
+  :host-context(.dark) .agenda-place,
+  :host-context(.dark) .agenda-topics {
+    color: #9ca3af;
+  }
+
+  :host-context(.dark) .agenda-more {
+    color: #a5b4fc;
+  }
+
   .agenda-date {
     font-size: 0.9375rem;
     font-weight: 600;

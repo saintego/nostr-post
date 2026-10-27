@@ -1,10 +1,11 @@
 /**
  * @nostr-post/calendar - <nostr-calendar-days>
  *
- * The posts of <nostr-calendar-agenda> under day headings (and, in month view, the month's grid
+ * The events of <nostr-calendar-agenda> under day headings (and, in month view, the month's grid
  * above them). It is the agenda's layout of <nostr-post-feed>: the feed loads the events and
- * their comments and reactions, this element groups them by day (`groupEventsByDay`) and shows
- * each with the feed's own thread rendering.
+ * their comments and reactions, this element groups them by day (`groupEventsByDay`) as compact
+ * rows. One event at a time opens in full under its row (the feed's thread rendering: comments,
+ * actions, venue map), so a month of hundreds of events stays light.
  */
 
 import {
@@ -15,9 +16,11 @@ import {
   renderFeedThread,
 } from '@nostr-post/web';
 import { html, LitElement, nothing } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { type AgendaWindow, formatAgendaDate, groupEventsByDay } from '../agenda';
+import { agendaItem } from '../agendaItem';
 import { type AgendaMessages, DEFAULT_AGENDA_MESSAGES } from './agendaMessages';
+import { renderAgendaRow } from './agendaRow';
 import { agendaStyles } from './agendaStyles';
 import { renderMonthGrid } from './monthGrid';
 
@@ -33,6 +36,11 @@ export class NostrCalendarDays extends LitElement {
   /** The next window is loading: these days stay, dimmed */
   @property({ type: Boolean }) loading = false;
   @property({ attribute: false }) messages: AgendaMessages = DEFAULT_AGENDA_MESSAGES;
+  /** The app's page of an event (`<nostr-calendar-agenda>`'s `eventHref`) */
+  @property({ attribute: false }) eventHref?: (address: string) => string;
+
+  /** The event open in full: its address and the day it was opened on */
+  @state() _open?: { address: string; date: string };
 
   override render() {
     const { ctx, window, messages } = this;
@@ -40,12 +48,19 @@ export class NostrCalendarDays extends LitElement {
     const threadByRoot = new Map(this.threads.map((thread) => [thread.root, thread]));
     const roots = this.threads.map((thread) => thread.root);
     const days = groupEventsByDay(roots, window);
-    // An event spanning several days opens its reply composer only on its first day
-    const shown = new Set<FeedThread>();
-    const renderOnce = (thread: FeedThread) => {
-      const again = shown.has(thread);
-      shown.add(thread);
-      return renderFeedThread(thread, again ? { ...ctx, activeReplyTarget: undefined } : ctx);
+    const open = this._open;
+    const renderEvent = (event: (typeof roots)[number], date: string) => {
+      const item = agendaItem(event, date, window.tzid);
+      const isOpen = open?.address === item.address && open.date === date;
+      const thread = threadByRoot.get(event);
+      return html`${renderAgendaRow(item, {
+        open: isOpen,
+        eventHref: this.eventHref,
+        messages,
+        onToggle: () => {
+          this._open = isOpen ? undefined : { address: item.address, date };
+        },
+      })}${isOpen && thread ? html`<div class="agenda-open">${renderFeedThread(thread, ctx)}</div>` : nothing}`;
     };
     return html`
       <div class="agenda-loading" role="status">${this.loading ? messages.loading : ''}</div>
@@ -63,10 +78,7 @@ export class NostrCalendarDays extends LitElement {
                 ({ date, events }) => html`
                   <section class="agenda-day" data-date=${date}>
                     <h3 class="agenda-date">${formatAgendaDate(date)}</h3>
-                    ${events.map((event) => {
-                      const thread = threadByRoot.get(event);
-                      return thread ? renderOnce(thread) : nothing;
-                    })}
+                    ${events.map((event) => renderEvent(event, date))}
                   </section>
                 `
               )

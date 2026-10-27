@@ -55,6 +55,11 @@ export class NostrCalendarAgenda extends LitElement {
   @property({ type: Boolean, attribute: 'comments-enabled' }) commentsEnabled = true;
   @property({ type: Boolean, attribute: 'reactions-enabled' }) reactionsEnabled = true;
   @property({ attribute: false }) messages: Partial<AgendaMessages> = {};
+  /**
+   * The app's page of an event, e.g. `(address) => '#/event/' + encodeNaddr(address)`: rows link
+   * there. Without it a row's title opens the event under it
+   */
+  @property({ attribute: false }) eventHref?: (address: string) => string;
 
   /** A calendar's event addresses, once loaded */
   @state() _calendarItems?: string[];
@@ -127,6 +132,7 @@ export class NostrCalendarAgenda extends LitElement {
       .month=${this.view === 'month'}
       .loading=${loading}
       .messages=${this._m}
+      .eventHref=${this.eventHref}
     ></nostr-calendar-days>`;
   };
 

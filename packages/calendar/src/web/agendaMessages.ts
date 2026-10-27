@@ -14,6 +14,13 @@ export interface AgendaMessages {
   navigation: string;
   /** Month view: a day's events not listed in its cell */
   moreEvents: (count: number) => string;
+  /** A row's time: an all-day event */
+  allDay: string;
+  /** A row's time: a later day of an event that started before */
+  continued: string;
+  /** Opens / closes an event's full view under its row */
+  details: string;
+  close: string;
 }
 
 export const DEFAULT_AGENDA_MESSAGES: AgendaMessages = {
@@ -24,4 +31,8 @@ export const DEFAULT_AGENDA_MESSAGES: AgendaMessages = {
   today: 'Today',
   navigation: 'Agenda period',
   moreEvents: (count) => `+${count} more`,
+  allDay: 'All day',
+  continued: 'continues',
+  details: 'Details',
+  close: 'Close',
 };
