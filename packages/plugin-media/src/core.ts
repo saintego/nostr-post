@@ -147,7 +147,7 @@ export const mediaPlugin: NostrUIPlugin = {
     return { success: true, data: undefined };
   },
 
-  valueSchema: () => ({
+  jsonSchema: () => ({
     type: 'array',
     items: { type: 'string', description: 'An image or video URL (https://…)' },
   }),

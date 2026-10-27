@@ -326,13 +326,13 @@ interface NostrUIPlugin {
   // Reconstruct a rich view value from all event tags (e.g. venue reconstructs from geohash + "i" + "location")
   resolveFromTags?(tags: string[][], field: PostField): unknown;
 
-  // Filling a post in from a JSON answer (see "Filling a post in from an answer"): the JSON
+  // A post's form data as JSON (see "A post's form data as JSON"): the JSON
   // Schema of the field's value (null: leave the field out; without the hook it's left out),
   // strict like structured outputs (every property required, optional ones nullable, no others)
-  valueSchema?(field: PostField): Record<string, unknown> | null;
-  // Turns the answer's value into the field's value when they differ (e.g. names into picked
+  jsonSchema?(field: PostField): Record<string, unknown> | null;
+  // Turns the JSON's value into the field's value when they differ (e.g. names into picked
   // wiki entities); `unresolved`: what it couldn't turn (e.g. names without a page)
-  fromAnswer?(value: unknown, field: PostField): Promise<{ value?: unknown; unresolved?: string[] }>;
+  parseJson?(value: unknown, field: PostField): Promise<{ value?: unknown; unresolved?: string[] }>;
 
   // Pre-coordinate: auto-extract values from other fields (e.g. read content to extract #hashtags or URLs)
   // Only runs for fields with `attachTo` pointing at a source field that has data
@@ -435,30 +435,34 @@ interface NostrUIPlugin {
 | `.value` | `unknown`   | Deserialized field value            |
 | `.field` | `PostField` | Full field definition from manifest |
 
-## Filling a post in from an answer
+## A post's form data as JSON
 
-A post can be filled in from text by anything that answers in JSON, e.g. an AI with structured
-outputs. `@nostr-post/plugins/answer` (also in the CDN bundle) builds the JSON Schema from the
-manifest and turns the answer into form data for a composer's `prefill`:
+A post can be filled in from anything that gives JSON, e.g. an AI with structured outputs.
+`@nostr-post/plugins/formJson` (also in the CDN bundle) builds the JSON Schema of a manifest's
+form data and parses JSON in that shape into form data for a composer's `prefill`:
 
 ```ts
-import { answerSchema, answerToFormData } from '@nostr-post/plugins/answer';
+import { formJsonSchema, parseFormJson } from '@nostr-post/plugins/formJson';
 
-const schema = answerSchema(manifest); // fields' labels and descriptions describe the properties
-const answer = await askSomeAi(text, schema); // JSON in that shape
-const { formatId, formData, unresolved } = await answerToFormData(manifest, answer);
-composer.defaultFormatId = formatId;
-composer.prefill = formData;
+const schema = formJsonSchema(manifest); // fields' labels and descriptions describe the properties
+const text = await askSomeAi(post, schema); // JSON in that shape, maybe wrapped in prose
+const parsed = await parseFormJson(manifest, text); // text or an already parsed object
+if (parsed.success) {
+  const { formatId, formData, unresolved } = parsed.data;
+  composer.defaultFormatId = formatId;
+  composer.prefill = formData;
+}
 ```
 
-Fields get their schema from their plugin's `valueSchema`; fields without a plugin (`text`,
+Fields get their schema from their plugin's `jsonSchema`; fields without a plugin (`text`,
 `textarea`, `number`, `select`) from their type (`string`, `number`, `boolean`, `enum`, an array
-with `metadata.multiple`). A plugin without `valueSchema` is left out: its value's shape isn't
+with `metadata.multiple`). A plugin without `jsonSchema` is left out: its value's shape isn't
 known. With several user-selectable publish formats the schema adds `publishFormat`. The plugins
 that have it: `date` (`{ start, end, tzid }`), `hashtag`, `markdown`, `stars`, `identifier`,
-`embed`, `media`, and `wiki-entity-picker` (asks for names; `fromAnswer` looks up the pages of the
-entity type by d-tag and reports names without a page as `unresolved`). The core part without
-plugins is `formDataSchema` / `formDataFromAnswer` in `@nostr-post/core/formDataSchema`.
+`embed`, `media`, and `wiki-entity-picker` (asks for names; `parseJson` looks up the pages of the
+entity type by d-tag and reports names without a page as `unresolved`). Without plugins:
+`formJsonSchema(manifest, { fieldSchema })` and `parseFormJson` (synchronous) in
+`@nostr-post/core/formJson`.
 
 ## Event actions and entity manifests
 

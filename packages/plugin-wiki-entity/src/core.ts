@@ -268,14 +268,14 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
     return entity;
   },
 
-  /** In an answer: the entities' names; `fromAnswer` looks their pages up */
-  valueSchema: (field: PostField) => {
+  /** In JSON: the entities' names; `parseJson` looks their pages up */
+  jsonSchema: (field: PostField) => {
     const name = { type: 'string', description: 'A name, as written' };
     return isMultiple(field) ? { type: 'array', items: name } : name;
   },
 
   /** Names to the entities with a page of the field's type; names without one are unresolved */
-  fromAnswer: async (value: unknown, field: PostField) => {
+  parseJson: async (value: unknown, field: PostField) => {
     const names = (Array.isArray(value) ? value : [value]).filter(
       (name): name is string => typeof name === 'string' && name.trim() !== ''
     );

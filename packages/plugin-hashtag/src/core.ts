@@ -124,7 +124,7 @@ export const hashtagPlugin: NostrUIPlugin = {
     return '';
   },
 
-  valueSchema: () => ({
+  jsonSchema: () => ({
     type: 'array',
     items: { type: 'string', description: 'A lowercase word or words joined by -, without #' },
   }),

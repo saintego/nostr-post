@@ -17,7 +17,7 @@ import {
   setDryRun,
   similarEvents,
 } from '../../nostr-post.js';
-import { askClaude, gigPrompt, parseAnswer, toFormData } from './ai.js';
+import { askClaude, gigPrompt, readAnswer } from './ai.js';
 import { ARTIST_MANIFEST, CITIES, GENRES, GIG_MANIFEST } from './manifests.js';
 
 const main = document.getElementById('main');
@@ -257,7 +257,7 @@ function addGig() {
     let draft;
     try {
       status('Reading the answer…');
-      draft = await toFormData(parseAnswer($('answer').value));
+      draft = await readAnswer($('answer').value);
       status('');
     } catch (error) {
       return status(`Couldn't read the answer: ${error.message}`);

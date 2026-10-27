@@ -62,9 +62,9 @@
       "types": "./dist/textCompletion.d.ts",
       "import": "./dist/textCompletion.js"
     },
-    "./formDataSchema": {
-      "types": "./dist/formDataSchema.d.ts",
-      "import": "./dist/formDataSchema.js"
+    "./formJson": {
+      "types": "./dist/formJson.d.ts",
+      "import": "./dist/formJson.js"
     },
     "./textNormalize": {
       "types": "./dist/textNormalize.d.ts",

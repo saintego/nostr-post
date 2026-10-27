@@ -98,13 +98,13 @@ The bundle re-exports utilities for advanced usage:
 
 - `pluginRegistry`
 
-**Filling a post in from JSON** (e.g. an AI's structured output; see [PLUGINS.md](../../PLUGINS.md#filling-a-post-in-from-an-answer))
+**Form data as JSON** (e.g. an AI's structured output; see [PLUGINS.md](../../PLUGINS.md#a-posts-form-data-as-json))
 
-- `answerSchema(manifest)`: the JSON Schema of a manifest's form data, with the registered plugins' value schemas
-- `answerToFormData(manifest, answer)`: `{ formatId?, formData, unresolved }` from an answer in that shape
-  (e.g. performer names turned into their wiki pages)
-- `formDataSchema(manifest, options?)`, `formDataFromAnswer(manifest, answer)`, `PUBLISH_FORMAT_KEY`: the same
-  without plugins
+- `formJsonSchema(manifest)`: the JSON Schema of a manifest's form data, with the registered plugins' schemas
+- `parseFormJson(manifest, input)`: a `Result` with `{ formatId?, formData, unresolved }` from JSON in that
+  shape, as text (also wrapped in prose or code fences, as AIs answer) or parsed (e.g. performer names
+  turned into their wiki pages)
+- `PUBLISH_FORMAT_KEY`: the property holding the chosen publish format
 
 **Geo helpers**
 

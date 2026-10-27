@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formDataFromAnswer, formDataSchema, PUBLISH_FORMAT_KEY } from './formDataSchema';
+import { formJsonSchema, PUBLISH_FORMAT_KEY, parseFormJson } from './formJson';
 import type { NostrPostManifest } from './types';
 
 const manifest: NostrPostManifest = {
@@ -48,9 +48,9 @@ const manifest: NostrPostManifest = {
   metadata: { description: 'A test post' },
 };
 
-describe('formDataSchema', () => {
+describe('formJsonSchema', () => {
   it('describes the editable fields it knows, strictly', () => {
-    const schema = formDataSchema(manifest);
+    const schema = formJsonSchema(manifest);
     expect(schema).toMatchObject({
       type: 'object',
       description: 'A test post',
@@ -71,9 +71,9 @@ describe('formDataSchema', () => {
     });
   });
 
-  it("takes a value's schema from valueSchema: null leaves the field out", () => {
-    const schema = formDataSchema(manifest, {
-      valueSchema: (field) =>
+  it("takes a value's schema from jsonSchema: null leaves the field out", () => {
+    const schema = formJsonSchema(manifest, {
+      fieldSchema: (field) =>
         field.id === 'where' ? { type: 'string' } : field.id === 'score' ? null : undefined,
     });
     const properties = schema.properties as Record<string, unknown>;
@@ -83,7 +83,7 @@ describe('formDataSchema', () => {
   });
 
   it('makes multiple fields arrays', () => {
-    const schema = formDataSchema({
+    const schema = formJsonSchema({
       ...manifest,
       fields: [
         {
@@ -101,10 +101,10 @@ describe('formDataSchema', () => {
   });
 });
 
-describe('formDataFromAnswer', () => {
+describe('parseFormJson', () => {
   it("keeps the manifest's fields without empty values, and a known format", () => {
     expect(
-      formDataFromAnswer(manifest, {
+      parseFormJson(manifest, {
         title: 'Hi',
         score: null,
         size: '',
@@ -112,13 +112,27 @@ describe('formDataFromAnswer', () => {
         other: 'x',
         [PUBLISH_FORMAT_KEY]: 'long',
       })
-    ).toEqual({ formatId: 'long', formData: { title: 'Hi', where: { lat: 1 } } });
+    ).toEqual({
+      success: true,
+      data: { formatId: 'long', formData: { title: 'Hi', where: { lat: 1 } } },
+    });
   });
 
-  it('ignores unknown formats and non-objects', () => {
-    expect(formDataFromAnswer(manifest, { [PUBLISH_FORMAT_KEY]: 'nope' })).toEqual({
-      formData: {},
+  it('reads the JSON object out of text, also wrapped in prose or code fences', () => {
+    const text = 'Sure! ```json\n{"title": "Hi", "score": 4}\n```';
+    expect(parseFormJson(manifest, text)).toEqual({
+      success: true,
+      data: { formData: { title: 'Hi', score: 4 } },
     });
-    expect(formDataFromAnswer(manifest, [1])).toEqual({ formData: {} });
+  });
+
+  it('fails on text without a JSON object and on non-objects; ignores unknown formats', () => {
+    expect(parseFormJson(manifest, 'no json here').success).toBe(false);
+    expect(parseFormJson(manifest, '{ broken').success).toBe(false);
+    expect(parseFormJson(manifest, [1]).success).toBe(false);
+    expect(parseFormJson(manifest, { [PUBLISH_FORMAT_KEY]: 'nope' })).toEqual({
+      success: true,
+      data: { formData: {} },
+    });
   });
 });

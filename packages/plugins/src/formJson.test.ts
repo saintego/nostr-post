@@ -1,6 +1,6 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { describe, expect, it } from 'vitest';
-import { answerSchema, answerToFormData } from './answer';
+import { formJsonSchema, parseFormJson } from './formJson';
 import type { NostrUIPlugin } from './types';
 
 const manifest: NostrPostManifest = {
@@ -15,13 +15,13 @@ const manifest: NostrPostManifest = {
 };
 
 const plugins: Record<string, NostrUIPlugin> = {
-  date: { id: 'date', type: 'date', valueSchema: () => ({ type: 'string' }) },
+  date: { id: 'date', type: 'date', jsonSchema: () => ({ type: 'string' }) },
   geo: { id: 'geo', type: 'geo' },
   who: {
     id: 'who',
     type: 'ref',
-    valueSchema: () => ({ type: 'array', items: { type: 'string' } }),
-    fromAnswer: async (value) => {
+    jsonSchema: () => ({ type: 'array', items: { type: 'string' } }),
+    parseJson: async (value) => {
       const names = value as string[];
       return {
         value: names.filter((n) => n === 'Known').map((n) => ({ name: n })),
@@ -32,23 +32,26 @@ const plugins: Record<string, NostrUIPlugin> = {
 };
 const getPlugin = (id: string) => plugins[id];
 
-describe('answerSchema', () => {
+describe('formJsonSchema', () => {
   it("uses plugins' value schemas and leaves out plugins without one", () => {
-    const properties = answerSchema(manifest, getPlugin).properties as Record<string, unknown>;
+    const properties = formJsonSchema(manifest, getPlugin).properties as Record<string, unknown>;
     expect(Object.keys(properties)).toEqual(['title', 'when', 'who']);
   });
 });
 
-describe('answerToFormData', () => {
-  it("applies plugins' fromAnswer and reports what they couldn't resolve", async () => {
-    const result = await answerToFormData(
+describe('parseFormJson', () => {
+  it("applies plugins' parseJson and reports what they couldn't resolve", async () => {
+    const result = await parseFormJson(
       manifest,
       { title: 'Hi', when: '2026-10-31', where: null, who: ['Known', 'Unknown'] },
       getPlugin
     );
     expect(result).toEqual({
-      formData: { title: 'Hi', when: '2026-10-31', who: [{ name: 'Known' }] },
-      unresolved: { who: ['Unknown'] },
+      success: true,
+      data: {
+        formData: { title: 'Hi', when: '2026-10-31', who: [{ name: 'Known' }] },
+        unresolved: { who: ['Unknown'] },
+      },
     });
   });
 });

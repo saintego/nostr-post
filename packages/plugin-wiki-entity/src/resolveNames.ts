@@ -3,7 +3,7 @@
  *
  * Finds the wiki pages of entities by name: the d-tag an entity of the type named so gets
  * (`entityTypeDTag`), looked up on relays and resolved to one version each. Used by the
- * picker's `fromAnswer`, e.g. for performers an AI read from a post.
+ * picker's `parseJson`, e.g. for performers an AI read from a post.
  */
 
 import { fetchEvents } from '@nostr-post/signer';

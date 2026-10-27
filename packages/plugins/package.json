@@ -20,9 +20,9 @@
       "types": "./dist/publish.d.ts",
       "import": "./dist/publish.js"
     },
-    "./answer": {
-      "types": "./dist/answer.d.ts",
-      "import": "./dist/answer.js"
+    "./formJson": {
+      "types": "./dist/formJson.d.ts",
+      "import": "./dist/formJson.js"
     },
     "./entities": {
       "types": "./dist/entities.d.ts",

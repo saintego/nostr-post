@@ -134,7 +134,7 @@ export const embedPlugin: NostrUIPlugin = {
         };
   },
 
-  valueSchema: (field: PostField) => {
+  jsonSchema: (field: PostField) => {
     const link = { type: 'string', description: 'A web link (https://…)' };
     return field.metadata?.multiple === true ? { type: 'array', items: link } : link;
   },

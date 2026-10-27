@@ -54,13 +54,9 @@ export { encodeNaddr, decodeNaddr } from '@nostr-post/core/nip19';
 
 // Plugin registry
 export { pluginRegistry } from '@nostr-post/plugins/registry';
-// Filling a post in from a JSON answer (e.g. an AI's structured output)
-export { answerSchema, answerToFormData } from '@nostr-post/plugins/answer';
-export {
-  formDataFromAnswer,
-  formDataSchema,
-  PUBLISH_FORMAT_KEY,
-} from '@nostr-post/core/formDataSchema';
+// A manifest's form data as JSON (e.g. an AI's structured output); the plugins' versions
+export { formJsonSchema, parseFormJson } from '@nostr-post/plugins/formJson';
+export { PUBLISH_FORMAT_KEY } from '@nostr-post/core/formJson';
 
 // Geo helpers
 export {

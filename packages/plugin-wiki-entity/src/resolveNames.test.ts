@@ -64,7 +64,7 @@ describe('wikiEntityPickerPlugin answers', () => {
   };
 
   it('asks for names', () => {
-    expect(wikiEntityPickerPlugin.valueSchema?.(field)).toMatchObject({
+    expect(wikiEntityPickerPlugin.jsonSchema?.(field)).toMatchObject({
       type: 'array',
       items: { type: 'string' },
     });
@@ -72,7 +72,7 @@ describe('wikiEntityPickerPlugin answers', () => {
 
   it('turns names into picked entities', async () => {
     fetchEvents.mockResolvedValueOnce([page('a-band-artist', 'A Band')]);
-    const result = await wikiEntityPickerPlugin.fromAnswer?.(['A Band', 'Other'], field);
+    const result = await wikiEntityPickerPlugin.parseJson?.(['A Band', 'Other'], field);
     expect(result?.value).toEqual([expect.objectContaining({ dTag: 'a-band-artist' })]);
     expect(result?.unresolved).toEqual(['Other']);
   });

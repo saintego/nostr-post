@@ -5,7 +5,7 @@
  * draft: the app shows it as a preview and in the composer before anything is published.
  */
 
-import { answerSchema, answerToFormData } from '../../nostr-post.js';
+import { formJsonSchema, parseFormJson } from '../../nostr-post.js';
 import { GIG_MANIFEST } from './manifests.js';
 
 /**
@@ -13,7 +13,7 @@ import { GIG_MANIFEST } from './manifests.js';
  * with what each field plugin asks for, e.g. the date's `{ start, end, tzid }` and the
  * performers' names (looked up as artist pages afterwards).
  */
-export const gigSchema = () => answerSchema(GIG_MANIFEST);
+export const gigSchema = () => formJsonSchema(GIG_MANIFEST);
 
 /** The prompt for a gig's text (and, sent separately, its poster) */
 export const gigPrompt = (text, today = new Date().toISOString().slice(0, 10)) =>
@@ -25,21 +25,16 @@ ${JSON.stringify(gigSchema())}
 Post:
 ${text || '(see the poster image)'}`;
 
-/** The first JSON object in an answer (AIs sometimes wrap it in text or code fences) */
-export const parseAnswer = (answer) => {
-  const start = answer.indexOf('{');
-  const end = answer.lastIndexOf('}');
-  if (start < 0 || end <= start) throw new Error('No JSON object in the answer');
-  return JSON.parse(answer.slice(start, end + 1));
-};
-
 /**
- * The gig form's values and publish format from the AI's JSON: performers become their artist
- * pages (`unresolved.performers`: names without a page yet). A start with a time is published
- * as a timed event, whatever format the answer chose.
+ * The gig form's values and publish format from the AI's answer (text with JSON, as any AI
+ * gives it): performers become their artist pages (`unresolved.performers`: names without a
+ * page yet). A start with a time is published as a timed event, whatever format the AI chose.
+ * Throws when the answer has no usable JSON.
  */
-export const toFormData = async (gig) => {
-  const { formatId, formData, unresolved } = await answerToFormData(GIG_MANIFEST, gig);
+export const readAnswer = async (answer) => {
+  const parsed = await parseFormJson(GIG_MANIFEST, answer);
+  if (!parsed.success) throw parsed.error;
+  const { formatId, formData, unresolved } = parsed.data;
   const timed = /T\d\d:\d\d/.test(formData.when?.start ?? '');
   return { formatId: timed ? 'timed' : (formatId ?? 'all-day'), formData, unresolved };
 };

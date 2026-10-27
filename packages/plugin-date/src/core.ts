@@ -190,8 +190,8 @@ export const datePlugin: NostrUIPlugin = {
   resolveFromTags: (tags: string[][], field: PostField): unknown =>
     dateValueFromTags(tags, activeTarget(field)?.tagName),
 
-  /** A DateValue, as the answer gives it */
-  valueSchema: () => ({
+  /** A DateValue, as JSON */
+  jsonSchema: () => ({
     type: 'object',
     properties: {
       start: {

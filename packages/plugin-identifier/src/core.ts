@@ -92,7 +92,7 @@ export const identifierPlugin: NostrUIPlugin = {
 
   deserializeValue: (raw: string): unknown => raw,
 
-  valueSchema: (field: PostField) => {
+  jsonSchema: (field: PostField) => {
     const prefix = getPrefix(field);
     return prefix ? { type: 'string', description: `As ${prefix}:<id>` } : { type: 'string' };
   },
