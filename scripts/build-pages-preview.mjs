@@ -63,6 +63,7 @@ copyDir(join(root, 'examples/nextjs-demo/out'), join(deployDir, 'examples/nextjs
 cpSync(join(root, 'examples/wiki-demo'), join(deployDir, 'examples/wiki-demo'), {
   recursive: true,
 });
+cpSync(join(root, 'examples/gigs'), join(deployDir, 'examples/gigs'), { recursive: true });
 copyDir(join(root, 'tools/manifest-creator/out'), join(deployDir, 'manifest-creator'));
 
 console.log('Done. Local artifact at .pages-local');

@@ -134,6 +134,10 @@ The bundle re-exports utilities for advanced usage:
   CALENDAR_EVENT_MANIFEST, d-tag `ics:<UID>`), `icsDTag(uid)`, `fetchEventsAsIcs(addresses)`
 - Duplicates: `similarEvents(draft, events)`, `titleSimilarity(a, b)`
 
+**NIP-19**
+
+- `encodeNaddr(address)`, `decodeNaddr(naddr)`: an address (`kind:pubkey:d-tag`) as `naddr1…` and back
+
 **Signing & Relays**
 
 - `signEvent`, `signAndPublish`, `publishToRelay`, `publishToRelays` (`signAndPublish` without

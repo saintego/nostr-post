@@ -118,18 +118,26 @@
       Left: players for links inside note text; Bandcamp page links (the album id is only on the
       page: store it with the link, or read it through a proxy)
 - [ ] Gig platform example (`examples/gigs`, plan: static nsite now, cron worker later in its own repo)
-  - [ ] Static app: city + genre + date browser (agenda/month with `#g`/`#t`), event and artist pages,
+  - [x] Static app: city + genre + date browser (agenda/month with `#g`/`#t`), event and artist pages,
         "add gig" composer
-  - [ ] Artist wiki entity manifest (name, genres, media links as `embed` field with `r`/NIP-73 `i`) and a
+  - [x] Artist wiki entity manifest (name, genres, media links as `embed` field with `r`/NIP-73 `i`) and a
         gig manifest with Performers (wiki-entity picker, role `performer`)
-  - [ ] Add flow: paste text or a poster → AI with the user's own key (browser call) or a copy-paste
+  - [x] Add flow: paste text or a poster → AI with the user's own key (browser call) or a copy-paste
         prompt → prefill → duplicate hint (`similarEvents`) → preview → sign. The AI's result is never
         published directly: it shows as the event preview (and in the composer) for the user to check
-  - [ ] Preview / test mode: the whole app usable without publishing (the signer's dry run,
+  - [x] Preview / test mode: the whole app usable without publishing (the signer's dry run,
         `setDryRun`): events are signed and shown as they would be, nothing reaches relays; a banner
         says so
-  - [ ] `.ics` import UI (`icsToDrafts`, confirm each event); share the current filter as link + text
-  - [ ] In `build:pages`, so PR previews show it; its own nsite
+  - [x] `.ics` import UI (`icsToDrafts`, confirm each event)
+  - [x] In `build:pages`, so `preview:pages` and PR previews show it (`/examples/gigs/`)
+  - [ ] Its own nsite (deploy separately from the library's pages)
+  - [ ] Share the current filter (city, genre, week) as a link plus text, and as an image
+  - [ ] Gigs in the agenda link to their page (`#/event/<naddr>`); the views have no link to hook into yet
+  - [ ] The add flow's preview shows event actions (RSVP, Add to calendar, .ics) that would act on a
+        placeholder address: a view option to hide actions
+  - [ ] Artist page lists the artist's gigs (events with its `a` tag: a related section, `wikiConfig.related`)
+  - [ ] Cities: a map/search picker instead of the fixed list (geohash prefix of any place)
+  - [ ] The Claude call (`askClaude`) is untested against the real API: try it with a key and a poster
   - [ ] Cron worker (own repo): Open Graph pages and `.ics` feeds into the nsite; Facebook `.ics`
         subscriptions (URL encrypted to the cron with NIP-44 as app data, events signed through the
         user's NIP-46 signer or as drafts to confirm)
