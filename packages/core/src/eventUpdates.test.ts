@@ -7,6 +7,7 @@ import {
   eventEditors,
   isUpdateComment,
   parseUpdateComment,
+  suggestedUpdates,
 } from './eventUpdates';
 import type { DisplayableEvent, NostrPostManifest } from './types';
 
@@ -230,6 +231,17 @@ describe('update comments by the event editors', () => {
   it('knows the author, organizers and extra editors', () => {
     expect([...eventEditors(event)]).toEqual([author, organizer]);
     expect(eventEditors(event, [curator]).has(curator)).toBe(true);
+  });
+
+  it("lists others' updates as suggestions, applied once the viewer accepts one", () => {
+    const hijack = { ...update(speaker, 'Moved to Friday', 3), id: 'x' };
+    const interactions = [update(organizer, 'Fixed', 2), hijack];
+    expect(suggestedUpdates(event, interactions)).toEqual([hijack]);
+    expect(suggestedUpdates(event, interactions, [speaker])).toEqual([]);
+    expect(title(applyUpdateCommentsToEvent(event, manifest, interactions))).toBe('Fixed');
+    expect(
+      title(applyUpdateCommentsToEvent(event, manifest, interactions, [], new Set(['x'])))
+    ).toBe('Moved to Friday');
   });
 
   it("applies an organizer's update, not a speaker's or a stranger's", () => {

@@ -8,6 +8,8 @@
 export { NostrPostComposer } from './composer';
 export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from './composerMessages';
 export { NostrPostView } from './view';
+export { DEFAULT_EDIT_MESSAGES, type EditMessages } from './viewEdit';
+export { DEFAULT_SUGGESTION_MESSAGES, type SuggestionMessages } from './viewSuggestions';
 export { NostrPostFeed } from './feed';
 export { DEFAULT_FEED_MESSAGES, type FeedMessages } from './feedMessages';
 // For feed layouts (`<nostr-post-feed .layout>`, e.g. @nostr-post/calendar's agenda)

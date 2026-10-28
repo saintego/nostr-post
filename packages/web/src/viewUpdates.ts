@@ -15,6 +15,7 @@ export {
   eventEditors,
   isUpdateComment,
   parseUpdateComment,
+  suggestedUpdates,
   tryParseJsonObject,
   UPDATE_COMMENT_PATTERN,
 } from '@nostr-post/core/eventUpdates';

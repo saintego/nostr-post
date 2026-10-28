@@ -183,6 +183,10 @@ The bundle re-exports utilities for advanced usage:
 
 - `DEFAULT_COMPOSER_MESSAGES`: the composer's submit-area text (button, running step, errors); set
   `composer.messages = { submit: '…' }` to override any of it
+- `DEFAULT_EDIT_MESSAGES`: the view's Edit button and edit form (e.g. the note that a non-author's
+  changes go out as a suggestion); set `view.messages` to override any of it
+- `DEFAULT_SUGGESTION_MESSAGES`: the view's list of others' suggested changes ("Show with this
+  change"), also through `view.messages`
 - `DEFAULT_FEED_MESSAGES`: the feed's text (loading, empty); set `feed.messages` to
   override any of it
 

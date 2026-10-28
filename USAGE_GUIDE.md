@@ -351,7 +351,7 @@ Display a single Nostr event with automatic field rendering based on manifest.
 
 - `event: DisplayableEvent` - Event to display
 - `manifest: NostrPostManifest` - Manifest to guide field rendering (optional, auto-fetched from event via NIP-78 if not provided)
-- `messages: Partial<RawDataMessages>` - Override the "All data" section's text (e.g. translations)
+- `messages: Partial<RawDataMessages & EditMessages & SuggestionMessages>` - Override the "All data" section's, the edit form's and the suggested changes' text (e.g. translations; `DEFAULT_EDIT_MESSAGES`, `DEFAULT_SUGGESTION_MESSAGES`)
 - `interactionEvents: DisplayableEvent[]` - Kind-1 update-comment replies that should be merged into the displayed event (see [Inline Editing](#inline-editing))
 
 **Field Visibility**
@@ -367,10 +367,10 @@ Set `editable` to show an "Edit" button. The button's behaviour depends on the e
 
 | Event kind                    | Edit mechanism                                                                                                                                                                                                                                                                                                                                     |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Addressable** (30000–39999) | Opens an inline composer pre-filled with current values. On submit the component publishes a replacement event (NIP-33 overwrite).                                                                                                                                                                                                                 |
+| **Addressable** (30000–39999) | Opens an inline composer pre-filled with current values. For the event's author, on submit the component publishes a replacement event (NIP-33 overwrite). Anyone else's changes are published as an update comment, as for kind 1 (with the event's `a` tag, so it stays with the next versions): applied for the event's editors, a suggestion otherwise. |
 | **Kind 1**                    | Opens an inline composer pre-filled with current values. On submit the component publishes a kind-1 _update-comment_ reply in the format `update:{fieldId}:{value}` (one changed field per line). The view applies these comments client-side so the post appears updated, while the comment remains visible as plain text in other Nostr clients. |
 
-Update comments apply when the event's editors wrote them (`eventEditors`): its author, the people it names in `p` tags with an editor role (`host`, `co-host`, `organizer`, `editor`, as NIP-52 events list organizers), and the view's `trustedEditors` (e.g. the maintainer of the calendar an agenda shows). Others' update comments stay ordinary comments. Comments on addressable events also carry the event's address (`["a", address, "", "root"]`; the composer's `root-address`), so they stay with the event when it's republished.
+Update comments apply when the event's editors wrote them (`eventEditors`): its author, the people it names in `p` tags with an editor role (`host`, `co-host`, `organizer`, `editor`, as NIP-52 events list organizers), and the view's `trustedEditors` (e.g. the maintainer of the calendar an agenda shows). Others' update comments are suggested changes (`suggestedUpdates`): the view lists them with who suggested what, and each viewer can show the event with one applied ("Show with this change", only for them, nothing is published; `applyUpdateCommentsToEvent`'s `accepted`). Comments on addressable events also carry the event's address (`["a", address, "", "root"]`; the composer's `root-address`), so they stay with the event when it's republished.
 
 When the user clicks "Edit", a cancelable `nostr-post-edit-request` CustomEvent is dispatched:
 

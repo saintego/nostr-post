@@ -285,10 +285,10 @@
       flag as a NIP-32 self-label, `["L", "nostr-post.updates"], ["l", "anyone", "nostr-post.updates"]`
       (not a NIP of its own: other clients ignore it), e.g. for imported gigs that should "live their
       own life" until the promoter takes over - the manifest only sets the composer's default for that label - the viewer filters open posts: everyone's updates, or only their web of trust (follow list
-      first); viewers with different follows can see different versions of an open post - others' updates show as suggestions in any case
-- [ ] `<nostr-post-view editable>` shows Edit to everyone; on an addressable event a non-author's
-      edit publishes their own copy (same d-tag, their key). For others it should publish an update
-      comment, as on kind 1 (the gigs app's edit page checks the author itself)
+      first); viewers with different follows can see different versions of an open post - others' updates show as suggestions in any case (done: the view lists them, "Show with this change" per viewer)
+- [x] `<nostr-post-view editable>` shows Edit to everyone; on an addressable event a non-author's
+      edit published their own copy (same d-tag, their key). Now others' edits are update comments,
+      as on kind 1
 
 - [x] Set up Vitest for unit testing
 - [x] Unit tests for validation functions in @nostr-post/core

@@ -32,7 +32,13 @@ import {
 import { authorDisplayName, type NostrProfile, truncatePubkey } from './userProfile';
 import { renderEventActions } from './viewActions';
 import { DEFAULT_NOSTR_LINK_BASE, renderNoteContent } from './viewContent';
-import { type EditState, renderEditButton, renderInlineComposer } from './viewEdit';
+import {
+  DEFAULT_EDIT_MESSAGES,
+  type EditMessages,
+  type EditState,
+  renderEditButton,
+  renderInlineComposer,
+} from './viewEdit';
 import {
   hasStructuredContentMappings,
   renderLinkedEvents,
@@ -41,8 +47,18 @@ import {
 import { DEFAULT_RAW_DATA_MESSAGES, type RawDataMessages, renderRawData } from './viewRawData';
 import { postRoleView } from './viewRoles';
 import { viewStyle } from './viewStyle';
+import {
+  DEFAULT_SUGGESTION_MESSAGES,
+  renderSuggestions,
+  type SuggestionMessages,
+} from './viewSuggestions';
 import { renderTagPlugins } from './viewTagPlugins';
-import { applyUpdateCommentsToEvent, eventEditors, renderUpdateComments } from './viewUpdates';
+import {
+  applyUpdateCommentsToEvent,
+  eventEditors,
+  renderUpdateComments,
+  suggestedUpdates,
+} from './viewUpdates';
 
 /** Event type that can be either unsigned or signed — re-exported from core for convenience */
 export type { DisplayableEvent } from '@nostr-post/core/types';
@@ -98,6 +114,16 @@ export class NostrPostView extends NostrPostElement {
   @state()
   private _editPubkey?: string;
 
+  /** Others' suggested changes the viewer shows applied (update comment ids), on this page only */
+  @state()
+  private _accepted: ReadonlySet<string> = new Set();
+
+  private _toggleSuggestion(id: string) {
+    const accepted = new Set(this._accepted);
+    if (!accepted.delete(id)) accepted.add(id);
+    this._accepted = accepted;
+  }
+
   /** Show the collapsed "All data" section (kind, author, ID, time, all tags, content) */
   @property({ type: Boolean, attribute: 'show-tags' })
   showTags?: boolean;
@@ -106,9 +132,9 @@ export class NostrPostView extends NostrPostElement {
   @property({ type: Boolean, attribute: 'show-kind' })
   showKind?: boolean;
 
-  /** Overrides for the "All data" section's text (e.g. translations) */
+  /** Overrides for the "All data" section's and the edit form's text (e.g. translations) */
   @property({ attribute: false })
-  messages?: Partial<RawDataMessages>;
+  messages?: Partial<RawDataMessages & EditMessages & SuggestionMessages>;
 
   /** Base URL that `nostr:` references in the text link to; the NIP-19 entity is appended */
   @property({ attribute: 'nostr-link-base' })
@@ -320,10 +346,16 @@ export class NostrPostView extends NostrPostElement {
     if (!dispatched.defaultPrevented) {
       const opening = !this._showInlineComposer;
       this._showInlineComposer = opening;
-      if (opening && !(event.kind >= 30000 && event.kind < 40000)) {
-        void getPublicKey().then((pk) => {
-          this._editPubkey = pk;
-        });
+      // The author republishes an addressable event; others' edits are update comments
+      if (opening && this._editPubkey === undefined) {
+        void getPublicKey().then(
+          (pk) => {
+            this._editPubkey = pk;
+          },
+          () => {
+            this._editPubkey = '';
+          }
+        );
       }
     }
   }
@@ -337,6 +369,7 @@ export class NostrPostView extends NostrPostElement {
         this._showInlineComposer = false;
       },
       onError: (message) => this.showError(message),
+      messages: { ...DEFAULT_EDIT_MESSAGES, ...this.messages },
     };
   }
 
@@ -351,7 +384,8 @@ export class NostrPostView extends NostrPostElement {
       this.event,
       this.effectiveManifest,
       this.interactionEvents,
-      this.trustedEditors
+      this.trustedEditors,
+      this._accepted
     );
     const { kind, created_at, pubkey } = event;
     // Role lines (`Tasted at: nostr:naddr1…`) show as rows, not in the text
@@ -429,8 +463,16 @@ export class NostrPostView extends NostrPostElement {
           this.interactionEvents,
           eventEditors(this.event, this.trustedEditors)
         )}
+        ${renderSuggestions(
+          suggestedUpdates(this.event, this.interactionEvents, this.trustedEditors),
+          {
+            accepted: this._accepted,
+            onToggle: (id) => this._toggleSuggestion(id),
+            messages: { ...DEFAULT_SUGGESTION_MESSAGES, ...this.messages },
+          }
+        )}
         ${showTechnicalMeta ? renderRawData(event, { ...DEFAULT_RAW_DATA_MESSAGES, ...this.messages }) : ''}
-        ${renderEditButton(event, this.editable, this._showInlineComposer, (ev) => this.handleEditRequest(ev))}
+        ${renderEditButton(event, this.editable, this._showInlineComposer, (ev) => this.handleEditRequest(ev), { ...DEFAULT_EDIT_MESSAGES, ...this.messages })}
         ${renderInlineComposer(event, this.editState)}
       </div>
     `;

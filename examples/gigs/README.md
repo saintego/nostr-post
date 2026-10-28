@@ -10,9 +10,10 @@ players, RSVP, `.ics` import and export.
   page's link (`#/?city=…&g=…&genre=…&view=…&from=…`); "Share" sends it with the shown gigs as text
   (`agendaText`), "Image" as a picture (`agendaImage`), through the device's share sheet or as a
   copy or download.
-- **Gig** (`#/event/<naddr>`): one event (`<nostr-calendar-event>`), shareable. Edit
-  (`#/gig-edit/<naddr>`): only by who posted it, others suggest changes in a comment; removing a
-  performer removes their profile links too, performers without a page are edited in the description.
+- **Gig** (`#/event/<naddr>`): one event with its comments (`<nostr-calendar-event thread editable>`),
+  shareable. Edit: who posted it republishes it, anyone else's changes are a suggestion (an update
+  comment); removing a performer removes their profile links too, performers without a page are
+  edited in the description.
 - **Musician** (`#/artist/<d-tag>`, `#/artist-new[/<name>]`, `#/artist-edit/<d-tag>[?add=<JSON>]`):
   a musician's wiki page (type
   `(musician)`); links play (`@nostr-post/plugin-embed`), and its gigs are listed: those that link

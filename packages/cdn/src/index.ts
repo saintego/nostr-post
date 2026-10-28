@@ -189,6 +189,8 @@ export { extractPrefillFromEvent } from '@nostr-post/web';
 
 // Composer text (submit button, steps, errors) for overriding via its `messages` property
 export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from '@nostr-post/web';
+export { DEFAULT_EDIT_MESSAGES, type EditMessages } from '@nostr-post/web';
+export { DEFAULT_SUGGESTION_MESSAGES, type SuggestionMessages } from '@nostr-post/web';
 export { DEFAULT_FEED_MESSAGES, type FeedMessages } from '@nostr-post/web';
 
 // Wiki (NIP-54 kind:30818)

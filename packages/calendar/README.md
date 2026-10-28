@@ -162,6 +162,13 @@ events by day (as many as fit; "+N more"), `footer` (e.g. the site's address), `
 One event by `address`: loads its newest version and shows it with the calendar manifest. It is the
 kind view of 31922/31923, so a post linking an event (`nostr:naddr…`) shows it in place.
 
+| Property / attribute | Description |
+| -------------------- | ----------- |
+| `address`            | `31922\|31923:<pubkey>:<d-tag>` |
+| `manifest`, `relays` | Default `CALENDAR_EVENT_MANIFEST` and the default relays |
+| `thread`             | The event's own page: also its comments, reactions and update comments (a `<nostr-post-feed>` of the one event) |
+| `editable`           | An Edit button: the author republishes the event, anyone else suggests the changes as an update comment (applied for the event's editors) |
+
 ### Event actions
 
 On events made with manifests that publish calendar events (`publishesCalendarEvents`):

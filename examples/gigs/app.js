@@ -5,18 +5,11 @@
  * Test mode signs events but publishes nothing (the signer's dry run).
  */
 
-import {
-  decodeNaddr,
-  extractPrefillFromEvent,
-  fetchEvents,
-  getPublicKey,
-  icsToDrafts,
-  setDryRun,
-} from '../../nostr-post.js';
+import { decodeNaddr, fetchEvents, icsToDrafts, setDryRun } from '../../nostr-post.js';
 import { addGig } from './addGig.js';
 import { browse } from './browse.js';
 import { ARTIST_MANIFEST, GIG_MANIFEST } from './manifests.js';
-import { escapeHtml, eventLink, html, main, store } from './util.js';
+import { escapeHtml, html, main, store } from './util.js';
 
 // ── Dark theme ────────────────────────────────────────────────────────
 
@@ -46,8 +39,8 @@ testToggle.addEventListener('change', () => applyTestMode(testToggle.checked));
 function eventPage(id) {
   const address = id.startsWith('naddr1') ? decodeNaddr(id) : decodeURIComponent(id);
   main.innerHTML = html`
-    <p><a href="#/">← All gigs</a> · <a href="#/gig-edit/${id}">Edit</a></p>
-    <nostr-calendar-event id="event"></nostr-calendar-event>
+    <p><a href="#/">← All gigs</a></p>
+    <nostr-calendar-event id="event" thread editable></nostr-calendar-event>
     <p class="share">Share: <input readonly value="${location.href}" onfocus="this.select()" /></p>
   `;
   const card = document.getElementById('event');
@@ -179,53 +172,10 @@ function importIcs() {
   });
 }
 
-/**
- * Editing a gig: only by who posted it (others suggest changes in a comment). Performers
- * without a page are named in the description, so they're edited there
- */
-async function editGig(id) {
-  const address = id.startsWith('naddr1') ? decodeNaddr(id) : decodeURIComponent(id);
-  main.innerHTML = html`
-    <p><a href="${eventLink(address ?? '')}">← The gig</a></p>
-    <h2>Edit a gig</h2>
-    <p id="edit-status" class="hint">Loading the gig…</p>
-  `;
-  const status = (text) => {
-    document.getElementById('edit-status').textContent = text;
-  };
-  const [kind, pubkey, dTag] = (address ?? '').split(':');
-  const versions = await fetchEvents({
-    kinds: [Number(kind)],
-    authors: [pubkey],
-    '#d': [dTag],
-  }).catch(() => []);
-  const event = versions.sort((a, b) => b.created_at - a.created_at)[0];
-  if (!event) return status('Gig not found.');
-  const me = await getPublicKey().catch(() => undefined);
-  if (me !== event.pubkey) {
-    return status(
-      'Only who posted the gig can edit it. To suggest a change, comment under the gig.'
-    );
-  }
-  status('');
-  const composer = document.createElement('nostr-post-composer');
-  composer.setAttribute('auto-publish', '');
-  composer.manifest = GIG_MANIFEST;
-  composer.defaultFormatId = event.kind === 31922 ? 'all-day' : 'timed';
-  composer.dTag = dTag;
-  composer.prefill = extractPrefillFromEvent(event, GIG_MANIFEST);
-  composer.messages = { submit: 'Publish the changes', submitting: 'Publishing…' };
-  composer.addEventListener('nostr-post-published', () => {
-    location.hash = eventLink(address);
-  });
-  main.append(composer);
-}
-
 // ── Router ────────────────────────────────────────────────────────────
 
 const routes = [
   [/^#\/event\/(.+)$/, (m) => eventPage(m[1])],
-  [/^#\/gig-edit\/(.+)$/, (m) => editGig(m[1])],
   [/^#\/artist\/(.+)$/, (m) => artistPage(m[1])],
   [/^#\/artist-new(?:\/(.+))?$/, (m) => newArtist(m[1] && decodeURIComponent(m[1]))],
   [
