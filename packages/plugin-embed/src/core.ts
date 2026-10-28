@@ -3,11 +3,13 @@
  *
  * Players for links: a YouTube, Spotify, SoundCloud, Vimeo or Bandcamp link becomes the
  * provider's embed URL, built from the link alone (no requests). Fields opt in with
- * `uiPlugin: 'embed'`; their values are links, one or several (`r` tags, for example).
+ * `uiPlugin: 'embed'`; their values are links, one or several (`r` tags, for example). Links to
+ * profiles (`profileLinks.ts`) are also written as NIP-73 `i` tags in canonical form.
  * No DOM dependencies — safe for SSR/Node.
  */
 
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
+import { profileUrls } from './profileLinks';
 
 export type EmbedProvider = 'youtube' | 'spotify' | 'soundcloud' | 'vimeo' | 'bandcamp';
 
@@ -140,4 +142,8 @@ export const embedPlugin: NostrUIPlugin = {
   },
 
   formatValue: (value: unknown): string => linksOf(value).join(', '),
+
+  /** Profile links (an artist's Bandcamp, Instagram, …) as NIP-73 `i` tags, in canonical form */
+  extraTags: (value: unknown): [string, ...string[]][] =>
+    profileUrls(linksOf(value)).map((url): [string, string] => ['i', url]),
 };

@@ -139,9 +139,19 @@
   - [x] Gigs in the agenda link to their page (`#/event/<naddr>`): `<nostr-calendar-agenda>`'s `eventHref`
   - [ ] The add flow's preview shows event actions (RSVP, Add to calendar, .ics) that would act on a
         placeholder address: a view option to hide actions
-  - [ ] Artist slug should be based on their social/bandcamp links
-  - [ ] validate artist links from AI
-  - [ ] validate existance of artist wiki by links, name, before creating new
+  - [ ] Musician pages identified by their profile links (type suffix `(musician)`; "artist" also
+        means painters)
+    - [x] Profile links (Bandcamp, Spotify artist, SoundCloud, Instagram, Facebook, YouTube) in one
+          canonical form (`profileLink`), written as NIP-73 `i` tags by the embed field
+    - [ ] Slug: the name if free, else a profile handle (Bandcamp/Instagram/SoundCloud/Facebook), else
+          the name plus a genre or city; a taken slug whose page has the same link is that musician
+    - [ ] validate artist links from AI input: only links in the post's text (or marked as read from
+          the poster); the preview shows them as players, so the user sees what was found
+    - [ ] artist wiki is not mandatory: performers without a page stay as text, linked through their
+          profile links (`i` tags), so a page created later finds the gig
+    - [ ] validate existence of artist wiki by links, name, before creating new: look up by `#i`, then by
+          the name's slug
+    - [ ] A gig that adds links the musician's page doesn't have: suggest updating the page
   - [ ] Artist page lists the artist's gigs (events with its `a` tag: a related section, `wikiConfig.related`)
   - [ ] Cities: a map/search picker instead of the fixed list (geohash prefix of any place)
   - [ ] The Claude call (`askClaude`) is untested against the real API: try it with a key and a poster

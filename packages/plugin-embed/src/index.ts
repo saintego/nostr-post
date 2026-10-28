@@ -12,3 +12,9 @@ export {
   linkProvider,
   linksOf,
 } from './core';
+export {
+  type ProfileLink,
+  type ProfilePlatform,
+  profileLink,
+  profileUrls,
+} from './profileLinks';

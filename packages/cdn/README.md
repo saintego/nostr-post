@@ -115,7 +115,8 @@ The bundle re-exports utilities for advanced usage:
 
 **People helpers** (see [plugin-profile](../plugin-profile/README.md))
 
-- Embeds: `embedFor(link)` (a link's player), `linkProvider(link)`, `embedPlugin`, `Embed`
+- Embeds: `embedFor(link)` (a link's player), `linkProvider(link)`, `embedPlugin`, `Embed`;
+  `profileLink(link)`, `profileUrls(links)`: profile links in canonical form (NIP-73 `i` tags)
 - `profilePlugin`, `personFromText(text)`, `peopleFromTags(tags)`, `personTag(person)`, `Person`
 - `mentionsIn(text)`: the people in a text's `nostr:npub…` mentions; the composer completes `@name` in
   text fields with an attached `profile` field (the standard kind 1 post has one)

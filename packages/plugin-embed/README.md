@@ -18,7 +18,9 @@ embedFor('https://youtu.be/dQw4w9WgXcQ');
 | `embedFor(link)`      | The player for a link: `{ provider, src, height? }` (no `height`: a 16:9 video); undefined for links without one. Built from the link alone, no requests |
 | `linkProvider(link)`  | The provider of a link, also of a Bandcamp page (which gets no player)             |
 | `linksOf(value)`      | The links in a field's value (one or a list)                                       |
-| `embedPlugin`         | The plugin: `validate` (web links only)                                            |
+| `embedPlugin`         | The plugin: `validate` (web links only); profile links also written as `i` tags    |
+| `profileLink(link)`   | The profile a link points to, in canonical form: `{ platform, url, handle? }`, or undefined for links that aren't profiles |
+| `profileUrls(links)`  | The canonical profile URLs among links, without repeats                            |
 
 Players by provider:
 
@@ -31,6 +33,22 @@ Players by provider:
 | Bandcamp   | only `bandcamp.com/EmbeddedPlayer/…` links: the album or track number is only on the page | as given |
 
 The field: `type: 'string'`, mapped to a tag such as `r`; `metadata.multiple` for several links.
+
+Profile links are also written as NIP-73 `i` tags with the canonical URL, so relays find
+everything that links the same profile (`#i`), e.g. an artist's wiki page and the gigs that link
+the artist:
+
+| Platform   | Profile links                               | Canonical URL (handle)                         |
+| ---------- | ------------------------------------------- | ---------------------------------------------- |
+| Bandcamp   | `<name>.bandcamp.com/…`                     | `https://<name>.bandcamp.com` (name)           |
+| Spotify    | `open.spotify.com/artist/<id>`              | `https://open.spotify.com/artist/<id>`         |
+| SoundCloud | `soundcloud.com/<user>/…`                   | `https://soundcloud.com/<user>` (user)         |
+| Instagram  | `instagram.com/<user>`                      | `https://www.instagram.com/<user>` (user)      |
+| Facebook   | `facebook.com/<page>`, `profile.php?id=`    | `https://www.facebook.com/<page>` (page)       |
+| YouTube    | `youtube.com/@<handle>`, `channel/<id>`     | `https://www.youtube.com/@<handle>` (handle)   |
+
+Hosts are matched without `www.`/`m.`; handles are lowercased; queries and further path parts
+are dropped.
 
 ## `/web`
 

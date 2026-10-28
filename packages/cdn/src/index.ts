@@ -82,7 +82,14 @@ export {
 } from '@nostr-post/plugin-profile';
 
 // Players for links (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp)
-export { embedFor, linkProvider, embedPlugin, type Embed } from '@nostr-post/plugin-embed';
+export {
+  type Embed,
+  embedFor,
+  embedPlugin,
+  linkProvider,
+  profileLink,
+  profileUrls,
+} from '@nostr-post/plugin-embed';
 
 // Date field (NIP-52 date tags)
 export {

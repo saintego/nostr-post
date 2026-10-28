@@ -8,9 +8,9 @@ import { CALENDAR_EVENT_MANIFEST } from '../../nostr-post.js';
 
 /** An artist's wiki page (NIP-54): name, genres and media links shown as players */
 export const ARTIST_MANIFEST = {
-  id: 'gigs-artist-v1',
+  id: 'gigs-musician-v1',
   version: '1.0.0',
-  wikiConfig: { titleTemplate: '{title} (Artist)', dTagTemplate: '{title}-(artist)' },
+  wikiConfig: { titleTemplate: '{title} (musician)', dTagTemplate: '{title}-(musician)' },
   fields: [
     {
       id: 'title',
@@ -34,7 +34,8 @@ export const ARTIST_MANIFEST = {
       mapTo: { kind: 30818, target: 'tag', tagName: 'r' },
       metadata: {
         label: 'Listen',
-        description: 'YouTube, Spotify, SoundCloud, Bandcamp player or any link',
+        description:
+          'Bandcamp, Spotify, SoundCloud, YouTube (players), Instagram or Facebook profiles, or any link',
         multiple: true,
       },
     },
@@ -46,7 +47,10 @@ export const ARTIST_MANIFEST = {
       metadata: { label: 'About' },
     },
   ],
-  metadata: { name: 'Artist', description: 'A band or artist, with links to their music' },
+  metadata: {
+    name: 'Musician',
+    description: 'A band, musician or DJ, with links to their music and profiles',
+  },
 };
 
 export const GENRES = [
