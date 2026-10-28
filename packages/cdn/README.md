@@ -145,6 +145,9 @@ The bundle re-exports utilities for advanced usage:
 - iCalendar: `eventsToIcs(events, name?)`, `icsToDrafts(text)` (an `.ics` file as drafts for
   CALENDAR_EVENT_MANIFEST, d-tag `ics:<UID>`), `icsDTag(uid)`, `fetchEventsAsIcs(addresses)`
 - Duplicates: `similarEvents(draft, events)`, `titleSimilarity(a, b)`
+- Sharing: `agendaWindowFor(from, days, tzid, view)` (an agenda element's window),
+  `agendaSummary(events, window)`, `agendaText(events, window, { title, link })` (a message),
+  `agendaImage(summary, { title, footer, dark })` (a PNG), `drawAgendaImage` (the canvas)
 
 **NIP-19**
 

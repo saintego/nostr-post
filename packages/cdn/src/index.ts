@@ -132,7 +132,11 @@ export {
   monthGrid,
   shiftMonth,
   formatMonth,
+  agendaWindowFor,
+  agendaSummary,
+  agendaText,
 } from '@nostr-post/calendar';
+export { agendaImage, drawAgendaImage } from '@nostr-post/calendar/web';
 export { eventsToIcs, icsToDrafts, icsDTag, type IcsDraft } from '@nostr-post/calendar/ics';
 
 // Signing & relay utilities

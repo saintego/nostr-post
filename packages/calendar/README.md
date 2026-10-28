@@ -36,6 +36,15 @@ All-day or timed is its publish format. Its fields use the `date`, `venue`, `pro
 | `latestByAddress(events)`                | Newest version of each addressable event                                       |
 | `formatAgendaDate(date, locale?)`        | A day heading, e.g. `Wednesday, October 21, 2026`                              |
 
+### Sharing an agenda
+
+| Export | Does |
+| ------ | ---- |
+| `agendaSummary(events, window, { locale?, maxItems? })` | The window's events by day for sharing: `{ range, days: [{ date, label, items: [{ time?, title, place? }] }], more }` (an event spanning days once, on its first) |
+| `agendaText(events, window, { title?, link?, locale?, maxItems?, moreText?, emptyText? })` | The same as a message: title and dates, a line per event by day, the link |
+
+`agendaImage(summary, options)` in `/web` draws it as a PNG.
+
 A window is `{ from?, days?, tzid? }`: `days` days from `from` (`YYYY-MM-DD`, default today), in
 `tzid` (default the viewer's). `<nostr-calendar-agenda>` (`/web`) is built on these;
 a month grid can use the same functions with a month as the window.
@@ -139,6 +148,12 @@ as its layout (`<nostr-calendar-days>`). Events show as compact rows (time, titl
 `agendaItem`), so a month of hundreds of events stays light; one at a time opens in full under its row
 ("Details", or its title without `eventHref`) with its comments, actions and venue map. While the next
 window loads, the shown days stay, dimmed.
+
+### `agendaImage(summary, options)`
+
+An `agendaSummary` as a PNG (`Promise<Blob>`), e.g. for a story or a chat: `title`, the dates, the
+events by day (as many as fit; "+N more"), `footer` (e.g. the site's address), `dark`, `width` and
+`height` (default 1080×1350), `moreText`, `emptyText`. `drawAgendaImage` gives the canvas.
 
 ### `<nostr-calendar-event>`
 

@@ -30,6 +30,7 @@ registerEventAction({ tagName: 'np-ics-download', matches: publishesCalendarEven
 
 export { NostrCalendarAgenda } from './web/agenda';
 export { NostrCalendarDays } from './web/agendaDays';
+export { type AgendaImageOptions, agendaImage, drawAgendaImage } from './web/agendaImage';
 export { type AgendaMessages, DEFAULT_AGENDA_MESSAGES } from './web/agendaMessages';
 export { NostrCalendarEvent } from './web/calendarEvent';
 export { NpCalendarSave } from './web/calendarSave';

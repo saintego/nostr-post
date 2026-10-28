@@ -24,6 +24,14 @@ export {
   windowDates,
 } from './agenda';
 export { type AgendaItem, agendaItem } from './agendaItem';
+export {
+  type AgendaSummary,
+  type AgendaSummaryOptions,
+  type AgendaTextOptions,
+  agendaSummary,
+  agendaText,
+  type SummaryDay,
+} from './agendaShare';
 export { AGENDA_LIMIT, type AgendaQuery, agendaFilters } from './agendaQuery';
 export { CALENDAR_EVENT_MANIFEST } from './calendarManifest';
 export {
