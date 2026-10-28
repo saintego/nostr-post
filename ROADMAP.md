@@ -139,6 +139,9 @@
   - [x] Gigs in the agenda link to their page (`#/event/<naddr>`): `<nostr-calendar-agenda>`'s `eventHref`
   - [ ] The add flow's preview shows event actions (RSVP, Add to calendar, .ics) that would act on a
         placeholder address: a view option to hide actions
+  - [ ] Artist slug should be based on their social/bandcamp links
+  - [ ] validate artist links from AI
+  - [ ] validate existance of artist wiki by links, name, before creating new
   - [ ] Artist page lists the artist's gigs (events with its `a` tag: a related section, `wikiConfig.related`)
   - [ ] Cities: a map/search picker instead of the fixed list (geohash prefix of any place)
   - [ ] The Claude call (`askClaude`) is untested against the real API: try it with a key and a poster
@@ -245,15 +248,11 @@
 - [x] One text normalization in core (`@nostr-post/core/textNormalize`: `slugify`, `nip54DTag`,
       `textWords`, `foldAccents`): wiki's `normalizeDTag` (now `nip54DTag`), plugin-list's
       `newSetDTag` and plugin-date's `titleSimilarity` use it; their outputs are unchanged
-- [ ] Who may update a post (update comments, kind 1 and addressable alike), in layers:
-      - the post decides what's allowed: the author, editors it names (`p` + role, done), and an open
-        flag as a NIP-32 self-label, `["L", "nostr-post.updates"], ["l", "anyone", "nostr-post.updates"]`
-        (not a NIP of its own: other clients ignore it), e.g. for imported gigs that should "live their
-        own life" until the promoter takes over
-      - the manifest only sets the composer's default for that label
-      - the viewer filters open posts: everyone's updates, or only their web of trust (follow list
-        first); viewers with different follows can see different versions of an open post
-      - others' updates show as suggestions in any case
+- [ ] Who may update a post (update comments, kind 1 and addressable alike), in layers: - the post decides what's allowed: the author, editors it names (`p` + role, done), and an open
+      flag as a NIP-32 self-label, `["L", "nostr-post.updates"], ["l", "anyone", "nostr-post.updates"]`
+      (not a NIP of its own: other clients ignore it), e.g. for imported gigs that should "live their
+      own life" until the promoter takes over - the manifest only sets the composer's default for that label - the viewer filters open posts: everyone's updates, or only their web of trust (follow list
+      first); viewers with different follows can see different versions of an open post - others' updates show as suggestions in any case
 
 - [x] Set up Vitest for unit testing
 - [x] Unit tests for validation functions in @nostr-post/core
