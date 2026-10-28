@@ -9,9 +9,11 @@ export {
   type EmbedProvider,
   embedFor,
   embedPlugin,
+  linkFromEmbedCode,
   linkProvider,
   linksOf,
 } from './core';
+export { checkLink, isCheckableLink, type LinkCheck, namesMatch } from './linkCheck';
 export {
   type ProfileLink,
   type ProfilePlatform,

@@ -10,7 +10,7 @@ import type { PostField } from '@nostr-post/plugins/types';
 import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
-import { linksOf } from '../core';
+import { embedFor, linkFromEmbedCode, linkProvider, linksOf } from '../core';
 import './embed';
 import { DEFAULT_EMBED_MESSAGES, type EmbedMessages } from './embedMessages';
 import { embedStyles } from './embedStyles';
@@ -77,12 +77,13 @@ export class NpEmbedInput extends LitElement {
         (row, index) => html`
           <div class="row">
             <input
-              type="url"
+              type="text"
+              inputmode="url"
               placeholder=${m.placeholder}
               .value=${live(row)}
               @change=${(e: Event) => {
                 const next = [...rows];
-                next[index] = (e.target as HTMLInputElement).value;
+                next[index] = linkFromEmbedCode((e.target as HTMLInputElement).value);
                 this._emit(next);
               }}
             />
@@ -99,6 +100,11 @@ export class NpEmbedInput extends LitElement {
             }
           </div>
           ${row.trim() ? html`<np-embed .url=${row.trim()} .messages=${this.messages}></np-embed>` : nothing}
+          ${
+            linkProvider(row) === 'bandcamp' && !embedFor(row)
+              ? html`<p class="hint">${m.bandcampHint}</p>`
+              : nothing
+          }
         `
       )}
       ${

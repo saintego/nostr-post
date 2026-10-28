@@ -83,10 +83,15 @@ export {
 
 // Players for links (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp)
 export {
+  checkLink,
   type Embed,
   embedFor,
   embedPlugin,
+  isCheckableLink,
+  type LinkCheck,
+  linkFromEmbedCode,
   linkProvider,
+  namesMatch,
   profileLink,
   profileUrls,
 } from '@nostr-post/plugin-embed';

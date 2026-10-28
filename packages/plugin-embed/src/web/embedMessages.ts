@@ -13,6 +13,8 @@ export interface EmbedMessages {
   placeholder: string;
   addLink: string;
   remove: string;
+  /** Under a Bandcamp page link, which gets no player */
+  bandcampHint: string;
 }
 
 export const DEFAULT_EMBED_MESSAGES: EmbedMessages = {
@@ -28,4 +30,6 @@ export const DEFAULT_EMBED_MESSAGES: EmbedMessages = {
   placeholder: 'https://… (YouTube, Spotify, SoundCloud, Bandcamp, any link)',
   addLink: 'Add link',
   remove: 'Remove',
+  bandcampHint:
+    "For a player, paste Bandcamp's embed code instead (on the album's page: Share / Embed)",
 };

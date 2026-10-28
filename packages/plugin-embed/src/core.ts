@@ -114,6 +114,15 @@ export const linkProvider = (link: string): EmbedProvider | undefined => {
   return embedFor(link)?.provider;
 };
 
+/**
+ * The link in a site's embed code (`<iframe src="…">`), e.g. Bandcamp's "Share / Embed" code,
+ * whose player link has the album number its page link lacks; other text as it is
+ */
+export const linkFromEmbedCode = (text: string): string => {
+  const src = text.match(/<iframe\b[^>]*\bsrc=["']([^"']+)["']/i)?.[1];
+  return src ? src.replace(/&amp;/g, '&') : text;
+};
+
 /** The links in a field's value: one link or a list */
 export const linksOf = (value: unknown): string[] =>
   (Array.isArray(value) ? value : [value]).filter(

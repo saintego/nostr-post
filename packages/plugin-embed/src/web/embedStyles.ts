@@ -74,6 +74,16 @@ export const embedStyles = css`
     padding: 0.25rem 0;
   }
 
+  .hint {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  :host-context(.dark) .hint {
+    color: #9ca3af;
+  }
+
   :host-context(.dark) .placeholder {
     background: #1f2937;
     border-color: #4b5563;
