@@ -2,8 +2,9 @@
  * @nostr-post/plugin-wiki-entity - Entities in form JSON
  *
  * How a picker field asks for its entities in form JSON (`jsonSchema`): by what tells an entity
- * apart, its name and its links (the entity manifest's fields written as `r` or `i` tags), e.g. a
- * musician's name and Bandcamp or Instagram profile. `entityItems` reads them back with the
+ * apart, its name and its links (the entity manifest's fields written as `r` or `i` tags), and its
+ * hashtags (`t` tags), e.g. a musician's name, Bandcamp or Instagram profile and genres. Hashtags
+ * prefill a new page and qualify its slug when the name is taken. `entityItems` reads them back with the
  * NIP-73 ids (`i` tags) the links give, to look the entities' pages up (`resolveEntities`).
  */
 
@@ -19,7 +20,7 @@ export interface EntityItem {
   name: string;
   /** NIP-73 ids of its links (`i` tag values), e.g. canonical profile URLs */
   ids: string[];
-  /** The entity's form data: its name and links, to create or update its page with */
+  /** The entity's form data: its name, links and hashtags, to create or update its page with */
   prefill: Record<string, unknown>;
 }
 
@@ -27,6 +28,9 @@ const isLinkField = (field: PostField): boolean =>
   getFieldTargets(field).some(
     (t) => t.target === 'tag' && (t.tagName === 'r' || t.tagName === 'i')
   );
+
+const isHashtagField = (field: PostField): boolean =>
+  getFieldTargets(field).some((t) => t.target === 'tag' && t.tagName === 't');
 
 /** An entity manifest's link fields (written as `r` or `i` tags) */
 export const linkFields = (manifest: NostrPostManifest): PostField[] =>
@@ -36,10 +40,12 @@ export const linkFields = (manifest: NostrPostManifest): PostField[] =>
 const nameOf = (manifest: NostrPostManifest): string | undefined =>
   nameFieldId(manifest) ?? manifest.fields.find((f) => f.required && f.type === 'string')?.id;
 
-/** The fields that tell an entity of this type apart: its name and its links */
+/** The fields that tell an entity of this type apart: its name, links and hashtags */
 export const identityFields = (manifest: NostrPostManifest): PostField[] => {
   const nameId = nameOf(manifest);
-  return manifest.fields.filter((field) => field.id === nameId || isLinkField(field));
+  return manifest.fields.filter(
+    (field) => field.id === nameId || isLinkField(field) || isHashtagField(field)
+  );
 };
 
 const identityManifest = (manifest: NostrPostManifest): NostrPostManifest => ({
@@ -48,7 +54,7 @@ const identityManifest = (manifest: NostrPostManifest): NostrPostManifest => ({
   fields: identityFields(manifest),
 });
 
-/** The JSON Schema of one entity of this type: its name and links, as the type's fields ask */
+/** The JSON Schema of one entity of this type: its name, links and hashtags, as the type's fields ask */
 export const entityJsonSchema = (manifest: NostrPostManifest): Record<string, unknown> =>
   formJsonSchema(identityManifest(manifest));
 

@@ -64,9 +64,9 @@ const page = (dTag: string, title: string, ids: string[] = []) => ({
 const IG = 'https://www.instagram.com/doomsday';
 
 describe('entityJsonSchema / entityItems', () => {
-  it('asks for the name and the link fields only', () => {
+  it('asks for the name, link and hashtag fields only', () => {
     const schema = entityJsonSchema(MUSICIAN);
-    expect(Object.keys(schema.properties as object)).toEqual(['title', 'media']);
+    expect(Object.keys(schema.properties as object)).toEqual(['title', 'genres', 'media']);
   });
 
   it("reads items with their links' ids, and plain names", () => {
@@ -153,7 +153,7 @@ describe('wikiEntityPickerPlugin', () => {
   it("asks for a list of the entity manifest's items", () => {
     expect(wikiEntityPickerPlugin.jsonSchema?.(field)).toMatchObject({
       type: 'array',
-      items: { type: 'object', required: ['title', 'media'] },
+      items: { type: 'object', required: ['title', 'genres', 'media'] },
     });
   });
 

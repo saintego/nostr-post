@@ -468,8 +468,9 @@ with `metadata.multiple`). A plugin without `jsonSchema` is left out: its value'
 known. With several user-selectable publish formats the schema adds `publishFormat`. The plugins
 that have it: `date` (`{ start, end, tzid }`), `hashtag`, `markdown`, `stars`, `identifier`,
 `embed` (profile links also as `i` tags), `media`, and `wiki-entity-picker`. The picker asks
-for each entity by what tells it apart: the entity manifest's name field and link fields (written
-as `r` or `i` tags), e.g. a musician's name and profiles. `parseJson` looks their pages up by the
+for each entity by what tells it apart: the entity manifest's name field, link fields (written
+as `r` or `i` tags) and hashtag fields (`t`), e.g. a musician's name, profiles and genres; the
+hashtags prefill a new page and qualify its slug when the name is taken. `parseJson` looks their pages up by the
 links' `i` tags first, then by the name's d-tag (a page with that name but none of the same links
 is another entity). Entities without a page stay in the value unlinked (no `a` tag, their links
 still as `i` tags, so a page created later finds the post) with a `create` suggestion; the picker

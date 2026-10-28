@@ -25,7 +25,11 @@ export const ARTIST_MANIFEST = {
       type: 'string',
       uiPlugin: 'hashtag',
       mapTo: { kind: 30818, target: 'tag', tagName: 't' },
-      metadata: { label: 'Genres', suggestions: [] },
+      metadata: {
+        label: 'Genres',
+        description: 'Their music genres, e.g. punk or techno',
+        suggestions: [],
+      },
     },
     {
       id: 'media',
