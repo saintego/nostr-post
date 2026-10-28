@@ -7,11 +7,13 @@ import {
   agendaFilter,
   coordinateEvents,
   fetchEvents,
+  findJsonObject,
   isDryRun,
   pluginRegistry,
   similarEvents,
 } from '../../nostr-post.js';
 import { askClaude, gigPrompt, readAnswer } from './ai.js';
+import { suggestedLinks } from './links.js';
 import { GIG_MANIFEST } from './manifests.js';
 import { escapeHtml, eventLink, html, main, store } from './util.js';
 
@@ -59,10 +61,13 @@ export function addGig() {
         <p class="hint">Copy this prompt to any AI (with the poster, if you have one), then paste its answer below.</p>
         <textarea id="prompt" rows="6" readonly></textarea>
       </details>
+      <label><input id="suggest-links" type="checkbox" ${store.get('gigs:suggest-links') === '0' ? '' : 'checked'} />
+        Let the AI suggest performers' Spotify, SoundCloud and YouTube links (checked by asking those sites)</label>
       <textarea id="answer" rows="6" placeholder="The AI's answer (JSON)"></textarea>
       <button type="button" id="use">Preview</button>
       <p id="ai-status" class="hint" role="status"></p>
     </section>
+    <section class="step" id="suggested" hidden></section>
     <section class="step" id="review" hidden>
       <h3>3. Check it</h3>
       <div id="duplicates"></div>
@@ -79,10 +84,15 @@ export function addGig() {
   const status = (text) => {
     $('ai-status').textContent = text;
   };
+  const suggestLinks = () => $('suggest-links').checked;
   const updatePrompt = () => {
-    $('prompt').value = gigPrompt($('post-text').value);
+    $('prompt').value = gigPrompt($('post-text').value, { suggestLinks: suggestLinks() });
   };
   $('post-text').addEventListener('input', updatePrompt);
+  $('suggest-links').addEventListener('change', () => {
+    store.set('gigs:suggest-links', suggestLinks() ? '1' : '0');
+    updatePrompt();
+  });
   updatePrompt();
 
   $('ask').addEventListener('click', async () => {
@@ -95,6 +105,7 @@ export function addGig() {
         apiKey,
         text: $('post-text').value,
         poster: $('poster').files?.[0],
+        suggestLinks: suggestLinks(),
       });
       status('Done: check the preview below.');
       $('use').click();
@@ -103,13 +114,28 @@ export function addGig() {
     }
   });
 
+  // Links the post doesn't have, suggested by the AI: the ones Spotify, SoundCloud or YouTube
+  // know by the performer's name are offered to confirm (by playing them) before the preview
   $('use').addEventListener('click', async () => {
+    $('review').hidden = true;
+    $('suggested').hidden = true;
+    const json = findJsonObject($('answer').value);
+    if (!json.success) return status(`Couldn't read the answer: ${json.error.message}`);
+    status('Checking the links the AI suggested…');
+    const suggestions = await suggestedLinks(json.data, $('post-text').value);
+    status('');
+    if (!suggestions.length) return showDraft([]);
+    renderSuggestedLinks($('suggested'), suggestions, showDraft);
+  });
+
+  const showDraft = async (confirmed) => {
     let draft;
     try {
       status('Reading the answer…');
       draft = await readAnswer($('answer').value, {
         text: $('post-text').value,
         poster: $('poster').files?.[0],
+        confirmed,
       });
       status('');
     } catch (error) {
@@ -150,7 +176,7 @@ export function addGig() {
           })
           .join(', ')}. RSVP there instead of adding it again?</div>`
       : '';
-  });
+  };
 
   $('composer').addEventListener('nostr-post-published', (e) => {
     const event = e.detail?.[0];
@@ -159,6 +185,36 @@ export function addGig() {
     const where = isDryRun() ? ' (test mode: not sent to relays)' : '';
     $('published').innerHTML =
       `Published${where}: <a href="${eventLink(`${event.kind}:${event.pubkey}:${d}`)}">open the gig</a>`;
+  });
+}
+
+/**
+ * The links the AI suggested and their provider knows by the performer's name, as players with
+ * "It's them" to confirm each: `onContinue` gets the confirmed links
+ */
+function renderSuggestedLinks(target, suggestions, onContinue) {
+  target.hidden = false;
+  target.innerHTML = `<h3>Links the AI suggested</h3>
+    <p class="hint">Not in the post. They exist, under the performer's name, but may be someone
+    else's with the same name: play each one and tick those that are really them.</p>
+    ${suggestions
+      .map(
+        (s, i) => `<div class="performer"><strong>${escapeHtml(s.name)}</strong>
+          <np-embed data-i="${i}"></np-embed>
+          <label><input type="checkbox" data-i="${i}" /> It's them (${escapeHtml(s.names.join(' · '))})</label>
+        </div>`
+      )
+      .join('')}
+    <button type="button" id="continue">Continue</button>`;
+  for (const embed of target.querySelectorAll('np-embed')) {
+    embed.url = suggestions[Number(embed.dataset.i)].link;
+  }
+  target.querySelector('#continue').addEventListener('click', () => {
+    const confirmed = [...target.querySelectorAll('input:checked')].map(
+      (box) => suggestions[Number(box.dataset.i)].link
+    );
+    target.hidden = true;
+    onContinue(confirmed);
   });
 }
 

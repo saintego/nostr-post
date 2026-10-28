@@ -16,11 +16,23 @@ import { GIG_MANIFEST } from './manifests.js';
  */
 export const gigSchema = () => formJsonSchema(GIG_MANIFEST);
 
-/** The prompt for a gig's text (and, sent separately, its poster) */
-export const gigPrompt = (text, today = new Date().toISOString().slice(0, 10)) =>
+/** Asks the AI for performers' links the post doesn't have; they're checked before use */
+const SUGGEST_LINKS = `
+Performers' media may also have links you know for them that the post doesn't: their Spotify
+artist page, SoundCloud profile or a YouTube video of theirs (these are checked; no other sites).`;
+
+/**
+ * The prompt for a gig's text (and, sent separately, its poster). `suggestLinks`: also ask for
+ * performers' Spotify, SoundCloud and YouTube links the post doesn't have (`suggestedLinks`
+ * checks them).
+ */
+export const gigPrompt = (
+  text,
+  { today = new Date().toISOString().slice(0, 10), suggestLinks = false } = {}
+) =>
   `Extract the event from this post about a concert or party. Today is ${today}: a date without a
-year is the next one. Use only what the post says; null when it doesn't say. Answer with JSON only,
-no other text, valid against this JSON Schema:
+year is the next one. Use only what the post says; null when it doesn't say.${suggestLinks ? SUGGEST_LINKS : ''}
+Answer with JSON only, no other text, valid against this JSON Schema:
 ${JSON.stringify(gigSchema())}
 
 Post:
@@ -31,14 +43,15 @@ ${text || '(see the poster image)'}`;
  * gives it): performers become their musician pages, found by their profile links or names;
  * those without a page stay unlinked (their links still tag the gig) and are named in the
  * description, so the gig says who plays. Only links the post's `text` has are used (with a
- * poster, others are kept as `fromPoster`, for the user to check). A start with a time is
+ * poster, others are kept as `fromPoster`, for the user to check), and those the user `confirmed`
+ * (from `suggestedLinks`). A start with a time is
  * published as a timed event, whatever format the AI chose. `performers`: each performer's name
  * and links, as the AI read them. Throws when the answer has no usable JSON.
  */
-export const readAnswer = async (answer, { text = '', poster } = {}) => {
+export const readAnswer = async (answer, { text = '', poster, confirmed = [] } = {}) => {
   const json = findJsonObject(answer);
   if (!json.success) throw json.error;
-  const { value, fromPoster } = checkLinks(json.data, text, Boolean(poster));
+  const { value, fromPoster } = checkLinks(json.data, text, Boolean(poster), confirmed);
   const parsed = await parseFormJson(GIG_MANIFEST, value);
   if (!parsed.success) throw parsed.error;
   const { formatId, formData, suggestions } = parsed.data;
@@ -85,7 +98,13 @@ const base64Of = (file) =>
  * gigSchema(). On a safety decline the API retries on Anthropic's recommended fallback model
  * (`fallbacks: "default"`); a refusal of the whole chain throws.
  */
-export async function askClaude({ apiKey, model = 'claude-opus-5-5', text, poster }) {
+export async function askClaude({
+  apiKey,
+  model = 'claude-opus-5-5',
+  text,
+  poster,
+  suggestLinks = false,
+}) {
   const { default: Anthropic } = await import(SDK_URL);
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   const content = [];
@@ -95,7 +114,7 @@ export async function askClaude({ apiKey, model = 'claude-opus-5-5', text, poste
       source: { type: 'base64', media_type: poster.type, data: await base64Of(poster) },
     });
   }
-  content.push({ type: 'text', text: gigPrompt(text) });
+  content.push({ type: 'text', text: gigPrompt(text, { suggestLinks }) });
   const response = await client.beta.messages.create({
     model,
     max_tokens: 16000,

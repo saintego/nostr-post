@@ -15,7 +15,10 @@ players, RSVP, `.ics` import and export.
   hint when it seems to be on Nostr already → the composer, prefilled, to correct and publish.
   Nothing the AI returns is published without you. The AI's JSON follows the gig manifest
   (`formJsonSchema`). Only links the post's text has are kept (with a poster, others are kept but
-  marked "read from the poster"); the performers' links show as players. Performers are matched to
+  marked "read from the poster"); the performers' links show as players. Optionally the AI also
+  suggests performers' Spotify, SoundCloud and YouTube links: those whose site knows them by the
+  performer's name (`checkLink`, `namesMatch`) are offered as players to confirm ("It's them"),
+  the others are dropped. Performers each get the gig's genres too. Performers are matched to
   their pages by profile link, then name; those without a page stay as text (in the description)
   and their profile links still tag the gig; the form offers "Create page" for them.
 - **Import** (`#/import`): an `.ics` file (e.g. Facebook's export of your events) → review each
@@ -24,7 +27,8 @@ players, RSVP, `.ics` import and export.
   signer's dry run).
 
 App-specific data (the musician and gig manifests, cities, genres) is in `manifests.js`; the AI
-prompt and the Claude call in `ai.js`; the link check in `links.js`. Everything else comes from the packages.
+prompt and the Claude call in `ai.js`; the link check in `links.js`; pages in `browse.js`,
+`addGig.js` and `app.js` (router, gig, musician, import). Everything else comes from the packages.
 
 Run it with `pnpm preview:pages` and open `/examples/gigs/`. Planned work is in
 [ROADMAP.md](../../ROADMAP.md) ("Gig platform example").

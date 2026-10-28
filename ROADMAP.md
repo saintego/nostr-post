@@ -119,8 +119,9 @@
       (`<nostr-post-feed agenda agenda-view="month">`, `monthGrid`)
 - [ ] rich media preview - youtube with play, spotify/bandcamp/soundcloud with playlist if possible.
       Done for link fields: `@nostr-post/plugin-embed` (`uiPlugin: 'embed'`, click-to-load players).
-      Left: players for links inside note text; Bandcamp page links (the album id is only on the
-      page: store it with the link, or read it through a proxy)
+      Bandcamp: its embed code (Share / Embed) pasted into the field becomes the player link.
+      Left: players for links inside note text; Bandcamp page links (the album number is only on the
+      page, also for direct album links: read it through a proxy, e.g. the cron)
 - [ ] Gig platform example (`examples/gigs`, plan: static nsite now, cron worker later in its own repo)
   - [x] Static app: city + genre + date browser (agenda/month with `#g`/`#t`), event and artist pages,
         "add gig" composer
@@ -149,6 +150,9 @@
           slug still starts with the name; the wiki composer picks the first free one
     - [x] validate artist links from AI input: only links in the post's text (or marked as read from
           the poster); the preview shows them as players, so the user sees what was found
+    - [x] AI-suggested links (opt-in): Spotify, SoundCloud and YouTube links the post doesn't have are
+          checked with the provider (oEmbed: exists, and under the performer's name) and offered as
+          players to confirm; Bandcamp, Instagram and Facebook can't be checked from a browser
     - [x] artist wiki is not mandatory: performers without a page stay as text, linked through their
           profile links (`i` tags), so a page created later finds the gig. The picker keeps them as
           unlinked values with "Create page" (prefilled with name and links)
