@@ -138,7 +138,7 @@ export interface FormJson {
  * The JSON object in `text`: the text itself, or the object inside prose or code fences (as
  * AIs often wrap it)
  */
-const jsonObjectIn = (text: string): Result<unknown> => {
+export const findJsonObject = (text: string): Result<unknown> => {
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start < 0 || end <= start) return { success: false, error: new Error('No JSON object') };
@@ -156,7 +156,7 @@ const jsonObjectIn = (text: string): Result<unknown> => {
  */
 export function parseFormJson(manifest: NostrPostManifest, input: unknown): Result<FormJson> {
   const parsed: Result<unknown> =
-    typeof input === 'string' ? jsonObjectIn(input) : { success: true, data: input };
+    typeof input === 'string' ? findJsonObject(input) : { success: true, data: input };
   if (!parsed.success) return parsed;
   const values = parsed.data;
   if (!values || typeof values !== 'object' || Array.isArray(values)) {

@@ -5,7 +5,8 @@
  * draft: the app shows it as a preview and in the composer before anything is published.
  */
 
-import { formJsonSchema, parseFormJson } from '../../nostr-post.js';
+import { findJsonObject, formJsonSchema, parseFormJson } from '../../nostr-post.js';
+import { checkLinks } from './links.js';
 import { GIG_MANIFEST } from './manifests.js';
 
 /**
@@ -29,18 +30,28 @@ ${text || '(see the poster image)'}`;
  * The gig form's values and publish format from the AI's answer (text with JSON, as any AI
  * gives it): performers become their musician pages, found by their profile links or names;
  * those without a page stay unlinked (their links still tag the gig) and are named in the
- * description, so the gig says who plays. A start with a time is published as a timed event,
- * whatever format the AI chose. Throws when the answer has no usable JSON.
+ * description, so the gig says who plays. Only links the post's `text` has are used (with a
+ * poster, others are kept as `fromPoster`, for the user to check). A start with a time is
+ * published as a timed event, whatever format the AI chose. `performers`: each performer's name
+ * and links, as the AI read them. Throws when the answer has no usable JSON.
  */
-export const readAnswer = async (answer) => {
-  const parsed = await parseFormJson(GIG_MANIFEST, answer);
+export const readAnswer = async (answer, { text = '', poster } = {}) => {
+  const json = findJsonObject(answer);
+  if (!json.success) throw json.error;
+  const { value, fromPoster } = checkLinks(json.data, text, Boolean(poster));
+  const parsed = await parseFormJson(GIG_MANIFEST, value);
   if (!parsed.success) throw parsed.error;
   const { formatId, formData, suggestions } = parsed.data;
+  const performers = (Array.isArray(value.performers) ? value.performers : []).flatMap((p) =>
+    p?.title ? [{ name: p.title, links: Array.isArray(p.media) ? p.media : [] }] : []
+  );
   const timed = /T\d\d:\d\d/.test(formData.when?.start ?? '');
   return {
     formatId: timed ? 'timed' : (formatId ?? 'all-day'),
     formData: withUnlinkedNames(formData),
     suggestions,
+    performers,
+    fromPoster,
   };
 };
 

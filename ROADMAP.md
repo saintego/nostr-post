@@ -147,7 +147,7 @@
           the name plus a genre or city; a taken slug whose page has the same link is that musician.
           The handle is added to the name as the qualifier (`doomsday-doomsdayband-musician`), so the
           slug still starts with the name; the wiki composer picks the first free one
-    - [ ] validate artist links from AI input: only links in the post's text (or marked as read from
+    - [x] validate artist links from AI input: only links in the post's text (or marked as read from
           the poster); the preview shows them as players, so the user sees what was found
     - [x] artist wiki is not mandatory: performers without a page stay as text, linked through their
           profile links (`i` tags), so a page created later finds the gig. The picker keeps them as
@@ -160,7 +160,9 @@
     - [ ] Editing an event with several picked entities: their `i` tags come back on one nameless
           unlinked value (tags can't be told apart by entity); unlinked entities' names aren't stored
           in tags, only in the description
-  - [ ] Artist page lists the artist's gigs (events with its `a` tag: a related section, `wikiConfig.related`)
+  - [x] Artist page lists the artist's gigs: events with its `a` tag or one of its profile links (`i`).
+        In the gigs app for now; a generic version would be a related section (`wikiConfig.related`)
+        that also queries `#i`
   - [ ] Cities: a map/search picker instead of the fixed list (geohash prefix of any place)
   - [ ] The Claude call (`askClaude`) is untested against the real API: try it with a key and a poster
   - [x] The AI's JSON Schema comes from the gig manifest (`formJsonSchema`, plugins' `jsonSchema`), and

@@ -56,7 +56,7 @@ export { encodeNaddr, decodeNaddr } from '@nostr-post/core/nip19';
 export { pluginRegistry } from '@nostr-post/plugins/registry';
 // A manifest's form data as JSON (e.g. an AI's structured output); the plugins' versions
 export { formJsonSchema, parseFormJson } from '@nostr-post/plugins/formJson';
-export { PUBLISH_FORMAT_KEY } from '@nostr-post/core/formJson';
+export { findJsonObject, PUBLISH_FORMAT_KEY } from '@nostr-post/core/formJson';
 
 // Geo helpers
 export {

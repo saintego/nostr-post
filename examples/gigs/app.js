@@ -138,15 +138,42 @@ function eventPage(id) {
   card.address = address ?? '';
 }
 
-/** An artist's wiki page: their links as players */
-function artistPage(dTag) {
+/** A musician's wiki page: their links as players, and their gigs */
+function artistPage(id) {
+  const dTag = decodeURIComponent(id);
   main.innerHTML = html`
     <p><a href="#/">← All gigs</a> · <a href="#/artist-new">Add an artist</a></p>
     <nostr-wiki-view id="artist"></nostr-wiki-view>
+    <h3>Gigs</h3>
+    <nostr-post-feed id="gigs"></nostr-post-feed>
   `;
   const view = document.getElementById('artist');
   view.manifest = ARTIST_MANIFEST;
-  view.entityId = decodeURIComponent(dTag);
+  view.entityId = dTag;
+  void showArtistGigs(document.getElementById('gigs'), dTag);
+}
+
+/**
+ * The gigs that link a musician: by its page (`a` tag, any version's author) or by its profile
+ * links (`i` tags), so gigs added before the page existed show too
+ */
+async function showArtistGigs(feed, dTag) {
+  const versions = await fetchEvents({ kinds: [30818], '#d': [dTag] }).catch(() => []);
+  const addresses = [...new Set(versions.map((v) => `30818:${v.pubkey}:${dTag}`))];
+  const ids = [
+    ...new Set(versions.flatMap((v) => v.tags.filter((t) => t[0] === 'i').map((t) => t[1]))),
+  ];
+  const kinds = [31922, 31923];
+  const filters = [
+    ...(addresses.length ? [{ kinds, '#a': addresses }] : []),
+    ...(ids.length ? [{ kinds, '#i': ids }] : []),
+  ];
+  if (!filters.length) {
+    feed.replaceWith(Object.assign(document.createElement('p'), { textContent: 'No gigs yet.' }));
+    return;
+  }
+  feed.manifest = GIG_MANIFEST;
+  feed.filters = filters;
 }
 
 /** A new artist's page, with the name filled in when given (`#/artist-new/<name>`) */
@@ -219,6 +246,7 @@ function addGig() {
       <div id="duplicates"></div>
       <p class="hint">How it will look:</p>
       <nostr-post-view id="preview"></nostr-post-view>
+      <div id="performer-links"></div>
       <p class="hint" id="performers-hint"></p>
       <h3>4. Correct and publish</h3>
       <nostr-post-composer id="composer" auto-publish></nostr-post-composer>
@@ -257,7 +285,10 @@ function addGig() {
     let draft;
     try {
       status('Reading the answer…');
-      draft = await readAnswer($('answer').value);
+      draft = await readAnswer($('answer').value, {
+        text: $('post-text').value,
+        poster: $('poster').files?.[0],
+      });
       status('');
     } catch (error) {
       return status(`Couldn't read the answer: ${error.message}`);
@@ -270,6 +301,7 @@ function addGig() {
     } catch (error) {
       status(`Preview: ${error.message}`);
     }
+    renderPerformerLinks($('performer-links'), draft);
     // Performers with a page are picked in the form, the others show "Create page" there;
     // pages that lack links from the post can get them
     const updates = (draft.suggestions.performers ?? []).filter((s) => s.action === 'update');
@@ -306,6 +338,31 @@ function addGig() {
     $('published').innerHTML =
       `Published${where}: <a href="${eventLink(`${event.kind}:${event.pubkey}:${d}`)}">open the gig</a>`;
   });
+}
+
+/** The performers' links as players, so the user sees what the AI found (and from where) */
+function renderPerformerLinks(target, { performers, fromPoster }) {
+  const withLinks = performers.filter((p) => p.links.length);
+  target.innerHTML = withLinks.length
+    ? `<p class="hint">Performers' links:</p>${withLinks
+        .map(
+          (p, i) => `<div class="performer"><strong>${escapeHtml(p.name)}</strong>
+            ${p.links
+              .map(
+                (link, j) =>
+                  `<div><np-embed data-p="${i}" data-l="${j}"></np-embed>${
+                    fromPoster.includes(link)
+                      ? '<span class="warning">Read from the poster, not in the text: check it</span>'
+                      : ''
+                  }</div>`
+              )
+              .join('')}</div>`
+        )
+        .join('')}`
+    : '';
+  for (const embed of target.querySelectorAll('np-embed')) {
+    embed.url = withLinks[Number(embed.dataset.p)].links[Number(embed.dataset.l)];
+  }
 }
 
 // ── Importing .ics ────────────────────────────────────────────────────

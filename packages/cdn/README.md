@@ -105,6 +105,7 @@ The bundle re-exports utilities for advanced usage:
   shape, as text (also wrapped in prose or code fences, as AIs answer) or parsed (e.g. performer names
   turned into their wiki pages)
 - `PUBLISH_FORMAT_KEY`: the property holding the chosen publish format
+- `findJsonObject(text)`: a `Result` with the JSON object in text (also inside prose or code fences)
 
 **Geo helpers**
 
