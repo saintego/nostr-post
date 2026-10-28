@@ -21,7 +21,6 @@ import {
 import type { CreatedEntity, WikiEvent } from '@nostr-post/wiki';
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { ref } from 'lit/directives/ref.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import '@nostr-post/wiki/web';
 import {
@@ -42,19 +41,10 @@ import {
   DEFAULT_WIKI_ENTITY_PICKER_MESSAGES,
   type WikiEntityPickerMessages,
 } from './pickerMessages';
+import { renderModal } from './modal';
 import { isShown, renderPickedChip } from './pickedChip';
 import { type EntitySearchResult, searchEntities } from './search';
 import { pickerStyles } from './webStyles';
-
-/** Events from the create dialog's composer that must not reach the form around the picker */
-const DIALOG_EVENTS = [
-  'np-value-changed',
-  'nostr-wiki-field-change',
-  'nostr-wiki-submit',
-  'nostr-wiki-published',
-  'nostr-wiki-error',
-  'wiki-entity-create',
-];
 
 @customElement('wiki-entity-picker')
 export class WikiEntityPicker extends LitElement {
@@ -303,35 +293,9 @@ export class WikiEntityPicker extends LitElement {
     this._creating = undefined;
   }
 
-  private _isolated = new WeakSet<Element>();
-
-  /** Keep the dialog composer's events from reaching the form around the picker */
-  private _isolateDialog = (el?: Element) => {
-    if (!el || this._isolated.has(el)) return;
-    this._isolated.add(el);
-    for (const type of DIALOG_EVENTS) el.addEventListener(type, (e) => e.stopPropagation());
-  };
-
   /** Overlay shared by the create dialog and the preview */
   private _renderModal(title: string, body: unknown, onClose: () => void) {
-    return html`
-      <div class="modal-backdrop" @click=${onClose}>
-        <div
-          class="modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label=${title}
-          @click=${(e: Event) => e.stopPropagation()}
-          ${ref(this._isolateDialog)}
-        >
-          <div class="modal-header">
-            <span>${title}</span>
-            <button type="button" class="clear-btn" aria-label=${this._m.close} @click=${onClose}>×</button>
-          </div>
-          <div class="modal-body">${body}</div>
-        </div>
-      </div>
-    `;
+    return renderModal({ title, body, closeLabel: this._m.close, onClose });
   }
 
   private _renderCreateDialog() {
