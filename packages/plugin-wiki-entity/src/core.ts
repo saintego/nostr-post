@@ -275,7 +275,8 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
     const ids = tags.filter((t) => t[0] === 'i' && t[1]).map((t) => t[1] as string);
     if (isMultiple(field)) {
       // The `i` tags can't be told apart by entity: kept on a nameless unlinked value, so editing
-      // the event keeps the links of picked and unlinked entities alike
+      // the event keeps the links of picked and unlinked entities alike (`withPageLinks` gives
+      // picked entities theirs back)
       const links: WikiEntityData[] = ids.length
         ? [{ dTag: '', resolvedPubkey: '', externalIds: ids, unlinked: true }]
         : [];

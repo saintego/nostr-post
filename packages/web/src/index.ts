@@ -23,6 +23,9 @@ export { colors, baseStyles } from './theme';
 export { runAfterPublish, runBeforePublish, runPublishHooks } from '@nostr-post/plugins/publish';
 export { type NostrPostSubmitDetail, withTags } from './composerSubmit';
 
+// An event's values as form data, e.g. to edit it in your own composer
+export { extractPrefillFromEvent } from './viewUpdates';
+
 // Standard manifests
 export { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
 

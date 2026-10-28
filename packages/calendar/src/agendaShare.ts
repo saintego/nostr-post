@@ -10,6 +10,7 @@ import { defaultTimeZone } from '@nostr-post/plugin-date';
 import {
   type AgendaWindow,
   type CalendarEventLike,
+  eventTimeZone,
   formatWindowRange,
   groupEventsByDay,
 } from './agenda';
@@ -52,13 +53,13 @@ export const agendaSummary = (
   window: AgendaWindow,
   { locale, maxItems = Number.POSITIVE_INFINITY }: AgendaSummaryOptions = {}
 ): AgendaSummary => {
-  const tzid = window.tzid ?? defaultTimeZone();
+  const zoned = { ...window, tzid: window.tzid ?? defaultTimeZone() };
   let left = maxItems;
   let more = 0;
   const days: SummaryDay[] = [];
-  for (const day of groupEventsByDay(events, { ...window, tzid })) {
+  for (const day of groupEventsByDay(events, zoned)) {
     const items = day.events
-      .map((event) => agendaItem(event, day.date, tzid))
+      .map((event) => agendaItem(event, day.date, eventTimeZone(event, zoned)))
       .filter((item) => !item.continued)
       .map(({ time, title, place }) => ({
         ...(time ? { time } : {}),
@@ -71,7 +72,7 @@ export const agendaSummary = (
     if (shown.length)
       days.push({ date: day.date, label: dayLabel(day.date, locale), items: shown });
   }
-  return { range: formatWindowRange({ ...window, tzid }, locale), days, more };
+  return { range: formatWindowRange(zoned, locale), days, more };
 };
 
 export interface AgendaTextOptions extends AgendaSummaryOptions {

@@ -136,6 +136,7 @@ The bundle re-exports utilities for advanced usage:
 - `CALENDAR_EVENT_MANIFEST`: calendar event, all-day or timed by publish format
 - Agenda: `agendaFilters(query)` (an agenda's relay filters), `agendaFilter(window)`,
   `groupEventsByDay(events, window)`, `eventTiming(event)`, `eventDates(timing, tzid?)`,
+  `eventTimeZone(event, window)` (with the window's `eventZones`, events in their own zone),
   `windowDates(window)`, `shiftWindow(window, steps)`, `AgendaWindow`
 - Months: `monthWindow(month)`, `monthGrid(month)`, `shiftMonth(month, steps)`, `formatMonth(month)`
 - RSVP (kind 31925): `fetchRsvps(addresses)`, `publishRsvp(address, status)`,
@@ -195,6 +196,8 @@ The bundle re-exports utilities for advanced usage:
 - `runAfterPublish(manifest, formData, { pubkey, events })`: once the post is published, runs plugins'
   after-publish steps (e.g. the list field saving the venue to lists) with the form data
   `runPublishHooks` returned; returns the errors of those that failed
+- `extractPrefillFromEvent(event, manifest)`: an event's values as form data, to edit it in a
+  composer (`prefill`, with the event's `dTag`)
 
 **Wiki (NIP-54)**: see [packages/wiki](../wiki/README.md)
 
@@ -214,6 +217,8 @@ The bundle re-exports utilities for advanced usage:
 - `searchEntities`, `entityTypeAffixes`
 - `entityJsonSchema(manifest)`, `resolveEntities(items, { entityManifest, relays })`: entities in form JSON
   (name and links) and their wiki pages, found by link (`#i`) or name; the others as unlinked values
+- `withPageLinks(values, relays?)`: an edited event's picked entities with their own links (`i` tags)
+  back, from their pages, so removing one removes its links; the picker does it on edit
 
 **Venues and the venue hub**
 

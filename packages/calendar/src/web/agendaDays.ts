@@ -17,7 +17,7 @@ import {
 } from '@nostr-post/web';
 import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { type AgendaWindow, formatAgendaDate, groupEventsByDay } from '../agenda';
+import { type AgendaWindow, eventTimeZone, formatAgendaDate, groupEventsByDay } from '../agenda';
 import { agendaItem } from '../agendaItem';
 import { type AgendaMessages, DEFAULT_AGENDA_MESSAGES } from './agendaMessages';
 import { renderAgendaRow } from './agendaRow';
@@ -50,7 +50,7 @@ export class NostrCalendarDays extends LitElement {
     const days = groupEventsByDay(roots, window);
     const open = this._open;
     const renderEvent = (event: (typeof roots)[number], date: string) => {
-      const item = agendaItem(event, date, window.tzid);
+      const item = agendaItem(event, date, eventTimeZone(event, window));
       const isOpen = open?.address === item.address && open.date === date;
       const thread = threadByRoot.get(event);
       return html`${renderAgendaRow(item, {

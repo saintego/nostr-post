@@ -4,7 +4,7 @@
  */
 
 import { encodeGeohash, searchNominatim } from '../../nostr-post.js';
-import { CITIES, GENRES, GIG_MANIFEST } from './manifests.js';
+import { GENRES, GIG_MANIFEST } from './manifests.js';
 import { shareImage, shareText } from './share.js';
 import { escapeHtml, eventLink, html, main, store } from './util.js';
 
@@ -40,6 +40,20 @@ const writeFilter = (filter) => {
     if (key !== 'from') store.set(`gigs:${key}`, filter[key] || null);
   }
   history.replaceState(null, '', `#/?${params}`);
+};
+
+/** Cities picked before, the latest first */
+const RECENT_CITIES = 8;
+const recentCities = () => {
+  try {
+    return new Map(JSON.parse(store.get('gigs:cities') ?? '[]'));
+  } catch {
+    return new Map();
+  }
+};
+const rememberCity = (name, g) => {
+  const recent = [...recentCities()].filter(([n]) => n !== name);
+  store.set('gigs:cities', JSON.stringify([[name, g], ...recent].slice(0, RECENT_CITIES)));
 };
 
 /** A city's name in a search result, e.g. "Bangkok, Thailand" */
@@ -81,8 +95,8 @@ export function browse() {
   form.view.value = filter.view;
   $('genres').innerHTML = GENRES.map((g) => `<option value="${escapeHtml(g)}"></option>`).join('');
 
-  // Cities: the app's list, and any place OpenStreetMap knows (searched while typing)
-  const cities = new Map(CITIES.filter((c) => c.geohash).map((c) => [c.name, c.geohash]));
+  // Cities: any place OpenStreetMap knows (searched while typing), and those picked before
+  const cities = recentCities();
   if (filter.city && filter.g) cities.set(filter.city, filter.g);
   const listCities = () => {
     $('cities').innerHTML = [...cities.keys()]
@@ -107,6 +121,8 @@ export function browse() {
 
   const agenda = $('agenda');
   agenda.manifest = GIG_MANIFEST;
+  // A city's gigs at the city's times, wherever the viewer is
+  agenda.eventZones = true;
   // Rows link to the gig's page; "Details" opens it in place
   agenda.eventHref = (address) => eventLink(address);
   agenda.from = filter.from;
@@ -129,6 +145,7 @@ export function browse() {
     agenda.tagFilters = tagFilters;
     agenda.view = VIEWS[f.view].view;
     agenda.days = VIEWS[f.view].days;
+    if (f.g) rememberCity(f.city, f.g);
     writeFilter(f);
   };
   form.addEventListener('change', apply);

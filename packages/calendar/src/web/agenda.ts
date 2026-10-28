@@ -27,7 +27,16 @@ import { type AgendaMessages, DEFAULT_AGENDA_MESSAGES } from './agendaMessages';
 import { agendaStyles } from './agendaStyles';
 
 /** Properties that change which events load */
-const QUERY_PROPERTIES = ['from', 'days', 'view', 'timeZone', 'kinds', 'authors', 'tagFilters'];
+const QUERY_PROPERTIES = [
+  'from',
+  'days',
+  'view',
+  'timeZone',
+  'eventZones',
+  'kinds',
+  'authors',
+  'tagFilters',
+];
 
 @customElement('nostr-calendar-agenda')
 export class NostrCalendarAgenda extends LitElement {
@@ -41,6 +50,8 @@ export class NostrCalendarAgenda extends LitElement {
   @property() view: 'list' | 'month' = 'list';
   /** IANA time zone of the days. Default: the viewer's */
   @property({ attribute: 'time-zone' }) timeZone?: string;
+  /** Events on the days and at the times of their own zone (`start_tzid`), e.g. a city's gigs */
+  @property({ type: Boolean, attribute: 'event-zones' }) eventZones = false;
   /** One calendar (`31924:<pubkey>:<d-tag>`): its events, by address */
   @property() calendar?: string;
   /** Default 31922 and 31923 */
@@ -74,7 +85,8 @@ export class NostrCalendarAgenda extends LitElement {
   }
 
   get _window(): AgendaWindow {
-    return agendaWindowFor(this.from, this.days, this.timeZone, this.view);
+    const window = agendaWindowFor(this.from, this.days, this.timeZone, this.view);
+    return this.eventZones ? { ...window, eventZones: true } : window;
   }
 
   override willUpdate(changed: Map<string, unknown>): void {

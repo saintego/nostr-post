@@ -41,6 +41,7 @@ import {
   DEFAULT_WIKI_ENTITY_PICKER_MESSAGES,
   type WikiEntityPickerMessages,
 } from './pickerMessages';
+import { needsPageLinks, withPageLinks } from './eventLinks';
 import { renderModal } from './modal';
 import { isShown, renderPickedChip } from './pickedChip';
 import { type EntitySearchResult, searchEntities } from './search';
@@ -129,6 +130,18 @@ export class WikiEntityPicker extends LitElement {
     this._debounceTimer = setTimeout(() => {
       void this._search();
     }, 300);
+  }
+
+  override willUpdate(changed: Map<string, unknown>): void {
+    if (changed.has('value')) void this._splitLinks();
+  }
+
+  /** An edited event's links back to their entities, so removing one removes its links */
+  private async _splitLinks(): Promise<void> {
+    const value = this.value;
+    if (!Array.isArray(value) || !needsPageLinks(value)) return;
+    const split = await withPageLinks(value, this._relays);
+    if (this.value === value && split !== value) this._emit(split);
   }
 
   /** An entity manifest given by its published address: fetch it once, then re-render */

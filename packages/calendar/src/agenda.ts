@@ -2,7 +2,7 @@
  * @nostr-post/plugin-date - Agenda
  *
  * NIP-52 calendar events by day: the relay filter for a date window (`#D` day tags) and the
- * events of each day of the window, in the viewer's time zone. Works on any window, so an
+ * events of each day of the window, in the viewer's time zone or each event's own. Works on any window, so an
  * agenda list and a month grid share it. No DOM dependencies.
  */
 
@@ -11,6 +11,7 @@ import {
   dateOfDayNumber,
   dayNumberOfDate,
   defaultTimeZone,
+  isValidTimeZone,
   MAX_DAY_TAGS,
   TIMED_EVENT_KIND,
   unixToWall,
@@ -32,6 +33,11 @@ export interface AgendaWindow {
   days?: number;
   /** IANA time zone the days are in. Default: the viewer's */
   tzid?: string;
+  /**
+   * Timed events on the days and at the times of their own zone (`start_tzid`), e.g. a city's
+   * gigs in the city's time wherever the viewer is. Default: in `tzid`
+   */
+  eventZones?: boolean;
 }
 
 /** The parts of an event the agenda reads (a signed Nostr event fits) */
@@ -67,6 +73,13 @@ const tagValue = (tags: string[][], name: string): string | undefined =>
 export const todayIn = (tzid = defaultTimeZone(), now = Date.now()): string =>
   (unixToWall(Math.floor(now / 1000), tzid) ?? new Date(now).toISOString()).slice(0, 10);
 
+/** The zone an event is shown in: its own (`start_tzid`) with `eventZones`, else the window's */
+export const eventTimeZone = (event: CalendarEventLike, window: AgendaWindow): string => {
+  const tzid = window.tzid ?? defaultTimeZone();
+  const own = window.eventZones ? tagValue(event.tags, 'start_tzid') : undefined;
+  return own && isValidTimeZone(own) ? own : tzid;
+};
+
 const resolveWindow = (window: AgendaWindow) => {
   const tzid = window.tzid ?? defaultTimeZone();
   const from = window.from && DATE_PATTERN.test(window.from) ? window.from : todayIn(tzid);
@@ -85,7 +98,8 @@ export const windowDates = (window: AgendaWindow): string[] => {
 
 /**
  * `D` tag values to ask relays for: the UTC days the window's local days touch (timed events
- * are tagged by UTC day), plus the window's own calendar dates (all-day events by date).
+ * are tagged by UTC day), plus the window's own calendar dates (all-day events by date). With
+ * `eventZones` a day more on each side: events' zones are up to 14 hours from UTC.
  */
 export const agendaDayTags = (window: AgendaWindow): string[] => {
   const { tzid, first, last } = resolveWindow(window);
@@ -93,8 +107,13 @@ export const agendaDayTags = (window: AgendaWindow): string[] => {
   const endUnix = wallToUnix(dateOfDayNumber(last + 1), tzid);
   const utcFirst = startUnix === undefined ? first : Math.floor(startUnix / SECONDS_PER_DAY);
   const utcLast = endUnix === undefined ? last : Math.floor((endUnix - 1) / SECONDS_PER_DAY);
+  const margin = window.eventZones ? 1 : 0;
   const tags: string[] = [];
-  for (let day = Math.min(first, utcFirst); day <= Math.max(last, utcLast); day++) {
+  for (
+    let day = Math.min(first, utcFirst) - margin;
+    day <= Math.max(last, utcLast) + margin;
+    day++
+  ) {
     tags.push(String(day));
   }
   return tags;
@@ -170,7 +189,6 @@ export const groupEventsByDay = <T extends CalendarEventLike>(
   events: T[],
   window: AgendaWindow
 ): AgendaDay<T>[] => {
-  const tzid = window.tzid ?? defaultTimeZone();
   const dates = windowDates(window);
   const byDate = new Map<string, { event: T; timing: EventTiming }[]>(
     dates.map((date) => [date, []])
@@ -178,7 +196,8 @@ export const groupEventsByDay = <T extends CalendarEventLike>(
   for (const event of latestByAddress(events)) {
     const timing = eventTiming(event);
     if (!timing) continue;
-    for (const date of eventDates(timing, tzid)) byDate.get(date)?.push({ event, timing });
+    for (const date of eventDates(timing, eventTimeZone(event, window)))
+      byDate.get(date)?.push({ event, timing });
   }
   return dates.flatMap((date) => {
     const entries = byDate.get(date) ?? [];

@@ -138,8 +138,8 @@
   - [ ] Its own nsite (deploy separately from the library's pages)
   - [x] Share the current filter (city, genre, week) as a link plus text, and as an image
         (`agendaText`, `agendaImage` in `@nostr-post/calendar`; the filter is in the page's link)
-  - [ ] Times in a shared city's agenda (and the agenda itself) show in the viewer's time zone: show a
-        city's gigs in its own zone (the events' `start_tzid`, or the city's)
+  - [x] Times in a shared city's agenda (and the agenda itself) show in the viewer's time zone: show a
+        city's gigs in its own zone (the window's `eventZones`: each event in its `start_tzid`)
   - [x] Gigs in the agenda link to their page (`#/event/<naddr>`): `<nostr-calendar-agenda>`'s `eventHref`
   - [ ] The add flow's preview shows event actions (RSVP, Add to calendar, .ics) that would act on a
         placeholder address: a view option to hide actions
@@ -164,13 +164,16 @@
           and link fields)
     - [x] A gig that adds links the musician's page doesn't have: suggest updating the page (`update`
           suggestions): "add them to the page" opens its edit form with the links added (`additions`)
-    - [ ] Editing an event with several picked entities: their `i` tags come back on one nameless
-          unlinked value (tags can't be told apart by entity); unlinked entities' names aren't stored
-          in tags, only in the description
+    - [x] Editing an event with several picked entities: their `i` tags come back on one nameless
+          unlinked value (tags can't be told apart by entity). The picker gives each picked entity
+          the links its page has (`withPageLinks`), so removing it removes them; the rest stay.
+          Unlinked entities' names stay in the description only, on purpose: they're edited there
+          (e.g. "X cancelled"), as are others' update comments
   - [x] Artist page lists the artist's gigs: events with its `a` tag or one of its profile links (`i`).
         In the gigs app for now; a generic version would be a related section (`wikiConfig.related`)
         that also queries `#i`
-  - [x] Cities: any city by search (Nominatim, as the venue field's city level) besides the app's list
+  - [x] Cities: any city by search (Nominatim, as the venue field's city level) and the ones picked
+        before (no hand-typed geohashes)
   - [ ] A city's area is one 4-character geohash cell (about 40 × 20 km) around its center: a city near
         a cell's edge misses gigs in the next cell; query the neighbouring cells too
   - [ ] The Claude call (`askClaude`) is untested against the real API: try it with a key and a poster
@@ -283,6 +286,9 @@
       (not a NIP of its own: other clients ignore it), e.g. for imported gigs that should "live their
       own life" until the promoter takes over - the manifest only sets the composer's default for that label - the viewer filters open posts: everyone's updates, or only their web of trust (follow list
       first); viewers with different follows can see different versions of an open post - others' updates show as suggestions in any case
+- [ ] `<nostr-post-view editable>` shows Edit to everyone; on an addressable event a non-author's
+      edit publishes their own copy (same d-tag, their key). For others it should publish an update
+      comment, as on kind 1 (the gigs app's edit page checks the author itself)
 
 - [x] Set up Vitest for unit testing
 - [x] Unit tests for validation functions in @nostr-post/core

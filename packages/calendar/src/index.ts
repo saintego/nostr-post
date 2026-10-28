@@ -14,6 +14,7 @@ export {
   DEFAULT_AGENDA_DAYS,
   type EventTiming,
   eventDates,
+  eventTimeZone,
   eventTiming,
   formatAgendaDate,
   formatWindowRange,

@@ -381,6 +381,10 @@ element.addEventListener("nostr-post-edit-request", (e) => {
 });
 ```
 
+To edit in your own composer, `extractPrefillFromEvent(event, manifest)` (from `@nostr-post/web` and
+the CDN bundle) gives the event's values as form data: set it as the composer's `prefill`, with the
+event's `dTag` for an addressable event.
+
 **Feeding update-comments into the view:**
 
 To render existing update-comment replies into the merged view, pass them via the `interactionEvents` property. Only events from the same author as the original event are trusted:

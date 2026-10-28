@@ -21,7 +21,7 @@ const titleOf = ({ city, genre }) => {
 
 /** The shown window's gigs, as the agenda asks for them */
 const loadGigs = async ({ g, genre, from, days, view }) => {
-  const window = agendaWindowFor(from, days, undefined, view);
+  const window = { ...agendaWindowFor(from, days, undefined, view), eventZones: true };
   const filter = { ...agendaFilter(window) };
   if (g) filter['#g'] = [g];
   if (genre) filter['#t'] = [genre];

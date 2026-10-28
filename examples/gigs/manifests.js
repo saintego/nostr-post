@@ -70,16 +70,6 @@ export const GENRES = [
   'folk',
 ];
 
-/** Cities to browse by: a geohash prefix (about 40 km at 4 characters) */
-export const CITIES = [
-  { name: 'Anywhere', geohash: '' },
-  { name: 'Medellín', geohash: 'd347' },
-  { name: 'Bangkok', geohash: 'w4rq' },
-  { name: 'Prague', geohash: 'u2fk' },
-  { name: 'Berlin', geohash: 'u33d' },
-  { name: 'Brno', geohash: 'u2ez' },
-];
-
 /** The gig's own wording of calendar event fields */
 const GIG_FIELD_METADATA = {
   tags: {

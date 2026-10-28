@@ -5,12 +5,14 @@ publishing as an nsite. NIP-52 calendar events, musician pages (NIP-54 wiki) wit
 players, RSVP, `.ics` import and export.
 
 - **Browse** (`#/`): gigs by city (a geohash prefix, `#g`), genre (`#t`) and date, as a list of days,
-  a week or a month (`<nostr-calendar-agenda>`). Cities: the app's list, or any city OpenStreetMap
-  finds while typing (`searchNominatim`, as the venue field's city level). The filter is in the
+  a week or a month (`<nostr-calendar-agenda>`). Cities: any city OpenStreetMap finds while
+  typing (`searchNominatim`, as the venue field's city level), and the ones picked before. The filter is in the
   page's link (`#/?city=…&g=…&genre=…&view=…&from=…`); "Share" sends it with the shown gigs as text
   (`agendaText`), "Image" as a picture (`agendaImage`), through the device's share sheet or as a
   copy or download.
-- **Gig** (`#/event/<naddr>`): one event (`<nostr-calendar-event>`), shareable.
+- **Gig** (`#/event/<naddr>`): one event (`<nostr-calendar-event>`), shareable. Edit
+  (`#/gig-edit/<naddr>`): only by who posted it, others suggest changes in a comment; removing a
+  performer removes their profile links too, performers without a page are edited in the description.
 - **Musician** (`#/artist/<d-tag>`, `#/artist-new[/<name>]`, `#/artist-edit/<d-tag>[?add=<JSON>]`):
   a musician's wiki page (type
   `(musician)`); links play (`@nostr-post/plugin-embed`), and its gigs are listed: those that link
@@ -33,7 +35,7 @@ players, RSVP, `.ics` import and export.
 - **Test mode** (on by default): events are signed and shown but never sent to relays (the
   signer's dry run).
 
-App-specific data (the musician and gig manifests, cities, genres) is in `manifests.js`; the AI
+App-specific data (the musician and gig manifests, genres) is in `manifests.js`; the AI
 prompt and the Claude call in `ai.js`; the link check in `links.js`; pages in `browse.js`,
 `addGig.js` and `app.js` (router, gig, musician, import); sharing in `share.js`. Everything else comes from the packages.
 

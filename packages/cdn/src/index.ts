@@ -115,6 +115,7 @@ export {
   groupEventsByDay,
   eventTiming,
   eventDates,
+  eventTimeZone,
   windowDates,
   shiftWindow,
   type AgendaWindow,
@@ -183,6 +184,8 @@ export {
 
 // Publishing a submitted post yourself (composer without auto-publish): plugin hooks
 export { runAfterPublish, runBeforePublish, runPublishHooks, withTags } from '@nostr-post/web';
+// An event's values as form data, e.g. to edit it in a composer
+export { extractPrefillFromEvent } from '@nostr-post/web';
 
 // Composer text (submit button, steps, errors) for overriding via its `messages` property
 export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from '@nostr-post/web';
@@ -230,6 +233,7 @@ export {
   entityJsonSchema,
   resolveEntities,
   searchEntities,
+  withPageLinks,
 } from '@nostr-post/plugin-wiki-entity';
 
 // Venues and the venue hub (wiki entity filled from OpenStreetMap)

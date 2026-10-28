@@ -3,6 +3,7 @@ import {
   agendaDayTags,
   agendaFilter,
   eventDates,
+  eventTimeZone,
   eventTiming,
   formatAgendaDate,
   formatWindowRange,
@@ -13,8 +14,8 @@ import {
   windowDates,
 } from './agenda';
 
-const utc = (year: number, month: number, date: number, hour = 0) =>
-  Date.UTC(year, month - 1, date, hour) / 1000;
+const utc = (year: number, month: number, date: number, hour = 0, minute = 0) =>
+  Date.UTC(year, month - 1, date, hour, minute) / 1000;
 const day = (year: number, month: number, date: number) => utc(year, month, date) / 86400;
 
 let created = 1000;
@@ -122,6 +123,46 @@ describe('groupEventsByDay', () => {
       allDay('moved', '2026-10-23', undefined, 2),
     ];
     expect(ids(groupEventsByDay(events, window))).toEqual([['2026-10-23', ['moved']]]);
+  });
+});
+
+describe('eventZones', () => {
+  // Fri 23:30 in Bangkok (UTC+7) is Fri 18:30 in Prague (UTC+2) and Fri 12:30 in New York
+  const gig = {
+    ...timed('gig', utc(2026, 10, 23, 16, 30)),
+    tags: [...timed('gig', utc(2026, 10, 23, 16, 30)).tags, ['start_tzid', 'Asia/Bangkok']],
+  };
+
+  it("shows an event in its own zone, else the window's", () => {
+    const window = { from: '2026-10-23', days: 2, tzid: 'America/Los_Angeles' };
+    expect(eventTimeZone(gig, window)).toBe('America/Los_Angeles');
+    expect(eventTimeZone(gig, { ...window, eventZones: true })).toBe('Asia/Bangkok');
+    const unknown = { ...gig, tags: [...gig.tags.slice(0, -1), ['start_tzid', 'Mars/Base']] };
+    expect(eventTimeZone(unknown, { ...window, eventZones: true })).toBe('America/Los_Angeles');
+  });
+
+  it("puts an event on its own zone's day", () => {
+    // 01:00 Saturday in Bangkok is still Friday in Los Angeles
+    const late = {
+      ...gig,
+      tags: [
+        ['d', 'late'],
+        ['start', String(utc(2026, 10, 23, 18))],
+        ['start_tzid', 'Asia/Bangkok'],
+      ],
+    };
+    const window = { from: '2026-10-23', days: 2, tzid: 'America/Los_Angeles' };
+    expect(ids(groupEventsByDay([late], window))).toEqual([['2026-10-23', ['late']]]);
+    expect(ids(groupEventsByDay([late], { ...window, eventZones: true }))).toEqual([
+      ['2026-10-24', ['late']],
+    ]);
+  });
+
+  it('asks for a day more on each side', () => {
+    const window = { from: '2026-10-21', days: 1, tzid: 'UTC' };
+    expect(agendaDayTags({ ...window, eventZones: true })).toEqual(
+      [day(2026, 10, 20), day(2026, 10, 21), day(2026, 10, 22)].map(String)
+    );
   });
 });
 
