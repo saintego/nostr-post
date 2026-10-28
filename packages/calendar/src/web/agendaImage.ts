@@ -38,6 +38,8 @@ type Theme = (typeof colors)['light'] | (typeof colors)['dark'];
 interface Pen {
   ctx: CanvasRenderingContext2D;
   theme: Theme;
+  /** Day headings' color: the theme's primary, lighter on dark */
+  accent: string;
   left: number;
   width: number;
   unit: number;
@@ -60,7 +62,7 @@ const rowHeight = (row: Row, unit: number): number =>
 const drawRow = (pen: Pen, row: Row, y: number) => {
   const { theme, left, unit } = pen;
   if ('day' in row) {
-    text(pen, row.day, left, y + 34 * unit, `700 ${34 * unit}px`, theme.primary);
+    text(pen, row.day, left, y + 34 * unit, `700 ${34 * unit}px`, pen.accent);
     return;
   }
   const { time, title, place } = row.item;
@@ -98,7 +100,8 @@ export const drawAgendaImage = (
   const theme = dark ? colors.dark : colors.light;
   const unit = width / 1080;
   const pad = Math.round(width * 0.07);
-  const pen: Pen = { ctx, theme, left: pad, width: width - 2 * pad, unit };
+  const accent = dark ? '#a5b4fc' : theme.primary;
+  const pen: Pen = { ctx, theme, accent, left: pad, width: width - 2 * pad, unit };
 
   ctx.fillStyle = dark ? '#111827' : theme.bg;
   ctx.fillRect(0, 0, width, height);

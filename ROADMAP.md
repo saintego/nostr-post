@@ -136,7 +136,10 @@
   - [x] `.ics` import UI (`icsToDrafts`, confirm each event)
   - [x] In `build:pages`, so `preview:pages` and PR previews show it (`/examples/gigs/`)
   - [ ] Its own nsite (deploy separately from the library's pages)
-  - [ ] Share the current filter (city, genre, week) as a link plus text, and as an image
+  - [x] Share the current filter (city, genre, week) as a link plus text, and as an image
+        (`agendaText`, `agendaImage` in `@nostr-post/calendar`; the filter is in the page's link)
+  - [ ] Times in a shared city's agenda (and the agenda itself) show in the viewer's time zone: show a
+        city's gigs in its own zone (the events' `start_tzid`, or the city's)
   - [x] Gigs in the agenda link to their page (`#/event/<naddr>`): `<nostr-calendar-agenda>`'s `eventHref`
   - [ ] The add flow's preview shows event actions (RSVP, Add to calendar, .ics) that would act on a
         placeholder address: a view option to hide actions
@@ -167,7 +170,9 @@
   - [x] Artist page lists the artist's gigs: events with its `a` tag or one of its profile links (`i`).
         In the gigs app for now; a generic version would be a related section (`wikiConfig.related`)
         that also queries `#i`
-  - [ ] Cities: a map/search picker instead of the fixed list (geohash prefix of any place)
+  - [x] Cities: any city by search (Nominatim, as the venue field's city level) besides the app's list
+  - [ ] A city's area is one 4-character geohash cell (about 40 × 20 km) around its center: a city near
+        a cell's edge misses gigs in the next cell; query the neighbouring cells too
   - [ ] The Claude call (`askClaude`) is untested against the real API: try it with a key and a poster
   - [x] The AI's JSON Schema comes from the gig manifest (`formJsonSchema`, plugins' `jsonSchema`), and
         performers' names become their artist pages (`parseJson`); names without a page link to

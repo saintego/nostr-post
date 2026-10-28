@@ -73,11 +73,11 @@ export const GENRES = [
 /** Cities to browse by: a geohash prefix (about 40 km at 4 characters) */
 export const CITIES = [
   { name: 'Anywhere', geohash: '' },
-  { name: 'Medellín', geohash: 'd3m2' },
+  { name: 'Medellín', geohash: 'd347' },
   { name: 'Bangkok', geohash: 'w4rq' },
   { name: 'Prague', geohash: 'u2fk' },
   { name: 'Berlin', geohash: 'u33d' },
-  { name: 'Brno', geohash: 'u2ef' },
+  { name: 'Brno', geohash: 'u2ez' },
 ];
 
 /** A gig: the calendar event manifest with performers (artist pages) and genre suggestions */
