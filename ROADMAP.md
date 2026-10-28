@@ -315,7 +315,7 @@
 - [ ] READMEs by entry point (AGENTS.md "Dependencies"): the wiki README documents its web components and React wrappers before the API of its main entry; put the main entry first. Packages other than plugin-list, wiki and cdn have no README (the CDN README links plugin-geo's and plugin-venue's); add them with the main entry first
 - [ ] Prefix private members of custom elements with `_` (AGENTS.md "Style"): the venue input, the post composer and view, and others without it; best together with thinning them
 - [ ] Thin the largest web components (AGENTS.md "Style": state and render only): `wikiComposer` (446 lines), `wiki-entity-picker` (444), `nostr-post-composer` (435); move logic and template parts into function modules
-- [ ] Bring oversized files under the 500-line limit: plugin-markdown input (done: web feed, core coordinator, web view, plugin-geo input, manifest-creator ManifestEditor and FieldEditor, wiki-composer, plugin-venue input)
+- [x] Bring oversized files under the 500-line limit (done: plugin-markdown input, web feed, core coordinator, web view, plugin-geo input, manifest-creator ManifestEditor and FieldEditor, wiki-composer, plugin-venue input)
 - [ ] Venue linking UI improvements (OSM ID deep links)
 - [ ] Additional plugins: polls, calendars, markets, date, tags, mentions
 - [ ] Plugin examples, plugin developer documentation and plugin validation examples
