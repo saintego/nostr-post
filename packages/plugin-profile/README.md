@@ -24,7 +24,7 @@ A field's value is a list of `Person`: `{ pubkey, role?, relay? }` (hex pubkey).
 
 | Export                                     | Does                                                                     |
 | ------------------------------------------ | ------------------------------------------------------------------------ |
-| `profilePlugin`                            | The plugin: `validate` (keys, `metadata.max`), `extraTags` (the `p` tags), `resolveFromTags` |
+| `profilePlugin`                            | The plugin: `validate` (keys, `metadata.max`), `extraTags` (the `p` tags), `resolveFromTags`; in form JSON people are `{ name, role }`, and a name becomes a person only when exactly one profile has it (tagging notifies, so unsure matches are left out) |
 | `personFromText(text)`                     | The person in an `npub`, `nprofile` (its first relay hint), hex key or `nostr:` link |
 | `personTag(person)`, `peopleFromTags(tags, tagName?)` | A person's `p` tag; the people in an event's tags, each once  |
 | `withPerson(people, person)`, `withoutPerson(people, pubkey)` | Adding (or updating a role) and removing            |

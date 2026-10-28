@@ -80,22 +80,30 @@ export const CITIES = [
   { name: 'Brno', geohash: 'u2ez' },
 ];
 
+/** The gig's own wording of calendar event fields */
+const GIG_FIELD_METADATA = {
+  tags: {
+    label: 'Genres',
+    description: 'Music genres, e.g. punk or techno',
+    suggestions: GENRES,
+  },
+  // Tagging notifies people: only organizers on Nostr, not the performers (their own field)
+  participants: {
+    label: 'Organizers',
+    description:
+      'Organizers or hosts on Nostr, by npub or the name of their Nostr profile; not the performers',
+    roles: ['organizer', 'host'],
+  },
+};
+
 /** A gig: the calendar event manifest with performers (artist pages) and genre suggestions */
 export const GIG_MANIFEST = {
   ...CALENDAR_EVENT_MANIFEST,
   id: 'gigs-gig-v1',
   fields: [
     ...CALENDAR_EVENT_MANIFEST.fields.map((field) =>
-      field.id === 'tags'
-        ? {
-            ...field,
-            metadata: {
-              ...field.metadata,
-              label: 'Genres',
-              description: 'Music genres, e.g. punk or techno',
-              suggestions: GENRES,
-            },
-          }
+      GIG_FIELD_METADATA[field.id]
+        ? { ...field, metadata: { ...field.metadata, ...GIG_FIELD_METADATA[field.id] } }
         : field
     ),
     {

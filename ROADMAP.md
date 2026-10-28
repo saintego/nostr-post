@@ -177,8 +177,9 @@
   - [x] The AI's JSON Schema comes from the gig manifest (`formJsonSchema`, plugins' `jsonSchema`), and
         performers' names become their artist pages (`parseJson`); names without a page link to
         "Add an artist" with the name filled in
-  - [ ] JSON schemas (`jsonSchema`) for the fields still left out of form JSON: venue (a place name → OpenStreetMap
-        search), participants (names → NIP-50 profile search), reference, list
+  - [x] JSON schemas (`jsonSchema`) for the fields still left out of form JSON: venue (a place name → OpenStreetMap
+        search), participants (names → NIP-50 profile search; only an exact, unique name). Reference
+        (derived from a text field) and list (not part of the post) stay out on purpose
   - [ ] Cron worker (own repo): Open Graph pages and `.ics` feeds into the nsite; Facebook `.ics`
         subscriptions (URL encrypted to the cron with NIP-44 as app data, events signed through the
         user's NIP-46 signer or as drafts to confirm)

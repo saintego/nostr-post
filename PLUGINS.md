@@ -467,7 +467,11 @@ Fields get their schema from their plugin's `jsonSchema`; fields without a plugi
 with `metadata.multiple`). A plugin without `jsonSchema` is left out: its value's shape isn't
 known. With several user-selectable publish formats the schema adds `publishFormat`. The plugins
 that have it: `date` (`{ start, end, tzid }`), `hashtag`, `markdown`, `stars`, `identifier`,
-`embed` (profile links also as `i` tags), `media`, and `wiki-entity-picker`. The picker asks
+`embed` (profile links also as `i` tags), `media`, `venue` (a place as text, e.g. "JAM, Bangkok",
+read back as the first place OpenStreetMap finds at the field's levels), `profile` (`{ name, role }`
+per person; a name becomes a person only when exactly one profile has it, as tagging notifies
+them), and `wiki-entity-picker`. `reference` (derived from a text field) and `list` (the user's
+own lists, not part of the post) have none on purpose. The picker asks
 for each entity by what tells it apart: the entity manifest's name field, link fields (written
 as `r` or `i` tags) and hashtag fields (`t`), e.g. a musician's name, profiles and genres; the
 hashtags prefill a new page and qualify its slug when the name is taken. `parseJson` looks their pages up by the
