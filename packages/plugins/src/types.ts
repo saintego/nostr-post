@@ -125,6 +125,18 @@ export interface AfterPublishContext {
   manifest: NostrPostManifest;
 }
 
+/** Something the user may do after a field's value was parsed from JSON (`parseJson`) */
+export interface FormJsonSuggestion {
+  /** What it is about, e.g. a name */
+  label: string;
+  /** `create` a page from `prefill`, or `update` the page at `address` with `prefill`'s values */
+  action: 'create' | 'update';
+  /** The page to update (`kind:pubkey:d-tag`) */
+  address?: string;
+  /** Form data for the page's composer, e.g. the name and links */
+  prefill: Record<string, unknown>;
+}
+
 /**
  * Plugin interface.
  *
@@ -268,13 +280,13 @@ export interface NostrUIPlugin {
 
   /**
    * Turns a value in `jsonSchema`'s shape into the field's value, when they differ (e.g.
-   * names into picked wiki entities). `unresolved`: the parts it couldn't turn, for the user to
-   * handle (e.g. names without a page).
+   * names into picked wiki entities). `suggestions`: what the user may do next (e.g. create the
+   * page of a name that has none, add new links to a page).
    */
   parseJson?: (
     value: unknown,
     field: PostField
-  ) => Promise<{ value?: unknown; unresolved?: string[] }>;
+  ) => Promise<{ value?: unknown; suggestions?: FormJsonSuggestion[] }>;
 
   /**
    * Completions while typing in the text field this plugin's field is attached to

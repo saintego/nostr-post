@@ -12,9 +12,11 @@ import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-p
 import {
   type EntityTypeAffixes,
   extractExternalIds,
+  getEntityManifest,
   normalizeDTag,
   type WikiEvent,
 } from '@nostr-post/wiki';
+import { entityItems, entityJsonSchema } from './entityJson';
 
 /**
  * Data shape stored for a wiki-entity-picker field.
@@ -29,6 +31,13 @@ export interface WikiEntityData {
   externalIds: string[];
   /** Human-readable display name */
   displayName?: string;
+  /**
+   * An entity without a page (yet): `dTag` and `resolvedPubkey` are empty, no `a` tag is written,
+   * its links still are (`externalIds` as `i` tags). E.g. a performer read from a post.
+   */
+  unlinked?: true;
+  /** For an unlinked entity: form data to create its page with (its name and links) */
+  prefill?: Record<string, unknown>;
 }
 
 /**
@@ -173,6 +182,10 @@ function entityProblem(
     success: false,
     error: { field: fieldId, message, code: 'INVALID_VALUE' },
   });
+  if (entity.unlinked === true) {
+    const named = typeof entity.displayName === 'string' && entity.displayName.length > 0;
+    return named || Array.isArray(entity.externalIds) ? undefined : fail('Entity has no name');
+  }
   if (typeof entity.dTag !== 'string' || entity.dTag.length === 0) {
     return fail('Selected entity is missing a d-tag');
   }
@@ -233,6 +246,7 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
   serializeValue: (value: unknown): string => {
     if (!value || typeof value !== 'object' || Array.isArray(value)) return '';
     const entity = value as WikiEntityData;
+    if (entity.unlinked) return '';
     return `30818:${entity.resolvedPubkey}:${entity.dTag}`;
   },
 
@@ -258,8 +272,17 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
       .filter((t) => t[0] === tagName && t[1]?.startsWith('30818:'))
       .map((t) => parseWikiAddress(t[1] as string))
       .filter((e): e is WikiEntityData => !!e);
+    const ids = tags.filter((t) => t[0] === 'i' && t[1]).map((t) => t[1] as string);
+    if (isMultiple(field)) {
+      // The `i` tags can't be told apart by entity: kept on a nameless unlinked value, so editing
+      // the event keeps the links of picked and unlinked entities alike
+      const links: WikiEntityData[] = ids.length
+        ? [{ dTag: '', resolvedPubkey: '', externalIds: ids, unlinked: true }]
+        : [];
+      const all = [...entities, ...links];
+      return all.length ? all : undefined;
+    }
     if (entities.length === 0) return undefined;
-    if (isMultiple(field)) return entities;
     const [entity] = entities as [WikiEntityData];
     const config = field.metadata as WikiEntityPickerConfig | undefined;
     if (config?.emitExtraTags !== false) {
@@ -268,22 +291,26 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
     return entity;
   },
 
-  /** In JSON: the entities' names; `parseJson` looks their pages up */
+  /**
+   * In form JSON: the entities by name and links, as the entity manifest's name and link fields
+   * ask (`entityJsonSchema`), or by name when the entity manifest isn't known yet
+   */
   jsonSchema: (field: PostField) => {
-    const name = { type: 'string', description: 'A name, as written' };
-    return isMultiple(field) ? { type: 'array', items: name } : name;
+    const manifest = getEntityManifest((field.metadata as WikiEntityPickerConfig)?.entityManifest);
+    const item = manifest
+      ? entityJsonSchema(manifest)
+      : { type: 'string', description: 'A name, as written' };
+    return isMultiple(field) ? { type: 'array', items: item } : item;
   },
 
-  /** Names to the entities with a page of the field's type; names without one are unresolved */
+  /** The entities' pages, found by link or name (`resolveEntities`); unlinked values for the others */
   parseJson: async (value: unknown, field: PostField) => {
-    const names = (Array.isArray(value) ? value : [value]).filter(
-      (name): name is string => typeof name === 'string' && name.trim() !== ''
-    );
-    const config = field.metadata as WikiEntityPickerConfig | undefined;
-    const { resolveEntityNames } = await import('./resolveNames');
-    const { entities, unresolved } = await resolveEntityNames(names, config ?? {});
+    const config = (field.metadata as WikiEntityPickerConfig | undefined) ?? {};
+    const manifest = getEntityManifest(config.entityManifest);
+    const { resolveEntities } = await import('./resolveEntities');
+    const { entities, suggestions } = await resolveEntities(entityItems(value, manifest), config);
     const picked = isMultiple(field) ? entities : entities[0];
-    return { value: entities.length ? picked : undefined, unresolved };
+    return { value: entities.length ? picked : undefined, suggestions };
   },
 
   /**

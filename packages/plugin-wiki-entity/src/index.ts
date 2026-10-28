@@ -27,5 +27,12 @@ export {
   DEFAULT_WIKI_ENTITY_PICKER_MESSAGES,
   type WikiEntityPickerMessages,
 } from './pickerMessages';
-export { resolveEntityNames } from './resolveNames';
+export {
+  type EntityItem,
+  entityItems,
+  entityJsonSchema,
+  identityFields,
+  linkFields,
+} from './entityJson';
+export { resolveEntities } from './resolveEntities';
 export { type EntitySearchResult, searchEntities } from './search';

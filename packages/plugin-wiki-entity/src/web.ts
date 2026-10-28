@@ -42,6 +42,7 @@ import {
   DEFAULT_WIKI_ENTITY_PICKER_MESSAGES,
   type WikiEntityPickerMessages,
 } from './pickerMessages';
+import { isShown, renderPickedChip } from './pickedChip';
 import { type EntitySearchResult, searchEntities } from './search';
 import { pickerStyles } from './webStyles';
 
@@ -81,6 +82,8 @@ export class WikiEntityPicker extends LitElement {
     prefill: Record<string, unknown>;
     /** A plugin's create form for this type (e.g. venues from OpenStreetMap) */
     creatorTag?: string;
+    /** The unlinked entity whose page this is: the created one takes its place */
+    replaces?: WikiEntityData;
   };
   private _debounceTimer?: ReturnType<typeof setTimeout>;
 
@@ -175,7 +178,12 @@ export class WikiEntityPicker extends LitElement {
     const winner = defaultResolver([event]);
     if (!winner) return;
 
-    const entityData = entityDataOf(winner);
+    const replaces = this._creating?.replaces;
+    const picked = entityDataOf(winner);
+    // A created page of an unlinked entity keeps the links the event had for it
+    const entityData = replaces
+      ? { ...picked, externalIds: [...new Set([...picked.externalIds, ...replaces.externalIds])] }
+      : picked;
 
     this._results = [];
     this._query = '';
@@ -183,29 +191,41 @@ export class WikiEntityPicker extends LitElement {
       this._emit(entityData);
       return;
     }
-    const others = this._picked.filter((e) => e.dTag !== entityData.dTag);
+    const others = this._picked.filter(
+      (e) => e !== replaces && (e.unlinked || e.dTag !== entityData.dTag)
+    );
     this._emit([...others, entityData]);
   }
 
   /** Removes one picked entity (a list) or the selection */
-  private _remove(dTag: string): void {
+  private _remove(entity: WikiEntityData): void {
     if (!this._config.multiple) {
       this._emit(undefined);
       return;
     }
-    const rest = this._picked.filter((e) => e.dTag !== dTag);
+    const rest = this._picked.filter((e) => e !== entity);
     this._emit(rest.length > 0 ? rest : undefined);
   }
 
+  /** Opens the create dialog for an unlinked entity, with its name and links */
+  private _createFor(entity: WikiEntityData): void {
+    const manifest = getEntityManifest(this._config.entityManifest);
+    if (!manifest) return;
+    this._creating = {
+      manifest,
+      prefill: entity.prefill ?? entityPrefill(manifest, entity.displayName ?? ''),
+      creatorTag: entityCreatorFor(manifest)?.tagName,
+      replaces: entity,
+    };
+  }
+
   private _renderPicked(entity: WikiEntityData) {
-    return html`
-      <div class="selected">
-        <span class="selected-name">${entity.displayName ?? entity.dTag}</span>
-        <span class="selected-slug">${entity.dTag}</span>
-        ${this._previewButton(entity.dTag)}
-        <button type="button" class="clear-btn" @click=${() => this._remove(entity.dTag)} aria-label=${this._m.remove}>×</button>
-      </div>
-    `;
+    return renderPickedChip(entity, {
+      messages: this._m,
+      onRemove: () => this._remove(entity),
+      onCreate: () => this._createFor(entity),
+      preview: (dTag) => this._previewButton(dTag),
+    });
   }
 
   /**
@@ -269,17 +289,18 @@ export class WikiEntityPicker extends LitElement {
   /** Select the entity a plugin's create form created or found */
   private _onEntityCreated(e: CustomEvent<CreatedEntity>): void {
     const { dTag, pubkey, displayName } = e.detail;
-    this._creating = undefined;
     const tags = [['d', dTag], ...(displayName ? [['title', displayName]] : [])];
+    // Selected while _creating still says which unlinked entity it replaces
     this._onSelect({ kind: 30818, pubkey, tags, content: '', created_at: 0, id: '', sig: '' });
+    this._creating = undefined;
   }
 
   /** Select the entity the dialog just published */
   private _onEntityPublished(e: CustomEvent): void {
     const signed = e.detail?.results?.signedEvent as WikiEvent | undefined;
     const dTag = (e.detail?.dTag as string | undefined) ?? '';
-    this._creating = undefined;
     if (signed && dTag) this._onSelect(signed);
+    this._creating = undefined;
   }
 
   private _isolated = new WeakSet<Element>();
@@ -429,7 +450,7 @@ export class WikiEntityPicker extends LitElement {
 
     return html`
       <div class="picker">
-        ${picked.map((entity) => this._renderPicked(entity))}
+        ${picked.filter(isShown).map((entity) => this._renderPicked(entity))}
         <input
           class="search-input"
           type="search"

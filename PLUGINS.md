@@ -331,8 +331,12 @@ interface NostrUIPlugin {
   // strict like structured outputs (every property required, optional ones nullable, no others)
   jsonSchema?(field: PostField): Record<string, unknown> | null;
   // Turns the JSON's value into the field's value when they differ (e.g. names into picked
-  // wiki entities); `unresolved`: what it couldn't turn (e.g. names without a page)
-  parseJson?(value: unknown, field: PostField): Promise<{ value?: unknown; unresolved?: string[] }>;
+  // wiki entities); `suggestions`: what the user may do next, e.g. `{ label, action: 'create', prefill }`
+  // for a name without a page, `{ label, action: 'update', address, prefill }` for links a page lacks
+  parseJson?(
+    value: unknown,
+    field: PostField,
+  ): Promise<{ value?: unknown; suggestions?: FormJsonSuggestion[] }>;
 
   // Pre-coordinate: auto-extract values from other fields (e.g. read content to extract #hashtags or URLs)
   // Only runs for fields with `attachTo` pointing at a source field that has data
@@ -448,7 +452,7 @@ const schema = formJsonSchema(manifest); // fields' labels and descriptions desc
 const text = await askSomeAi(post, schema); // JSON in that shape, maybe wrapped in prose
 const parsed = await parseFormJson(manifest, text); // text or an already parsed object
 if (parsed.success) {
-  const { formatId, formData, unresolved } = parsed.data;
+  const { formatId, formData, suggestions } = parsed.data;
   composer.defaultFormatId = formatId;
   composer.prefill = formData;
 }
@@ -459,8 +463,14 @@ Fields get their schema from their plugin's `jsonSchema`; fields without a plugi
 with `metadata.multiple`). A plugin without `jsonSchema` is left out: its value's shape isn't
 known. With several user-selectable publish formats the schema adds `publishFormat`. The plugins
 that have it: `date` (`{ start, end, tzid }`), `hashtag`, `markdown`, `stars`, `identifier`,
-`embed`, `media`, and `wiki-entity-picker` (asks for names; `parseJson` looks up the pages of the
-entity type by d-tag and reports names without a page as `unresolved`). Without plugins:
+`embed` (profile links also as `i` tags), `media`, and `wiki-entity-picker`. The picker asks
+for each entity by what tells it apart: the entity manifest's name field and link fields (written
+as `r` or `i` tags), e.g. a musician's name and profiles. `parseJson` looks their pages up by the
+links' `i` tags first, then by the name's d-tag (a page with that name but none of the same links
+is another entity). Entities without a page stay in the value unlinked (no `a` tag, their links
+still as `i` tags, so a page created later finds the post) with a `create` suggestion; the picker
+shows them with "Create page", prefilled. A found page missing some of the links gets an `update`
+suggestion. Without plugins:
 `formJsonSchema(manifest, { fieldSchema })` and `parseFormJson` (synchronous) in
 `@nostr-post/core/formJson`.
 

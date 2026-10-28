@@ -204,3 +204,48 @@ describe('<wiki-entity-picker> result details and preview', () => {
     expect((picker as any)._previewDTag).toBe('bitcoin-beer');
   });
 });
+
+describe('<wiki-entity-picker> unlinked entities', () => {
+  it('shows them with "Create page"; the created page takes their place with their links', async () => {
+    registerEntityManifest(breweryManifest);
+    const picker = document.createElement('wiki-entity-picker') as WikiEntityPicker;
+    picker.field = {
+      id: 'brewery',
+      metadata: { entityManifest: 'brewery-entity-test', multiple: true },
+    };
+    const unlinked = {
+      dTag: '',
+      resolvedPubkey: '',
+      externalIds: ['https://www.instagram.com/moon'],
+      displayName: 'Moonshine',
+      unlinked: true as const,
+      prefill: { name: 'Moonshine' },
+    };
+    // A nameless unlinked value only keeps an event's links: not shown
+    const links = { dTag: '', resolvedPubkey: '', externalIds: ['x'], unlinked: true as const };
+    picker.value = [unlinked, links];
+    document.body.appendChild(picker);
+    await picker.updateComplete;
+    const chips = picker.shadowRoot?.querySelectorAll('.selected') ?? [];
+    expect(chips.length).toBe(1);
+    expect(chips[0]?.textContent).toContain('no page yet');
+
+    picker.shadowRoot?.querySelector<HTMLButtonElement>('.chip-create')?.click();
+    // biome-ignore lint/suspicious/noExplicitAny: driving private state in a test
+    const p = picker as any;
+    expect(p._creating.prefill).toEqual({ name: 'Moonshine' });
+    p._onEntityCreated(
+      new CustomEvent('created', { detail: { dTag: 'moonshine-brewery', pubkey: 'pk' } })
+    );
+    expect(picker.value).toEqual([
+      links,
+      {
+        dTag: 'moonshine-brewery',
+        resolvedPubkey: 'pk',
+        externalIds: ['https://www.instagram.com/moon'],
+        displayName: 'moonshine-brewery',
+      },
+    ]);
+    picker.remove();
+  });
+});

@@ -147,11 +147,17 @@
           the name plus a genre or city; a taken slug whose page has the same link is that musician
     - [ ] validate artist links from AI input: only links in the post's text (or marked as read from
           the poster); the preview shows them as players, so the user sees what was found
-    - [ ] artist wiki is not mandatory: performers without a page stay as text, linked through their
-          profile links (`i` tags), so a page created later finds the gig
-    - [ ] validate existence of artist wiki by links, name, before creating new: look up by `#i`, then by
-          the name's slug
-    - [ ] A gig that adds links the musician's page doesn't have: suggest updating the page
+    - [x] artist wiki is not mandatory: performers without a page stay as text, linked through their
+          profile links (`i` tags), so a page created later finds the gig. The picker keeps them as
+          unlinked values with "Create page" (prefilled with name and links)
+    - [x] validate existence of artist wiki by links, name, before creating new: look up by `#i`, then by
+          the name's slug (`resolveEntities`; the picker's form JSON asks for the entity manifest's name
+          and link fields)
+    - [ ] A gig that adds links the musician's page doesn't have: suggest updating the page. Done as a
+          hint linking to the page (`update` suggestions); left: an edit form prefilled with the links
+    - [ ] Editing an event with several picked entities: their `i` tags come back on one nameless
+          unlinked value (tags can't be told apart by entity); unlinked entities' names aren't stored
+          in tags, only in the description
   - [ ] Artist page lists the artist's gigs (events with its `a` tag: a related section, `wikiConfig.related`)
   - [ ] Cities: a map/search picker instead of the fixed list (geohash prefix of any place)
   - [ ] The Claude call (`askClaude`) is untested against the real API: try it with a key and a poster

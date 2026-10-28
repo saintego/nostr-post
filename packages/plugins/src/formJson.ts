@@ -14,7 +14,7 @@ import {
 } from '@nostr-post/core/formJson';
 import type { NostrPostManifest, Result } from '@nostr-post/core/types';
 import { pluginRegistry } from './registry';
-import type { NostrUIPlugin } from './types';
+import type { FormJsonSuggestion, NostrUIPlugin } from './types';
 
 type GetPlugin = (id: string) => NostrUIPlugin | undefined;
 
@@ -37,10 +37,10 @@ export const formJsonSchema = (
     },
   });
 
-/** Form data parsed from JSON, with what plugins couldn't resolve */
+/** Form data parsed from JSON, with what the user may do next */
 export interface ParsedFormJson extends FormJson {
-  /** Per field, what its plugin couldn't turn into a value (e.g. names without a page) */
-  unresolved: Record<string, string[]>;
+  /** Per field, its plugin's suggestions (e.g. create the page of a name that has none) */
+  suggestions: Record<string, FormJsonSuggestion[]>;
 }
 
 /**
@@ -56,7 +56,7 @@ export const parseFormJson = async (
   const parsed = coreParseFormJson(manifest, input);
   if (!parsed.success) return parsed;
   const { formData } = parsed.data;
-  const unresolved: Record<string, string[]> = {};
+  const suggestions: Record<string, FormJsonSuggestion[]> = {};
   const resolved = { ...formData };
   await Promise.all(
     manifest.fields.map(async (field) => {
@@ -65,8 +65,8 @@ export const parseFormJson = async (
       const result = await parseJson(formData[field.id], field);
       if (result.value === undefined) delete resolved[field.id];
       else resolved[field.id] = result.value;
-      if (result.unresolved?.length) unresolved[field.id] = result.unresolved;
+      if (result.suggestions?.length) suggestions[field.id] = result.suggestions;
     })
   );
-  return { success: true, data: { ...parsed.data, formData: resolved, unresolved } };
+  return { success: true, data: { ...parsed.data, formData: resolved, suggestions } };
 };

@@ -27,16 +27,33 @@ ${text || '(see the poster image)'}`;
 
 /**
  * The gig form's values and publish format from the AI's answer (text with JSON, as any AI
- * gives it): performers become their artist pages (`unresolved.performers`: names without a
- * page yet). A start with a time is published as a timed event, whatever format the AI chose.
- * Throws when the answer has no usable JSON.
+ * gives it): performers become their musician pages, found by their profile links or names;
+ * those without a page stay unlinked (their links still tag the gig) and are named in the
+ * description, so the gig says who plays. A start with a time is published as a timed event,
+ * whatever format the AI chose. Throws when the answer has no usable JSON.
  */
 export const readAnswer = async (answer) => {
   const parsed = await parseFormJson(GIG_MANIFEST, answer);
   if (!parsed.success) throw parsed.error;
-  const { formatId, formData, unresolved } = parsed.data;
+  const { formatId, formData, suggestions } = parsed.data;
   const timed = /T\d\d:\d\d/.test(formData.when?.start ?? '');
-  return { formatId: timed ? 'timed' : (formatId ?? 'all-day'), formData, unresolved };
+  return {
+    formatId: timed ? 'timed' : (formatId ?? 'all-day'),
+    formData: withUnlinkedNames(formData),
+    suggestions,
+  };
+};
+
+/** The description with the names of performers without a page, unless it has them already */
+const withUnlinkedNames = (formData) => {
+  const names = (formData.performers ?? [])
+    .filter((p) => p.unlinked && p.displayName)
+    .map((p) => p.displayName);
+  const description = formData.description ?? '';
+  const missing = names.filter((name) => !description.toLowerCase().includes(name.toLowerCase()));
+  if (!missing.length) return formData;
+  const line = `With: ${missing.join(', ')}`;
+  return { ...formData, description: description ? `${description}\n\n${line}` : line };
 };
 
 /** The official SDK, loaded only when someone asks Claude (pinned; ESM from jsDelivr) */

@@ -270,15 +270,17 @@ function addGig() {
     } catch (error) {
       status(`Preview: ${error.message}`);
     }
-    // Performers with an artist page are picked in the form; the others need a page first
-    const missing = draft.unresolved.performers ?? [];
-    $('performers-hint').innerHTML = missing.length
-      ? `No artist page yet for: ${missing
-          .map(
-            (name) =>
-              `<a href="#/artist-new/${encodeURIComponent(name)}" target="_blank">${escapeHtml(name)}</a>`
-          )
-          .join(', ')}. Create them (opens a new tab), then pick them in the form.`
+    // Performers with a page are picked in the form, the others show "Create page" there;
+    // pages that lack links from the post can get them
+    const updates = (draft.suggestions.performers ?? []).filter((s) => s.action === 'update');
+    $('performers-hint').innerHTML = updates.length
+      ? `New links for ${updates
+          .map((s) => {
+            const dTag = s.address.split(':').slice(2).join(':');
+            const links = Object.values(s.prefill).flat().map(escapeHtml).join(', ');
+            return `<a href="#/artist/${encodeURIComponent(dTag)}" target="_blank">${escapeHtml(s.label)}</a> (${links})`;
+          })
+          .join('; ')}: add them to their page?`
       : '';
     const composer = $('composer');
     composer.manifest = GIG_MANIFEST;

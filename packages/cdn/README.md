@@ -101,7 +101,7 @@ The bundle re-exports utilities for advanced usage:
 **Form data as JSON** (e.g. an AI's structured output; see [PLUGINS.md](../../PLUGINS.md#a-posts-form-data-as-json))
 
 - `formJsonSchema(manifest)`: the JSON Schema of a manifest's form data, with the registered plugins' schemas
-- `parseFormJson(manifest, input)`: a `Result` with `{ formatId?, formData, unresolved }` from JSON in that
+- `parseFormJson(manifest, input)`: a `Result` with `{ formatId?, formData, suggestions }` from JSON in that
   shape, as text (also wrapped in prose or code fences, as AIs answer) or parsed (e.g. performer names
   turned into their wiki pages)
 - `PUBLISH_FORMAT_KEY`: the property holding the chosen publish format
@@ -206,8 +206,8 @@ The bundle re-exports utilities for advanced usage:
 - `registerEventAction({ tagName, matches })`, `eventActionsFor(manifest)`: a plugin's control shown with
   events made with a manifest, in `<nostr-post-view>` and `<nostr-wiki-view>` (the list plugin's Save button)
 - `searchEntities`, `entityTypeAffixes`
-- `resolveEntityNames(names, { entityManifest, relays })`: the wiki pages of entities by name, and the
-  names without a page
+- `entityJsonSchema(manifest)`, `resolveEntities(items, { entityManifest, relays })`: entities in form JSON
+  (name and links) and their wiki pages, found by link (`#i`) or name; the others as unlinked values
 
 **Venues and the venue hub**
 

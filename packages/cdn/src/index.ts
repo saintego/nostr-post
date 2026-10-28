@@ -218,7 +218,8 @@ export {
 // Wiki entity picker (search, create)
 export {
   entityTypeAffixes,
-  resolveEntityNames,
+  entityJsonSchema,
+  resolveEntities,
   searchEntities,
 } from '@nostr-post/plugin-wiki-entity';
 

@@ -22,6 +22,10 @@ export interface WikiEntityPickerMessages {
   previewLabel: (dTag: string) => string;
   remove: string;
   close: string;
+  /** Shown on a picked entity that has no page yet */
+  noPage: string;
+  /** Creates the page of a picked entity that has none */
+  createPage: string;
 }
 
 export const DEFAULT_WIKI_ENTITY_PICKER_MESSAGES: WikiEntityPickerMessages = {
@@ -39,4 +43,6 @@ export const DEFAULT_WIKI_ENTITY_PICKER_MESSAGES: WikiEntityPickerMessages = {
   previewLabel: (dTag) => `Preview ${dTag}`,
   remove: 'Remove',
   close: 'Close',
+  noPage: 'no page yet',
+  createPage: 'Create page',
 };

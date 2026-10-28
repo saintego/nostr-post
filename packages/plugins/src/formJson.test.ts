@@ -25,7 +25,9 @@ const plugins: Record<string, NostrUIPlugin> = {
       const names = value as string[];
       return {
         value: names.filter((n) => n === 'Known').map((n) => ({ name: n })),
-        unresolved: names.filter((n) => n !== 'Known'),
+        suggestions: names
+          .filter((n) => n !== 'Known')
+          .map((n) => ({ label: n, action: 'create' as const, prefill: { name: n } })),
       };
     },
   },
@@ -40,7 +42,7 @@ describe('formJsonSchema', () => {
 });
 
 describe('parseFormJson', () => {
-  it("applies plugins' parseJson and reports what they couldn't resolve", async () => {
+  it("applies plugins' parseJson and collects their suggestions", async () => {
     const result = await parseFormJson(
       manifest,
       { title: 'Hi', when: '2026-10-31', where: null, who: ['Known', 'Unknown'] },
@@ -50,7 +52,9 @@ describe('parseFormJson', () => {
       success: true,
       data: {
         formData: { title: 'Hi', when: '2026-10-31', who: [{ name: 'Known' }] },
-        unresolved: { who: ['Unknown'] },
+        suggestions: {
+          who: [{ label: 'Unknown', action: 'create', prefill: { name: 'Unknown' } }],
+        },
       },
     });
   });

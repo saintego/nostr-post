@@ -1,0 +1,40 @@
+/**
+ * @nostr-post/plugin-wiki-entity - A picked entity's chip in <wiki-entity-picker>
+ *
+ * A picked entity shows its name and slug; an unlinked one (no page yet, e.g. a performer read
+ * from a post) shows its name with "Create page", which opens the create dialog with its name
+ * and links filled in.
+ */
+
+import { html, type TemplateResult } from 'lit';
+import type { WikiEntityData } from './core';
+import type { WikiEntityPickerMessages } from './pickerMessages';
+
+export interface PickedChipActions {
+  messages: WikiEntityPickerMessages;
+  onRemove: () => void;
+  /** Creates the page of an unlinked entity */
+  onCreate: () => void;
+  /** The preview button of a picked entity */
+  preview: (dTag: string) => unknown;
+}
+
+/** Whether the chip shows: an unlinked value without a name only keeps an event's links */
+export const isShown = (entity: WikiEntityData): boolean =>
+  !entity.unlinked || Boolean(entity.displayName);
+
+export const renderPickedChip = (
+  entity: WikiEntityData,
+  { messages: m, onRemove, onCreate, preview }: PickedChipActions
+): TemplateResult => html`
+  <div class="selected ${entity.unlinked ? 'unlinked' : ''}">
+    <span class="selected-name">${entity.displayName ?? entity.dTag}</span>
+    ${
+      entity.unlinked
+        ? html`<span class="selected-slug">${m.noPage}</span>
+            <button type="button" class="chip-create" @click=${onCreate}>${m.createPage}</button>`
+        : html`<span class="selected-slug">${entity.dTag}</span>${preview(entity.dTag)}`
+    }
+    <button type="button" class="clear-btn" @click=${onRemove} aria-label=${m.remove}>×</button>
+  </div>
+`;
