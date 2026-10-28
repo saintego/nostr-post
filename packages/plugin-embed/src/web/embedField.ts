@@ -8,7 +8,7 @@
 
 import type { PostField } from '@nostr-post/plugins/types';
 import { html, LitElement, nothing } from 'lit';
-import { customElement, property } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { live } from 'lit/directives/live.js';
 import { linksOf } from '../core';
 import './embed';
@@ -40,6 +40,9 @@ export class NpEmbedInput extends LitElement {
   @property({ type: Object }) field?: PostField;
   @property({ type: Object }) messages: Partial<EmbedMessages> = {};
 
+  /** Empty rows the user added ("Add link"); the value has only the filled ones */
+  @state() _blank = 0;
+
   get _m(): EmbedMessages {
     return { ...DEFAULT_EMBED_MESSAGES, ...this.messages };
   }
@@ -48,15 +51,17 @@ export class NpEmbedInput extends LitElement {
     return this.field?.metadata?.multiple === true;
   }
 
-  /** The rows: the value's links (typed text too), one empty row to type into */
+  /** The rows: the value's links (typed text too) and the added empty ones, at least one */
   get _rows(): string[] {
     const items = (Array.isArray(this.value) ? this.value : [this.value]).filter(
       (v): v is string => typeof v === 'string'
     );
-    return items.length > 0 ? items : [''];
+    const rows = [...items, ...Array<string>(this._blank).fill('')];
+    return rows.length > 0 ? rows : [''];
   }
 
   _emit(rows: string[]): void {
+    this._blank = rows.filter((r) => !r.trim()).length;
     const kept = rows.map((r) => r.trim()).filter(Boolean);
     const value = kept.length === 0 ? undefined : this._multiple ? kept : kept[0];
     this.dispatchEvent(
@@ -98,7 +103,9 @@ export class NpEmbedInput extends LitElement {
       )}
       ${
         this._multiple && rows.every((row) => row.trim())
-          ? html`<button type="button" class="small" @click=${() => this._emit([...rows, ''])}>
+          ? html`<button type="button" class="small" @click=${() => {
+              this._blank += 1;
+            }}>
               ${m.addLink}
             </button>`
           : nothing
