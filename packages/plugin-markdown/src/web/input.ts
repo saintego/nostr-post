@@ -323,8 +323,9 @@ export class NpMarkdownInput extends LitElement {
     }
   `;
 
+  /** Composers pass `undefined` for an empty field */
   @property({ type: String })
-  value = '';
+  value: string | undefined = '';
 
   @property({ type: Object })
   field: PostField | null = null;
@@ -341,14 +342,14 @@ export class NpMarkdownInput extends LitElement {
     this.mode = this.config.defaultMode ?? 'wysiwyg';
     // Initialize HTML from markdown value
     if (this.value) {
-      this.editorHtml = markdownToHtml(this.value);
+      this.editorHtml = markdownToHtml(this.value ?? '');
     }
   }
 
   updated(changed: Map<PropertyKey, unknown>) {
     // If value is set externally, sync editor
     if (changed.has('value') && !this._internalUpdate) {
-      this.editorHtml = markdownToHtml(this.value);
+      this.editorHtml = markdownToHtml(this.value ?? '');
       const editor = this.shadowRoot?.querySelector('.editor') as HTMLElement;
       if (editor && this.mode === 'wysiwyg') {
         editor.innerHTML = this.editorHtml;
@@ -395,7 +396,7 @@ export class NpMarkdownInput extends LitElement {
       }
     } else {
       // Raw -> WYSIWYG: convert markdown to HTML
-      this.editorHtml = markdownToHtml(this.value);
+      this.editorHtml = markdownToHtml(this.value ?? '');
     }
 
     this.mode = newMode;
@@ -475,14 +476,14 @@ export class NpMarkdownInput extends LitElement {
               <textarea
                 class="raw-editor"
                 placeholder=${placeholder}
-                .value=${this.value}
+                .value=${this.value ?? ''}
                 @input=${this.handleRawInput}
               ></textarea>
             `
         }
 
         <div class="footer">
-          <span>${this.value.length} chars</span>
+          <span>${(this.value ?? '').length} chars</span>
           <span>Markdown</span>
         </div>
       </div>
