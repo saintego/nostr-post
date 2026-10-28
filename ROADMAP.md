@@ -143,8 +143,10 @@
         means painters)
     - [x] Profile links (Bandcamp, Spotify artist, SoundCloud, Instagram, Facebook, YouTube) in one
           canonical form (`profileLink`), written as NIP-73 `i` tags by the embed field
-    - [ ] Slug: the name if free, else a profile handle (Bandcamp/Instagram/SoundCloud/Facebook), else
-          the name plus a genre or city; a taken slug whose page has the same link is that musician
+    - [x] Slug: the name if free, else a profile handle (Bandcamp/Instagram/SoundCloud/Facebook), else
+          the name plus a genre or city; a taken slug whose page has the same link is that musician.
+          The handle is added to the name as the qualifier (`doomsday-doomsdayband-musician`), so the
+          slug still starts with the name; the wiki composer picks the first free one
     - [ ] validate artist links from AI input: only links in the post's text (or marked as read from
           the poster); the preview shows them as players, so the user sees what was found
     - [x] artist wiki is not mandatory: performers without a page stay as text, linked through their

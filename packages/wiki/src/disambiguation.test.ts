@@ -59,6 +59,22 @@ describe('disambiguation', () => {
     expect(distinguishingSuggestions(beer, formData)).toEqual(['Moonshine', 'IPA', '6.5']);
   });
 
+  it("puts fields' own qualifiers first, offers list items, skips links", () => {
+    const formData = {
+      title: 'Bitcoin',
+      style: ['IPA', 'Sour'],
+      brewery: 'https://moonshine.bandcamp.com',
+    };
+    const qualifiersOf = (field: { id: string }) =>
+      field.id === 'brewery' ? ['moonshine'] : undefined;
+    expect(distinguishingSuggestions(beer, formData, qualifiersOf)).toEqual([
+      'moonshine',
+      'IPA',
+      'Sour',
+    ]);
+    expect(distinguishingSuggestions(beer, formData)).toEqual(['IPA', 'Sour']);
+  });
+
   it('names fields usable as qualifiers, skipping the name and long text', () => {
     expect(distinguishingFieldLabels(beer)).toEqual(['brewery', 'style', 'abv']);
   });

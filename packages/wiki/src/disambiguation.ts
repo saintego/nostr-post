@@ -1,4 +1,4 @@
-import type { NostrPostManifest } from '@nostr-post/core/types';
+import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { interpolateTemplate, templateFieldIds, templateText } from './identity';
 import { normalizeDTag } from './normalizeDTag';
 import type { WikiManifest } from './types';
@@ -65,7 +65,8 @@ function suggestionText(value: unknown): string | undefined {
   if (typeof value === 'number') return String(value);
   if (typeof value === 'string') {
     const text = value.trim();
-    return text && text.length <= MAX_SUGGESTION_LENGTH && !text.includes('\n') ? text : undefined;
+    const short = text.length <= MAX_SUGGESTION_LENGTH && !text.includes('\n');
+    return text && short && !text.includes('://') ? text : undefined;
   }
   // Reference fields (e.g. a picked brewery): its name without "(Brewery)"
   if (value && typeof value === 'object' && !Array.isArray(value)) {
@@ -74,20 +75,27 @@ function suggestionText(value: unknown): string | undefined {
   return undefined;
 }
 
+/** A field's value as qualifier texts: each item of a list (e.g. genres), else the value */
+const valueTexts = (value: unknown): string[] =>
+  (Array.isArray(value) ? value : [value]).flatMap((item) => suggestionText(item) ?? []);
+
 /**
  * Values from other filled-in fields that could tell this entity apart from
- * another with the same name: the brewery, the style, a year, ….
+ * another with the same name: the brewery, the style, a year, …. `qualifiersOf` gives a
+ * field's own texts (its plugin's `qualifiers`, e.g. a profile's handle): they come first.
  */
 export function distinguishingSuggestions(
   manifest: NostrPostManifest,
-  formData: Record<string, unknown>
+  formData: Record<string, unknown>,
+  qualifiersOf?: (field: PostField, value: unknown) => string[] | undefined
 ): string[] {
   const nameId = nameFieldId(manifest);
-  const values = manifest.fields
-    .filter((f) => f.id !== nameId)
-    .map((f) => suggestionText(formData[f.id]))
-    .filter((text): text is string => !!text);
-  return Array.from(new Set(values)).slice(0, MAX_SUGGESTIONS);
+  const fields = manifest.fields.filter((f) => f.id !== nameId && formData[f.id] !== undefined);
+  const own = fields.flatMap((f) => qualifiersOf?.(f, formData[f.id]) ?? []);
+  const values = fields
+    .filter((f) => qualifiersOf?.(f, formData[f.id]) === undefined)
+    .flatMap((f) => valueTexts(formData[f.id]));
+  return Array.from(new Set([...own, ...values])).slice(0, MAX_SUGGESTIONS);
 }
 
 /** Field types whose values are too long or not text, so they make poor qualifiers */

@@ -187,7 +187,9 @@ export const BEER_MANIFEST: NostrPostManifest = {
 doesn't collide with the article about Bitcoin) and declares links derived from the entity's data.
 All manifest keys, including the picker's and the venue field's, are documented in
 [MANIFEST.md](../../MANIFEST.md#wiki-entity-manifests). Functions for them: `entityDTagFor`, `entityTitleFor`,
-`checkEntityDTag`, `distinguishingSuggestions`, `entityTypeAffixes`, `manifestLinks`.
+`checkEntityDTag`, `checkEntitySlug` (a taken slug's first free qualifier among candidates),
+`distinguishingSuggestions` (other fields' values, with fields' own qualifiers first, e.g. a profile
+handle from the plugins' `qualifiers` hook), `entityTypeAffixes`, `manifestLinks`.
 
 ### Unknown and newer fields
 
@@ -372,7 +374,9 @@ A form for creating or editing a wiki entity. Pre-fills from the resolved event 
 Publishing goes to `relays` plus the author's own relays (NIP-65). Plugins' publish summaries (e.g. the
 venue field's "Also create/update the venue's wiki page") show next to the publish button, and their
 `beforePublish` hooks run before the event is signed, as in `<nostr-post-composer>`. For a new entity the composer
-checks that the slug is free and asks for a distinguishing detail when it isn't. While the signer has
+checks that the slug is free. When it isn't, it picks the first distinguishing detail whose slug is
+free (fields' plugin `qualifiers` first, e.g. a profile's handle, then other fields' values such as a
+genre), until the user edits the detail themselves. While the signer has
 a pending request (e.g. an approval in a remote signer like Amber), "Waiting for your signer to approve…"
 shows next to the button (`SIGNING_EVENT` from `@nostr-post/signer`; text: `waitingForSigner`).
 

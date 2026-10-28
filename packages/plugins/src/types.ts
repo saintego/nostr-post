@@ -289,6 +289,13 @@ export interface NostrUIPlugin {
   ) => Promise<{ value?: unknown; suggestions?: FormJsonSuggestion[] }>;
 
   /**
+   * Short texts a value gives that tell an entity apart from another with the same name, e.g.
+   * a profile link's handle. A new wiki entity whose slug is taken tries them first as its
+   * qualifier ("Doomsday (doomsdayband musician)"); fields without the hook offer their value.
+   */
+  qualifiers?: (value: unknown, field: PostField) => string[];
+
+  /**
    * Completions while typing in the text field this plugin's field is attached to
    * (`attachTo`), e.g. `@name` mentions: after `trigger`, the composer shows what `search`
    * finds for the typed text and inserts the picked one's `insert`.

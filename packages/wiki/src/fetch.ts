@@ -1,4 +1,6 @@
+import type { NostrPostManifest } from '@nostr-post/core/types';
 import { fetchEvents, fetchEventsFromRelay } from '@nostr-post/signer';
+import { entityDTagFor } from './disambiguation';
 import { DEFAULT_WIKI_RELAYS, WIKI_KIND } from './nip54';
 import type { WikiEvent } from './resolver';
 
@@ -48,4 +50,27 @@ export function checkEntityDTag(
       else resolve(settled.some((r) => r.status === 'rejected') ? 'unknown' : 'free');
     });
   });
+}
+
+/**
+ * Whether a new entity's slug is free, with `qualifier` added to its name; when it's taken
+ * and `candidates` are given, the first candidate qualifier whose slug is free (checked one
+ * after another), e.g. the entity's profile handle, then its genre.
+ */
+export async function checkEntitySlug(
+  manifest: NostrPostManifest,
+  formData: Record<string, unknown>,
+  options: { qualifier?: string; candidates?: string[]; relays?: string[] } = {}
+): Promise<{ status: DTagAvailability; qualifier: string }> {
+  const qualifier = options.qualifier ?? '';
+  const check = (q: string) => {
+    const dTag = entityDTagFor(manifest, formData, q);
+    return dTag ? checkEntityDTag(dTag, options.relays) : Promise.resolve('unknown' as const);
+  };
+  const status = await check(qualifier);
+  if (status !== 'taken') return { status, qualifier };
+  for (const candidate of options.candidates ?? []) {
+    if ((await check(candidate)) === 'free') return { status: 'free', qualifier: candidate };
+  }
+  return { status, qualifier };
 }

@@ -48,7 +48,8 @@ the artist:
 | YouTube    | `youtube.com/@<handle>`, `channel/<id>`     | `https://www.youtube.com/@<handle>` (handle)   |
 
 Hosts are matched without `www.`/`m.`; handles are lowercased; queries and further path parts
-are dropped.
+are dropped. The handles are the field's `qualifiers`: a new wiki entity whose slug is taken (another
+musician with the same name) gets the first free one, e.g. `doomsday-doomsdayband-musician`.
 
 ## `/web`
 

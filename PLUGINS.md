@@ -345,6 +345,10 @@ interface NostrUIPlugin {
     field: PostField,
   ): Record<string, unknown>;
 
+  // Short texts that tell an entity apart from another with the same name (e.g. the embed field's
+  // profile handles): a new wiki entity whose slug is taken tries them first as its qualifier
+  qualifiers?(value: unknown, field: PostField): string[];
+
   // Async, before the post's events are signed (fields with a value only). May publish
   // events of its own (e.g. the venue's wiki entity); returned tags are added to every
   // event of the post (e.g. an `a` tag). Throwing stops publishing and shows the error.

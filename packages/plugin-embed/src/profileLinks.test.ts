@@ -67,3 +67,21 @@ describe('profile links as i tags', () => {
     expect(embedPlugin.extraTags?.(links, field)).toEqual([['i', 'https://doomsday.bandcamp.com']]);
   });
 });
+
+describe('profile handles as qualifiers', () => {
+  it('gives each handle once; ids without a handle give none', () => {
+    const links = [
+      'https://doomsday.bandcamp.com/album/a',
+      'https://www.instagram.com/doomsday/',
+      'https://open.spotify.com/artist/abc',
+    ];
+    expect(
+      embedPlugin.qualifiers?.(links, {
+        id: 'media',
+        type: 'string',
+        uiPlugin: 'embed',
+        mapTo: { kind: 1, target: 'tag', tagName: 'r' },
+      })
+    ).toEqual(['doomsday']);
+  });
+});

@@ -9,7 +9,7 @@
  */
 
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
-import { profileUrls } from './profileLinks';
+import { profileLink, profileUrls } from './profileLinks';
 
 export type EmbedProvider = 'youtube' | 'spotify' | 'soundcloud' | 'vimeo' | 'bandcamp';
 
@@ -142,6 +142,11 @@ export const embedPlugin: NostrUIPlugin = {
   },
 
   formatValue: (value: unknown): string => linksOf(value).join(', '),
+
+  /** Profile handles (Bandcamp, Instagram, …): they tell apart entities with the same name */
+  qualifiers: (value: unknown): string[] => [
+    ...new Set(linksOf(value).flatMap((link) => profileLink(link)?.handle ?? [])),
+  ],
 
   /** Profile links (an artist's Bandcamp, Instagram, …) as NIP-73 `i` tags, in canonical form */
   extraTags: (value: unknown): [string, ...string[]][] =>

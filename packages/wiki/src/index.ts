@@ -46,7 +46,12 @@ export {
   selectNewestEntity,
 } from './resolver';
 
-export { checkEntityDTag, type DTagAvailability, fetchEntityVersions } from './fetch';
+export {
+  checkEntityDTag,
+  checkEntitySlug,
+  type DTagAvailability,
+  fetchEntityVersions,
+} from './fetch';
 export {
   type EntityTypeAffixes,
   entityTypeAffixes,
