@@ -11,7 +11,8 @@ players, RSVP, `.ics` import and export.
   (`agendaText`), "Image" as a picture (`agendaImage`), through the device's share sheet or as a
   copy or download.
 - **Gig** (`#/event/<naddr>`): one event (`<nostr-calendar-event>`), shareable.
-- **Musician** (`#/artist/<d-tag>`, `#/artist-new[/<name>]`): a musician's wiki page (type
+- **Musician** (`#/artist/<d-tag>`, `#/artist-new[/<name>]`, `#/artist-edit/<d-tag>[?add=<JSON>]`):
+  a musician's wiki page (type
   `(musician)`); links play (`@nostr-post/plugin-embed`), and its gigs are listed: those that link
   the page (`a` tag) or one of its profiles (`i` tag), so gigs added before the page show too.
 - **Add a gig** (`#/add`): paste a post's text and its poster → AI reads it (Claude with your own
@@ -24,7 +25,9 @@ players, RSVP, `.ics` import and export.
   performer's name (`checkLink`, `namesMatch`) are offered as players to confirm ("It's them"),
   the others are dropped. Performers each get the gig's genres too. Performers are matched to
   their pages by profile link, then name; those without a page stay as text (in the description)
-  and their profile links still tag the gig; the form offers "Create page" for them.
+  and their profile links still tag the gig; the form offers "Create page" for them. A page that
+  lacks links the post has gets "add them to the page": its edit form with the links added
+  (the wiki composer's `additions`).
 - **Import** (`#/import`): an `.ics` file (e.g. Facebook's export of your events) → review each
   event in the composer. Its d-tag comes from the event's UID, so importing again updates.
 - **Test mode** (on by default): events are signed and shown but never sent to relays (the

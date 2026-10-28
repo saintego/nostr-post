@@ -13,6 +13,7 @@ import {
   entityTitleFor,
 } from '../disambiguation';
 import { checkEntitySlug, fetchEntityVersions } from '../fetch';
+import { addToFormData } from '../formMerge';
 import {
   DEFAULT_WIKI_RELAYS,
   manifestToWikiEvent,
@@ -66,6 +67,13 @@ export class NostrWikiComposer extends LitElement {
   @property({ attribute: false })
   prefill?: Record<string, unknown>;
 
+  /**
+   * Values to add to the loaded version (`addToFormData`): lists get the new items, empty fields
+   * the value, e.g. a musician's links a post has and their page doesn't
+   */
+  @property({ attribute: false })
+  additions?: Record<string, unknown>;
+
   @state() private _loading = false;
   @state() private _publishing = false;
   /** The signer is working on a signature (e.g. waiting for the user to approve) */
@@ -110,7 +118,9 @@ export class NostrWikiComposer extends LitElement {
     return !this._baseEvent && !this.entityId;
   }
 
+  /** The d-tag it publishes to: the edited entity's, else the one its data gives */
   private get _previewDTag(): string | undefined {
+    if (this.entityId?.trim()) return this.entityId.trim();
     if (!this.manifest) return undefined;
     return entityDTagFor(this.manifest, this._formData, this._activeQualifier);
   }
@@ -219,7 +229,10 @@ export class NostrWikiComposer extends LitElement {
       if (fetchId !== this._fetchId) return;
       if (winner) {
         this._baseEvent = winner;
-        this._formData = wikiEventToManifestData(winner, this.manifest);
+        this._formData = addToFormData(
+          wikiEventToManifestData(winner, this.manifest),
+          this.additions
+        );
       } else {
         this._baseEvent = undefined;
         this._formData = { ...this.prefill };

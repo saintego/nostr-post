@@ -194,7 +194,8 @@ handle from the plugins' `qualifiers` hook), `entityTypeAffixes`, `manifestLinks
 ### Unknown and newer fields
 
 Readers may have an older manifest than the writer. `wikiEventToManifestData` reads the fields the
-manifest knows. `unmappedTableRows(event, manifest)` returns the infobox rows it doesn't, and
+manifest knows; `addToFormData(formData, additions)` adds values to them (new list items, empty
+fields), as the composer's `additions` does. `unmappedTableRows(event, manifest)` returns the infobox rows it doesn't, and
 `<nostr-wiki-view>` shows them under "All data". Nothing is lost.
 
 ### Generated Nostr event
@@ -366,6 +367,7 @@ A form for creating or editing a wiki entity. Pre-fills from the resolved event 
 | `manifest`                     | `NostrPostManifest`             | Field definitions (property only)                             |
 | `baseEvent`                    | `WikiEvent`                     | Edit from this version instead of the newest (property only)  |
 | `prefill`                      | `Record<string, unknown>`       | Initial values for a new entity (property only)               |
+| `additions`                    | `Record<string, unknown>`       | Values added to the loaded version (`addToFormData`: lists get the new items, empty fields the value), e.g. links a post has that the page lacks; set with `entityId` (property only) |
 | `relays`                       | `string[]`                      | Relays to load from and publish to (property only)            |
 | `auto-publish` / `autoPublish` | `boolean`                       | Publish automatically using NIP-07 signer                     |
 | `messages`                     | `Partial<WikiComposerMessages>` | Override user-facing text, e.g. translations (property only)  |

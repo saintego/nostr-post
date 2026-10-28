@@ -158,9 +158,10 @@ export function addGig() {
           .map((s) => {
             const dTag = s.address.split(':').slice(2).join(':');
             const links = Object.values(s.prefill).flat().map(escapeHtml).join(', ');
-            return `<a href="#/artist/${encodeURIComponent(dTag)}" target="_blank">${escapeHtml(s.label)}</a> (${links})`;
+            const edit = `#/artist-edit/${encodeURIComponent(dTag)}?add=${encodeURIComponent(JSON.stringify(s.prefill))}`;
+            return `<a href="#/artist/${encodeURIComponent(dTag)}" target="_blank">${escapeHtml(s.label)}</a> (${links}): <a href="${escapeHtml(edit)}" target="_blank">add them to the page</a>`;
           })
-          .join('; ')}: add them to their page?`
+          .join('; ')}`
       : '';
     const composer = $('composer');
     composer.manifest = GIG_MANIFEST;

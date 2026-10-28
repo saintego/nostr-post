@@ -62,6 +62,8 @@ export {
   nameFieldId,
 } from './disambiguation';
 
+export { addToFormData } from './formMerge';
+
 export {
   WIKI_KIND,
   DEFAULT_WIKI_RELAYS,

@@ -162,8 +162,8 @@
     - [x] validate existence of artist wiki by links, name, before creating new: look up by `#i`, then by
           the name's slug (`resolveEntities`; the picker's form JSON asks for the entity manifest's name
           and link fields)
-    - [ ] A gig that adds links the musician's page doesn't have: suggest updating the page. Done as a
-          hint linking to the page (`update` suggestions); left: an edit form prefilled with the links
+    - [x] A gig that adds links the musician's page doesn't have: suggest updating the page (`update`
+          suggestions): "add them to the page" opens its edit form with the links added (`additions`)
     - [ ] Editing an event with several picked entities: their `i` tags come back on one nameless
           unlinked value (tags can't be told apart by entity); unlinked entities' names aren't stored
           in tags, only in the description

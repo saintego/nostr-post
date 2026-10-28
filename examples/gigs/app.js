@@ -52,7 +52,7 @@ function eventPage(id) {
 function artistPage(id) {
   const dTag = decodeURIComponent(id);
   main.innerHTML = html`
-    <p><a href="#/">← All gigs</a> · <a href="#/artist-new">Add an artist</a></p>
+    <p><a href="#/">← All gigs</a> · <a href="#/artist-edit/${encodeURIComponent(dTag)}">Edit</a> · <a href="#/artist-new">Add an artist</a></p>
     <nostr-wiki-view id="artist"></nostr-wiki-view>
     <h3>Gigs</h3>
     <nostr-post-feed id="gigs"></nostr-post-feed>
@@ -85,6 +85,35 @@ async function showArtistGigs(feed, dTag) {
   feed.manifest = GIG_MANIFEST;
   feed.filters = filters;
 }
+
+/**
+ * Editing a musician's page; `additions` (`#/artist-edit/<d-tag>?add=<JSON>`) are added to it,
+ * e.g. links from a gig that the page doesn't have
+ */
+function editArtist(dTag, additions) {
+  main.innerHTML = `
+    <h2>Edit a musician</h2>
+    <p class="hint" ${additions ? '' : 'hidden'}>Links from the gig are added below: check them and publish.</p>
+    <nostr-wiki-composer id="composer" auto-publish></nostr-wiki-composer>
+  `;
+  const composer = document.getElementById('composer');
+  composer.manifest = ARTIST_MANIFEST;
+  composer.additions = additions;
+  composer.entityId = dTag;
+  composer.addEventListener('nostr-wiki-published', () => {
+    location.hash = `#/artist/${encodeURIComponent(dTag)}`;
+  });
+}
+
+/** `?add=<JSON>` of a route, if valid */
+const additionsOf = (query) => {
+  try {
+    const value = JSON.parse(new URLSearchParams(query ?? '').get('add') ?? 'null');
+    return value && typeof value === 'object' ? value : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
 /** A new artist's page, with the name filled in when given (`#/artist-new/<name>`) */
 function newArtist(name) {
@@ -149,6 +178,10 @@ const routes = [
   [/^#\/event\/(.+)$/, (m) => eventPage(m[1])],
   [/^#\/artist\/(.+)$/, (m) => artistPage(m[1])],
   [/^#\/artist-new(?:\/(.+))?$/, (m) => newArtist(m[1] && decodeURIComponent(m[1]))],
+  [
+    /^#\/artist-edit\/([^?]+)(?:\?(.*))?$/,
+    (m) => editArtist(decodeURIComponent(m[1]), additionsOf(m[2])),
+  ],
   [/^#\/add$/, addGig],
   [/^#\/import$/, importIcs],
 ];
