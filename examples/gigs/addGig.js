@@ -60,6 +60,10 @@ export function addGig() {
         <summary>No key? Use any AI</summary>
         <p class="hint">Copy this prompt to any AI (with the poster, if you have one), then paste its answer below.</p>
         <textarea id="prompt" rows="6" readonly></textarea>
+        <div class="row">
+          <button type="button" id="copy-prompt">Copy prompt</button>
+          <span id="copy-status" class="hint" role="status"></span>
+        </div>
       </details>
       <label><input id="suggest-links" type="checkbox" ${store.get('gigs:suggest-links') === '0' ? '' : 'checked'} />
         Let the AI suggest performers' Spotify, SoundCloud and YouTube links (checked by asking those sites)</label>
@@ -94,6 +98,17 @@ export function addGig() {
     updatePrompt();
   });
   updatePrompt();
+  // Clicking the prompt selects it all, for copying by hand where the clipboard is blocked
+  $('prompt').addEventListener('focus', () => $('prompt').select());
+  $('copy-prompt').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText($('prompt').value);
+      $('copy-status').textContent = 'Copied: paste it into any AI.';
+    } catch {
+      $('prompt').select();
+      $('copy-status').textContent = "Couldn't copy: it's selected, copy it with Ctrl+C or ⌘C.";
+    }
+  });
 
   $('ask').addEventListener('click', async () => {
     const apiKey = $('api-key').value.trim();
