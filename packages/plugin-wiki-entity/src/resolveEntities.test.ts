@@ -112,6 +112,25 @@ describe('resolveEntities', () => {
     ]);
   });
 
+  it('marks pages found automatically, for the user to check: by link or name', async () => {
+    fetchEvents.mockResolvedValueOnce([
+      page('doomsday-band-musician', 'Doomsday', [IG]),
+      page('other-musician', 'Other'),
+    ]);
+    const items = entityItems([{ title: 'Doomsday', media: [IG] }, 'Other'], MUSICIAN);
+    const { entities } = await resolveEntities(items, { entityManifest: MUSICIAN });
+    expect(entities.map((e) => e.match?.by)).toEqual(['link', 'name']);
+    // "Not them": the unlinked value it was, with its name and links
+    expect(entities[0]?.match?.instead).toEqual({
+      dTag: '',
+      resolvedPubkey: '',
+      externalIds: [IG],
+      displayName: 'Doomsday',
+      unlinked: true,
+      prefill: { title: 'Doomsday', media: [IG] },
+    });
+  });
+
   it('a page with the name but other links is another entity', async () => {
     fetchEvents.mockResolvedValueOnce([
       page('doomsday-musician', 'Doomsday', ['https://www.instagram.com/someone-else']),

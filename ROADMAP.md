@@ -139,8 +139,10 @@
         its type found by its links meanwhile is linked instead; a taken name gets the first free
         qualifier (handle, genre), and with none free nothing is published, so another
         performer's page is never overwritten
-  - [ ] Confirm a page found for a performer automatically (by links or name): "It's them" / "Not
-        them" in the picker's page preview (the whole page in a popup, its links as players)
+  - [x] Confirm a page found for a performer automatically (by links or name): the value is marked
+        (`match`), the chip says how it was found, and the picker's page preview (the whole page in
+        a popup, its links as players) has "It's them" / "Not them" (back to its name and links, so
+        it can get its own page); the publish summary lists pages not checked yet
   - [ ] Richer artist pages: description, genres, country (the venue field's country level, `i`
         `iso3166:`), albums and releases, members, active years; links stay one field. Prefill them
         from the AI's answer when the user confirms the artist

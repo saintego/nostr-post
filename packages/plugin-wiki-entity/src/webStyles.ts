@@ -44,6 +44,22 @@ export const pickerStyles = css`
     border-style: dashed;
   }
   .selected.unlinked .selected-slug { font-family: inherit; font-style: italic; }
+  .selected.unconfirmed { border-style: dashed; border-color: #d97706; }
+  .selected.unconfirmed .selected-slug { font-family: inherit; color: #92400e; }
+  .match-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+  .match-actions button {
+    padding: 0.4rem 0.9rem;
+    border: 1px solid var(--nl-border, #d1d5db);
+    border-radius: 0.375rem;
+    background: white;
+    font: inherit;
+    cursor: pointer;
+  }
+  .match-actions .match-confirm {
+    background: var(--nl-primary, #6366f1);
+    border-color: var(--nl-primary, #6366f1);
+    color: white;
+  }
   .chip-create {
     background: none;
     border: none;
@@ -243,6 +259,17 @@ export const pickerStyles = css`
   }
   :host-context(.dark) .selected.unlinked {
     background: none;
+  }
+  :host-context(.dark) .selected.unconfirmed { border-color: #f59e0b; }
+  :host-context(.dark) .selected.unconfirmed .selected-slug { color: #fcd34d; }
+  :host-context(.dark) .match-actions button {
+    border-color: #4b5563;
+    background: #111827;
+    color: #f3f4f6;
+  }
+  :host-context(.dark) .match-actions .match-confirm {
+    background: #6366f1;
+    border-color: #6366f1;
   }
   :host-context(.dark) .selected-name {
     color: #f3f4f6;

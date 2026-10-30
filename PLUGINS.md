@@ -481,7 +481,11 @@ as `r` or `i` tags) and hashtag fields (`t`), e.g. a musician's name, profiles a
 hashtags prefill a new page and qualify its slug when the name is taken. `parseJson` looks their pages up by the
 links' `i` tags first, then by the name's d-tag (a page with that name but none of the same links
 is another entity). Entities without a page stay in the value unlinked (no `a` tag, their links
-still as `i` tags, so a page created later finds the post) with a `create` suggestion; the picker
+still as `i` tags, so a page created later finds the post) with a `create` suggestion. A page
+found this way is marked for the user to check (`match`: by link or by name, and the unlinked
+value it was): the picker's chip says so, and its preview has "It's them" (`confirmMatch`) and
+"Not them" (`rejectMatch`: back to its name and links); the publish summary lists those not
+checked yet. Entities without a page: the picker
 shows them with "Create page", prefilled, and when the post is published creates their pages
 (its `beforePublish` hook, `createEntityPage`), which the post then links. That's always the
 user's choice: next to the publish button each one has a checkbox, ticked when it has links,

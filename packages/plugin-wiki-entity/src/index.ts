@@ -34,6 +34,7 @@ export {
   identityFields,
   linkFields,
 } from './entityJson';
+export { confirmMatch, isUnconfirmed, rejectMatch } from './entityMatch';
 export { createEntityPage, createsPage, pageData } from './entityPage';
 export { needsPageLinks, splitEventLinks, withPageLinks } from './eventLinks';
 export { resolveEntities } from './resolveEntities';

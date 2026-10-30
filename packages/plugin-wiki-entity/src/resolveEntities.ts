@@ -97,21 +97,27 @@ export async function resolveEntities(
         idsOfEvent(byName).length === 0 ||
         idsOfEvent(byName).some((id) => item.ids.includes(id)));
     const page = byLink ?? (sameName ? byName : undefined);
+    const unlinked: WikiEntityData = {
+      dTag: '',
+      resolvedPubkey: '',
+      externalIds: item.ids,
+      displayName: item.name,
+      unlinked: true,
+      prefill: item.prefill,
+    };
     if (!page) {
-      entities.push({
-        dTag: '',
-        resolvedPubkey: '',
-        externalIds: item.ids,
-        displayName: item.name,
-        unlinked: true,
-        prefill: item.prefill,
-      });
+      entities.push(unlinked);
       suggestions.push({ label: item.name, action: 'create', prefill: item.prefill });
       return;
     }
     const entity = entityDataOf(page);
     if (entities.some((e) => !e.unlinked && e.dTag === entity.dTag)) return;
-    entities.push({ ...entity, externalIds: [...new Set([...entity.externalIds, ...item.ids])] });
+    entities.push({
+      ...entity,
+      externalIds: [...new Set([...entity.externalIds, ...item.ids])],
+      // Found, not confirmed: the user checks it's this entity
+      match: { by: byLink ? 'link' : 'name', instead: unlinked },
+    });
     const missing = missingLinks(item, page, linkFieldIds);
     if (missing) {
       suggestions.push({

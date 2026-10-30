@@ -44,7 +44,8 @@ import {
 } from './pickerMessages';
 import { needsPageLinks, withPageLinks } from './eventLinks';
 import { renderModal } from './modal';
-import { isShown, renderPickedChip } from './pickedChip';
+import { confirmMatch, rejectMatch } from './entityMatch';
+import { isShown, renderMatchActions, renderPickedChip } from './pickedChip';
 import { type EntitySearchResult, searchEntities } from './search';
 import { pickerStyles } from './webStyles';
 
@@ -345,6 +346,8 @@ export class WikiEntityPicker extends LitElement {
     if (!dTag) return nothing;
     // Unknown types: <nostr-wiki-view> shows the article text (STANDARD_WIKI_MANIFEST)
     const manifest = getEntityManifest(this._config.entityManifest);
+    // A picked entity whose page was found automatically: the user says whether it's theirs
+    const found = this._picked.find((e) => !e.unlinked && e.dTag === dTag);
     return this._renderModal(
       dTag,
       html`
@@ -353,10 +356,23 @@ export class WikiEntityPicker extends LitElement {
           .entityId=${dTag}
           .relays=${this._relays}
         ></nostr-wiki-view>
+        ${renderMatchActions(found, {
+          messages: this._m,
+          onConfirm: () => found && this._settleMatch(found, confirmMatch(found)),
+          onReject: () => found && this._settleMatch(found, rejectMatch(found)),
+        })}
       `,
       () => {
         this._previewDTag = undefined;
       }
+    );
+  }
+
+  /** Replaces a found entity with the user's answer (it, confirmed; or its unlinked value) */
+  private _settleMatch(entity: WikiEntityData, settled: WikiEntityData): void {
+    this._previewDTag = undefined;
+    this._emit(
+      this._config.multiple ? this._picked.map((e) => (e === entity ? settled : e)) : settled
     );
   }
 

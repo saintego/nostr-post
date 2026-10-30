@@ -43,6 +43,11 @@ export interface WikiEntityData {
    * means yes when it has links, no for a name alone (namesakes)
    */
   createPage?: boolean;
+  /**
+   * A page found for the entity automatically (`resolveEntities`), not confirmed by the user yet:
+   * found `by` its links or its name; `instead`, the unlinked value it was ("Not them")
+   */
+  match?: { by: 'link' | 'name'; instead: WikiEntityData };
 }
 
 /**
