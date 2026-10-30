@@ -138,8 +138,11 @@
         a performer has no outside identity: find an existing page by its links (`#i`) and name slug
         first (`resolveEntities`), and never create one from a name alone (duplicates, namesakes).
         Today it's one "Create page" dialog per performer
-  - [ ] The app is plain JavaScript with HTML strings (about 1100 lines) and getting hard to follow:
-        rewrite it on `@nostr-post/react` with a build step (Vite), still a static nsite
+  - [x] Rewritten in React (Vite, TypeScript), still a static nsite: logic in `src/lib`, a component
+        per page; the packages' custom elements used in JSX directly (React 19 sets their properties
+        and listens to their events), typed from their `HTMLElementTagNameMap` entries
+        (`<nostr-post-composer>` got its entry). `@nostr-post/react` only wraps the composer, view
+        and feed, so the app doesn't use its wrappers
   - [x] Preview / test mode: the whole app usable without publishing (the signer's dry run,
         `setDryRun`): events are signed and shown as they would be, nothing reaches relays; a banner
         says so

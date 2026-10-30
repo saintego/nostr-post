@@ -36,6 +36,7 @@ run('pnpm', ['--filter', '@nostr-post/cdn', 'build']);
 console.log('Building example apps for static hosting...');
 run('pnpm', ['--filter', '@nostr-post/example', 'build']);
 run('pnpm', ['--filter', 'react-demo', 'build']);
+run('pnpm', ['--filter', 'gigs', 'build']);
 run('pnpm', ['--filter', 'nextjs-demo', 'build'], {
   env: {
     NOSTR_POST_BASE_PATH: '/examples/nextjs-demo',
@@ -63,7 +64,7 @@ copyDir(join(root, 'examples/nextjs-demo/out'), join(deployDir, 'examples/nextjs
 cpSync(join(root, 'examples/wiki-demo'), join(deployDir, 'examples/wiki-demo'), {
   recursive: true,
 });
-cpSync(join(root, 'examples/gigs'), join(deployDir, 'examples/gigs'), { recursive: true });
+copyDir(join(root, 'examples/gigs/dist'), join(deployDir, 'examples/gigs'));
 copyDir(join(root, 'tools/manifest-creator/out'), join(deployDir, 'manifest-creator'));
 
 console.log('Done. Local artifact at .pages-local');

@@ -34,7 +34,7 @@
       padding: 0.75rem 1rem; background: var(--card); border-bottom: 1px solid var(--border);
     }
     header h1 { margin: 0; font-size: 1.25rem; }
-    header nav { display: flex; gap: 1rem; flex: 1; }
+    header nav { display: flex; flex-wrap: wrap; gap: 1rem; flex: 1; }
     a { color: var(--accent); }
     .banner {
       padding: 0.5rem 1rem; background: var(--warn-bg); color: var(--warn-text); font-size: 0.875rem;
@@ -65,24 +65,9 @@
   <!-- nostr-shard-signer sign-in (the button in the bottom-right corner): Nostr-only (extension,
        NIP-46 bunker) without a client ID -->
   <script src="https://saintego.github.io/nostr-shard-signer/nostr-bridge.js"></script>
-  <script type="module" src="../../nostr-post.js"></script>
 </head>
 <body>
-  <header>
-    <h1>🎸 Gigs</h1>
-    <nav>
-      <a href="#/">Browse</a>
-      <a href="#/add">Add a gig</a>
-      <a href="#/import">Import .ics</a>
-      <a href="#/artist-new">Add an artist</a>
-    </nav>
-    <label class="switch"><input type="checkbox" id="test-mode" /> Test mode</label>
-  </header>
-  <div class="banner" id="test-banner" hidden>
-    Test mode: sign in (bottom-right) to try adding gigs. Events are signed and shown, but nothing
-    is sent to relays. Turn it off to publish.
-  </div>
-  <main id="main"></main>
-  <script type="module" src="./app.js"></script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>

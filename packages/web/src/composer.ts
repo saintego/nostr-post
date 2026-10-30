@@ -31,7 +31,7 @@ import {
   type ValidationResult,
   validateAndCoordinate,
 } from './composerSubmit';
-
+import './composerElement';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
 import {
   fetchManifestByATag,

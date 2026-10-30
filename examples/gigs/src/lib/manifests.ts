@@ -1,13 +1,14 @@
 /**
- * The gig app's own data: its artist and gig manifests, cities and genres. App-specific (they
- * stay in the example, AGENTS.md "Packages are the product"); everything else comes from the
- * packages through the CDN bundle.
+ * The gig app's own data: its artist and gig manifests and genres. App-specific (they stay in the
+ * example, AGENTS.md "Packages are the product"); everything else comes from the packages.
  */
 
-import { CALENDAR_EVENT_MANIFEST } from '../../nostr-post.js';
+import { CALENDAR_EVENT_MANIFEST } from '@nostr-post/calendar';
+import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
+import type { WikiManifest } from '@nostr-post/wiki';
 
 /** An artist's wiki page (NIP-54): name, genres and media links shown as players */
-export const ARTIST_MANIFEST = {
+export const ARTIST_MANIFEST: WikiManifest = {
   id: 'gigs-musician-v1',
   version: '1.0.0',
   wikiConfig: { titleTemplate: '{title} (musician)', dTagTemplate: '{title}-(musician)' },
@@ -71,7 +72,7 @@ export const GENRES = [
 ];
 
 /** The gig's own wording of calendar event fields */
-const GIG_FIELD_METADATA = {
+const GIG_FIELD_METADATA: Record<string, PostField['metadata']> = {
   tags: {
     label: 'Genres',
     description: 'Music genres, e.g. punk or techno',
@@ -87,15 +88,14 @@ const GIG_FIELD_METADATA = {
 };
 
 /** A gig: the calendar event manifest with performers (artist pages) and genre suggestions */
-export const GIG_MANIFEST = {
+export const GIG_MANIFEST: NostrPostManifest = {
   ...CALENDAR_EVENT_MANIFEST,
   id: 'gigs-gig-v1',
   fields: [
-    ...CALENDAR_EVENT_MANIFEST.fields.map((field) =>
-      GIG_FIELD_METADATA[field.id]
-        ? { ...field, metadata: { ...field.metadata, ...GIG_FIELD_METADATA[field.id] } }
-        : field
-    ),
+    ...CALENDAR_EVENT_MANIFEST.fields.map((field) => {
+      const metadata = GIG_FIELD_METADATA[field.id];
+      return metadata ? { ...field, metadata: { ...field.metadata, ...metadata } } : field;
+    }),
     {
       id: 'performers',
       type: 'ref',

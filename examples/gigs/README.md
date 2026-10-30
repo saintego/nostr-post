@@ -1,7 +1,7 @@
 # Gigs (example)
 
-Concerts and parties on Nostr: a thin static app on nostr-post's packages (the CDN bundle), for
-publishing as an nsite. NIP-52 calendar events, musician pages (NIP-54 wiki) with their music as
+Concerts and parties on Nostr: a thin static app on nostr-post's packages (React, Vite and
+TypeScript; the packages' custom elements used in JSX), built for publishing as an nsite. NIP-52 calendar events, musician pages (NIP-54 wiki) with their music as
 players, RSVP, `.ics` import and export.
 
 - **Browse** (`#/`): gigs by city (a geohash prefix, `#g`), genre (`#t`) and date, as a list of days,
@@ -40,9 +40,15 @@ players, RSVP, `.ics` import and export.
 - **Test mode** (on by default): events are signed and shown but never sent to relays (the
   signer's dry run).
 
-App-specific data (the musician and gig manifests, genres) is in `manifests.js`; the AI
-prompt and the Claude call in `ai.js`; the link check in `links.js`; pages in `browse.js`,
-`addGig.js` and `app.js` (router, gig, musician, import); sharing in `share.js`. Everything else comes from the packages.
+The code is in `src/`:
 
-Run it with `pnpm preview:pages` and open `/examples/gigs/`. Planned work is in
+- `lib/`: the logic, without React. The app's own data (the musician and gig manifests, genres)
+  in `manifests.ts`; the AI prompt and the Claude call (the official SDK, loaded only when asked)
+  in `ai.ts`; the link check in `links.ts`; the browse filter and cities in `filter.ts`; sharing in
+  `share.ts`; the draft's preview and duplicates in `draft.ts`; hash routes in `routes.ts`.
+- `pages/`: a component per page, and the add flow's parts (`SuggestedLinks`, `DraftReview`).
+- `elements.d.ts`: the custom elements' JSX types, from the packages' own element types.
+
+Everything else comes from the packages. Run it with `pnpm --filter gigs dev`, or as in PR
+previews with `pnpm preview:pages` and open `/examples/gigs/`. Planned work is in
 [ROADMAP.md](../../ROADMAP.md) ("Gig platform example").
