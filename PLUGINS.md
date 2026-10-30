@@ -462,6 +462,10 @@ if (parsed.success) {
 }
 ```
 
+Both need the fields' plugins registered: import their entries, or with `@nostr-post/web` call
+`await ensurePluginsForManifest(manifest)` first (composers load them themselves, but a schema
+built before any composer is shown would leave their fields out).
+
 Fields get their schema from their plugin's `jsonSchema`; fields without a plugin (`text`,
 `textarea`, `number`, `select`) from their type (`string`, `number`, `boolean`, `enum`, an array
 with `metadata.multiple`). A plugin without `jsonSchema` is left out: its value's shape isn't
@@ -478,7 +482,12 @@ hashtags prefill a new page and qualify its slug when the name is taken. `parseJ
 links' `i` tags first, then by the name's d-tag (a page with that name but none of the same links
 is another entity). Entities without a page stay in the value unlinked (no `a` tag, their links
 still as `i` tags, so a page created later finds the post) with a `create` suggestion; the picker
-shows them with "Create page", prefilled. A found page missing some of the links gets an `update`
+shows them with "Create page", prefilled, and when the post is published creates their pages
+(its `beforePublish` hook, `createEntityPage`), which the post then links. That's always the
+user's choice: next to the publish button each one has a checkbox, ticked when it has links,
+unticked for a name alone. A page of its type published meanwhile with one of its links is linked
+instead, and a name another page has gets a qualifier (a handle, a genre); when none is free,
+nothing is published. A found page missing some of the links gets an `update`
 suggestion. Without plugins:
 `formJsonSchema(manifest, { fieldSchema })` and `parseFormJson` (synchronous) in
 `@nostr-post/core/formJson`.

@@ -5,8 +5,8 @@
  */
 
 import { findJsonObject } from '@nostr-post/core/formJson';
-import { useRef, useState } from 'react';
-import { askClaude, type GigDraft, gigPrompt, readAnswer } from '../lib/ai';
+import { useEffect, useRef, useState } from 'react';
+import { askClaude, type GigDraft, gigPrompt, loadGigPlugins, readAnswer } from '../lib/ai';
 import { type SuggestedLink, suggestedLinks } from '../lib/links';
 import { store } from '../lib/store';
 import { DraftReview } from './DraftReview';
@@ -67,6 +67,11 @@ export function AddGig() {
   const [answer, setAnswer] = useState('');
   const [status, setStatus] = useState('');
   const [next, setNext] = useState<Next>();
+  // The prompt's schema comes from the form's plugins
+  const [pluginsLoaded, setPluginsLoaded] = useState(false);
+  useEffect(() => {
+    void loadGigPlugins().then(() => setPluginsLoaded(true));
+  }, []);
 
   const review = (draft?: GigDraft) => setNext({ step: 'review', draft, id: Date.now() });
 
@@ -157,7 +162,7 @@ export function AddGig() {
             Ask Claude
           </button>
         </div>
-        <PromptCopy prompt={gigPrompt(text, { suggestLinks })} />
+        {pluginsLoaded && <PromptCopy prompt={gigPrompt(text, { suggestLinks })} />}
         <label>
           <input
             type="checkbox"

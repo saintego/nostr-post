@@ -221,6 +221,9 @@ The bundle re-exports utilities for advanced usage:
 - `searchEntities`, `entityTypeAffixes`
 - `entityJsonSchema(manifest)`, `resolveEntities(items, { entityManifest, relays })`: entities in form JSON
   (name and links) and their wiki pages, found by link (`#i`) or name; the others as unlinked values
+- `createsPage(entity)`, `createEntityPage(entity, field)`: the picker's publish hook: an unlinked
+  entity's page is created when the post is published (ticked next to the publish button by
+  default when it has links), and the post links it
 - `withPageLinks(values, relays?)`: an edited event's picked entities with their own links (`i` tags)
   back, from their pages, so removing one removes its links; the picker does it on edit
 

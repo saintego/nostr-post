@@ -231,6 +231,8 @@ export {
 
 // Wiki entity picker (search, create)
 export {
+  createEntityPage,
+  createsPage,
   entityTypeAffixes,
   entityJsonSchema,
   resolveEntities,

@@ -34,6 +34,7 @@ export {
   identityFields,
   linkFields,
 } from './entityJson';
+export { createEntityPage, createsPage, pageData } from './entityPage';
 export { needsPageLinks, splitEventLinks, withPageLinks } from './eventLinks';
 export { resolveEntities } from './resolveEntities';
 export { type EntitySearchResult, searchEntities } from './search';

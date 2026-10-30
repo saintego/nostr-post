@@ -31,8 +31,9 @@ players, RSVP, `.ics` import and export.
   doesn't; the others (YouTube channels, Bandcamp, Instagram, Metal Archives, websites, …) can't be checked
   from a browser and are left for the user to open and tick. Performers each get the gig's
   genres too. Performers are matched to their pages by profile link, then name; those without a
-  page stay as text (in the description) and their profile links still tag the gig; the form
-  offers "Create page" for them (with their links), and a hint above it names them. A page that
+  page get one when the gig is published, with their links (a checkbox each next to the publish
+  button: ticked with links, unticked for a name alone); unticked, they stay as text (in the
+  description) and their profile links still tag the gig. A page that
   lacks links the post has gets "add them to the page": its edit form with the links added
   (the wiki composer's `additions`).
 - **Import** (`#/import`): an `.ics` file (e.g. Facebook's export of your events) → review each

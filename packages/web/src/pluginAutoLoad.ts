@@ -41,6 +41,10 @@ const ensurePluginLoaded = async (pluginId: string) => {
   await pending;
 };
 
+/**
+ * Loads the field plugins a manifest uses (their web entries, which register them), e.g. before
+ * reading form JSON or building its schema when no composer has loaded them yet
+ */
 export const ensurePluginsForManifest = async (manifest?: NostrPostManifest) => {
   if (!manifest || typeof window === 'undefined') return;
 

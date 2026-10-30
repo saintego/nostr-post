@@ -10,6 +10,7 @@ import { findJsonObject } from '@nostr-post/core/formJson';
 import type { WikiEntityData } from '@nostr-post/plugin-wiki-entity';
 import { formJsonSchema, parseFormJson } from '@nostr-post/plugins/formJson';
 import type { FormJsonSuggestion } from '@nostr-post/plugins/types';
+import { ensurePluginsForManifest } from '@nostr-post/web';
 import { checkLinks, performersOf } from './links';
 import { GIG_MANIFEST } from './manifests';
 
@@ -19,6 +20,12 @@ import { GIG_MANIFEST } from './manifests';
  * performers' names (looked up as artist pages afterwards).
  */
 export const gigSchema = () => formJsonSchema(GIG_MANIFEST);
+
+/**
+ * Loads the gig form's field plugins: the schema and reading the answer need them (their
+ * `jsonSchema` and `parseJson`), before any composer has loaded them
+ */
+export const loadGigPlugins = () => ensurePluginsForManifest(GIG_MANIFEST);
 
 /** Asks the AI for performers' links the post doesn't have; they're checked before use */
 const SUGGEST_LINKS = `
@@ -74,6 +81,7 @@ export const readAnswer = async (
 ): Promise<GigDraft> => {
   const json = findJsonObject(answer);
   if (!json.success) throw json.error;
+  await loadGigPlugins();
   const { value, fromPoster } = checkLinks(json.data, text, hasPoster, confirmed);
   const parsed = await parseFormJson(GIG_MANIFEST, value);
   if (!parsed.success) throw parsed.error;
@@ -144,7 +152,10 @@ export async function askClaude({
   poster?: File;
   suggestLinks?: boolean;
 }): Promise<string> {
-  const { default: Anthropic } = await import('@anthropic-ai/sdk');
+  const [{ default: Anthropic }] = await Promise.all([
+    import('@anthropic-ai/sdk'),
+    loadGigPlugins(),
+  ]);
   const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true });
   if (poster && !IMAGE_TYPES.includes(poster.type)) {
     throw new Error('The poster must be a JPEG, PNG, GIF or WebP image');

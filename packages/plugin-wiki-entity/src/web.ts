@@ -12,6 +12,7 @@
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
+import './pagePublish';
 import {
   DEFAULT_WIKI_RELAYS,
   defaultResolver,
@@ -459,13 +460,14 @@ export class WikiEntityPicker extends LitElement {
   }
 }
 
-// Register plugin and set inputTagName so the composer knows which element to use
+// Register plugin and set the elements the composer uses: the input, and the pages to create
+const tagNames = {
+  inputTagName: 'wiki-entity-picker',
+  publishSummaryTagName: 'np-wiki-entity-publish',
+};
 const entry = pluginRegistry.get('wiki-entity-picker');
-if (entry) {
-  entry.inputTagName = 'wiki-entity-picker';
-} else {
-  pluginRegistry.register({ ...wikiEntityPickerPlugin, inputTagName: 'wiki-entity-picker' });
-}
+if (entry) Object.assign(entry, tagNames);
+else pluginRegistry.register({ ...wikiEntityPickerPlugin, ...tagNames });
 
 declare global {
   interface HTMLElementTagNameMap {

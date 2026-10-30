@@ -27,6 +27,7 @@ export { type NostrPostSubmitDetail, withTags } from './composerSubmit';
 
 // An event's values as form data, e.g. to edit it in your own composer
 export { extractPrefillFromEvent } from './viewUpdates';
+export { ensurePluginsForManifest } from './pluginAutoLoad';
 
 // Standard manifests
 export { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';

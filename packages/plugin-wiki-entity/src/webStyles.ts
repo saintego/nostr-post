@@ -244,6 +244,13 @@ export const pickerStyles = css`
   :host-context(.dark) .selected.unlinked {
     background: none;
   }
+  :host-context(.dark) .selected-name {
+    color: #f3f4f6;
+  }
+  :host-context(.dark) .selected-slug,
+  :host-context(.dark) .clear-btn {
+    color: #9ca3af;
+  }
   :host-context(.dark) .chip-create {
     color: #a5b4fc;
   }

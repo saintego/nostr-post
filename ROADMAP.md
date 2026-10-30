@@ -131,17 +131,16 @@
         prompt → prefill → duplicate hint (`similarEvents`) → preview → sign. The AI's result is never
         published directly: it shows as the event preview (and in the composer) for the user to check
   - [x] Adding a gig without AI: "fill in the form yourself" opens the empty composer
-  - [ ] Create performers' artist pages together with the gig, in `@nostr-post/plugin-wiki-entity` like
-        the venue hub (`plugin-venue` `beforePublish`, `wikiSync.ts`): the picker's hook creates pages
-        for unlinked values with confirmed links before the post is built, so it links them (`a`
-        tags), listed in the publish summary. Unlike a venue (OSM ids), a performer has no outside
-        identity: find an existing page by its links (`#i`) and name slug first (`resolveEntities`),
-        and never create one from a name alone (duplicates, namesakes). The user always confirms that
-        a found page is this performer, in the picker's page preview (the whole page in a popup, its
-        links as players), with "It's them" / "Not them" there for pages found automatically. Musician
-        pages are always optional: a checkbox per performer in the publish summary, no manifest key
-        to require them; without a page the performer stays as text and links (as today). Today it's
-        one "Create page" dialog per performer
+  - [x] Create performers' artist pages together with the gig (`@nostr-post/plugin-wiki-entity`, like the
+        venue hub): the picker's `beforePublish` hook (`createEntityPage`) creates the pages of
+        unlinked values, so the gig links them (`a` tags). Always optional, no manifest key to
+        require them: `<np-wiki-entity-publish>` next to the publish button has a checkbox per
+        performer (`createPage`), ticked when it has links, unticked for a name alone. A page of
+        its type found by its links meanwhile is linked instead; a taken name gets the first free
+        qualifier (handle, genre), and with none free nothing is published, so another
+        performer's page is never overwritten
+  - [ ] Confirm a page found for a performer automatically (by links or name): "It's them" / "Not
+        them" in the picker's page preview (the whole page in a popup, its links as players)
   - [ ] Richer artist pages: description, genres, country (the venue field's country level, `i`
         `iso3166:`), albums and releases, members, active years; links stay one field. Prefill them
         from the AI's answer when the user confirms the artist

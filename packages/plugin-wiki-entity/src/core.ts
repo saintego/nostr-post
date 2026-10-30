@@ -38,6 +38,11 @@ export interface WikiEntityData {
   unlinked?: true;
   /** For an unlinked entity: form data to create its page with (its name and links) */
   prefill?: Record<string, unknown>;
+  /**
+   * For an unlinked entity: create its page when the post is published (`createsPage`). Unset
+   * means yes when it has links, no for a name alone (namesakes)
+   */
+  createPage?: boolean;
 }
 
 /**
@@ -302,6 +307,15 @@ export const wikiEntityPickerPlugin: NostrUIPlugin = {
       ? entityJsonSchema(manifest)
       : { type: 'string', description: 'A name, as written' };
     return isMultiple(field) ? { type: 'array', items: item } : item;
+  },
+
+  /**
+   * Creates the pages of unlinked entities the user left ticked (`createEntityPage`), so the
+   * post links them; runs per entity of a list. Loaded lazily, like the venue's
+   */
+  beforePublish: async (value: unknown, field: PostField) => {
+    const { createEntityPage } = await import('./entityPage');
+    return createEntityPage(value, field);
   },
 
   /** The entities' pages, found by link or name (`resolveEntities`); unlinked values for the others */

@@ -59,8 +59,9 @@ function PerformerHints({ draft }: { draft: GigDraft }) {
       {updates.length > 0 && withoutPage.length > 0 && <br />}
       {withoutPage.length > 0 && (
         <>
-          No artist page yet for <strong>{withoutPage.join(', ')}</strong>: "Create page" next to
-          them under Performers below makes one, with their links.
+          No artist page yet for <strong>{withoutPage.join(', ')}</strong>: publishing creates their
+          pages, with their links (untick next to the publish button to leave them as names).
+          Performers known only by a name are unticked.
         </>
       )}
     </p>

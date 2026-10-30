@@ -26,6 +26,10 @@ export interface WikiEntityPickerMessages {
   noPage: string;
   /** Creates the page of a picked entity that has none */
   createPage: string;
+  /** Next to the publish button: create the page of an entity that has none */
+  createOnPublish: (name: string) => string;
+  /** Under it, for an entity known only by its name */
+  nameOnly: string;
 }
 
 export const DEFAULT_WIKI_ENTITY_PICKER_MESSAGES: WikiEntityPickerMessages = {
@@ -45,4 +49,6 @@ export const DEFAULT_WIKI_ENTITY_PICKER_MESSAGES: WikiEntityPickerMessages = {
   close: 'Close',
   noPage: 'no page yet',
   createPage: 'Create page',
+  createOnPublish: (name) => `Also create the page of ${name}`,
+  nameOnly: 'Only a name, no links: tick it if you are sure who it is',
 };
