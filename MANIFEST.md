@@ -212,7 +212,7 @@ styles, mapped to `t` for posts and wiki entities; the beer entity extends it an
 | `date`               | `date`   | `precision` (`'day'` default \| `'time'`), on kinds other than NIP-52 calendar events, see [dates](#dates)                                                                                                                      |
 | `embed`              | `string` | `multiple` (several links). Links show as players (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp player links), others as links |
 | `profile`            | `profile` | `roles` (role suggestions, e.g. `['host', 'speaker']`), `max` (most people), `searchRelays` (NIP-50 relays to search profiles; default `DEFAULT_SEARCH_RELAYS`). The value: `{ pubkey, role?, relay? }[]`, written as `["p", pubkey, relay, role]`. With `attachTo` a text field: `@` mentions in it (`nostr:npub…`), the people mentioned get `p` tags |
-| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts)); `multiple` (several venues, a list)                                                                                  |
+| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub), and `requirePage` (no opt-out from it); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts)); `multiple` (several venues, a list)                                                                                  |
 | `list`               | `string` | `saveField`: the field whose wiki entity is saved (a `venue` field's page, a `wiki-entity-picker`'s entity); without it, the post itself. `relays`. The value: list addresses and `new:<title>`. See [lists](#lists) |
 | `wiki-entity-picker` | `ref`    | `entityManifest`: the entity type ([reference](#referencing-entity-manifests)), which limits search to it and enables "+ Create"; `relays`; `minSearchLength` (2); `emitExtraTags` (`false`: don't copy the entity's `i` tags); `multiple` (pick several; the value is a list) |
 
@@ -475,7 +475,10 @@ A `venue` field with `metadata.wikiEntity` also creates the venue's wiki page fr
 when a review (or a wiki page, e.g. a brewery's location) is published, or updates it when OSM has
 a newer version of the place; only for an exact place, not a city or country. The review or page
 links to it with an `a` tag. The author sees what will happen, an editable slug and an opt-out
-checkbox next to the publish button. This runs when `<nostr-post-composer auto-publish>` or
+checkbox next to the publish button: a page is one more event to sign, and without it the post
+keeps the venue's own tags, so a page made later still finds it. `metadata.requirePage: true`
+removes the opt-out (the manifest requires the page); `linkOnly` fields always require it, as their
+post has nothing but the page's link. This runs when `<nostr-post-composer auto-publish>` or
 `<nostr-wiki-composer auto-publish>` publishes; apps that publish `nostr-post-submit` or
 `nostr-wiki-submit` themselves call `runBeforePublish` (see the
 [composer docs](./USAGE_GUIDE.md#nostr-post-composer)).

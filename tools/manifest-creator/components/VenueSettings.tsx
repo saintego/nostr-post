@@ -14,7 +14,7 @@ const LEVELS = [
   { id: 'place', label: 'Exact place' },
 ] as const;
 
-/** A venue field's levels and link-only mode; renders nothing for other plugins. */
+/** A venue field's levels, link-only mode and wiki page; renders nothing for other plugins. */
 export function VenueSettings({ field, onMetadataChange }: VenueSettingsProps) {
   if (field.uiPlugin !== 'venue') return null;
   const current = Array.isArray(field.metadata?.levels)
@@ -26,6 +26,7 @@ export function VenueSettings({ field, onMetadataChange }: VenueSettingsProps) {
     const isDefault = next.length === 1 && next[0] === 'place';
     onMetadataChange('levels', next.length === 0 || isDefault ? undefined : next);
   };
+  const linkOnly = field.metadata?.linkOnly === true;
   return (
     <div style={styles.formGroup}>
       <div style={styles.label}>Levels:</div>
@@ -47,7 +48,7 @@ export function VenueSettings({ field, onMetadataChange }: VenueSettingsProps) {
         <input
           style={styles.checkbox}
           type="checkbox"
-          checked={field.metadata?.linkOnly === true}
+          checked={linkOnly}
           onChange={(e) => onMetadataChange('linkOnly', e.target.checked || undefined)}
         />
         Link only
@@ -65,6 +66,25 @@ export function VenueSettings({ field, onMetadataChange }: VenueSettingsProps) {
         Only the venue page's link and its role (needs a wiki page manifest), no venue tags: for
         several venues in one post
       </div>
+      {field.metadata?.wikiEntity ? (
+        <>
+          <label style={{ ...styles.label, display: 'flex', gap: '0.25rem' }}>
+            <input
+              style={styles.checkbox}
+              type="checkbox"
+              // Link only has nothing but the page's link: the page is always required
+              checked={linkOnly || field.metadata?.requirePage === true}
+              disabled={linkOnly}
+              onChange={(e) => onMetadataChange('requirePage', e.target.checked || undefined)}
+            />
+            Require the wiki page
+          </label>
+          <div style={styles.helperText}>
+            Otherwise the user may publish without creating or updating the venue's page (one more
+            event to sign); the post keeps the venue's own tags
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

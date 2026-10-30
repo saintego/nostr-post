@@ -153,4 +153,19 @@ describe('syncVenueEntity', () => {
     expect(await syncVenueEntity({ ...venue, syncWiki: false }, field)).toEqual([]);
     expect(signEvent).not.toHaveBeenCalled();
   });
+
+  it.each([
+    ['requirePage', { requirePage: true }],
+    ['linkOnly', { linkOnly: true }],
+  ])('ignores the opt-out when the field requires the page (%s)', async (_, metadata) => {
+    const required = {
+      id: 'venue',
+      type: 'geo',
+      uiPlugin: 'venue',
+      metadata: { wikiEntity: 'venue-entity-test', ...metadata },
+    } as never;
+    const tags = await syncVenueEntity({ ...venue, syncWiki: false }, required);
+    expect(tags[0]?.[0]).toBe('a');
+    expect(signEvent).toHaveBeenCalled();
+  });
 });

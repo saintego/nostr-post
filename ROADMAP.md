@@ -132,12 +132,19 @@
         published directly: it shows as the event preview (and in the composer) for the user to check
   - [x] Adding a gig without AI: "fill in the form yourself" opens the empty composer
   - [ ] Create performers' artist pages together with the gig, in `@nostr-post/plugin-wiki-entity` like
-        the venue hub (`plugin-venue` `beforePublish`, `wikiSync.ts`): an opt-in field setting makes the
-        picker's hook create pages for unlinked values with confirmed links before the post is
-        built, so it links them (`a` tags), listed in the publish summary. Unlike a venue (OSM ids),
-        a performer has no outside identity: find an existing page by its links (`#i`) and name slug
-        first (`resolveEntities`), and never create one from a name alone (duplicates, namesakes).
-        Today it's one "Create page" dialog per performer
+        the venue hub (`plugin-venue` `beforePublish`, `wikiSync.ts`): the picker's hook creates pages
+        for unlinked values with confirmed links before the post is built, so it links them (`a`
+        tags), listed in the publish summary. Unlike a venue (OSM ids), a performer has no outside
+        identity: find an existing page by its links (`#i`) and name slug first (`resolveEntities`),
+        and never create one from a name alone (duplicates, namesakes). The user always confirms that
+        a found page is this performer, in the picker's page preview (the whole page in a popup, its
+        links as players), with "It's them" / "Not them" there for pages found automatically. Musician
+        pages are always optional: a checkbox per performer in the publish summary, no manifest key
+        to require them; without a page the performer stays as text and links (as today). Today it's
+        one "Create page" dialog per performer
+  - [ ] Richer artist pages: description, genres, country (the venue field's country level, `i`
+        `iso3166:`), albums and releases, members, active years; links stay one field. Prefill them
+        from the AI's answer when the user confirms the artist
   - [x] Rewritten in React (Vite, TypeScript), still a static nsite: logic in `src/lib`, a component
         per page; the packages' custom elements used in JSX directly (React 19 sets their properties
         and listens to their events), typed from their `HTMLElementTagNameMap` entries
@@ -199,7 +206,8 @@
         (derived from a text field) and list (not part of the post) stay out on purpose
   - [ ] Cron worker (own repo): Open Graph pages and `.ics` feeds into the nsite; Facebook `.ics`
         subscriptions (URL encrypted to the cron with NIP-44 as app data, events signed through the
-        user's NIP-46 signer or as drafts to confirm)
+        user's NIP-46 signer or as drafts to confirm). Imported gigs never create or update artist or
+        venue pages: performers stay as names and links, venues as their own tags
 - [ ] P2P offers support (NIP-69) with filtered feed presets/views
 - [ ] Zap support (NIP-57): zap requests/receipts with amount + payer views and filtering
 - [ ] Add scenario manifests for:
@@ -229,6 +237,13 @@
 - [x] Controlled vocabularies, part 1: enum options with value, label, group, description and an unpublished `code`; one published value per field (readable values like `american-ipa` in `t`), infobox rows show the label; options editor in the manifest creator; BJCP 2021 beer styles (121, category 27 split into its beers) as the `beer-style-bjcp-2021` base manifest (imported once from beerjson/bjcp-json), which the beer entity extends; brewery type (Brewers Association segments)
 - [x] Controlled vocabularies, part 2: brewery location from OpenStreetMap instead of free-text country and city. A venue field with `metadata.levels` (country, city, place) searches those levels; every level gets `i` `iso3166:CZ` (NIP-73) and `i` `wikidata:Q…` when OSM has one, so "breweries in Czechia" is one `#i` query; a city a 4-character geohash, a country none; geohash prefixes on wiki pages too. Cities and countries are not wiki entities: they're identities with existing authorities (ISO 3166, OSM, Wikidata), and community-made country pages would invite fake or disputed ones; disputed territories follow OSM. Venue pages also get their country and Wikidata `i` tags
 - [x] Brewery location at an exact place creates/links the venue wiki page from the brewery's form: the wiki composer runs plugin `beforePublish` hooks and renders `publishSummaryTagName` (shared via `@nostr-post/plugins/publish`); cities and countries get no venue page
+- [x] Creating wiki pages while publishing is the user's choice (a page is one more event to sign, and
+      many signers don't sign it on their own; without it the post keeps its own identifiers, so a
+      page made later still finds it):
+  - [x] Venue fields (`wikiEntity`): the opt-out checkbox next to the publish button (`syncWiki`) was
+        there; `metadata.requirePage: true` removes it, and `linkOnly` fields always require the page
+        (their post has only the page's `a` tag). The manifest creator's venue settings have
+        "Require the wiki page"
 - [ ] A city wiki page, if people want to describe cities; with the same `i` tags it links up like the venue hub
 - [x] References with a role (wiki entities): an entity can point to several entities of one type, each in a role, using only NIP-01 and NIP-54. Every referenced entity is a plain `a` tag (`#a` queries find all beers a brewery was involved in); a `ref` field mapped to an `a` tag and the infobox writes its row as NIP-54 wikilinks (`Brewed at | [Pivovar Z][pivovar-z-brewery]`), and reading matches them to the `a` tags. The wiki-entity picker has `multiple: true`. A `ref` field without a row takes the `a` tags no row claims; entities written before roles read into the first role field. One entity in two roles gets one `a` tag. First use: the beer example's `breweries` (several for a collaboration) and `brewed_at`
   - not chosen: a 4th marker element on `a` (NIP-10 markers exist only for `e`, with fixed values), NIP-32 labels (they label the event or the referenced entity, not which `a` tag), custom tag names (other clients and `#a` queries miss them)

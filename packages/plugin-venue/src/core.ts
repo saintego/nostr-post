@@ -80,7 +80,8 @@ export interface VenueData {
   address?: VenueAddress;
   /**
    * Create/update the venue's wiki entity when publishing (fields with
-   * `metadata.wikiEntity`). Unset means yes.
+   * `metadata.wikiEntity`). Unset means yes; ignored when the field requires the page
+   * (`metadata.requirePage`, `linkOnly`).
    */
   syncWiki?: boolean;
   /**

@@ -26,6 +26,7 @@ import {
   slugBody,
   venueDTag,
   venueIdentifiers,
+  venuePageRequired,
   venueQualifierSuggestions,
   venueToEntityData,
 } from '../wikiEntity';
@@ -268,17 +269,23 @@ export class NpVenueWikiPublish extends LitElement {
     if (Array.isArray(this.value)) return this._renderList(this.value);
     if (!this._enabled || !this._venue) return nothing;
     const m = this._m;
-    const checked = this._venue.syncWiki !== false;
+    // A required page has no opt-out: the plan below says what happens to it
+    const required = !!this.field && venuePageRequired(this.field);
+    const checked = required || this._venue.syncWiki !== false;
     return html`
       <div class="wiki-publish">
-        <label class="sync">
-          <input
-            type="checkbox"
-            .checked=${checked}
-            @change=${(e: Event) => this._emit({ syncWiki: (e.target as HTMLInputElement).checked })}
-          />
-          ${m.syncLabel}
-        </label>
+        ${
+          required
+            ? nothing
+            : html`<label class="sync">
+                <input
+                  type="checkbox"
+                  .checked=${checked}
+                  @change=${(e: Event) => this._emit({ syncWiki: (e.target as HTMLInputElement).checked })}
+                />
+                ${m.syncLabel}
+              </label>`
+        }
         ${
           checked
             ? html`<p class="plan">${this._planText()}</p>
