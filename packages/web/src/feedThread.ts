@@ -17,11 +17,24 @@ export interface FeedThreadContext {
   editable?: boolean;
   showKind?: boolean;
   showTags?: boolean;
+  /** Besides the author and the organizers it names: whose update comments apply */
+  trustedEditors?: string[];
   activeReplyTarget?: ReplyTarget;
   displayName: (pubkey: string) => string;
   renderEventActions: (event: SignedEvent, rootEvent?: SignedEvent) => TemplateResult;
   onCommentPublished: (event: Event) => void;
 }
+
+/**
+ * A feed's layout (`<nostr-post-feed .layout>`): renders the loaded threads, e.g. under day
+ * headings, with `renderFeedThread` for each. `loading`: newer posts are on their way (the
+ * threads are the previous ones until then).
+ */
+export type FeedLayout = (
+  threads: FeedThread[],
+  ctx: FeedThreadContext,
+  state: { loading: boolean }
+) => TemplateResult;
 
 export const renderFeedThread = (thread: FeedThread, ctx: FeedThreadContext): TemplateResult => {
   const reactionSummaryWithAuthors = summarizeReactionsWithAuthors(
@@ -40,6 +53,7 @@ export const renderFeedThread = (thread: FeedThread, ctx: FeedThreadContext): Te
         ?editable=${ctx.editable}
         .showKind=${ctx.showKind}
         .showTags=${ctx.showTags}
+        .trustedEditors=${ctx.trustedEditors}
       ></nostr-post-view>
       ${renderReactionSummary(reactionSummaryWithAuthors)}
       ${ctx.renderEventActions(thread.root, thread.root)}
@@ -55,6 +69,7 @@ export const renderFeedThread = (thread: FeedThread, ctx: FeedThreadContext): Te
                 .replyToPubkey=${ctx.activeReplyTarget?.replyToPubkey}
                 .rootEventId=${ctx.activeReplyTarget?.rootEventId}
                 .rootPubkey=${ctx.activeReplyTarget?.rootPubkey}
+                .rootAddress=${ctx.activeReplyTarget?.rootAddress}
                 @nostr-post-published=${ctx.onCommentPublished}
               ></nostr-post-composer>
             </div>

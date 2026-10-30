@@ -8,8 +8,14 @@
 export { NostrPostComposer } from './composer';
 export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from './composerMessages';
 export { NostrPostView } from './view';
+export { DEFAULT_EDIT_MESSAGES, type EditMessages } from './viewEdit';
+export { DEFAULT_SUGGESTION_MESSAGES, type SuggestionMessages } from './viewSuggestions';
 export { NostrPostFeed } from './feed';
 export { DEFAULT_FEED_MESSAGES, type FeedMessages } from './feedMessages';
+// For feed layouts (`<nostr-post-feed .layout>`, e.g. @nostr-post/calendar's agenda)
+export type { FeedThread } from './feedStandard';
+export { feedStyle } from './feedStyle';
+export { type FeedLayout, type FeedThreadContext, renderFeedThread } from './feedThread';
 export { NostrPostElement } from './baseComponent';
 
 // Theme (single source of truth for colors and styles)
@@ -18,6 +24,10 @@ export { colors, baseStyles } from './theme';
 // Publishing a submitted post yourself: run plugin hooks, add their tags
 export { runAfterPublish, runBeforePublish, runPublishHooks } from '@nostr-post/plugins/publish';
 export { type NostrPostSubmitDetail, withTags } from './composerSubmit';
+
+// An event's values as form data, e.g. to edit it in your own composer
+export { extractPrefillFromEvent } from './viewUpdates';
+export { ensurePluginsForManifest } from './pluginAutoLoad';
 
 // Standard manifests
 export { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';

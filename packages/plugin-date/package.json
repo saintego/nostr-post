@@ -1,7 +1,7 @@
 {
   "name": "@nostr-post/plugin-date",
   "version": "0.1.0",
-  "description": "Date and time field plugin for nostr-post (NIP-52 calendar event dates)",
+  "description": "Date and time field plugin for nostr-post (NIP-52 date tags)",
   "type": "module",
   "exports": {
     ".": {
@@ -33,10 +33,7 @@
   "license": "MIT",
   "dependencies": {
     "@nostr-post/core": "workspace:*",
-    "@nostr-post/plugin-list": "workspace:*",
-    "@nostr-post/plugin-profile": "workspace:*",
     "@nostr-post/plugins": "workspace:*",
-    "@nostr-post/signer": "workspace:*",
     "lit": "^3.3.3"
   },
   "devDependencies": {

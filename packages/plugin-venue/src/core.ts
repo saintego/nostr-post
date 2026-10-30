@@ -16,6 +16,7 @@
 import { decodeGeohash, encodeGeohash } from '@nostr-post/plugin-geo';
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
 import { googleCidIdentifier } from './googleLink';
+import { parseVenueJson, venueJsonSchema } from './venueJson';
 import {
   type VenueLevel,
   geohashTags,
@@ -79,7 +80,8 @@ export interface VenueData {
   address?: VenueAddress;
   /**
    * Create/update the venue's wiki entity when publishing (fields with
-   * `metadata.wikiEntity`). Unset means yes.
+   * `metadata.wikiEntity`). Unset means yes; ignored when the field requires the page
+   * (`metadata.requirePage`, `linkOnly`).
    */
   syncWiki?: boolean;
   /**
@@ -336,6 +338,10 @@ export const venuePlugin: NostrUIPlugin = {
 
     return { success: true, data: undefined };
   },
+
+  /** A place as text ("JAM, Bangkok"), looked up on OpenStreetMap (`venueJson.ts`) */
+  jsonSchema: venueJsonSchema,
+  parseJson: parseVenueJson,
 
   formatValue: (value: unknown): string => {
     if (Array.isArray(value)) return value.map((v) => venuePlugin.formatValue?.(v)).join(', ');

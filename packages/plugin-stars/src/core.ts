@@ -63,6 +63,11 @@ export const starsPlugin: NostrUIPlugin = {
     return { success: true, data: undefined };
   },
 
+  jsonSchema: (field: PostField) => {
+    const config = (field.metadata as StarsPluginConfig) || {};
+    return { type: 'number', description: `From ${config.min ?? 1} to ${config.max ?? 5}` };
+  },
+
   formatValue: (value: unknown): string => {
     if (typeof value !== 'number') return '0';
     const max = 5;

@@ -189,4 +189,25 @@ export const datePlugin: NostrUIPlugin = {
 
   resolveFromTags: (tags: string[][], field: PostField): unknown =>
     dateValueFromTags(tags, activeTarget(field)?.tagName),
+
+  /** A DateValue, as JSON */
+  jsonSchema: () => ({
+    type: 'object',
+    properties: {
+      start: {
+        type: 'string',
+        description: 'YYYY-MM-DD, or YYYY-MM-DDTHH:mm when the time is known (wall-clock time)',
+      },
+      end: {
+        anyOf: [{ type: 'string' }, { type: 'null' }],
+        description: 'Same form as start; for whole days the last day',
+      },
+      tzid: {
+        anyOf: [{ type: 'string' }, { type: 'null' }],
+        description: 'IANA time zone of the place, e.g. America/Bogota',
+      },
+    },
+    required: ['start', 'end', 'tzid'],
+    additionalProperties: false,
+  }),
 };

@@ -7,7 +7,7 @@
  * `@city` and `@name` are derived from the picked venue's address.
  */
 
-import type { NostrPostManifest } from '@nostr-post/core/types';
+import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import {
   type EntityTypeAffixes,
   entityDTagFor,
@@ -97,6 +97,18 @@ export function mergeOsmFields(
 }
 
 /** External identifiers of a venue as NIP-73 `i` values */
+/**
+ * Whether the field always creates/updates the venue's page: the manifest requires it
+ * (`metadata.requirePage`), or the post has nothing else for the venue (`linkOnly`: only the
+ * page's `a` tag). Otherwise the user may opt out (`VenueData.syncWiki`)
+ */
+export const venuePageRequired = (field: PostField): boolean =>
+  field.metadata?.requirePage === true || field.metadata?.linkOnly === true;
+
+/** Whether publishing creates/updates the venue's page: required, or the user didn't opt out */
+export const syncsVenuePage = (venue: VenueData, field: PostField): boolean =>
+  venuePageRequired(field) || venue.syncWiki !== false;
+
 export function venueIdentifiers(venue: VenueData): string[] {
   const ids: string[] = [];
   if (venue.osmType && venue.osmId) ids.push(`osm:${venue.osmType}:${venue.osmId}`);

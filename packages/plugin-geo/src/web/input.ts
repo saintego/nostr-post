@@ -94,10 +94,11 @@ export class NpGeoInput extends LitElement {
       const { lat, lon } = decodeGeohash(this.focusPoint);
       this.map.setView([lat, lon], 18);
     }
-    // If value changed externally, decode and update marker
+    // If value changed externally, decode and update marker; the first one (e.g. an edited
+    // event's place, set after the map was made) also moves the map there
     if (changed.has('value') && this.map && this.value) {
       this.coords = decodeGeohash(this.value);
-      this.updateMarker(this.coords.lat, this.coords.lon, false);
+      this.updateMarker(this.coords.lat, this.coords.lon, !this.marker);
     }
   }
 

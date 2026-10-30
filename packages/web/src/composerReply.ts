@@ -6,6 +6,8 @@ export interface ReplyTarget {
   replyToPubkey?: string;
   rootEventId?: string;
   rootPubkey?: string;
+  /** The root's address when it's addressable (`kind:pubkey:d`): an `a` root tag too */
+  rootAddress?: string;
 }
 
 const uniqueValues = (values: Array<string | undefined>): string[] => {
@@ -30,6 +32,8 @@ export const buildReplyTags = (target: ReplyTarget): NostrTag[] => {
   if (target.replyToEventId !== rootEventId) {
     tags.push(['e', target.replyToEventId, '', 'reply']);
   }
+  // Replies stay with an addressable root across its versions (each has a new id)
+  if (target.rootAddress) tags.push(['a', target.rootAddress, '', 'root']);
 
   for (const pubkey of uniqueValues([target.replyToPubkey, target.rootPubkey])) {
     tags.push(['p', pubkey]);

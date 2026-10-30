@@ -13,9 +13,10 @@
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
-import { css, html, LitElement, nothing } from 'lit';
+import { html, LitElement, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { MarkdownPluginConfig } from '../core';
+import { markdownInputStyles } from './inputStyles';
 
 type EditorMode = 'raw' | 'wysiwyg';
 
@@ -136,195 +137,11 @@ function htmlToMarkdown(htmlStr: string): string {
 
 @customElement('np-markdown-input')
 export class NpMarkdownInput extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-    }
+  static styles = markdownInputStyles;
 
-    .container {
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      overflow: hidden;
-      background: white;
-    }
-
-    /* Toolbar */
-    .toolbar {
-      display: flex;
-      align-items: center;
-      gap: 0.125rem;
-      padding: 0.375rem 0.5rem;
-      background: #f9fafb;
-      border-bottom: 1px solid #e5e7eb;
-      flex-wrap: wrap;
-    }
-
-    .toolbar-btn {
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: none;
-      border: 1px solid transparent;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.875rem;
-      font-weight: 600;
-      color: #374151;
-      transition:
-        background 0.1s,
-        border-color 0.1s;
-    }
-
-    .toolbar-btn:hover {
-      background: #e5e7eb;
-    }
-
-    .toolbar-btn:active {
-      background: #d1d5db;
-    }
-
-    .toolbar-sep {
-      width: 1px;
-      height: 20px;
-      background: #d1d5db;
-      margin: 0 0.25rem;
-    }
-
-    .toolbar-spacer {
-      flex: 1;
-    }
-
-    .mode-toggle {
-      font-size: 0.75rem;
-      font-weight: 500;
-      padding: 0.25rem 0.5rem;
-      border-radius: 4px;
-      border: 1px solid #d1d5db;
-      background: white;
-      cursor: pointer;
-      color: #6b7280;
-      transition: background 0.1s;
-    }
-
-    .mode-toggle:hover {
-      background: #f3f4f6;
-    }
-
-    .mode-toggle.active {
-      background: #6366f1;
-      color: white;
-      border-color: #6366f1;
-    }
-
-    /* WYSIWYG editor */
-    .editor {
-      min-height: 200px;
-      padding: 0.75rem 1rem;
-      outline: none;
-      font-size: 0.9375rem;
-      line-height: 1.7;
-      color: #1f2937;
-      overflow-y: auto;
-    }
-
-    .editor:focus {
-      box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.15);
-    }
-
-    .editor h1 {
-      font-size: 1.5rem;
-      margin: 0.75rem 0 0.5rem;
-    }
-    .editor h2 {
-      font-size: 1.25rem;
-      margin: 0.75rem 0 0.5rem;
-    }
-    .editor h3 {
-      font-size: 1.125rem;
-      margin: 0.75rem 0 0.5rem;
-    }
-    .editor strong {
-      font-weight: 700;
-    }
-    .editor em {
-      font-style: italic;
-    }
-    .editor code {
-      background: #f3f4f6;
-      padding: 2px 4px;
-      border-radius: 3px;
-      font-family: monospace;
-      font-size: 0.875em;
-    }
-    .editor pre {
-      background: #1f2937;
-      color: #e5e7eb;
-      padding: 0.75rem;
-      border-radius: 6px;
-      overflow-x: auto;
-      font-family: monospace;
-      font-size: 0.875rem;
-    }
-    .editor blockquote {
-      border-left: 3px solid #d1d5db;
-      padding-left: 0.75rem;
-      margin: 0.5rem 0;
-      color: #6b7280;
-    }
-    .editor a {
-      color: #6366f1;
-      text-decoration: underline;
-    }
-    .editor img {
-      max-width: 100%;
-      border-radius: 4px;
-    }
-    .editor hr {
-      border: none;
-      border-top: 1px solid #e5e7eb;
-      margin: 0.75rem 0;
-    }
-    .editor ul,
-    .editor ol {
-      padding-left: 1.5rem;
-      margin: 0.25rem 0;
-    }
-
-    /* Raw textarea */
-    .raw-editor {
-      width: 100%;
-      min-height: 200px;
-      padding: 0.75rem 1rem;
-      border: none;
-      outline: none;
-      font-family: "SF Mono", "Fira Code", "Cascadia Code", monospace;
-      font-size: 0.875rem;
-      line-height: 1.6;
-      color: #1f2937;
-      resize: vertical;
-      box-sizing: border-box;
-    }
-
-    .raw-editor:focus {
-      box-shadow: inset 0 0 0 2px rgba(99, 102, 241, 0.15);
-    }
-
-    /* Footer */
-    .footer {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.375rem 0.75rem;
-      background: #f9fafb;
-      border-top: 1px solid #e5e7eb;
-      font-size: 0.75rem;
-      color: #9ca3af;
-    }
-  `;
-
+  /** Composers pass `undefined` for an empty field */
   @property({ type: String })
-  value = '';
+  value: string | undefined = '';
 
   @property({ type: Object })
   field: PostField | null = null;
@@ -341,14 +158,14 @@ export class NpMarkdownInput extends LitElement {
     this.mode = this.config.defaultMode ?? 'wysiwyg';
     // Initialize HTML from markdown value
     if (this.value) {
-      this.editorHtml = markdownToHtml(this.value);
+      this.editorHtml = markdownToHtml(this.value ?? '');
     }
   }
 
   updated(changed: Map<PropertyKey, unknown>) {
     // If value is set externally, sync editor
     if (changed.has('value') && !this._internalUpdate) {
-      this.editorHtml = markdownToHtml(this.value);
+      this.editorHtml = markdownToHtml(this.value ?? '');
       const editor = this.shadowRoot?.querySelector('.editor') as HTMLElement;
       if (editor && this.mode === 'wysiwyg') {
         editor.innerHTML = this.editorHtml;
@@ -395,7 +212,7 @@ export class NpMarkdownInput extends LitElement {
       }
     } else {
       // Raw -> WYSIWYG: convert markdown to HTML
-      this.editorHtml = markdownToHtml(this.value);
+      this.editorHtml = markdownToHtml(this.value ?? '');
     }
 
     this.mode = newMode;
@@ -475,14 +292,14 @@ export class NpMarkdownInput extends LitElement {
               <textarea
                 class="raw-editor"
                 placeholder=${placeholder}
-                .value=${this.value}
+                .value=${this.value ?? ''}
                 @input=${this.handleRawInput}
               ></textarea>
             `
         }
 
         <div class="footer">
-          <span>${this.value.length} chars</span>
+          <span>${(this.value ?? '').length} chars</span>
           <span>Markdown</span>
         </div>
       </div>

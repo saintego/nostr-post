@@ -215,4 +215,11 @@ export const composerStyles = css`
     font-size: 0.8rem;
     color: var(--nl-text-secondary, #6b7280);
   }
+
+  :host-context(.dark) .wiki-identity-preview { background: #1e3a5f; border-color: #1d4ed8; }
+  :host-context(.dark) .preview-label,
+  :host-context(.dark) .wiki-dtag-status { color: #9ca3af; }
+  :host-context(.dark) .preview-dtag { color: #93c5fd; }
+  :host-context(.dark) .wiki-disambiguation { background: #451a03; border-color: #b45309; color: #fcd34d; }
+  :host-context(.dark) .wiki-suggestions button { background: #1f2937; border-color: #b45309; color: #fcd34d; }
 `;

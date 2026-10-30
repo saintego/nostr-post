@@ -7,6 +7,7 @@
 
 export {
   createTarget,
+  entityDataOf,
   entityPrefill,
   entitySnippet,
   entityTypeAffixes,
@@ -26,4 +27,15 @@ export {
   DEFAULT_WIKI_ENTITY_PICKER_MESSAGES,
   type WikiEntityPickerMessages,
 } from './pickerMessages';
+export {
+  type EntityItem,
+  entityItems,
+  entityJsonSchema,
+  identityFields,
+  linkFields,
+} from './entityJson';
+export { confirmMatch, isUnconfirmed, rejectMatch } from './entityMatch';
+export { createEntityPage, createsPage, pageData } from './entityPage';
+export { needsPageLinks, splitEventLinks, withPageLinks } from './eventLinks';
+export { resolveEntities } from './resolveEntities';
 export { type EntitySearchResult, searchEntities } from './search';

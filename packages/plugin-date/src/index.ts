@@ -1,8 +1,9 @@
 /**
  * @nostr-post/plugin-date - Core entrypoint
  *
- * Import this for headless usage (validation, serialization, NIP-52 tags).
+ * Import this for headless usage (validation, serialization, NIP-52 date tags).
  * Import '@nostr-post/plugin-date/web' for the input and view components.
+ * Calendar events themselves (agenda, RSVP, calendars, iCalendar) are @nostr-post/calendar.
  */
 export {
   ALL_DAY_EVENT_KIND,
@@ -13,54 +14,17 @@ export {
   formatDateValue,
   TIMED_EVENT_KIND,
 } from './core';
-export { CALENDAR_EVENT_MANIFEST } from './calendarManifest';
-export {
-  calendarEventFilters,
-  fetchCalendarItems,
-  publishesCalendarEvents,
-} from './calendars';
-export {
-  isCalendarEventAddress,
-  peopleByStatus,
-  RSVP_KIND,
-  RSVP_STATUSES,
-  type RsvpLike,
-  type RsvpStatus,
-  type RsvpSummary,
-  rsvpEvent,
-  rsvpFilter,
-  summarizeRsvps,
-  type UnsignedRsvp,
-  withAnswer,
-} from './rsvp';
-export { fetchRsvps, publishRsvp, type RsvpRelayOptions } from './rsvpRelays';
-export {
-  type AgendaDay,
-  type AgendaWindow,
-  agendaDayTags,
-  agendaFilter,
-  type CalendarEventLike,
-  DEFAULT_AGENDA_DAYS,
-  type EventTiming,
-  eventDates,
-  eventTiming,
-  formatAgendaDate,
-  formatWindowRange,
-  groupEventsByDay,
-  latestByAddress,
-  shiftWindow,
-  todayIn,
-  windowDates,
-} from './agenda';
 export {
   type DatePrecision,
   type DateValue,
+  dateOfDayNumber,
+  dayNumberOfDate,
   dayNumbers,
   defaultTimeZone,
   isDateValue,
   isValidTimeZone,
-  timeZones,
   MAX_DAY_TAGS,
+  timeZones,
   unixToWall,
   valueTimeZone,
   wallForPrecision,

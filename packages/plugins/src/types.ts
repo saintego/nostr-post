@@ -125,6 +125,18 @@ export interface AfterPublishContext {
   manifest: NostrPostManifest;
 }
 
+/** Something the user may do after a field's value was parsed from JSON (`parseJson`) */
+export interface FormJsonSuggestion {
+  /** What it is about, e.g. a name */
+  label: string;
+  /** `create` a page from `prefill`, or `update` the page at `address` with `prefill`'s values */
+  action: 'create' | 'update';
+  /** The page to update (`kind:pubkey:d-tag`) */
+  address?: string;
+  /** Form data for the page's composer, e.g. the name and links */
+  prefill: Record<string, unknown>;
+}
+
 /**
  * Plugin interface.
  *
@@ -256,6 +268,32 @@ export interface NostrUIPlugin {
    * @returns The resolved value to pass to the view component's .value property
    */
   resolveFromTags?: (tags: string[][], field: PostField) => unknown;
+
+  /**
+   * The JSON Schema of this field's value, for filling a post in from JSON (e.g. an AI's
+   * structured output; `formJsonSchema` in `@nostr-post/plugins/formJson`). `null` leaves the
+   * field out. Without this hook the field is left out, as its value's shape is unknown.
+   * Strict like structured outputs: objects list every property in `required` (optional ones
+   * accept `null`) and set `additionalProperties: false`.
+   */
+  jsonSchema?: (field: PostField) => Record<string, unknown> | null;
+
+  /**
+   * Turns a value in `jsonSchema`'s shape into the field's value, when they differ (e.g.
+   * names into picked wiki entities). `suggestions`: what the user may do next (e.g. create the
+   * page of a name that has none, add new links to a page).
+   */
+  parseJson?: (
+    value: unknown,
+    field: PostField
+  ) => Promise<{ value?: unknown; suggestions?: FormJsonSuggestion[] }>;
+
+  /**
+   * Short texts a value gives that tell an entity apart from another with the same name, e.g.
+   * a profile link's handle. A new wiki entity whose slug is taken tries them first as its
+   * qualifier ("Doomsday (doomsdayband musician)"); fields without the hook offer their value.
+   */
+  qualifiers?: (value: unknown, field: PostField) => string[];
 
   /**
    * Completions while typing in the text field this plugin's field is attached to

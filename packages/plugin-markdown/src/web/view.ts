@@ -164,6 +164,29 @@ export class NpMarkdownView extends LitElement {
       color: #9ca3af;
       font-style: italic;
     }
+
+    :host-context(.dark) .markdown-view {
+      color: #f3f4f6;
+    }
+    :host-context(.dark) .markdown-view code {
+      background: #374151;
+    }
+    :host-context(.dark) .markdown-view pre {
+      background: #111827;
+    }
+    :host-context(.dark) .markdown-view blockquote {
+      border-color: #4b5563;
+      color: #9ca3af;
+    }
+    :host-context(.dark) .markdown-view a {
+      color: #a5b4fc;
+    }
+    :host-context(.dark) .markdown-view a:hover {
+      color: #c7d2fe;
+    }
+    :host-context(.dark) .markdown-view hr {
+      border-color: #4b5563;
+    }
   `;
 
   @property({ type: String })

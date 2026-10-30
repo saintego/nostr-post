@@ -12,7 +12,8 @@ import {
   entityDTagFor,
   entityTitleFor,
 } from '../disambiguation';
-import { checkEntityDTag, fetchEntityVersions } from '../fetch';
+import { checkEntitySlug, fetchEntityVersions } from '../fetch';
+import { addToFormData } from '../formMerge';
 import {
   DEFAULT_WIKI_RELAYS,
   manifestToWikiEvent,
@@ -24,16 +25,12 @@ import type { WikiEvent, WikiResolverFunction } from '../resolver';
 import { defaultResolver } from '../resolver';
 import type { WikiManifest } from '../types';
 import { validateWikiForm } from '../validate';
-import { renderEnumControl } from './enumControl';
 import { renderPublishSummaries } from './publishSummaries';
+import { renderNativeControl } from './wikiComposerControls';
 import { DEFAULT_WIKI_COMPOSER_MESSAGES, type WikiComposerMessages } from './wikiComposerMessages';
 import { renderSlugCheck, type SlugStatus } from './wikiComposerSlug';
 import { composerStyles } from './wikiComposerStyles';
 import { publishWikiPage } from './wikiPublish';
-
-/** An empty number input clears the value instead of storing 0. */
-const parseNumberInput = (raw: string): number | undefined =>
-  raw === '' ? undefined : Number(raw);
 
 @customElement('nostr-wiki-composer')
 export class NostrWikiComposer extends LitElement {
@@ -70,6 +67,13 @@ export class NostrWikiComposer extends LitElement {
   @property({ attribute: false })
   prefill?: Record<string, unknown>;
 
+  /**
+   * Values to add to the loaded version (`addToFormData`): lists get the new items, empty fields
+   * the value, e.g. a musician's links a post has and their page doesn't
+   */
+  @property({ attribute: false })
+  additions?: Record<string, unknown>;
+
   @state() private _loading = false;
   @state() private _publishing = false;
   /** The signer is working on a signature (e.g. waiting for the user to approve) */
@@ -80,6 +84,8 @@ export class NostrWikiComposer extends LitElement {
   @state() private _published = false;
   /** Text added to a new entity's name to make its d-tag distinct */
   @state() private _qualifier = '';
+  /** The user chose the qualifier: no longer picked for them */
+  private _qualifierChosen = false;
   /** Whether a new entity's d-tag is already used by another entity */
   @state() private _dTagStatus: SlugStatus = 'idle';
   private _checkTimer?: ReturnType<typeof setTimeout>;
@@ -112,7 +118,9 @@ export class NostrWikiComposer extends LitElement {
     return !this._baseEvent && !this.entityId;
   }
 
+  /** The d-tag it publishes to: the edited entity's, else the one its data gives */
   private get _previewDTag(): string | undefined {
+    if (this.entityId?.trim()) return this.entityId.trim();
     if (!this.manifest) return undefined;
     return entityDTagFor(this.manifest, this._formData, this._activeQualifier);
   }
@@ -136,21 +144,40 @@ export class NostrWikiComposer extends LitElement {
   private _scheduleDTagCheck(): void {
     clearTimeout(this._checkTimer);
     const checkId = ++this._checkId;
-    const dTag = this._previewDTag;
+    const dTag = this.manifest && entityDTagFor(this.manifest, this._formData);
     if (!this._isNew || !dTag) {
       this._dTagStatus = 'idle';
       return;
     }
     this._dTagStatus = 'checking';
     this._checkTimer = setTimeout(async () => {
-      const status = await checkEntityDTag(dTag, this.relays).catch(() => 'unknown' as const);
-      if (checkId === this._checkId) this._dTagStatus = status;
+      const manifest = this.manifest as NostrPostManifest;
+      // A taken slug gets the first free suggestion (a profile handle, a genre, …) as qualifier
+      const chosen = this._qualifierChosen;
+      const { status, qualifier } = await checkEntitySlug(manifest, this._formData, {
+        // Until the user picks one, the name alone first, then the suggestions
+        qualifier: chosen ? this._activeQualifier : '',
+        candidates: chosen ? [] : this._suggestions(),
+        relays: this.relays,
+      }).catch(() => ({ status: 'unknown' as const, qualifier: this._qualifier }));
+      if (checkId !== this._checkId) return;
+      this._qualifier = qualifier;
+      this._dTagStatus = status;
     }, 400);
   }
 
   private _setQualifier(qualifier: string): void {
     this._qualifier = qualifier;
+    this._qualifierChosen = true;
     this._scheduleDTagCheck();
+  }
+
+  /** Qualifiers that could tell this entity apart: its fields' plugin qualifiers first */
+  private _suggestions(): string[] {
+    if (!this.manifest) return [];
+    return distinguishingSuggestions(this.manifest, this._formData, (field, value) =>
+      pluginRegistry.get(field.uiPlugin)?.qualifiers?.(value, field)
+    );
   }
 
   // First fetch happens in the initial updated() call, which reports every
@@ -186,6 +213,7 @@ export class NostrWikiComposer extends LitElement {
       this._error = undefined;
       this._published = false;
       this._qualifier = '';
+      this._qualifierChosen = false;
       this._scheduleDTagCheck();
       return;
     }
@@ -201,7 +229,10 @@ export class NostrWikiComposer extends LitElement {
       if (fetchId !== this._fetchId) return;
       if (winner) {
         this._baseEvent = winner;
-        this._formData = wikiEventToManifestData(winner, this.manifest);
+        this._formData = addToFormData(
+          wikiEventToManifestData(winner, this.manifest),
+          this.additions
+        );
       } else {
         this._baseEvent = undefined;
         this._formData = { ...this.prefill };
@@ -325,7 +356,7 @@ export class NostrWikiComposer extends LitElement {
       status: this._dTagStatus,
       dTag: this._previewDTag ?? '',
       qualifier: this._qualifier,
-      suggestions: distinguishingSuggestions(this.manifest, this._formData),
+      suggestions: this._suggestions(),
       placeholder: this._m.distinguishPlaceholder(distinguishingFieldLabels(this.manifest)),
       messages: this._m,
       onQualifier: (qualifier) => this._setQualifier(qualifier),
@@ -423,7 +454,7 @@ export class NostrWikiComposer extends LitElement {
     const plugin = pluginRegistry.get(f.uiPlugin);
     const control = plugin?.inputTagName
       ? this._renderPluginControl(f, value, plugin.inputTagName)
-      : this._renderNativeControl(f, value);
+      : renderNativeControl(f, value, (v) => this._onFieldChange(f.id, v), this._m);
     return html`
       <div class="wiki-field">
         <label for=${ifDefined(plugin?.inputTagName ? undefined : `field-${f.id}`)}>
@@ -444,42 +475,6 @@ export class NostrWikiComposer extends LitElement {
       .manifest=${this.manifest}
       @np-value-changed=${(e: CustomEvent) => this._onFieldChange(f.id, e.detail.value)}
     ></${tag}>`;
-  }
-
-  private _renderNativeControl(f: PostField, value: unknown) {
-    const placeholder = (f.metadata?.placeholder as string | undefined) ?? '';
-
-    if (f.uiPlugin === 'textarea') {
-      return html`
-        <textarea
-          id="field-${f.id}"
-          .value=${String(value ?? '')}
-          placeholder=${placeholder}
-          ?required=${f.required}
-          @input=${(e: InputEvent) => this._onFieldChange(f.id, (e.target as HTMLTextAreaElement).value)}
-        ></textarea>
-      `;
-    }
-
-    if ((f.uiPlugin === 'select' || f.type === 'enum') && f.options?.length) {
-      return renderEnumControl(f, value, (v) => this._onFieldChange(f.id, v), this._m);
-    }
-
-    // Number or text
-    const isNumber = f.type === 'number';
-    return html`
-      <input
-        id="field-${f.id}"
-        type=${isNumber ? 'number' : 'text'}
-        .value=${String(value ?? '')}
-        placeholder=${placeholder}
-        ?required=${f.required}
-        @input=${(e: InputEvent) => {
-          const raw = (e.target as HTMLInputElement).value;
-          this._onFieldChange(f.id, isNumber ? parseNumberInput(raw) : raw);
-        }}
-      />
-    `;
   }
 }
 

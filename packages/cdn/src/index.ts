@@ -18,13 +18,15 @@ import '@nostr-post/web';
 import '@nostr-post/plugin-stars/web';
 import '@nostr-post/plugin-geo/web';
 import '@nostr-post/plugin-date/web';
+import '@nostr-post/calendar/web';
 import '@nostr-post/plugin-profile/web';
+import '@nostr-post/plugin-embed/web';
 import '@nostr-post/plugin-venue/web';
 import '@nostr-post/plugin-media/web';
 import '@nostr-post/plugin-reference/web';
 import '@nostr-post/plugin-markdown/web';
 import '@nostr-post/plugin-hashtag/web';
-import '@nostr-post/plugin-list/web';
+import '@nostr-post/list/web';
 import '@nostr-post/wiki/web';
 import '@nostr-post/plugin-wiki-entity/web';
 
@@ -47,8 +49,14 @@ export {
 } from '@nostr-post/core/enumOptions';
 export { coordinateEvents, validateFormData } from '@nostr-post/core/coordinator';
 
+// NIP-19 addresses (`kind:pubkey:d-tag` ↔ `naddr1…`), e.g. for links to an event
+export { encodeNaddr, decodeNaddr } from '@nostr-post/core/nip19';
+
 // Plugin registry
 export { pluginRegistry } from '@nostr-post/plugins/registry';
+// A manifest's form data as JSON (e.g. an AI's structured output); the plugins' versions
+export { formJsonSchema, parseFormJson } from '@nostr-post/plugins/formJson';
+export { findJsonObject, PUBLISH_FORMAT_KEY } from '@nostr-post/core/formJson';
 
 // Geo helpers
 export {
@@ -73,20 +81,41 @@ export {
   type FoundProfile,
 } from '@nostr-post/plugin-profile';
 
-// Date helpers (NIP-52 calendar event dates)
+// Players for links (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp)
+export {
+  checkLink,
+  type Embed,
+  embedFor,
+  embedPlugin,
+  isCheckableLink,
+  type LinkCheck,
+  linkFromEmbedCode,
+  linkProvider,
+  namesMatch,
+  profileLink,
+  profileUrls,
+} from '@nostr-post/plugin-embed';
+
+// Date field (NIP-52 date tags)
 export {
   datePlugin,
-  CALENDAR_EVENT_MANIFEST,
   formatDateValue,
   dateValueFromTags,
   dayNumbers,
   ALL_DAY_EVENT_KIND,
   TIMED_EVENT_KIND,
   type DateValue,
+} from '@nostr-post/plugin-date';
+
+// Calendars (NIP-52): <nostr-calendar-agenda>, RSVP, calendars, duplicates, iCalendar
+export {
+  CALENDAR_EVENT_MANIFEST,
+  agendaFilters,
   agendaFilter,
   groupEventsByDay,
   eventTiming,
   eventDates,
+  eventTimeZone,
   windowDates,
   shiftWindow,
   type AgendaWindow,
@@ -97,7 +126,19 @@ export {
   type RsvpStatus,
   fetchCalendarItems,
   calendarEventFilters,
-} from '@nostr-post/plugin-date';
+  fetchEventsAsIcs,
+  similarEvents,
+  titleSimilarity,
+  monthWindow,
+  monthGrid,
+  shiftMonth,
+  formatMonth,
+  agendaWindowFor,
+  agendaSummary,
+  agendaText,
+} from '@nostr-post/calendar';
+export { agendaImage, drawAgendaImage } from '@nostr-post/calendar/web';
+export { eventsToIcs, icsToDrafts, icsDTag, type IcsDraft } from '@nostr-post/calendar/ics';
 
 // Signing & relay utilities
 export {
@@ -143,9 +184,13 @@ export {
 
 // Publishing a submitted post yourself (composer without auto-publish): plugin hooks
 export { runAfterPublish, runBeforePublish, runPublishHooks, withTags } from '@nostr-post/web';
+// An event's values as form data, e.g. to edit it in a composer
+export { extractPrefillFromEvent } from '@nostr-post/web';
 
 // Composer text (submit button, steps, errors) for overriding via its `messages` property
 export { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from '@nostr-post/web';
+export { DEFAULT_EDIT_MESSAGES, type EditMessages } from '@nostr-post/web';
+export { DEFAULT_SUGGESTION_MESSAGES, type SuggestionMessages } from '@nostr-post/web';
 export { DEFAULT_FEED_MESSAGES, type FeedMessages } from '@nostr-post/web';
 
 // Wiki (NIP-54 kind:30818)
@@ -185,7 +230,15 @@ export {
 } from '@nostr-post/wiki';
 
 // Wiki entity picker (search, create)
-export { searchEntities, entityTypeAffixes } from '@nostr-post/plugin-wiki-entity';
+export {
+  createEntityPage,
+  createsPage,
+  entityTypeAffixes,
+  entityJsonSchema,
+  resolveEntities,
+  searchEntities,
+  withPageLinks,
+} from '@nostr-post/plugin-wiki-entity';
 
 // Venues and the venue hub (wiki entity filled from OpenStreetMap)
 export {
@@ -214,4 +267,4 @@ export {
   saveToChoices,
   itemsToSave,
   listField,
-} from '@nostr-post/plugin-list';
+} from '@nostr-post/list';

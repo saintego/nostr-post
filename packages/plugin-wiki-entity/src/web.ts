@@ -12,17 +12,16 @@
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { pluginRegistry } from '@nostr-post/plugins/registry';
+import './pagePublish';
 import {
   DEFAULT_WIKI_RELAYS,
   defaultResolver,
   entityCreatorFor,
-  extractExternalIds,
   resolveEntityManifest,
 } from '@nostr-post/wiki';
 import type { CreatedEntity, WikiEvent } from '@nostr-post/wiki';
 import { LitElement, html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { ref } from 'lit/directives/ref.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import '@nostr-post/wiki/web';
 import {
@@ -30,6 +29,7 @@ import {
   type WikiEntityData,
   type WikiEntityPickerConfig,
   createTarget,
+  entityDataOf,
   entityPrefill,
   entitySnippet,
   entityTypeAffixes,
@@ -42,18 +42,12 @@ import {
   DEFAULT_WIKI_ENTITY_PICKER_MESSAGES,
   type WikiEntityPickerMessages,
 } from './pickerMessages';
+import { needsPageLinks, withPageLinks } from './eventLinks';
+import { renderModal } from './modal';
+import { confirmMatch, rejectMatch } from './entityMatch';
+import { isShown, renderMatchActions, renderPickedChip } from './pickedChip';
 import { type EntitySearchResult, searchEntities } from './search';
 import { pickerStyles } from './webStyles';
-
-/** Events from the create dialog's composer that must not reach the form around the picker */
-const DIALOG_EVENTS = [
-  'np-value-changed',
-  'nostr-wiki-field-change',
-  'nostr-wiki-submit',
-  'nostr-wiki-published',
-  'nostr-wiki-error',
-  'wiki-entity-create',
-];
 
 @customElement('wiki-entity-picker')
 export class WikiEntityPicker extends LitElement {
@@ -81,6 +75,8 @@ export class WikiEntityPicker extends LitElement {
     prefill: Record<string, unknown>;
     /** A plugin's create form for this type (e.g. venues from OpenStreetMap) */
     creatorTag?: string;
+    /** The unlinked entity whose page this is: the created one takes its place */
+    replaces?: WikiEntityData;
   };
   private _debounceTimer?: ReturnType<typeof setTimeout>;
 
@@ -138,6 +134,18 @@ export class WikiEntityPicker extends LitElement {
     }, 300);
   }
 
+  override willUpdate(changed: Map<string, unknown>): void {
+    if (changed.has('value')) void this._splitLinks();
+  }
+
+  /** An edited event's links back to their entities, so removing one removes its links */
+  private async _splitLinks(): Promise<void> {
+    const value = this.value;
+    if (!Array.isArray(value) || !needsPageLinks(value)) return;
+    const split = await withPageLinks(value, this._relays);
+    if (this.value === value && split !== value) this._emit(split);
+  }
+
   /** An entity manifest given by its published address: fetch it once, then re-render */
   override updated(changed: Map<string, unknown>): void {
     if (!changed.has('field')) return;
@@ -175,15 +183,12 @@ export class WikiEntityPicker extends LitElement {
     const winner = defaultResolver([event]);
     if (!winner) return;
 
-    const dTag = winner.tags.find((t) => t[0] === 'd')?.[1] ?? '';
-    const titleTag = winner.tags.find((t) => t[0] === 'title')?.[1];
-
-    const entityData: WikiEntityData = {
-      dTag,
-      resolvedPubkey: winner.pubkey,
-      externalIds: extractExternalIds(winner),
-      displayName: titleTag ?? dTag,
-    };
+    const replaces = this._creating?.replaces;
+    const picked = entityDataOf(winner);
+    // A created page of an unlinked entity keeps the links the event had for it
+    const entityData = replaces
+      ? { ...picked, externalIds: [...new Set([...picked.externalIds, ...replaces.externalIds])] }
+      : picked;
 
     this._results = [];
     this._query = '';
@@ -191,29 +196,41 @@ export class WikiEntityPicker extends LitElement {
       this._emit(entityData);
       return;
     }
-    const others = this._picked.filter((e) => e.dTag !== entityData.dTag);
+    const others = this._picked.filter(
+      (e) => e !== replaces && (e.unlinked || e.dTag !== entityData.dTag)
+    );
     this._emit([...others, entityData]);
   }
 
   /** Removes one picked entity (a list) or the selection */
-  private _remove(dTag: string): void {
+  private _remove(entity: WikiEntityData): void {
     if (!this._config.multiple) {
       this._emit(undefined);
       return;
     }
-    const rest = this._picked.filter((e) => e.dTag !== dTag);
+    const rest = this._picked.filter((e) => e !== entity);
     this._emit(rest.length > 0 ? rest : undefined);
   }
 
+  /** Opens the create dialog for an unlinked entity, with its name and links */
+  private _createFor(entity: WikiEntityData): void {
+    const manifest = getEntityManifest(this._config.entityManifest);
+    if (!manifest) return;
+    this._creating = {
+      manifest,
+      prefill: entity.prefill ?? entityPrefill(manifest, entity.displayName ?? ''),
+      creatorTag: entityCreatorFor(manifest)?.tagName,
+      replaces: entity,
+    };
+  }
+
   private _renderPicked(entity: WikiEntityData) {
-    return html`
-      <div class="selected">
-        <span class="selected-name">${entity.displayName ?? entity.dTag}</span>
-        <span class="selected-slug">${entity.dTag}</span>
-        ${this._previewButton(entity.dTag)}
-        <button type="button" class="clear-btn" @click=${() => this._remove(entity.dTag)} aria-label=${this._m.remove}>×</button>
-      </div>
-    `;
+    return renderPickedChip(entity, {
+      messages: this._m,
+      onRemove: () => this._remove(entity),
+      onCreate: () => this._createFor(entity),
+      preview: (dTag) => this._previewButton(dTag),
+    });
   }
 
   /**
@@ -277,48 +294,23 @@ export class WikiEntityPicker extends LitElement {
   /** Select the entity a plugin's create form created or found */
   private _onEntityCreated(e: CustomEvent<CreatedEntity>): void {
     const { dTag, pubkey, displayName } = e.detail;
-    this._creating = undefined;
     const tags = [['d', dTag], ...(displayName ? [['title', displayName]] : [])];
+    // Selected while _creating still says which unlinked entity it replaces
     this._onSelect({ kind: 30818, pubkey, tags, content: '', created_at: 0, id: '', sig: '' });
+    this._creating = undefined;
   }
 
   /** Select the entity the dialog just published */
   private _onEntityPublished(e: CustomEvent): void {
     const signed = e.detail?.results?.signedEvent as WikiEvent | undefined;
     const dTag = (e.detail?.dTag as string | undefined) ?? '';
-    this._creating = undefined;
     if (signed && dTag) this._onSelect(signed);
+    this._creating = undefined;
   }
-
-  private _isolated = new WeakSet<Element>();
-
-  /** Keep the dialog composer's events from reaching the form around the picker */
-  private _isolateDialog = (el?: Element) => {
-    if (!el || this._isolated.has(el)) return;
-    this._isolated.add(el);
-    for (const type of DIALOG_EVENTS) el.addEventListener(type, (e) => e.stopPropagation());
-  };
 
   /** Overlay shared by the create dialog and the preview */
   private _renderModal(title: string, body: unknown, onClose: () => void) {
-    return html`
-      <div class="modal-backdrop" @click=${onClose}>
-        <div
-          class="modal"
-          role="dialog"
-          aria-modal="true"
-          aria-label=${title}
-          @click=${(e: Event) => e.stopPropagation()}
-          ${ref(this._isolateDialog)}
-        >
-          <div class="modal-header">
-            <span>${title}</span>
-            <button type="button" class="clear-btn" aria-label=${this._m.close} @click=${onClose}>×</button>
-          </div>
-          <div class="modal-body">${body}</div>
-        </div>
-      </div>
-    `;
+    return renderModal({ title, body, closeLabel: this._m.close, onClose });
   }
 
   private _renderCreateDialog() {
@@ -354,6 +346,8 @@ export class WikiEntityPicker extends LitElement {
     if (!dTag) return nothing;
     // Unknown types: <nostr-wiki-view> shows the article text (STANDARD_WIKI_MANIFEST)
     const manifest = getEntityManifest(this._config.entityManifest);
+    // A picked entity whose page was found automatically: the user says whether it's theirs
+    const found = this._picked.find((e) => !e.unlinked && e.dTag === dTag);
     return this._renderModal(
       dTag,
       html`
@@ -362,10 +356,23 @@ export class WikiEntityPicker extends LitElement {
           .entityId=${dTag}
           .relays=${this._relays}
         ></nostr-wiki-view>
+        ${renderMatchActions(found, {
+          messages: this._m,
+          onConfirm: () => found && this._settleMatch(found, confirmMatch(found)),
+          onReject: () => found && this._settleMatch(found, rejectMatch(found)),
+        })}
       `,
       () => {
         this._previewDTag = undefined;
       }
+    );
+  }
+
+  /** Replaces a found entity with the user's answer (it, confirmed; or its unlinked value) */
+  private _settleMatch(entity: WikiEntityData, settled: WikiEntityData): void {
+    this._previewDTag = undefined;
+    this._emit(
+      this._config.multiple ? this._picked.map((e) => (e === entity ? settled : e)) : settled
     );
   }
 
@@ -437,7 +444,7 @@ export class WikiEntityPicker extends LitElement {
 
     return html`
       <div class="picker">
-        ${picked.map((entity) => this._renderPicked(entity))}
+        ${picked.filter(isShown).map((entity) => this._renderPicked(entity))}
         <input
           class="search-input"
           type="search"
@@ -469,13 +476,14 @@ export class WikiEntityPicker extends LitElement {
   }
 }
 
-// Register plugin and set inputTagName so the composer knows which element to use
+// Register plugin and set the elements the composer uses: the input, and the pages to create
+const tagNames = {
+  inputTagName: 'wiki-entity-picker',
+  publishSummaryTagName: 'np-wiki-entity-publish',
+};
 const entry = pluginRegistry.get('wiki-entity-picker');
-if (entry) {
-  entry.inputTagName = 'wiki-entity-picker';
-} else {
-  pluginRegistry.register({ ...wikiEntityPickerPlugin, inputTagName: 'wiki-entity-picker' });
-}
+if (entry) Object.assign(entry, tagNames);
+else pluginRegistry.register({ ...wikiEntityPickerPlugin, ...tagNames });
 
 declare global {
   interface HTMLElementTagNameMap {

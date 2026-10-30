@@ -1,5 +1,5 @@
 import type { ManifestList, NostrPostManifest } from '@nostr-post/core/types';
-import { listField } from '@nostr-post/plugin-list';
+import { listField } from '@nostr-post/list';
 
 /**
  * Lists the examples' entity types offer (`lists`). A list's d-tag is

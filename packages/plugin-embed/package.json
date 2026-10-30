@@ -1,0 +1,43 @@
+{
+  "name": "@nostr-post/plugin-embed",
+  "version": "0.1.0",
+  "description": "Rich media embeds for nostr-post link fields: YouTube, Spotify, SoundCloud, Vimeo, Bandcamp players",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
+    "test:watch": "vitest --dir src",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "nostr",
+    "plugin",
+    "embed",
+    "youtube",
+    "spotify",
+    "soundcloud",
+    "bandcamp"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nostr-post/core": "workspace:*",
+    "@nostr-post/plugins": "workspace:*",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

@@ -14,6 +14,7 @@ import type {
   TextCompletion,
   ValidationError,
 } from '@nostr-post/plugins/types';
+import { parseProfileJson, profileJsonSchema } from './profileJson';
 import { profileName, searchProfiles } from './search';
 
 /** A person in a people field */
@@ -142,6 +143,10 @@ export const profilePlugin: NostrUIPlugin = {
     peopleOf(value)
       .map((p) => (p.role ? `${p.pubkey.slice(0, 8)} (${p.role})` : p.pubkey.slice(0, 8)))
       .join(', '),
+
+  /** People as `{ name, role }`; a name only with exactly one profile of that name (`profileJson.ts`) */
+  jsonSchema: profileJsonSchema,
+  parseJson: parseProfileJson,
 
   /** The tags come whole from extraTags (relay and role need more than a value) */
   serializeValue: (): string => '',

@@ -147,6 +147,11 @@ export const mediaPlugin: NostrUIPlugin = {
     return { success: true, data: undefined };
   },
 
+  jsonSchema: () => ({
+    type: 'array',
+    items: { type: 'string', description: 'An image or video URL (https://…)' },
+  }),
+
   formatValue: (value: unknown): string => {
     const urls = toArray(value);
     return urls.map((u) => (u.startsWith('data:') ? '[uploaded file]' : u)).join(', ');

@@ -1,0 +1,185 @@
+/**
+ * @nostr-post/list - reading and publishing lists
+ *
+ * Reads lists from the user's relays and publishes changes through the signer
+ * (`signAndPublish`), so test mode (dry run) and the user's relays apply.
+ */
+
+import type { NostrTag, Result } from '@nostr-post/core/types';
+import {
+  DEFAULT_RELAYS,
+  type FetchFilter,
+  fetchEvents,
+  fetchUserRelays,
+  getPublicKey,
+  getPublishRelays,
+  signAndPublish,
+} from '@nostr-post/signer';
+import {
+  currentLists,
+  deletionEvent,
+  newSetDTag,
+  newSetEvent,
+  parseList,
+  withBookmarks,
+  withItem,
+  withoutItem,
+} from './core';
+import {
+  BOOKMARK_LISTS,
+  type BookmarkList,
+  DELETION_KIND,
+  type ListEvent,
+  type ListItem,
+  type ListRelayOptions,
+} from './types';
+
+const now = (): number => Math.floor(Date.now() / 1000);
+
+const readRelays = (pubkey: string, options: ListRelayOptions): Promise<string[]> =>
+  fetchUserRelays(pubkey, options.relays ?? DEFAULT_RELAYS);
+
+/**
+ * `pubkey`'s lists of `options.listKind` (default: the bookmarks list and bookmark sets),
+ * without deleted ones. The bookmarks list is always there (empty if they have none yet).
+ */
+export async function fetchLists(
+  pubkey: string,
+  options: ListRelayOptions = {}
+): Promise<BookmarkList[]> {
+  const listKind = options.listKind ?? BOOKMARK_LISTS;
+  const relays = await readRelays(pubkey, options);
+  const kinds = listKind.standard ? [listKind.standard, listKind.set] : [listKind.set];
+  const events = await fetchEvents(
+    [
+      { kinds, authors: [pubkey] },
+      { kinds: [DELETION_KIND], authors: [pubkey], '#k': [String(listKind.set)] },
+    ],
+    relays,
+    { waitForAll: true }
+  );
+  return withBookmarks(currentLists(events), pubkey, listKind);
+}
+
+/** The signed-in user's lists */
+export async function fetchMyLists(options: ListRelayOptions = {}): Promise<BookmarkList[]> {
+  return fetchLists(await getPublicKey(), options);
+}
+
+/** The newest copy of `list` on relays, so an edit doesn't undo one made elsewhere */
+async function latestEvent(list: BookmarkList, options: ListRelayOptions): Promise<ListEvent> {
+  const filter: FetchFilter =
+    list.dTag !== ''
+      ? { kinds: [list.kind], authors: [list.pubkey], '#d': [list.dTag] }
+      : { kinds: [list.kind], authors: [list.pubkey] };
+  const events = await fetchEvents(filter, await readRelays(list.pubkey, options), {
+    waitForAll: true,
+  });
+  return events.reduce<ListEvent>(
+    (newest, e) => (e.created_at > newest.created_at ? e : newest),
+    list.event
+  );
+}
+
+const failure = (error: unknown): { success: false; error: Error } => ({
+  success: false,
+  error: error instanceof Error ? error : new Error(String(error)),
+});
+
+/** Sign and publish to the user's relays; fails when no relay accepted it */
+async function publish(event: ListEvent, options: ListRelayOptions): Promise<Result<ListEvent>> {
+  try {
+    const relays = await getPublishRelays(event.pubkey, options.relays ?? DEFAULT_RELAYS);
+    const tags = event.tags.filter((t): t is NostrTag => t.length > 0);
+    const { signedEvent, publishResults } = await signAndPublish({ ...event, tags }, relays);
+    if (publishResults.success === 0) return failure(new Error('No relay accepted the event'));
+    return { success: true, data: signedEvent };
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+async function publishList(
+  event: ListEvent,
+  options: ListRelayOptions
+): Promise<Result<BookmarkList>> {
+  const published = await publish(event, options);
+  if (!published.success) return published;
+  const list = parseList(published.data);
+  return list ? { success: true, data: list } : failure(new Error('Not a list event'));
+}
+
+/** Add `item` to the newest version of `list` */
+export const addToList = (
+  list: BookmarkList,
+  item: ListItem,
+  options: ListRelayOptions = {}
+): Promise<Result<BookmarkList>> => addItemsToList(list, [item], options);
+
+/** Add `items` to the newest version of `list`, in one event */
+export async function addItemsToList(
+  list: BookmarkList,
+  items: ListItem[],
+  options: ListRelayOptions = {}
+): Promise<Result<BookmarkList>> {
+  try {
+    const latest = await latestEvent(list, options);
+    const at = now();
+    const added = items.reduce((event, item) => withItem(event, item, at), latest);
+    // Already in the published list: nothing to publish
+    const unchanged = added === latest && latest.created_at > 0 && parseList(latest);
+    if (unchanged) return { success: true, data: unchanged };
+    return publishList({ ...added, created_at: Math.max(at, latest.created_at + 1) }, options);
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+/** Remove `item` (any version of the same wiki entity) from the newest version of `list` */
+export async function removeFromList(
+  list: BookmarkList,
+  item: ListItem,
+  options: ListRelayOptions = {}
+): Promise<Result<BookmarkList>> {
+  try {
+    const latest = await latestEvent(list, options);
+    return publishList(withoutItem(latest, item, now()), options);
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+/**
+ * Create a set (bookmark set, or of `options.listKind`, e.g. a calendar) for the signed-in
+ * user, optionally with its first items. Its d-tag
+ * comes from the title (newSetDTag): when the user has that list already, the items are
+ * added to it (it keeps its title).
+ */
+export async function createList(
+  params: { title: string; description?: string; items?: ListItem[] },
+  options: ListRelayOptions = {}
+): Promise<Result<BookmarkList>> {
+  try {
+    const pubkey = await getPublicKey();
+    const dTag = newSetDTag(params.title, Math.random().toString(36).slice(2, 8));
+    const kind = (options.listKind ?? BOOKMARK_LISTS).set;
+    const list = parseList(newSetEvent({ ...params, pubkey, dTag, kind }, 0));
+    if (!list) return failure(new Error('Not a list event'));
+    // Unpublished (createdAt 0): addItemsToList starts from the user's copy if there is one
+    return addItemsToList(list, params.items ?? [], options);
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+/** Ask relays to delete a set (NIP-09). The bookmarks list itself can't be deleted. */
+export async function deleteList(
+  list: BookmarkList,
+  options: ListRelayOptions = {}
+): Promise<Result<void>> {
+  if (list.dTag === '') {
+    return failure(new Error('Only sets can be deleted'));
+  }
+  const published = await publish(deletionEvent(list, now()), options);
+  return published.success ? { success: true, data: undefined } : published;
+}

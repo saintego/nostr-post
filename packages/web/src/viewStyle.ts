@@ -261,10 +261,46 @@ export const viewStyle = css`
     margin-bottom: 0.125rem;
   }
 
+  .view-suggestion-author {
+    font-family: monospace;
+  }
+  .view-suggestion-line {
+    margin-right: 0.5rem;
+  }
+  .view-suggestion-toggle {
+    margin-left: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    font-size: 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+  }
+  .view-suggestion-toggle[aria-pressed='true'] {
+    border-color: #6366f1;
+    color: #4f46e5;
+  }
+  :host-context(.dark) .view-suggestion-toggle {
+    border-color: #4b5563;
+  }
+  :host-context(.dark) .view-suggestion-toggle[aria-pressed='true'] {
+    border-color: #a5b4fc;
+    color: #a5b4fc;
+  }
+
   .view-inline-composer {
     margin-top: 1rem;
     padding-top: 0.75rem;
     border-top: 1px solid var(--nl-border, #e5e7eb);
+  }
+  .view-edit-hint {
+    margin: 0 0 0.5rem;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+  :host-context(.dark) .view-edit-hint {
+    color: #9ca3af;
   }
   details.view-raw {
     margin-top: 0.75rem;

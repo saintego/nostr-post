@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@nostr-post/core/types": ["../core/dist/types.d.ts"],
+      "@nostr-post/plugin-date": ["../plugin-date/dist/index.d.ts"],
+      "@nostr-post/web": ["../web/dist/index.d.ts"],
+      "@nostr-post/core/manifestMappings": ["../core/dist/manifestMappings.d.ts"],
+      "@nostr-post/signer": ["../signer/dist/index.d.ts"],
+      "@nostr-post/list": ["../list/dist/index.d.ts"],
+      "@nostr-post/list/web": ["../list/dist/web.d.ts"],
+      "@nostr-post/plugin-profile/web": ["../plugin-profile/dist/web.d.ts"],
+      "@nostr-post/plugins/entities": ["../plugins/dist/entities.d.ts"],
+      "@nostr-post/plugins/registry": ["../plugins/dist/registry.d.ts"],
+      "@nostr-post/plugins/types": ["../plugins/dist/types.d.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

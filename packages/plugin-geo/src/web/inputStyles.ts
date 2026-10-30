@@ -180,4 +180,48 @@ export const geoInputStyles = css`
       text-align: center;
       letter-spacing: 0.05em;
     }
+
+    /* Dark theme: colors.dark of @nostr-post/web's theme */
+    :host-context(.dark) .search-input,
+    :host-context(.dark) .coord-input {
+      background: #374151;
+      color: #f3f4f6;
+      border-color: #4b5563;
+    }
+
+    :host-context(.dark) .btn-secondary {
+      background: #374151;
+      color: #f3f4f6;
+      border-color: #4b5563;
+    }
+
+    :host-context(.dark) .btn-secondary:hover {
+      background: #4b5563;
+    }
+
+    :host-context(.dark) .results-list {
+      background: #1f2937;
+      border-color: #4b5563;
+    }
+
+    :host-context(.dark) .result-item {
+      border-bottom-color: #374151;
+    }
+
+    :host-context(.dark) .result-item:hover {
+      background: #312e81;
+    }
+
+    :host-context(.dark) .map-wrapper {
+      border-color: #4b5563;
+    }
+
+    :host-context(.dark) .coord-label {
+      color: #9ca3af;
+    }
+
+    :host-context(.dark) .geohash-display {
+      color: #f3f4f6;
+      background: #374151;
+    }
 `;

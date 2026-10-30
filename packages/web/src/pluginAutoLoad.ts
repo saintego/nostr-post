@@ -7,12 +7,13 @@ const builtInPluginLoaders: Record<string, () => Promise<unknown>> = {
   geo: () => import('@nostr-post/plugin-geo/web'),
   date: () => import('@nostr-post/plugin-date/web'),
   profile: () => import('@nostr-post/plugin-profile/web'),
+  embed: () => import('@nostr-post/plugin-embed/web'),
   venue: () => import('@nostr-post/plugin-venue/web'),
   media: () => import('@nostr-post/plugin-media/web'),
   reference: () => import('@nostr-post/plugin-reference/web'),
   markdown: () => import('@nostr-post/plugin-markdown/web'),
   hashtag: () => import('@nostr-post/plugin-hashtag/web'),
-  list: () => import('@nostr-post/plugin-list/web'),
+  list: () => import('@nostr-post/list/web'),
 };
 
 const pendingPluginLoads = new Map<string, Promise<unknown>>();
@@ -40,6 +41,10 @@ const ensurePluginLoaded = async (pluginId: string) => {
   await pending;
 };
 
+/**
+ * Loads the field plugins a manifest uses (their web entries, which register them), e.g. before
+ * reading form JSON or building its schema when no composer has loaded them yet
+ */
 export const ensurePluginsForManifest = async (manifest?: NostrPostManifest) => {
   if (!manifest || typeof window === 'undefined') return;
 

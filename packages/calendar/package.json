@@ -1,0 +1,51 @@
+{
+  "name": "@nostr-post/calendar",
+  "version": "0.1.0",
+  "description": "NIP-52 calendars for nostr-post: event manifest, agenda and month views, RSVP, calendars (31924), iCalendar import/export",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./ics": {
+      "types": "./dist/ics.d.ts",
+      "import": "./dist/ics.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
+    "test:watch": "vitest --dir src",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "nostr",
+    "nip-52",
+    "calendar",
+    "agenda",
+    "rsvp",
+    "ical"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nostr-post/core": "workspace:*",
+    "@nostr-post/plugin-date": "workspace:*",
+    "@nostr-post/list": "workspace:*",
+    "@nostr-post/plugin-profile": "workspace:*",
+    "@nostr-post/plugins": "workspace:*",
+    "@nostr-post/signer": "workspace:*",
+    "@nostr-post/web": "workspace:*",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

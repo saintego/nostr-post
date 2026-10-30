@@ -7,7 +7,7 @@ vi.mock('@nostr-post/signer', () => ({
 }));
 
 import { fetchEventsFromRelay } from '@nostr-post/signer';
-import { checkEntityDTag } from './fetch';
+import { checkEntityDTag, checkEntitySlug } from './fetch';
 
 const version = {
   id: 'v',
@@ -52,5 +52,61 @@ describe('checkEntityDTag', () => {
   it('is taken even if another relay failed', async () => {
     relaysAnswer({ a: new Error('connection failed'), b: [version] });
     expect(await checkEntityDTag('bitcoin', ['a', 'b'])).toBe('taken');
+  });
+});
+
+describe('checkEntitySlug', () => {
+  beforeEach(() => {
+    (fetchEventsFromRelay as Mock).mockReset();
+  });
+
+  const manifest = {
+    id: 'musician',
+    version: '1',
+    wikiConfig: { dTagTemplate: '{title}-(musician)' },
+    fields: [],
+  } as never;
+
+  /** One relay; the d-tags in `taken` have a version */
+  const taken = (dTags: string[]) =>
+    (fetchEventsFromRelay as Mock).mockImplementation(
+      (
+        _relay: string,
+        filter: { '#d': string[] },
+        options?: { onEvent?: (e: unknown) => void }
+      ) => {
+        const found = dTags.includes(filter['#d'][0] ?? '') ? [version] : [];
+        for (const ev of found) options?.onEvent?.(ev);
+        return Promise.resolve(found);
+      }
+    );
+
+  it('keeps the name when its slug is free', async () => {
+    taken([]);
+    expect(
+      await checkEntitySlug(manifest, { title: 'Doomsday' }, { candidates: ['x'], relays: ['a'] })
+    ).toEqual({ status: 'free', qualifier: '' });
+  });
+
+  it('takes the first candidate whose slug is free', async () => {
+    taken(['doomsday-musician', 'doomsday-doomsdayband-musician']);
+    expect(
+      await checkEntitySlug(
+        manifest,
+        { title: 'Doomsday' },
+        { candidates: ['doomsdayband', 'metal'], relays: ['a'] }
+      )
+    ).toEqual({ status: 'free', qualifier: 'metal' });
+  });
+
+  it('stays taken when no candidate is free', async () => {
+    taken(['doomsday-musician', 'doomsday-metal-musician']);
+    expect(
+      await checkEntitySlug(
+        manifest,
+        { title: 'Doomsday' },
+        { candidates: ['metal'], relays: ['a'] }
+      )
+    ).toEqual({ status: 'taken', qualifier: '' });
   });
 });

@@ -11,8 +11,11 @@
 // Re-export pure functions from core so callers have a single import path
 export {
   applyUpdateCommentsToEvent,
+  EDITOR_ROLES,
+  eventEditors,
   isUpdateComment,
   parseUpdateComment,
+  suggestedUpdates,
   tryParseJsonObject,
   UPDATE_COMMENT_PATTERN,
 } from '@nostr-post/core/eventUpdates';
@@ -40,16 +43,16 @@ import { html, nothing } from 'lit';
  */
 export const renderUpdateComments = (
   interactionEvents: DisplayableEvent[] | undefined,
-  eventPubkey: string
+  editors: ReadonlySet<string>
 ): TemplateResult | typeof nothing => {
   if (!interactionEvents || interactionEvents.length === 0) return nothing;
 
   // Each interaction event may contain multiple update lines (one per field).
-  // Only trust update comments authored by the original event's author and
-  // whose content is a valid update comment — matching applyUpdateCommentsToEvent.
+  // Only the event's editors' update comments count (eventEditors), as in
+  // applyUpdateCommentsToEvent.
   const updates: { fieldId: string; rawValue: string }[] = [];
   for (const e of interactionEvents) {
-    if (e.kind !== 1 || e.pubkey !== eventPubkey || !isUpdateComment(e.content)) continue;
+    if (e.kind !== 1 || !editors.has(e.pubkey) || !isUpdateComment(e.content)) continue;
     for (const line of e.content.split('\n')) {
       const parsed = parseUpdateComment(line);
       if (parsed) updates.push(parsed);

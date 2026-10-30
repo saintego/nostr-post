@@ -326,12 +326,28 @@ interface NostrUIPlugin {
   // Reconstruct a rich view value from all event tags (e.g. venue reconstructs from geohash + "i" + "location")
   resolveFromTags?(tags: string[][], field: PostField): unknown;
 
+  // A post's form data as JSON (see "A post's form data as JSON"): the JSON
+  // Schema of the field's value (null: leave the field out; without the hook it's left out),
+  // strict like structured outputs (every property required, optional ones nullable, no others)
+  jsonSchema?(field: PostField): Record<string, unknown> | null;
+  // Turns the JSON's value into the field's value when they differ (e.g. names into picked
+  // wiki entities); `suggestions`: what the user may do next, e.g. `{ label, action: 'create', prefill }`
+  // for a name without a page, `{ label, action: 'update', address, prefill }` for links a page lacks
+  parseJson?(
+    value: unknown,
+    field: PostField,
+  ): Promise<{ value?: unknown; suggestions?: FormJsonSuggestion[] }>;
+
   // Pre-coordinate: auto-extract values from other fields (e.g. read content to extract #hashtags or URLs)
   // Only runs for fields with `attachTo` pointing at a source field that has data
   enrichFormData?(
     formData: Record<string, unknown>,
     field: PostField,
   ): Record<string, unknown>;
+
+  // Short texts that tell an entity apart from another with the same name (e.g. the embed field's
+  // profile handles): a new wiki entity whose slug is taken tries them first as its qualifier
+  qualifiers?(value: unknown, field: PostField): string[];
 
   // Async, before the post's events are signed (fields with a value only). May publish
   // events of its own (e.g. the venue's wiki entity); returned tags are added to every
@@ -427,6 +443,59 @@ interface NostrUIPlugin {
 | `.value` | `unknown`   | Deserialized field value            |
 | `.field` | `PostField` | Full field definition from manifest |
 
+## A post's form data as JSON
+
+A post can be filled in from anything that gives JSON, e.g. an AI with structured outputs.
+`@nostr-post/plugins/formJson` (also in the CDN bundle) builds the JSON Schema of a manifest's
+form data and parses JSON in that shape into form data for a composer's `prefill`:
+
+```ts
+import { formJsonSchema, parseFormJson } from '@nostr-post/plugins/formJson';
+
+const schema = formJsonSchema(manifest); // fields' labels and descriptions describe the properties
+const text = await askSomeAi(post, schema); // JSON in that shape, maybe wrapped in prose
+const parsed = await parseFormJson(manifest, text); // text or an already parsed object
+if (parsed.success) {
+  const { formatId, formData, suggestions } = parsed.data;
+  composer.defaultFormatId = formatId;
+  composer.prefill = formData;
+}
+```
+
+Both need the fields' plugins registered: import their entries, or with `@nostr-post/web` call
+`await ensurePluginsForManifest(manifest)` first (composers load them themselves, but a schema
+built before any composer is shown would leave their fields out).
+
+Fields get their schema from their plugin's `jsonSchema`; fields without a plugin (`text`,
+`textarea`, `number`, `select`) from their type (`string`, `number`, `boolean`, `enum`, an array
+with `metadata.multiple`). A plugin without `jsonSchema` is left out: its value's shape isn't
+known. With several user-selectable publish formats the schema adds `publishFormat`. The plugins
+that have it: `date` (`{ start, end, tzid }`), `hashtag`, `markdown`, `stars`, `identifier`,
+`embed` (profile links also as `i` tags), `media`, `venue` (a place as text, e.g. "JAM, Bangkok",
+read back as the first place OpenStreetMap finds at the field's levels), `profile` (`{ name, role }`
+per person; a name becomes a person only when exactly one profile has it, as tagging notifies
+them), and `wiki-entity-picker`. `reference` (derived from a text field) and `list` (the user's
+own lists, not part of the post) have none on purpose. The picker asks
+for each entity by what tells it apart: the entity manifest's name field, link fields (written
+as `r` or `i` tags) and hashtag fields (`t`), e.g. a musician's name, profiles and genres; the
+hashtags prefill a new page and qualify its slug when the name is taken. `parseJson` looks their pages up by the
+links' `i` tags first, then by the name's d-tag (a page with that name but none of the same links
+is another entity). Entities without a page stay in the value unlinked (no `a` tag, their links
+still as `i` tags, so a page created later finds the post) with a `create` suggestion. A page
+found this way is marked for the user to check (`match`: by link or by name, and the unlinked
+value it was): the picker's chip says so, and its preview has "It's them" (`confirmMatch`) and
+"Not them" (`rejectMatch`: back to its name and links); the publish summary lists those not
+checked yet. Entities without a page: the picker
+shows them with "Create page", prefilled, and when the post is published creates their pages
+(its `beforePublish` hook, `createEntityPage`), which the post then links. That's always the
+user's choice: next to the publish button each one has a checkbox, ticked when it has links,
+unticked for a name alone. A page of its type published meanwhile with one of its links is linked
+instead, and a name another page has gets a qualifier (a handle, a genre); when none is free,
+nothing is published. A found page missing some of the links gets an `update`
+suggestion. Without plugins:
+`formJsonSchema(manifest, { fieldSchema })` and `parseFormJson` (synchronous) in
+`@nostr-post/core/formJson`.
+
 ## Event actions and entity manifests
 
 Plugins meet the views and the wiki package through `@nostr-post/plugins/entities` instead of
@@ -437,6 +506,11 @@ depending on them (or on each other):
   or its id) and `manifest` properties. `<nostr-post-view>` (in its header), `<nostr-wiki-view>` (next to
   the title) and the venue view show them (`eventActionsFor(manifest)`); the list plugin's Save button,
   for manifests with `lists`, is one.
+- `registerKindView({ kinds, tagName })`: a domain package's element for events of its kinds, a custom
+  element with an `address` property (`kind:pubkey:d-tag`) that loads and shows the event. A post linking
+  such an event (`nostr:naddr…`) shows it in place of the link (`kindViewFor(kind)`); a later
+  registration for the same kind wins, so an app can replace a package's. The wiki registers
+  `<nostr-wiki-view>` for 30818, the list plugin `<np-list-view>` for 10003/30003.
 - `entityManifests()`: once `@nostr-post/wiki` is loaded, `resolve(ref)`, an entity manifest from its id,
   `30078:` address or the manifest itself. The list field uses it for the lists of the venue it saves.
 
@@ -453,7 +527,8 @@ When a plugin reads a new key, add it there.
 | ------------------------------ | ----------- | -------- | -------------------------------------------------------------------------------- |
 | `@nostr-post/plugin-stars`     | `stars`     | `number` | Interactive star rating (configurable max via `metadata.max`)                    |
 | `@nostr-post/plugin-geo`       | `geo`       | `geo`    | Map location picker using Leaflet/OpenStreetMap (NIP-52 geohash)                 |
-| `@nostr-post/plugin-date`      | `date`      | `date`   | Date or date and time with time zone; on NIP-52 calendar events (31922/31923) also `end`, `start_tzid`/`end_tzid` and `D` day tags. Text overridable through `messages` (`DateMessages`, `DEFAULT_DATE_MESSAGES`) |
+| `@nostr-post/plugin-date`      | `date`      | `date`   | Date or date and time with time zone; on NIP-52 calendar events (31922/31923) also `end`, `start_tzid`/`end_tzid` and `D` day tags (the events themselves: `@nostr-post/calendar`). Text overridable through `messages` (`DateMessages`, `DEFAULT_DATE_MESSAGES`) |
+| `@nostr-post/plugin-embed`     | `embed`     | `string` | Players for links: YouTube, Spotify, SoundCloud, Vimeo, Bandcamp player links; a "Play" button first, the provider loads on click |
 | `@nostr-post/plugin-profile`   | `profile`   | `profile` | People picker: search profiles (NIP-50) or paste an npub, a role each; `p` tags `["p", pubkey, relay, role]` (NIP-52 participants). Text overridable through `messages` (`ProfileMessages`) |
 | `@nostr-post/plugin-venue`     | `venue`     | `geo`    | OSM venue search + NIP-73 identity tags; wraps `plugin-geo`                      |
 | `@nostr-post/plugin-media`     | `media`     | `string` | Multi-file upload with NIP-98 auth; paste/drop on textarea via `attachTo`        |
@@ -461,7 +536,7 @@ When a plugin reads a new key, add it there.
 | `@nostr-post/plugin-hashtag`   | `hashtag`   | `string` | Hashtag array input; auto-extracts from target field when `attachTo` is set      |
 | `@nostr-post/plugin-reference` | `reference` | `string` | URL/nostr reference list; auto-extracts from target field when `attachTo` is set |
 | `@nostr-post/plugin-identifier` | `identifier` | `string` | External identifier (NIP-73 `i` tag), e.g. an ISBN, with an optional fixed prefix |
-| `@nostr-post/plugin-list` | `list` | `string` | Pick lists (NIP-51 bookmark sets) to save the post's wiki entity (`metadata.saveField`) or the post to, after publishing (`afterPublish`); adds Save to events made with manifests that have `lists` (`registerEventAction`) |
+| `@nostr-post/list` | `list` | `string` | Pick lists (NIP-51 bookmark sets) to save the post's wiki entity (`metadata.saveField`) or the post to, after publishing (`afterPublish`); adds Save to events made with manifests that have `lists` (`registerEventAction`) |
 | `@nostr-post/plugin-wiki-entity` | `wiki-entity-picker` | `ref` | Search, pick and create wiki entities (NIP-54); links the post with an `a` tag. Its text is overridable through the `messages` property (`WikiEntityPickerMessages`, defaults in `DEFAULT_WIKI_ENTITY_PICKER_MESSAGES`) |
 
 ## Custom Field Types

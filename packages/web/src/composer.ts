@@ -15,7 +15,12 @@ import { buildInitialFormData, isFieldReadonly, renderHiddenFieldErrors } from '
 import { initialPublishFormatId, renderPublishFormatPicker } from './composerFormatPicker';
 import { renderComposerHeader } from './composerHeader';
 import { type ComposerMessages, DEFAULT_COMPOSER_MESSAGES } from './composerMessages';
-import { hasReplyTarget, renderReplyTargetPanel, updateReplyTargetValue } from './composerReply';
+import {
+  hasReplyTarget,
+  type ReplyTarget,
+  renderReplyTargetPanel,
+  updateReplyTargetValue,
+} from './composerReply';
 import { composerStyle } from './composerStyle';
 import {
   invalidFieldLabels,
@@ -26,7 +31,7 @@ import {
   type ValidationResult,
   validateAndCoordinate,
 } from './composerSubmit';
-
+import './composerElement';
 import { ensurePluginsForManifest } from './pluginAutoLoad';
 import {
   fetchManifestByATag,
@@ -93,6 +98,10 @@ export class NostrPostComposer extends NostrPostElement {
   /** Optional root author pubkey when replying deeper in a thread. */
   @property({ type: String, attribute: 'root-pubkey' })
   rootPubkey?: string;
+
+  /** The root's address when it's addressable: replies follow it across its versions */
+  @property({ type: String, attribute: 'root-address' })
+  rootAddress?: string;
 
   /** Show reply target context panel when reply tags are in use. */
   @property({ type: Boolean, attribute: 'show-reply-target' })
@@ -384,10 +393,7 @@ export class NostrPostComposer extends NostrPostElement {
         manifestRef: this.manifestRef,
         dTag: this.dTag,
         extraTags: this.extraTags,
-        replyToEventId: this.replyToEventId,
-        replyToPubkey: this.replyToPubkey,
-        rootEventId: this.rootEventId,
-        rootPubkey: this.rootPubkey,
+        ...this._replyTarget,
       }
     );
   }
@@ -408,10 +414,12 @@ export class NostrPostComposer extends NostrPostElement {
     });
   }
 
-  private updateReplyTarget(
-    field: 'replyToEventId' | 'replyToPubkey' | 'rootEventId' | 'rootPubkey',
-    value: string
-  ) {
+  private get _replyTarget(): ReplyTarget {
+    const { replyToEventId, replyToPubkey, rootEventId, rootPubkey, rootAddress } = this;
+    return { replyToEventId, replyToPubkey, rootEventId, rootPubkey, rootAddress };
+  }
+
+  private updateReplyTarget(field: keyof ReplyTarget, value: string) {
     this[field] = updateReplyTargetValue(value);
   }
 
@@ -438,12 +446,7 @@ export class NostrPostComposer extends NostrPostElement {
       },
     };
 
-    const replyTarget = {
-      replyToEventId: this.replyToEventId,
-      replyToPubkey: this.replyToPubkey,
-      rootEventId: this.rootEventId,
-      rootPubkey: this.rootPubkey,
-    };
+    const replyTarget = this._replyTarget;
 
     const showReplyPanel =
       this.showReplyTarget || this.editableReplyTarget || hasReplyTarget(replyTarget);

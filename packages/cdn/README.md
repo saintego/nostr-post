@@ -39,13 +39,15 @@ The plugins and their UI elements are also registered:
 
 - **Stars** — `@nostr-post/plugin-stars`
 - **Geo** — `@nostr-post/plugin-geo`
-- **Date** — `@nostr-post/plugin-date`: dates and times, NIP-52 calendar event tags
+- **Date** — `@nostr-post/plugin-date`: dates and times, NIP-52 date tags
+- **Calendar** — `@nostr-post/calendar`: `<nostr-calendar-agenda>`, `<nostr-calendar-event>`, RSVP,
+  Add to calendar and `.ics` on calendar events
 - **Profile** — `@nostr-post/plugin-profile`: people picker (`p` tags with roles)
 - **Venue** — `@nostr-post/plugin-venue`
 - **Media** — `@nostr-post/plugin-media`
 - **Markdown** — `@nostr-post/plugin-markdown`
 - **Hashtag** — `@nostr-post/plugin-hashtag`
-- **Lists** — `@nostr-post/plugin-list`: the `list` field, `<np-list-save target="30818:<pubkey>:<d-tag>">`
+- **Lists** — `@nostr-post/list`: the `list` field, `<np-list-save target="30818:<pubkey>:<d-tag>">`
   (Save to the user's lists; also on events made with manifests that have `lists`) and
   `<np-list-view>` (the user's lists, or one list by `address`)
 
@@ -96,6 +98,15 @@ The bundle re-exports utilities for advanced usage:
 
 - `pluginRegistry`
 
+**Form data as JSON** (e.g. an AI's structured output; see [PLUGINS.md](../../PLUGINS.md#a-posts-form-data-as-json))
+
+- `formJsonSchema(manifest)`: the JSON Schema of a manifest's form data, with the registered plugins' schemas
+- `parseFormJson(manifest, input)`: a `Result` with `{ formatId?, formData, suggestions }` from JSON in that
+  shape, as text (also wrapped in prose or code fences, as AIs answer) or parsed (e.g. performer names
+  turned into their wiki pages)
+- `PUBLISH_FORMAT_KEY`: the property holding the chosen publish format
+- `findJsonObject(text)`: a `Result` with the JSON object in text (also inside prose or code fences)
+
 **Geo helpers**
 
 - `geoPlugin`
@@ -105,25 +116,43 @@ The bundle re-exports utilities for advanced usage:
 
 **People helpers** (see [plugin-profile](../plugin-profile/README.md))
 
+- Embeds: `embedFor(link)` (a link's player), `linkProvider(link)`, `embedPlugin`, `Embed`;
+  `profileLink(link)`, `profileUrls(links)`: profile links in canonical form (NIP-73 `i` tags);
+  `linkFromEmbedCode(text)`; `checkLink(link)`, `isCheckableLink(link)`, `namesMatch(name, names)`:
+  whether a Spotify, SoundCloud or YouTube link exists, and whose it is
 - `profilePlugin`, `personFromText(text)`, `peopleFromTags(tags)`, `personTag(person)`, `Person`
 - `mentionsIn(text)`: the people in a text's `nostr:npub…` mentions; the composer completes `@name` in
   text fields with an attached `profile` field (the standard kind 1 post has one)
 - `searchProfiles(query, { relays? })`, `profileName(pubkey, profile?)`, `DEFAULT_SEARCH_RELAYS`, `FoundProfile`
 
-**Date helpers** (NIP-52 calendar event dates, see [plugin-date](../plugin-date/README.md))
+**Date field** (see [plugin-date](../plugin-date/README.md))
 
-- `datePlugin`
-- `CALENDAR_EVENT_MANIFEST`: NIP-52 calendar event, all-day or timed by publish format
-- `formatDateValue(value, locale?)`, `dateValueFromTags(tags, tagName?)`, `dayNumbers(value, precision)`
+- `datePlugin`, `formatDateValue(value, locale?)`, `dateValueFromTags(tags, tagName?)`,
+  `dayNumbers(value, precision)`, `DateValue`
 - `ALL_DAY_EVENT_KIND` (31922), `TIMED_EVENT_KIND` (31923)
-- Agenda: `agendaFilter(window)` (relay filter of a date window), `groupEventsByDay(events, window)`,
-  `eventTiming(event)`, `eventDates(timing, tzid?)`, `windowDates(window)`, `shiftWindow(window, steps)`,
-  `AgendaWindow`
+
+**Calendars** (NIP-52, see [calendar](../calendar/README.md))
+
+- `CALENDAR_EVENT_MANIFEST`: calendar event, all-day or timed by publish format
+- Agenda: `agendaFilters(query)` (an agenda's relay filters), `agendaFilter(window)`,
+  `groupEventsByDay(events, window)`, `eventTiming(event)`, `eventDates(timing, tzid?)`,
+  `eventTimeZone(event, window)` (with the window's `eventZones`, events in their own zone),
+  `windowDates(window)`, `shiftWindow(window, steps)`, `AgendaWindow`
+- Months: `monthWindow(month)`, `monthGrid(month)`, `shiftMonth(month, steps)`, `formatMonth(month)`
 - RSVP (kind 31925): `fetchRsvps(addresses)`, `publishRsvp(address, status)`,
   `summarizeRsvps(events, address)`, `rsvpEvent(address, status, pubkey)`, `RsvpStatus`
 - Calendars (kind 31924): `fetchCalendarItems(address)` (a calendar's event addresses),
   `calendarEventFilters(addresses)`; edited with the list functions and `{ listKind: CALENDAR_LISTS }`
-- `DateValue`
+- iCalendar: `eventsToIcs(events, name?)`, `icsToDrafts(text)` (an `.ics` file as drafts for
+  CALENDAR_EVENT_MANIFEST, d-tag `ics:<UID>`), `icsDTag(uid)`, `fetchEventsAsIcs(addresses)`
+- Duplicates: `similarEvents(draft, events)`, `titleSimilarity(a, b)`
+- Sharing: `agendaWindowFor(from, days, tzid, view)` (an agenda element's window),
+  `agendaSummary(events, window)`, `agendaText(events, window, { title, link })` (a message),
+  `agendaImage(summary, { title, footer, dark })` (a PNG), `drawAgendaImage` (the canvas)
+
+**NIP-19**
+
+- `encodeNaddr(address)`, `decodeNaddr(naddr)`: an address (`kind:pubkey:d-tag`) as `naddr1…` and back
 
 **Signing & Relays**
 
@@ -154,7 +183,11 @@ The bundle re-exports utilities for advanced usage:
 
 - `DEFAULT_COMPOSER_MESSAGES`: the composer's submit-area text (button, running step, errors); set
   `composer.messages = { submit: '…' }` to override any of it
-- `DEFAULT_FEED_MESSAGES`: the feed's text (loading, empty, agenda buttons); set `feed.messages` to
+- `DEFAULT_EDIT_MESSAGES`: the view's Edit button and edit form (e.g. the note that a non-author's
+  changes go out as a suggestion); set `view.messages` to override any of it
+- `DEFAULT_SUGGESTION_MESSAGES`: the view's list of others' suggested changes ("Show with this
+  change"), also through `view.messages`
+- `DEFAULT_FEED_MESSAGES`: the feed's text (loading, empty); set `feed.messages` to
   override any of it
 
 **Publishing a submitted post yourself** (composer without `auto-publish`)
@@ -167,6 +200,8 @@ The bundle re-exports utilities for advanced usage:
 - `runAfterPublish(manifest, formData, { pubkey, events })`: once the post is published, runs plugins'
   after-publish steps (e.g. the list field saving the venue to lists) with the form data
   `runPublishHooks` returned; returns the errors of those that failed
+- `extractPrefillFromEvent(event, manifest)`: an event's values as form data, to edit it in a
+  composer (`prefill`, with the event's `dTag`)
 
 **Wiki (NIP-54)**: see [packages/wiki](../wiki/README.md)
 
@@ -184,6 +219,13 @@ The bundle re-exports utilities for advanced usage:
 - `registerEventAction({ tagName, matches })`, `eventActionsFor(manifest)`: a plugin's control shown with
   events made with a manifest, in `<nostr-post-view>` and `<nostr-wiki-view>` (the list plugin's Save button)
 - `searchEntities`, `entityTypeAffixes`
+- `entityJsonSchema(manifest)`, `resolveEntities(items, { entityManifest, relays })`: entities in form JSON
+  (name and links) and their wiki pages, found by link (`#i`) or name; the others as unlinked values
+- `createsPage(entity)`, `createEntityPage(entity, field)`: the picker's publish hook: an unlinked
+  entity's page is created when the post is published (ticked next to the publish button by
+  default when it has links), and the post links it
+- `withPageLinks(values, relays?)`: an edited event's picked entities with their own links (`i` tags)
+  back, from their pages, so removing one removes its links; the picker does it on edit
 
 **Venues and the venue hub**
 
@@ -398,33 +440,22 @@ This rewrites to a relay query like:
 
 ### Agenda (NIP-52 calendar events)
 
-With `agenda`, the feed shows calendar events of a date window under day headings, sorted by
-when they start (not when they were posted). Each version of an event counts once.
+`<nostr-calendar-agenda>` (from `@nostr-post/calendar`, in the bundle) shows calendar events of a
+date window under day headings, sorted by when they start, or a month as a grid:
 
 ```html
-<nostr-post-feed agenda agenda-from="2026-10-21" agenda-days="7"></nostr-post-feed>
+<nostr-calendar-agenda from="2026-10-21" days="7"></nostr-calendar-agenda>
+<nostr-calendar-agenda view="month" .tagFilters=${{ '#g': ['u09t'], '#t': ['punk'] }}></nostr-calendar-agenda>
+<nostr-calendar-agenda calendar="31924:<pubkey>:<d-tag>"></nostr-calendar-agenda>
 ```
 
-- `agenda-from`: first day, `YYYY-MM-DD` (default today); `agenda-days`: number of days (default 30)
-- `time-zone`: IANA time zone of the days (default the viewer's)
-- Kinds: `kinds`, else the manifest's, else 31922 and 31923; `limit` defaults to 500 here
-- Other filters (`authors`, `tagFilters`, …) narrow it down; `filters` replaces the agenda's filter
-- Previous / Today / Next buttons move the window; the feed then fires `nostr-post-agenda-change`
-  with `{ from, days }` (`from` undefined: today). While the new window loads, the buttons and the
-  previous window's days stay shown (dimmed), next to the `loading` message
-- With a calendar manifest, each event shows Going / Maybe / Can't go with counts (`<np-rsvp>`)
-- `calendar="31924:<pubkey>:<d-tag>"`: the agenda of one calendar (NIP-52): its events, loaded by
-  address, so also all-day events of clients that write no `D` tags
-- With a calendar manifest, events also get Add to calendar (`<np-calendar-save>`): the user's
-  calendars, to add the event to or start a new one
+The days become a `#D` filter, the day tags `@nostr-post/plugin-date` writes, or with `calendar`
+the calendar's events are asked for by address. See the [calendar README](../calendar/README.md)
+for its attributes. Events keep their comments, reactions and actions: RSVP, Add to calendar and
+`.ics`. A post linking a calendar event (`nostr:naddr…`) shows it as `<nostr-calendar-event>`.
 
-The days become a `#D` filter, the day tags `@nostr-post/plugin-date` writes:
-
-```json
-{ "kinds": [31922, 31923], "limit": 500, "#D": ["20746", "20747", "…"] }
-```
-
-All-day events from clients that don't write `D` tags aren't found this way.
+`<nostr-post-feed>` itself takes `layout` (how posts are laid out; the agenda is one) and
+`trustedEditors` (whose update comments apply besides each post's author and named editors).
 
 ### Advanced: Multiple REQ Filters
 

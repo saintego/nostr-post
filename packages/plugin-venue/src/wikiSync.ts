@@ -27,6 +27,7 @@ import {
   type EntitySyncAction,
   entitySyncAction,
   mergeOsmFields,
+  syncsVenuePage,
   venueDTag,
   venueEntityTags,
   venueIdentifiers,
@@ -125,7 +126,9 @@ function addMissingTags(tags: Tag[], extra: Tag[]): Tag[] {
 export async function syncVenueEntity(venue: VenueData, field: PostField): Promise<Tag[]> {
   // A registered id, an inline manifest, or a published manifest's address
   const manifest = await resolveEntityManifest(field.metadata?.wikiEntity as EntityManifestRef);
-  if (!manifest || venue.syncWiki === false || venueIdentifiers(venue).length === 0) return [];
+  if (!manifest || !syncsVenuePage(venue, field) || venueIdentifiers(venue).length === 0) {
+    return [];
+  }
 
   const relays = DEFAULT_WIKI_RELAYS;
   const { action, osm } = await planVenueEntity(venue, relays);

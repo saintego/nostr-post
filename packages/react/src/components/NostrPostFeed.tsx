@@ -31,11 +31,8 @@ interface NostrPostFeedElement extends HTMLElement {
   reactionsEnabled?: boolean;
   reactionOptions?: string[];
   editable?: boolean;
-  agenda?: boolean;
-  agendaFrom?: string;
-  agendaDays?: number;
-  timeZone?: string;
-  calendar?: string;
+  layout?: import('@nostr-post/web').FeedLayout;
+  trustedEditors?: string[];
   messages?: Partial<import('@nostr-post/web').FeedMessages>;
   refresh?: () => Promise<void>;
 }
@@ -104,16 +101,10 @@ export interface NostrPostFeedProps {
   reactionOptions?: string[];
   /** Show Edit button on addressable events (30000-39999) */
   editable?: boolean;
-  /** Agenda: NIP-52 calendar events of a date window under day headings, sorted by start */
-  agenda?: boolean;
-  /** Agenda's first day, `YYYY-MM-DD`. Default: today */
-  agendaFrom?: string;
-  /** Agenda's number of days (default 30) */
-  agendaDays?: number;
-  /** IANA time zone of the agenda's days. Default: the viewer's */
-  timeZone?: string;
-  /** Agenda of one calendar (`31924:<pubkey>:<d-tag>`): its events, loaded by address */
-  calendar?: string;
+  /** How the posts are laid out (e.g. @nostr-post/calendar's agenda); default one under another */
+  layout?: import('@nostr-post/web').FeedLayout;
+  /** Whose update comments apply besides each post's author and named editors */
+  trustedEditors?: string[];
   /** Overrides of the feed's text (e.g. translations) */
   messages?: Partial<import('@nostr-post/web').FeedMessages>;
   /** Called when the user clicks Edit on an addressable event */
@@ -142,17 +133,13 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
     const {
       ids,
       authors,
-      agenda = false,
-      // An agenda asks for calendar events (or the manifest's kinds) and enough of them
-      kinds = agenda ? undefined : [1],
+      kinds = [1],
       since,
       until,
       search,
-      limit = agenda ? undefined : 20,
-      agendaFrom,
-      agendaDays,
-      timeZone,
-      calendar,
+      limit = 20,
+      layout,
+      trustedEditors,
       messages,
       relays,
       filterTags,
@@ -205,11 +192,8 @@ export const NostrPostFeed = forwardRef<NostrPostFeedElement, NostrPostFeedProps
       element.reactionsEnabled = reactionsEnabled;
       element.reactionOptions = reactionOptions;
       element.editable = editable;
-      element.agenda = agenda;
-      element.agendaFrom = agendaFrom;
-      element.agendaDays = agendaDays;
-      element.timeZone = timeZone;
-      element.calendar = calendar;
+      element.layout = layout;
+      element.trustedEditors = trustedEditors;
       element.messages = messages;
     };
 

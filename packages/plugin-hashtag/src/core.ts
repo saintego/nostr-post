@@ -123,4 +123,9 @@ export const hashtagPlugin: NostrUIPlugin = {
     if (Array.isArray(value)) return value.map((t) => `#${t}`).join(' ');
     return '';
   },
+
+  jsonSchema: () => ({
+    type: 'array',
+    items: { type: 'string', description: 'A lowercase word or words joined by -, without #' },
+  }),
 };

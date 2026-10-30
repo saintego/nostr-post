@@ -3,8 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 describe('ensurePluginsForManifest', () => {
   it("loads a plugin's web entry even when its main entry registered it already", async () => {
-    // e.g. a manifest built with listField() from @nostr-post/plugin-list
-    await import('@nostr-post/plugin-list');
+    // e.g. a manifest built with listField() from @nostr-post/list
+    await import('@nostr-post/list');
     const { pluginRegistry } = await import('@nostr-post/plugins/registry');
     expect(pluginRegistry.get('list')?.inputTagName).toBeUndefined();
 
