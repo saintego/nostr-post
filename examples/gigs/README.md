@@ -21,14 +21,18 @@ players, RSVP, `.ics` import and export.
 - **Add a gig** (`#/add`): paste a post's text and its poster → AI reads it (Claude with your own
   API key, called from the browser; or a prompt you copy to any AI) → a preview of the event, a
   hint when it seems to be on Nostr already → the composer, prefilled, to correct and publish.
+  Or "fill in the form yourself": the empty composer, without AI.
   Nothing the AI returns is published without you. The AI's JSON follows the gig manifest
   (`formJsonSchema`). Only links the post's text has are kept (with a poster, others are kept but
   marked "read from the poster"); the performers' links show as players. Optionally the AI also
-  suggests performers' Spotify, SoundCloud and YouTube links: those whose site knows them by the
-  performer's name (`checkLink`, `namesMatch`) are offered as players to confirm ("It's them"),
-  the others are dropped. Performers each get the gig's genres too. Performers are matched to
-  their pages by profile link, then name; those without a page stay as text (in the description)
-  and their profile links still tag the gig; the form offers "Create page" for them. A page that
+  suggests performers' links from any site, offered as players or links to confirm ("It's them"):
+  Spotify, SoundCloud and YouTube video links are checked with their site (`checkLink`,
+  `namesMatch`) and come ticked when it knows them by the performer's name, dropped when it
+  doesn't; the others (YouTube channels, Bandcamp, Instagram, Metal Archives, websites, …) can't be checked
+  from a browser and are left for the user to open and tick. Performers each get the gig's
+  genres too. Performers are matched to their pages by profile link, then name; those without a
+  page stay as text (in the description) and their profile links still tag the gig; the form
+  offers "Create page" for them (with their links), and a hint above it names them. A page that
   lacks links the post has gets "add them to the page": its edit form with the links added
   (the wiki composer's `additions`).
 - **Import** (`#/import`): an `.ics` file (e.g. Facebook's export of your events) → review each

@@ -43,6 +43,8 @@ const findDuplicates = async (formData) => {
 export function addGig() {
   main.innerHTML = html`
     <h2>Add a gig</h2>
+    <p class="hint">Have AI read a post about it, or
+      <button type="button" id="manual">fill in the form yourself</button></p>
     <section class="step">
       <h3>1. The post</h3>
       <p class="hint">Copy the text of the post (Facebook, Instagram, a website) and save its poster.</p>
@@ -66,17 +68,19 @@ export function addGig() {
         </div>
       </details>
       <label><input id="suggest-links" type="checkbox" ${store.get('gigs:suggest-links') === '0' ? '' : 'checked'} />
-        Let the AI suggest performers' Spotify, SoundCloud and YouTube links (checked by asking those sites)</label>
+        Let the AI suggest performers' links the post doesn't have (you confirm them)</label>
       <textarea id="answer" rows="6" placeholder="The AI's answer (JSON)"></textarea>
       <button type="button" id="use">Preview</button>
       <p id="ai-status" class="hint" role="status"></p>
     </section>
     <section class="step" id="suggested" hidden></section>
     <section class="step" id="review" hidden>
-      <h3>3. Check it</h3>
+      <h3 id="check-heading">3. Check it</h3>
       <div id="duplicates"></div>
-      <p class="hint">How it will look:</p>
-      <nostr-post-view id="preview"></nostr-post-view>
+      <div id="preview-box">
+        <p class="hint">How it will look:</p>
+        <nostr-post-view id="preview"></nostr-post-view>
+      </div>
       <div id="performer-links"></div>
       <p class="hint" id="performers-hint"></p>
       <h3>4. Correct and publish</h3>
@@ -137,10 +141,26 @@ export function addGig() {
     const json = findJsonObject($('answer').value);
     if (!json.success) return status(`Couldn't read the answer: ${json.error.message}`);
     status('Checking the links the AI suggested…');
-    const suggestions = await suggestedLinks(json.data, $('post-text').value);
+    const suggestions = await suggestedLinks(
+      json.data,
+      $('post-text').value,
+      Boolean($('poster').files?.length)
+    );
     status('');
     if (!suggestions.length) return showDraft([]);
     renderSuggestedLinks($('suggested'), suggestions, showDraft);
+  });
+
+  // Without AI: the empty form
+  $('manual').addEventListener('click', () => {
+    $('review').hidden = false;
+    $('check-heading').hidden = true;
+    $('preview-box').hidden = true;
+    for (const id of ['duplicates', 'performer-links', 'performers-hint']) $(id).innerHTML = '';
+    const composer = $('composer');
+    composer.manifest = GIG_MANIFEST;
+    composer.prefill = {};
+    composer.scrollIntoView({ behavior: 'smooth' });
   });
 
   const showDraft = async (confirmed) => {
@@ -157,6 +177,8 @@ export function addGig() {
       return status(`Couldn't read the answer: ${error.message}`);
     }
     $('review').hidden = false;
+    $('check-heading').hidden = false;
+    $('preview-box').hidden = false;
     try {
       const preview = $('preview');
       preview.manifest = GIG_MANIFEST;
@@ -165,6 +187,9 @@ export function addGig() {
       status(`Preview: ${error.message}`);
     }
     renderPerformerLinks($('performer-links'), draft);
+    const withoutPage = (draft.formData.performers ?? []).filter(
+      (p) => p.unlinked && p.displayName
+    );
     // Performers with a page are picked in the form, the others show "Create page" there;
     // pages that lack links from the post can get them
     const updates = (draft.suggestions.performers ?? []).filter((s) => s.action === 'update');
@@ -178,6 +203,14 @@ export function addGig() {
           })
           .join('; ')}`
       : '';
+    if (withoutPage.length) {
+      $('performers-hint').innerHTML +=
+        `${updates.length ? '<br />' : ''}No artist page yet for ${withoutPage
+          .map((p) => `<strong>${escapeHtml(p.displayName)}</strong>`)
+          .join(
+            ', '
+          )}: "Create page" next to them under Performers below makes one, with their links.`;
+    }
     const composer = $('composer');
     composer.manifest = GIG_MANIFEST;
     composer.defaultFormatId = draft.formatId;
@@ -205,19 +238,26 @@ export function addGig() {
 }
 
 /**
- * The links the AI suggested and their provider knows by the performer's name, as players with
- * "It's them" to confirm each: `onContinue` gets the confirmed links
+ * The links the AI suggested, as players (or links) with "It's them" to confirm each: those their
+ * site knows by the performer's name are ticked, the ones no site could be asked about are left
+ * for the user to open. `onContinue` gets the confirmed links
  */
 function renderSuggestedLinks(target, suggestions, onContinue) {
   target.hidden = false;
   target.innerHTML = `<h3>Links the AI suggested</h3>
-    <p class="hint">Not in the post. They exist, under the performer's name, but may be someone
-    else's with the same name: play each one and tick those that are really them.</p>
+    <p class="hint">Not in the post: check each one. Ticked ones exist under the performer's name,
+    but may be someone else's with the same name: play them. The others couldn't be checked: open
+    them. Keep ticked only those that are really them.</p>
     ${suggestions
       .map(
         (s, i) => `<div class="performer"><strong>${escapeHtml(s.name)}</strong>
           <np-embed data-i="${i}"></np-embed>
-          <label><input type="checkbox" data-i="${i}" /> It's them (${escapeHtml(s.names.join(' · '))})</label>
+          <label><input type="checkbox" data-i="${i}" ${s.checked ? 'checked' : ''} /> It's them
+            ${
+              s.checked
+                ? `(checked: ${escapeHtml(s.names.join(' · '))})`
+                : "(couldn't be checked: open the link)"
+            }</label>
         </div>`
       )
       .join('')}

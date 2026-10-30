@@ -18,13 +18,15 @@ export const gigSchema = () => formJsonSchema(GIG_MANIFEST);
 
 /** Asks the AI for performers' links the post doesn't have; they're checked before use */
 const SUGGEST_LINKS = `
-Performers' media may also have links you know for them that the post doesn't: their Spotify
-artist page, SoundCloud profile or a YouTube video of theirs (these are checked; no other sites).`;
+Performers' media may also have links you know for them that the post doesn't: every page about
+them you know, from any site, e.g. their own website, Bandcamp, Spotify, SoundCloud, YouTube
+channel or videos, Instagram, Facebook, Metal Archives, Discogs, Wikipedia. Give all you know;
+each is checked, or confirmed by the user, before it's used.`;
 
 /**
  * The prompt for a gig's text (and, sent separately, its poster). `suggestLinks`: also ask for
- * performers' Spotify, SoundCloud and YouTube links the post doesn't have (`suggestedLinks`
- * checks them).
+ * performers' links the post doesn't have, from any site (`suggestedLinks` checks them, or the
+ * user confirms them).
  */
 export const gigPrompt = (
   text,

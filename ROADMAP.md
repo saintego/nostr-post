@@ -130,6 +130,16 @@
   - [x] Add flow: paste text or a poster → AI with the user's own key (browser call) or a copy-paste
         prompt → prefill → duplicate hint (`similarEvents`) → preview → sign. The AI's result is never
         published directly: it shows as the event preview (and in the composer) for the user to check
+  - [x] Adding a gig without AI: "fill in the form yourself" opens the empty composer
+  - [ ] Create performers' artist pages together with the gig, in `@nostr-post/plugin-wiki-entity` like
+        the venue hub (`plugin-venue` `beforePublish`, `wikiSync.ts`): an opt-in field setting makes the
+        picker's hook create pages for unlinked values with confirmed links before the post is
+        built, so it links them (`a` tags), listed in the publish summary. Unlike a venue (OSM ids),
+        a performer has no outside identity: find an existing page by its links (`#i`) and name slug
+        first (`resolveEntities`), and never create one from a name alone (duplicates, namesakes).
+        Today it's one "Create page" dialog per performer
+  - [ ] The app is plain JavaScript with HTML strings (about 1100 lines) and getting hard to follow:
+        rewrite it on `@nostr-post/react` with a build step (Vite), still a static nsite
   - [x] Preview / test mode: the whole app usable without publishing (the signer's dry run,
         `setDryRun`): events are signed and shown as they would be, nothing reaches relays; a banner
         says so
@@ -153,9 +163,10 @@
           slug still starts with the name; the wiki composer picks the first free one
     - [x] validate artist links from AI input: only links in the post's text (or marked as read from
           the poster); the preview shows them as players, so the user sees what was found
-    - [x] AI-suggested links (opt-in): Spotify, SoundCloud and YouTube links the post doesn't have are
-          checked with the provider (oEmbed: exists, and under the performer's name) and offered as
-          players to confirm; Bandcamp, Instagram and Facebook can't be checked from a browser
+    - [x] AI-suggested links (opt-in), from any site: Spotify, SoundCloud and YouTube video links the post
+          doesn't have are checked with the provider (oEmbed: exists, and under the performer's name)
+          and come ticked; YouTube channels, Bandcamp, Instagram and Facebook can't be checked from a
+          browser and are offered unticked, for the user to open and confirm
     - [x] artist wiki is not mandatory: performers without a page stay as text, linked through their
           profile links (`i` tags), so a page created later finds the gig. The picker keeps them as
           unlinked values with "Create page" (prefilled with name and links)
