@@ -1,0 +1,13 @@
+# nostr-post
+
+> Manifest-driven UI engine for complex structured Nostr content (Reviews, Articles, Events, Venues) with automatic event coordination, field-level visibility controls, plugin composition, and NIP-78 manifest storage.
+
+## Core Resources
+
+- [GitHub Repository](https://github.com/saintego/nostr-post): Source code, documentation, and issue tracker.
+- [Website](https://saintego.github.io/nostr-post/): Official website and documentation.
+
+## AI Agent & LLM Indexing
+
+- Structured following the standard /llms.txt specification for AI search engines and coding assistants.
+- Validated via [AccessGuard AI-Readiness Suite](https://ronanchnlps-bit.github.io/).
