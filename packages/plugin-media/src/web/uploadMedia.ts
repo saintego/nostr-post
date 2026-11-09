@@ -55,6 +55,29 @@ export async function imageDim(file: Blob): Promise<string | undefined> {
   }
 }
 
+/** A video's `WxH`, from its metadata (as it plays, rotation applied); undefined if unknown */
+export function videoDim(file: Blob): Promise<string | undefined> {
+  if (!file.type.startsWith('video/') || typeof document === 'undefined') {
+    return Promise.resolve(undefined);
+  }
+  return new Promise((resolve) => {
+    const video = document.createElement('video');
+    const url = URL.createObjectURL(file);
+    const done = (dim?: string) => {
+      URL.revokeObjectURL(url);
+      resolve(dim);
+    };
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => done(dimOf(video.videoWidth, video.videoHeight));
+    video.onerror = () => done();
+    video.src = url;
+  });
+}
+
+/** A photo's or a video's `WxH` */
+export const mediaDim = (file: Blob): Promise<string | undefined> =>
+  file.type.startsWith('video/') ? videoDim(file) : imageDim(file);
+
 /** The user's Blossom servers, unless the field leaves them out or the list doesn't come in time */
 export const userServers = async (config: MediaPluginConfig): Promise<string[]> => {
   if (config.userServers === false) return [];
@@ -85,7 +108,7 @@ export async function uploadMedia(
   const prepared = config.keepMetadata ? file : await withoutMetadata(file);
   const [sha256, dim, servers] = await Promise.all([
     sha256Hex(prepared),
-    imageDim(prepared),
+    mediaDim(prepared),
     userServers(config),
   ]);
   const targets = uploadTargets(config, servers);

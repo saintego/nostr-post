@@ -15,6 +15,7 @@ import {
   type NostrPostSubmitDetail,
   publishWithHooks,
   type ReplyTarget,
+  selectedFormatFor,
   signedInPubkey,
   updateReplyTargetValue,
   type ValidationResult,
@@ -149,9 +150,10 @@ export class NostrPostComposer extends NostrPostElement {
   @state() private _expandedFields: Set<string> = new Set();
   @state() private isResolvingManifestRef = false;
   @state() private selectedPublishFormatId = '';
-
-  private getInitialSelectedPublishFormatId(manifest: NostrPostManifest): string {
-    return initialPublishFormatId(manifest, this.defaultFormatId, this.hidePublishFormatSelector);
+  /** The user picked the format: the files picked no longer choose it */
+  private _formatPicked = false;
+  private get _manifest(): NostrPostManifest {
+    return this.manifest || STANDARD_KIND1_POST_MANIFEST;
   }
 
   updated(changed: Map<string, unknown>) {
@@ -161,7 +163,7 @@ export class NostrPostComposer extends NostrPostElement {
     if (changed.has('prefill') && this.draftId) this._formData = {};
     if (manifestChanged || changed.has('prefill')) {
       this.initDefaults({ resetUnknownFields: manifestChanged });
-      if (manifestChanged) this._resetForManifest(this.manifest || STANDARD_KIND1_POST_MANIFEST);
+      if (manifestChanged) this._resetForManifest(this._manifest);
       void this.ensureManifestPlugins();
     }
     if (changed.has('manifestRef')) void this._resolveManifestRef();
@@ -180,7 +182,13 @@ export class NostrPostComposer extends NostrPostElement {
 
   /** A new manifest: its default format, no errors or message, fields collapsed */
   private _resetForManifest(manifest: NostrPostManifest): void {
-    this.selectedPublishFormatId = this.getInitialSelectedPublishFormatId(manifest);
+    const { defaultFormatId, hidePublishFormatSelector } = this;
+    this.selectedPublishFormatId = initialPublishFormatId(
+      manifest,
+      defaultFormatId,
+      hidePublishFormatSelector
+    );
+    this._formatPicked = false;
     this.errors = {};
     this.successMessage = '';
     this._expandedFields = new Set();
@@ -211,14 +219,13 @@ export class NostrPostComposer extends NostrPostElement {
   }
 
   private async ensureManifestPlugins() {
-    await ensurePluginsForManifest(this.manifest || STANDARD_KIND1_POST_MANIFEST);
+    await ensurePluginsForManifest(this._manifest);
     this.requestUpdate();
   }
 
   private initDefaults({ resetUnknownFields = false }: { resetUnknownFields?: boolean } = {}) {
-    const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
     this._formData = buildInitialFormData({
-      manifest,
+      manifest: this._manifest,
       prefill: this.prefill,
       currentFormData: this._formData,
       resetUnknownFields,
@@ -236,18 +243,15 @@ export class NostrPostComposer extends NostrPostElement {
   }
 
   private handleFieldChange(fieldId: string, value: unknown): void {
-    const nextFormData = { ...this._formData };
-    if (value === undefined) {
-      delete nextFormData[fieldId];
-    } else {
-      nextFormData[fieldId] = value;
-    }
-    this._formData = nextFormData;
+    const { [fieldId]: _previous, ...rest } = this._formData;
+    this._formData = value === undefined ? rest : { ...rest, [fieldId]: value };
     if (this.errors[fieldId]) {
-      const newErrors = { ...this.errors };
-      delete newErrors[fieldId];
-      this.errors = newErrors;
+      const { [fieldId]: _error, ...errors } = this.errors;
+      this.errors = errors;
     }
+    // The files picked choose the format (a format's `select`), until the user picks one
+    const auto = this._formatPicked ? undefined : selectedFormatFor(this._manifest, this._formData);
+    if (auto) this.selectedPublishFormatId = auto;
     this.dispatchFormChange();
   }
 
@@ -269,23 +273,14 @@ export class NostrPostComposer extends NostrPostElement {
     }
   }
 
-  /** The manifest (resolving `manifestRef` if needed) and pubkey to submit with; shows why not */
-  private async _submitContext(): Promise<
-    { manifest: NostrPostManifest; pubkey: string } | undefined
-  > {
-    if (!this.manifest && this.manifestRef) {
-      const resolved = await this._resolveManifestRef();
-      if (!resolved || !this.manifest) {
-        this.showError('Failed to resolve manifestRef. Unable to submit post.');
-        return undefined;
-      }
+  /** The manifest (resolving `manifestRef` if needed) and pubkey to submit with; throws why not */
+  private async _submitContext(): Promise<{ manifest: NostrPostManifest; pubkey: string }> {
+    if (!this.manifest && this.manifestRef && !(await this._resolveManifestRef())) {
+      throw new Error('Failed to resolve manifestRef. Unable to submit post.');
     }
     const pubkey = await signedInPubkey(this.pubkey, this.autoPublish);
-    if (!pubkey) {
-      this.showError(this._m.signInToPublish);
-      return undefined;
-    }
-    return { manifest: this.manifest || STANDARD_KIND1_POST_MANIFEST, pubkey };
+    if (!pubkey) throw new Error(this._m.signInToPublish);
+    return { manifest: this._manifest, pubkey };
   }
 
   /**
@@ -312,9 +307,7 @@ export class NostrPostComposer extends NostrPostElement {
     e.preventDefault();
     return this._busy(this._m.stepSigner, async () => {
       this.errors = {};
-      const context = await this._submitContext();
-      if (!context) return;
-      const { manifest, pubkey } = context;
+      const { manifest, pubkey } = await this._submitContext();
       this._submitStep = undefined;
       await waitForUploads(this._m, (step) => (this._submitStep = step));
       const outcome = this._coordinate(manifest, this._formData, pubkey);
@@ -419,7 +412,7 @@ export class NostrPostComposer extends NostrPostElement {
   }
 
   render() {
-    const manifest = this.manifest || STANDARD_KIND1_POST_MANIFEST;
+    const manifest = this._manifest;
     const selectableFormats = getSelectablePublishFormats(manifest);
 
     const ctx: Omit<FieldRenderContext, 'attachedByTarget'> = {
@@ -460,6 +453,7 @@ export class NostrPostComposer extends NostrPostElement {
             this.hidePublishFormatSelector,
             (id) => {
               this.selectedPublishFormatId = id;
+              this._formatPicked = true;
             }
           )}
           ${

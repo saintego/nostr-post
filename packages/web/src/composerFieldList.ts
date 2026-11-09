@@ -19,7 +19,13 @@ export const renderFieldList = (
 
   const fullCtx: FieldRenderContext = { ...ctx, attachedByTarget };
 
+  // Only the chosen publish format's fields: a photo post doesn't ask for a video
+  const forActiveKinds = (field: PostField) =>
+    ctx.activeKinds.length === 0 ||
+    [field.mapTo].flat().some((target) => ctx.activeKinds.includes(target.kind));
+
   return manifest.fields.map((field) => {
+    if (!forActiveKinds(field)) return '';
     if (field.attachTo && field.visibility?.edit !== 'hidden') return '';
     if (
       isFieldExcluded(field, excludeFields) &&

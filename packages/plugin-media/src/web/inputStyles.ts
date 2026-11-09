@@ -134,8 +134,14 @@ export const mediaInputStyles = css`
     color: var(--np-color-on-surface-variant);
     margin: 0.25rem 0 0;
   }
-  .camera-buttons {
-    margin-top: var(--np-space-2);
+  /* Phones: one row of buttons, the quality on one line, no "or" */
+  .phone-picker {
+    flex-wrap: wrap;
+    gap: var(--np-space-2);
+  }
+  .touch .quality + .np-hint,
+  .touch .separator {
+    display: none;
   }
   .camera-input,
   .file-input {

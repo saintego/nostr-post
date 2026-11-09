@@ -7,7 +7,13 @@
  */
 
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
-import { imetaUrls, mediaImetaTags, readsImeta, writesImeta } from './mediaFiles';
+import {
+  describeMediaFiles,
+  imetaUrls,
+  mediaImetaTags,
+  readsImeta,
+  writesImeta,
+} from './mediaFiles';
 import { toArray } from './values';
 
 export interface MediaPluginConfig {
@@ -257,6 +263,9 @@ export const mediaPlugin: NostrUIPlugin = {
     type: 'array',
     items: { type: 'string', description: 'An image or video URL (https://…)' },
   }),
+
+  /** Photos or videos, portrait or not: a publish format's `select` picks by them */
+  describeMedia: (value: unknown) => describeMediaFiles(value),
 
   formatValue: (value: unknown): string => {
     const urls = toArray(value);

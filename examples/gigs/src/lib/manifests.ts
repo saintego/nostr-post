@@ -119,6 +119,7 @@ export const EVENT_MEDIA_MANIFEST: NostrPostManifest = {
       kinds: [20],
       default: true,
       userSelectable: true,
+      select: { field: 'media', media: 'image' },
     },
     {
       id: 'video',
@@ -126,6 +127,7 @@ export const EVENT_MEDIA_MANIFEST: NostrPostManifest = {
       description: 'A video post (NIP-71, kind 21), shown by Nostr video apps',
       kinds: [21],
       userSelectable: true,
+      select: { field: 'media', media: 'video' },
     },
     {
       id: 'short-video',
@@ -133,39 +135,25 @@ export const EVENT_MEDIA_MANIFEST: NostrPostManifest = {
       description: 'A short portrait video (NIP-71, kind 22), like a story or reel',
       kinds: [22],
       userSelectable: true,
+      select: { field: 'media', media: 'video', portrait: true },
     },
   ],
   fields: [
     {
-      id: 'photos',
+      id: 'media',
       type: 'string',
       uiPlugin: 'media',
       required: true,
-      // One `imeta` tag per photo (url, type, hash, size, dimensions, description)
-      mapTo: { kind: 20, target: 'tag', tagName: 'imeta' },
+      // One `imeta` tag per file (url, type, hash, size, dimensions, description); the files
+      // choose the format: photos a picture, a video a video (portrait: a short one)
+      mapTo: MEDIA_KINDS.map((kind) => ({ kind, target: 'tag' as const, tagName: 'imeta' })),
       metadata: {
-        label: 'Photos',
-        description: 'Photos of the event: the stage, the crowd, the place',
-        accept: ['image/*'],
+        label: 'Photos or video',
+        description: 'Photos of the event (the stage, the crowd, the place), or a video',
+        accept: ['image/*', 'video/*'],
         maxFiles: 10,
-        alt: true,
-        allowUrl: false,
-      },
-    },
-    {
-      id: 'video',
-      type: 'string',
-      uiPlugin: 'media',
-      required: true,
-      mapTo: [
-        { kind: 21, target: 'tag', tagName: 'imeta' },
-        { kind: 22, target: 'tag', tagName: 'imeta' },
-      ],
-      metadata: {
-        label: 'Video',
-        accept: ['video/*'],
-        maxFiles: 1,
         maxSize: 100 * 1024 * 1024,
+        alt: true,
         allowUrl: false,
       },
     },

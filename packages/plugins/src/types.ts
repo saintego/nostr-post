@@ -333,6 +333,15 @@ export interface NostrUIPlugin {
   qualifiers?: (value: unknown, field: PostField) => string[];
 
   /**
+   * What a value's files are: a photo or a video each, and whether it's portrait (taller than
+   * wide, when known). A publish format with `select` is chosen by them (e.g. a short video)
+   */
+  describeMedia?: (
+    value: unknown,
+    field: PostField
+  ) => { media: 'image' | 'video'; portrait?: boolean }[];
+
+  /**
    * Completions while typing in the text field this plugin's field is attached to
    * (`attachTo`), e.g. `@name` mentions: after `trigger`, the composer shows what `search`
    * finds for the typed text and inserts the picked one's `insert`.

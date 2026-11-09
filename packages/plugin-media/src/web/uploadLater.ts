@@ -23,7 +23,7 @@ import type { MediaPluginConfig } from '../core';
 import { sha256Hex } from '../hash';
 import { rememberMediaFile } from '../mediaFiles';
 import { uploadFailure, uploadTargets } from '../uploadServers';
-import { imageDim, uploadMedia, userServers, withoutMetadata } from './uploadMedia';
+import { mediaDim, uploadMedia, userServers, withoutMetadata } from './uploadMedia';
 import { signWithBrowser, uploadBlossom, withRetries } from './uploadRequest';
 
 /** How long an upload-later authorization is valid (s): the file may wait days for wifi */
@@ -73,7 +73,7 @@ export async function prepareUploadLater(
   const prepared = config.keepMetadata ? file : await withoutMetadata(file);
   const [sha256, dim, server] = await Promise.all([
     sha256Hex(prepared),
-    imageDim(prepared),
+    mediaDim(prepared),
     uploadLaterServer(config),
   ]);
   if (!server) return deferUnsigned(file, prepared, sha256, dim, config);

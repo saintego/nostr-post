@@ -110,6 +110,9 @@ export {
   type PublishMessages,
 } from './publishMessages';
 
+// The publish format chosen by the files picked (`select` of a format)
+export { selectedFormatFor } from './formatSelect';
+
 // Linking a post to the pages a page or event links (a section's `add.also`)
 export {
   type AlsoLink,

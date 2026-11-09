@@ -313,6 +313,8 @@ export {
   alsoLinkOptions,
   alsoLinkTags,
   loadAlsoLinks,
+  // The publish format chosen by the files picked (a format's `select`)
+  selectedFormatFor,
 } from '@nostr-post/posts';
 export type { PostSection } from '@nostr-post/core/types';
 // How a page section shows (`view`): register your own element under a name

@@ -317,6 +317,8 @@ The bundle re-exports utilities for advanced usage:
   `.manifest` (the page's or event's own), "Add" offers the pages its fields link (`add.also`) as
   "Also show on" checkboxes: `loadAlsoLinks(section, manifest, address)`, `alsoLinkOptions`,
   `alsoLinkTags(addresses)` (the composer's `extraTags`)
+- `selectedFormatFor(manifest, formData)`: the publish format the files picked choose (a format's
+  `select`, the plugins' `describeMedia`); the composer switches to it until the author picks one
 - `eventMedia(event)`, `mediaOfEvents(events)`: the photos and videos of posts, wherever their kind
   keeps them (`imeta`, `image`, `r`, links, JSON), each file once; `fetchReferences(targets)`: the
   posts referencing addresses or event ids (comments included); `<np-media-gallery>` shows their
