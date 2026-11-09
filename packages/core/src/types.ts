@@ -245,9 +245,16 @@ export interface PostSection {
   stats?: { tag: string; max?: number };
   /**
    * "Add": the composer of this manifest (its id, a published manifest's `30078:` address, or
-   * the manifest), with `field` linking the event where the page knows how (wiki pages)
+   * the manifest), with `field` linking the event where the page knows how (wiki pages).
+   * `also`: fields of the page's or event's own manifest whose linked pages "Add" offers to
+   * link too (`a` tags), ticked with `checked`, e.g. a gig's venue and performers, so one
+   * photo shows in the gig's, the venue's and an artist's gallery
    */
-  add?: { manifest: string | NostrPostManifest; field?: string };
+  add?: {
+    manifest: string | NostrPostManifest;
+    field?: string;
+    also?: { field: string; checked?: boolean }[];
+  };
 }
 
 /** A list for a manifest's events (`lists`) */

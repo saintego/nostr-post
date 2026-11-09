@@ -110,6 +110,15 @@ export {
   type PublishMessages,
 } from './publishMessages';
 
+// Linking a post to the pages a page or event links (a section's `add.also`)
+export {
+  type AlsoLink,
+  type AlsoLinkOption,
+  alsoLinkOptions,
+  alsoLinkTags,
+  loadAlsoLinks,
+} from './alsoLinks';
+
 // Editing a post with update comments
 export {
   appliedUpdates,

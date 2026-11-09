@@ -106,6 +106,7 @@ export class NostrCalendarEvent extends NpElement {
       .sections=${sections}
       .target=${{ addresses: [this.address], ids: [], links: [] }}
       .linkValue=${this.address}
+      .manifest=${this.manifest}
       .relays=${this.relays ?? DEFAULT_RELAYS}
     ></nostr-post-sections>`;
   }

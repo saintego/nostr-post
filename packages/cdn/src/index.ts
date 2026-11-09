@@ -309,6 +309,10 @@ export {
   sectionTarget,
   postSnippet,
   type SectionTarget,
+  // "Add" linking the pages the page or event links (`add.also`)
+  alsoLinkOptions,
+  alsoLinkTags,
+  loadAlsoLinks,
 } from '@nostr-post/posts';
 export type { PostSection } from '@nostr-post/core/types';
 // How a page section shows (`view`): register your own element under a name

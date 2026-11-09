@@ -7,7 +7,7 @@
 import { encodeNpub } from '@nostr-post/core/nip19';
 import type { NostrPostManifest, PostSection } from '@nostr-post/core/types';
 import { kindViewFor, sectionViewFor } from '@nostr-post/plugins/entities';
-import { addressOf, postSnippet } from '@nostr-post/posts';
+import { type AlsoLinkOption, addressOf, postSnippet } from '@nostr-post/posts';
 import type { SignedEvent } from '@nostr-post/signer';
 import { html, nothing, type TemplateResult } from 'lit';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
@@ -79,6 +79,30 @@ export const addPrefill = (
   const field = manifest.fields.find((f) => f.id === fieldId);
   return { [fieldId]: field?.metadata?.multiple ? [linkValue] : linkValue };
 };
+
+/** "Also show on": the pages "Add" can link too (`add.also`), as checkboxes */
+export const renderAlso = (
+  options: AlsoLinkOption[],
+  ticked: ReadonlySet<string>,
+  m: SectionsMessages,
+  onTick: (address: string, on: boolean) => void
+): TemplateResult | typeof nothing =>
+  options.length === 0
+    ? nothing
+    : html`<fieldset class="also" part="also">
+        <legend class="np-label">${m.alsoShowOn}</legend>
+        ${options.map(
+          (o) => html`<label class="also-page">
+            <input
+              type="checkbox"
+              class="np-checkbox"
+              .checked=${ticked.has(o.address)}
+              @change=${(e: Event) => onTick(o.address, (e.target as HTMLInputElement).checked)}
+            />
+            ${o.label}
+          </label>`
+        )}
+      </fieldset>`;
 
 /** The stats line, when the section has `stats` */
 export const renderStats = (

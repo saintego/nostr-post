@@ -16,6 +16,15 @@ describe('venuePlugin.resolveFromTags', () => {
     expect(venue.wikiEntity).toEqual({ pubkey: '39feb678', dTag: 'paralelná-polis-košice-venue' });
   });
 
+  it("takes its page from the last wiki `a` tag, after a gig's performers' pages", () => {
+    const venue = resolve([
+      ['a', '30818:aa:naraka-musician'],
+      ['g', 'w4rw0d'],
+      ['a', '30818:bb:jam-bangkok-venue'],
+    ]);
+    expect(venue.wikiEntity).toEqual({ pubkey: 'bb', dTag: 'jam-bangkok-venue' });
+  });
+
   it("names the venue by its own location tag, the last, after a post's free-text place", () => {
     const venue = resolve([
       ['location', 'Room 3, 2nd floor'],

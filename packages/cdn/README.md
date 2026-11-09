@@ -313,7 +313,10 @@ The bundle re-exports utilities for advanced usage:
 - Sections (`sections` of a manifest, MANIFEST.md): `fetchSection(section, target)`,
   `sectionFilters`, `matchesSection`, `sectionStats`, `sectionTarget(events)`, `postSnippet(event)`;
   `<nostr-post-sections .sections .target>` shows them (wiki pages and calendar events' pages do;
-  `hide-sections` hides them); `registerSectionView({ view, tagName })` adds a view
+  `hide-sections` hides them); `registerSectionView({ view, tagName })` adds a view. With
+  `.manifest` (the page's or event's own), "Add" offers the pages its fields link (`add.also`) as
+  "Also show on" checkboxes: `loadAlsoLinks(section, manifest, address)`, `alsoLinkOptions`,
+  `alsoLinkTags(addresses)` (the composer's `extraTags`)
 - `eventMedia(event)`, `mediaOfEvents(events)`: the photos and videos of posts, wherever their kind
   keeps them (`imeta`, `image`, `r`, links, JSON), each file once; `fetchReferences(targets)`: the
   posts referencing addresses or event ids (comments included); `<np-media-gallery>` shows their
