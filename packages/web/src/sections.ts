@@ -10,7 +10,14 @@
 
 import type { NostrPostManifest, PostSection } from '@nostr-post/core/types';
 import { entityManifests } from '@nostr-post/plugins/entities';
-import { fetchSection, type SectionTarget, sectionStats } from '@nostr-post/posts';
+import {
+  type AlsoLinkOption,
+  alsoLinkTags,
+  fetchSection,
+  loadAlsoLinks,
+  type SectionTarget,
+  sectionStats,
+} from '@nostr-post/posts';
 import {
   DEFAULT_RELAYS,
   fetchManifestByATag,
@@ -22,7 +29,7 @@ import { html, nothing } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import './composer';
 import { DEFAULT_SECTIONS_MESSAGES, type SectionsMessages } from './sectionsMessages';
-import { addPrefill, renderList, renderStats, renderView } from './sectionsParts';
+import { addPrefill, renderAlso, renderList, renderStats, renderView } from './sectionsParts';
 import { sectionsStyles } from './sectionsStyles';
 
 /** A manifest by reference: the manifest, a `30078:` address, or an id the wiki package knows */
@@ -48,6 +55,11 @@ export class NostrPostSections extends NpElement {
   @property({ attribute: false }) self?: SignedEvent[];
   /** The value linking the page, for an "Add" composer's field (e.g. a wiki page's) */
   @property({ attribute: false }) linkValue?: unknown;
+  /**
+   * The page's or event's own manifest: "Add" offers the pages its fields link (`add.also`),
+   * read from the event (`self`, else its newest version is loaded)
+   */
+  @property({ attribute: false }) manifest?: NostrPostManifest;
   /** A page's own rule for its items, e.g. the wiki's roles */
   @property({ attribute: false }) itemFilter?: (
     event: SignedEvent,
@@ -62,6 +74,9 @@ export class NostrPostSections extends NpElement {
   @state() _names: ReadonlyMap<string, string> = new Map();
   /** The section whose "Add" composer is open, and its manifest (null: not found) */
   @state() _adding?: { index: number; manifest: NostrPostManifest | null };
+  /** The pages "Add" offers to link too, and those ticked */
+  @state() _also: AlsoLinkOption[] = [];
+  @state() _alsoTicked: ReadonlySet<string> = new Set();
   @query('dialog') _dialog?: HTMLDialogElement;
   _loadedFor = '';
 
@@ -116,9 +131,32 @@ export class NostrPostSections extends NpElement {
     const ref = this.sections[index]?.add?.manifest;
     if (!ref) return;
     const manifest = (await resolveManifest(ref, this.relays)) ?? null;
+    this._also = [];
     this._adding = { index, manifest };
     await this.updateComplete;
     this._dialog?.showModal();
+    void this._loadAlso(index);
+  }
+
+  /** The pages the event links that the section's "Add" offers to link too */
+  async _loadAlso(index: number): Promise<void> {
+    const section = this.sections[index];
+    const [address] = this.target.addresses;
+    if (!section || !this.manifest || !address) return;
+    const options = await loadAlsoLinks(section, this.manifest, address, {
+      event: this.self?.[0],
+      relays: this.relays,
+    });
+    if (this._adding?.index !== index) return;
+    this._also = options;
+    this._alsoTicked = new Set(options.filter((o) => o.checked).map((o) => o.address));
+  }
+
+  _tickAlso(address: string, on: boolean): void {
+    const ticked = new Set(this._alsoTicked);
+    if (on) ticked.add(address);
+    else ticked.delete(address);
+    this._alsoTicked = ticked;
   }
 
   _published(index: number): void {
@@ -132,10 +170,12 @@ export class NostrPostSections extends NpElement {
     const section = adding ? this.sections[adding.index] : undefined;
     if (!adding || !section) return nothing;
     if (!adding.manifest) return html`<p class="status">${this._m.noComposer}</p>`;
-    return html`<nostr-post-composer
+    return html`${renderAlso(this._also, this._alsoTicked, this._m, (a, on) => this._tickAlso(a, on))}
+      <nostr-post-composer
       auto-publish
       .manifest=${adding.manifest}
       .prefill=${addPrefill(section, adding.manifest, this.linkValue)}
+      .extraTags=${alsoLinkTags([...this._alsoTicked]) || undefined}
       @nostr-post-published=${() => this._published(adding.index)}
     ></nostr-post-composer>`;
   }

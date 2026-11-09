@@ -12,6 +12,8 @@ export interface SectionsMessages {
   close: string;
   /** The "Add" composer couldn't be loaded */
   noComposer: string;
+  /** Above the pages "Add" can link too (`add.also`), e.g. the venue of a gig */
+  alsoShowOn: string;
   /** Author and date of a listed post */
   byline: (author: string, date: string) => string;
   /** A section's numbers: posts, and the average of its stats tag (e.g. the rating) */
@@ -25,6 +27,7 @@ export const DEFAULT_SECTIONS_MESSAGES: SectionsMessages = {
   add: () => 'Add',
   close: 'Close',
   noComposer: "The form couldn't be loaded",
+  alsoShowOn: 'Also show on',
   byline: (author, date) => `${author} · ${date}`,
   stats: (count, average, max) =>
     average === undefined

@@ -134,6 +134,10 @@ export const mediaInputStyles = css`
     color: var(--np-color-on-surface-variant);
     margin: 0.25rem 0 0;
   }
+  .camera-buttons {
+    margin-top: var(--np-space-2);
+  }
+  .camera-input,
   .file-input {
     display: none;
   }

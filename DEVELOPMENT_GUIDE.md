@@ -188,7 +188,7 @@ Each plugin package includes: core logic + web component input + web component v
 **Creates:** Photo/video upload with array support
 
 **Core:** Array field support, isImageUrl/isVideoUrl helpers  
-**Input:** <np-media-input> drag-drop, multi-file, URL paste, NIP-98 signed upload  
+**Input:** <np-media-input> drag-drop, multi-file, URL paste, NIP-98 signed upload; on phones "Take photo" / "Record video" open the camera  
 **View:** <np-media-view> responsive gallery (one photo large; photos open in <np-media-lightbox> with previous/next, full screen; videos + controls)  
 **Tags:** Multiple ["r", "https://..."] per field
 

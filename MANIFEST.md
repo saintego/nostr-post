@@ -166,7 +166,7 @@ deletions and other wiki pages.
 | `view`  | `list`, `gallery`, `agenda` or a registered view                                                    |
 | `limit` | Shown at first (20; galleries 12); "Show more" shows more                                           |
 | `stats` | `{ tag, max }`: how many posts and the average of that tag ("12 in total · ★ 4.3 / 5")              |
-| `add`   | `{ manifest, field }`: an "Add" button opening that manifest's composer (its id, a published manifest's `30078:` address, or the manifest), with `field` linking the page where the page knows how (wiki pages: a picked entity's or a venue's value; calendar events: the event's address, e.g. for a hidden field mapped to an `a` tag; a field taking several gets a list) |
+| `add`   | `{ manifest, field }`: an "Add" button opening that manifest's composer (its id, a published manifest's `30078:` address, or the manifest), with `field` linking the page where the page knows how (wiki pages: a picked entity's or a venue's value; calendar events: the event's address, e.g. for a hidden field mapped to an `a` tag; a field taking several gets a list). `also: [{ field, checked? }]`: fields of the page's or event's own manifest whose linked pages "Add" offers as "Also show on" checkboxes, ticked with `checked`; the ticked ones are linked too (`a` tags), so one post shows on each page's gallery, e.g. a gig's photo also on its venue's page (`{ field: 'location', checked: true }`) and, if the user ticks them, its performers' (`{ field: 'performers' }`) |
 
 A section that counts (`stats`), filters on the client (`dTagSuffix`, `role`) or shows a gallery reads
 up to 500 posts, and still lists `limit`; numbers are computed when shown, never stored.

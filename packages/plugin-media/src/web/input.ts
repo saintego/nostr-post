@@ -25,6 +25,7 @@ import {
 } from '../core';
 import { mediaFileOf, rememberMediaFile } from '../mediaFiles';
 import { targetHost, uploadTargets } from '../uploadServers';
+import { renderCameraButtons } from './camera';
 import { pastedFiles } from './clipboard';
 import { compressImage, rememberQuality } from './compress';
 import { mediaInputStyles } from './inputStyles';
@@ -464,6 +465,7 @@ export class NpMediaInput extends NpElement {
           @change=${this._handleFileSelected}
         />
       </div>
+      ${renderCameraButtons(this._accept, m, (files) => void this._uploadFiles(files))}
     `;
   }
 }

@@ -44,6 +44,9 @@ export interface MediaMessages {
   dropFiles: string;
   /** Under it: where files go (the first server tried) and the size limit */
   dropHint: (host: string, maxMb: number) => string;
+  /** On phones, next to the drop zone: the camera */
+  takePhoto: string;
+  recordVideo: string;
   /** Between the drop zone and the URL input */
   or: string;
   urlPlaceholder: string;
@@ -89,6 +92,8 @@ export const DEFAULT_MEDIA_MESSAGES: MediaMessages = {
   signInToUpload: (name) => `Sign in to upload ${name}: the upload is signed with your Nostr key`,
   tooLarge: (maxMb) => `File too large (max ${maxMb} MB)`,
   dropFiles: 'Drop files here, click to browse, or paste',
+  takePhoto: 'Take photo',
+  recordVideo: 'Record video',
   dropHint: (host, maxMb) => `Uploads to ${host} (max ${maxMb} MB each)`,
   or: 'or',
   urlPlaceholder: 'Paste a photo, or a URL and press Enter',

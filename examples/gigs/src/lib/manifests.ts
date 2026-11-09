@@ -188,10 +188,13 @@ export const EVENT_MEDIA_MANIFEST: NostrPostManifest = {
       type: 'string',
       uiPlugin: 'text',
       required: true,
-      // The event's address (`31922|31923:<pubkey>:<d-tag>`), filled by the event page's "Add"
+      // The page's address (a gig `31922|31923:…`, an artist's page `30818:…`), filled by its "Add"
       mapTo: MEDIA_KINDS.map((kind) => ({ kind, target: 'tag' as const, tagName: 'a' })),
       visibility: { edit: 'hidden', view: 'hidden' },
-      metadata: { label: 'Event', description: 'The calendar event the photos or video are of' },
+      metadata: {
+        label: 'Event',
+        description: 'The gig (or the artist page) the photos or video are of',
+      },
     },
     {
       id: 'tags',
@@ -246,7 +249,13 @@ export const GIG_MANIFEST: NostrPostManifest = {
       label: 'Photos and videos',
       view: 'gallery',
       self: true,
-      add: { manifest: EVENT_MEDIA_MANIFEST, field: 'event' },
+      // One photo for the gig's, the venue's and the artists' galleries: the venue's page is
+      // offered ticked, the performers' pages unticked (a crowd shot isn't of a band)
+      add: {
+        manifest: EVENT_MEDIA_MANIFEST,
+        field: 'event',
+        also: [{ field: 'location', checked: true }, { field: 'performers' }],
+      },
     },
   ],
   metadata: { name: 'Gig', description: 'A concert or party: when, where, who plays' },
@@ -255,7 +264,8 @@ export const GIG_MANIFEST: NostrPostManifest = {
 /**
  * An artist's page: ARTIST_MANIFEST with its upcoming gigs, those that link the page (`a` tag,
  * any version's author) or one of its profile links (`i` tags, so gigs added before the page
- * existed show too), and "Add" a gig with the artist as a performer
+ * existed show too), and "Add" a gig with the artist as a performer; and its photos and videos
+ * (posts linking the page, e.g. added to a gig with "Also show on" the artist)
  */
 export const ARTIST_PAGE_MANIFEST: WikiManifest = {
   ...ARTIST_MANIFEST,
@@ -267,6 +277,13 @@ export const ARTIST_PAGE_MANIFEST: WikiManifest = {
       links: true,
       view: 'agenda',
       add: { manifest: GIG_MANIFEST, field: 'performers' },
+    },
+    {
+      id: 'media',
+      label: 'Photos and videos',
+      view: 'gallery',
+      kinds: MEDIA_KINDS,
+      add: { manifest: EVENT_MEDIA_MANIFEST, field: 'event' },
     },
   ],
 };

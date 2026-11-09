@@ -52,4 +52,18 @@ export const sectionsStyles = css`
   dialog {
     width: min(48rem, calc(100vw - 2 * var(--np-space-4)));
   }
+  .also {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--np-space-2) var(--np-space-4);
+    margin: 0 0 var(--np-space-3);
+    padding: var(--np-space-2) var(--np-space-3);
+    border: 1px solid var(--np-color-outline-variant);
+    border-radius: var(--np-radius-sm);
+  }
+  .also-page {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--np-space-1);
+  }
 `;

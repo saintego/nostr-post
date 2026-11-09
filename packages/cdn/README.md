@@ -156,7 +156,7 @@ The bundle re-exports utilities for advanced usage:
 - Calendars (kind 31924): `fetchCalendarItems(address)` (a calendar's event addresses),
   `calendarEventFilters(addresses)`; edited with the list functions and `{ listKind: CALENDAR_LISTS }`
 - iCalendar: `eventsToIcs(events, name?)`, `icsToDrafts(text)` (an `.ics` file as drafts for
-  CALENDAR_EVENT_MANIFEST, d-tag `ics:<UID>`), `icsDTag(uid)`, `fetchEventsAsIcs(addresses)`
+  CALENDAR_EVENT_MANIFEST, d-tag `ics:<UID>`), `icsDTag(uid)`, `fetchEventsAsIcs(addresses)` (linked pages, e.g. performers, as names), `fetchIcsRefs(addresses)`
 - Duplicates: `similarEvents(draft, events)`, `titleSimilarity(a, b)`
 - Sharing: `agendaWindowFor(from, days, tzid, view)` (an agenda element's window),
   `agendaSummary(events, window)`, `agendaText(events, window, { title, link })` (a message),
@@ -313,7 +313,10 @@ The bundle re-exports utilities for advanced usage:
 - Sections (`sections` of a manifest, MANIFEST.md): `fetchSection(section, target)`,
   `sectionFilters`, `matchesSection`, `sectionStats`, `sectionTarget(events)`, `postSnippet(event)`;
   `<nostr-post-sections .sections .target>` shows them (wiki pages and calendar events' pages do;
-  `hide-sections` hides them); `registerSectionView({ view, tagName })` adds a view
+  `hide-sections` hides them); `registerSectionView({ view, tagName })` adds a view. With
+  `.manifest` (the page's or event's own), "Add" offers the pages its fields link (`add.also`) as
+  "Also show on" checkboxes: `loadAlsoLinks(section, manifest, address)`, `alsoLinkOptions`,
+  `alsoLinkTags(addresses)` (the composer's `extraTags`)
 - `eventMedia(event)`, `mediaOfEvents(events)`: the photos and videos of posts, wherever their kind
   keeps them (`imeta`, `image`, `r`, links, JSON), each file once; `fetchReferences(targets)`: the
   posts referencing addresses or event ids (comments included); `<np-media-gallery>` shows their
