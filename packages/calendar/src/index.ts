@@ -40,7 +40,8 @@ export {
   fetchCalendarItems,
   publishesCalendarEvents,
 } from './calendars';
-export { fetchEventsAsIcs } from './icsRelays';
+export { fetchEventsAsIcs, fetchIcsRefs } from './icsRelays';
+export { type IcsRef, icsDescription } from './icsText';
 export {
   agendaWindowFor,
   formatMonth,

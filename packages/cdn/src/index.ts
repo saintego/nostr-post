@@ -134,6 +134,7 @@ export {
   fetchCalendarItems,
   calendarEventFilters,
   fetchEventsAsIcs,
+  fetchIcsRefs,
   similarEvents,
   titleSimilarity,
   monthWindow,

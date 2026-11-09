@@ -119,6 +119,13 @@ export function roleLines(field: PostField, value: unknown): string[] {
 }
 
 const ROLE_LINE = /^(.+?):\s*nostr:(naddr1[02-9ac-hj-np-z]+)\s*$/i;
+/** A role line's label and its entity's address (`kind:pubkey:d-tag`); undefined for other lines */
+export const roleLineOf = (line: string): { label: string; address: string } | undefined => {
+  const [, label = '', naddr = ''] = line.trim().match(ROLE_LINE) ?? [];
+  const address = naddr ? decodeNaddr(naddr) : undefined;
+  return address ? { label: label.trim(), address } : undefined;
+};
+
 /** `<label>: <name>` with its links in brackets, if any */
 const NAME_LINE =
   /^(.+?):\s*(\S.*?)(?:\s*\((https?:\/\/[^\s(),]+(?:,\s*https?:\/\/[^\s(),]+)*)\))?$/;

@@ -7,7 +7,6 @@
  * No DOM dependencies.
  */
 
-import { parsePostRoles } from '@nostr-post/core/postRoles';
 import {
   ALL_DAY_EVENT_KIND,
   type DateValue,
@@ -19,6 +18,7 @@ import {
   unixToWall,
 } from '@nostr-post/plugin-date';
 import { type CalendarEventLike, eventTiming } from './agenda';
+import { type IcsRef, icsDescription } from './icsText';
 
 /** A calendar event with what an `.ics` entry needs (a signed Nostr event fits) */
 export interface IcsEventSource extends CalendarEventLike {
@@ -81,7 +81,7 @@ const eventAddress = (event: CalendarEventLike): string =>
   `${event.kind}:${event.pubkey}:${tagValue(event.tags, 'd') ?? ''}`;
 
 /** The VEVENT lines of a calendar event; none without a valid start */
-const veventLines = (event: IcsEventSource): string[] => {
+const veventLines = (event: IcsEventSource, refs: ReadonlyMap<string, IcsRef>): string[] => {
   const timing = eventTiming(event);
   if (!timing) return [];
   const lines = ['BEGIN:VEVENT', `UID:${escapeText(eventAddress(event))}`];
@@ -98,8 +98,8 @@ const veventLines = (event: IcsEventSource): string[] => {
   }
   const title = tagValue(event.tags, 'title') ?? tagValue(event.tags, 'name');
   if (title) lines.push(`SUMMARY:${escapeText(title)}`);
-  // Without role lines (`Performers: nostr:naddr1…`): links calendar apps can't open
-  const text = parsePostRoles(event.content ?? '', []).text.trim();
+  // Role lines (`Performers: nostr:naddr1…`, links calendar apps can't open) as names
+  const text = icsDescription(event.content ?? '', refs);
   const description = text || tagValue(event.tags, 'summary');
   if (description) lines.push(`DESCRIPTION:${escapeText(description)}`);
   const locations = event.tags.filter((t) => t[0] === 'location' && t[1]).map((t) => t[1] ?? '');
@@ -110,11 +110,18 @@ const veventLines = (event: IcsEventSource): string[] => {
   return lines;
 };
 
-/** An `.ics` file with the calendar events (CRLF lines, folded at 75 octets) */
-export const eventsToIcs = (events: IcsEventSource[], name?: string): string => {
+/**
+ * An `.ics` file with the calendar events (CRLF lines, folded at 75 octets). `refs`: the pages
+ * the events' role lines link, by address, written as their names (`icsDescription`)
+ */
+export const eventsToIcs = (
+  events: IcsEventSource[],
+  name?: string,
+  refs: ReadonlyMap<string, IcsRef> = new Map()
+): string => {
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//nostr-post//plugin-date//EN'];
   if (name) lines.push(`X-WR-CALNAME:${escapeText(name)}`);
-  for (const event of events) lines.push(...veventLines(event));
+  for (const event of events) lines.push(...veventLines(event, refs));
   lines.push('END:VCALENDAR');
   return `${lines.map(foldLine).join('\r\n')}\r\n`;
 };

@@ -156,7 +156,7 @@ The bundle re-exports utilities for advanced usage:
 - Calendars (kind 31924): `fetchCalendarItems(address)` (a calendar's event addresses),
   `calendarEventFilters(addresses)`; edited with the list functions and `{ listKind: CALENDAR_LISTS }`
 - iCalendar: `eventsToIcs(events, name?)`, `icsToDrafts(text)` (an `.ics` file as drafts for
-  CALENDAR_EVENT_MANIFEST, d-tag `ics:<UID>`), `icsDTag(uid)`, `fetchEventsAsIcs(addresses)`
+  CALENDAR_EVENT_MANIFEST, d-tag `ics:<UID>`), `icsDTag(uid)`, `fetchEventsAsIcs(addresses)` (linked pages, e.g. performers, as names), `fetchIcsRefs(addresses)`
 - Duplicates: `similarEvents(draft, events)`, `titleSimilarity(a, b)`
 - Sharing: `agendaWindowFor(from, days, tzid, view)` (an agenda element's window),
   `agendaSummary(events, window)`, `agendaText(events, window, { title, link })` (a message),
