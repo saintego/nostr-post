@@ -415,6 +415,10 @@ interface NostrUIPlugin {
   // profile handles): a new wiki entity whose slug is taken tries them first as its qualifier
   qualifiers?(value: unknown, field: PostField): string[];
 
+  // What a value's files are: a photo or a video each, portrait when known (the media plugin).
+  // A publish format with `select` is chosen by them (selectedFormatFor, @nostr-post/posts)
+  describeMedia?(value: unknown, field: PostField): { media: 'image' | 'video'; portrait?: boolean }[];
+
   // Async, before the post's events are signed (fields with a value only). May publish
   // events of its own (e.g. the venue's wiki entity); returned tags are added to every
   // event of the post (e.g. an `a` tag). Throwing stops publishing and shows the error.

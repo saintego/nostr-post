@@ -25,7 +25,7 @@ import {
 } from '../core';
 import { mediaFileOf, rememberMediaFile } from '../mediaFiles';
 import { targetHost, uploadTargets } from '../uploadServers';
-import { renderCameraButtons } from './camera';
+import { accepts, hasTouchScreen, renderPhonePicker } from './camera';
 import { pastedFiles } from './clipboard';
 import { compressImage, rememberQuality } from './compress';
 import { mediaInputStyles } from './inputStyles';
@@ -66,6 +66,8 @@ export class NpMediaInput extends NpElement {
   /** Why upload later didn't apply */
   @state() private _uploadNote = '';
   @state() private _urlInput = '';
+  /** A phone or tablet: a compact row instead of the drop zone */
+  private readonly _touch = hasTouchScreen();
   /** The quality picked here, until then the remembered one */
   @state() private _quality = '';
 
@@ -286,10 +288,10 @@ export class NpMediaInput extends NpElement {
     const canAddMore = this._urls.length < this._maxFiles;
 
     return html`
-      <div class="container">
+      <div class="container ${this._touch ? 'touch' : ''}">
         ${this._urls.length > 0 ? this._renderGallery() : nothing}
         ${canAddMore && showUpload ? this._renderDropZone() : nothing}
-        ${canAddMore && showUpload && this._config.qualityChoice !== false ? this._renderQuality() : nothing}
+        ${canAddMore && showUpload && this._config.qualityChoice !== false && accepts(this._accept, 'image') ? this._renderQuality() : nothing}
         ${canAddMore && showUpload && this._offersUploadLater ? this._renderUploadLater() : nothing}
         ${
           canAddMore && showUpload && showUrl
@@ -317,9 +319,16 @@ export class NpMediaInput extends NpElement {
         ${this._uploading ? this._renderUploadStatus() : nothing}
         ${this._uploadError ? html`<div class="np-message np-error" part="error">${this._uploadError}</div>` : nothing}
 
-        <div class="np-hint" part="hint">${m.fileCount(this._urls.length, this._maxFiles)}</div>
+        ${this._renderCount(canAddMore && showUpload)}
       </div>
     `;
+  }
+
+  /** How many files of how many; on phones it's in the picker's hint line */
+  private _renderCount(picker: boolean) {
+    if (this._touch && picker) return nothing;
+    const m = this._m;
+    return html`<div class="np-hint" part="hint">${m.fileCount(this._urls.length, this._maxFiles)}</div>`;
   }
 
   /** The running upload: progress, what's happening (also retries), and Cancel */
@@ -441,6 +450,17 @@ export class NpMediaInput extends NpElement {
     // The user's own servers come first once they're known; without them, the field's first
     const [first] = uploadTargets(this._config);
     const host = first ? targetHost(first) : '';
+    if (this._touch) {
+      const hint = `${m.dropHint(host, this._maxMb)} · ${m.fileCount(this._urls.length, this._maxFiles)}`;
+      return html`${renderPhonePicker(
+        this._accept,
+        m,
+        hint,
+        () => this._openFilePicker(),
+        (files) => void this._uploadFiles(files)
+      )}
+        <input class="file-input" type="file" accept=${this._accept} multiple @change=${this._handleFileSelected} />`;
+    }
     return html`
       <div
         class="drop-zone ${this._dragover ? 'dragover' : ''} ${this._uploading ? 'uploading' : ''}"
@@ -465,7 +485,6 @@ export class NpMediaInput extends NpElement {
           @change=${this._handleFileSelected}
         />
       </div>
-      ${renderCameraButtons(this._accept, m, (files) => void this._uploadFiles(files))}
     `;
   }
 }

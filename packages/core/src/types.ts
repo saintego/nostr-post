@@ -35,6 +35,13 @@ export interface PublishFormat {
   kinds: number[];
   default?: boolean;
   userSelectable?: boolean;
+  /**
+   * Chosen by itself when all files of `field` are photos or videos (`media`), for `portrait`
+   * only portrait ones (taller than wide), e.g. a short video. The composer picks the format
+   * that fits (a portrait one before others, else the first), until the user picks one; the
+   * field's plugin tells what its files are (`describeMedia`)
+   */
+  select?: { field: string; media: 'image' | 'video'; portrait?: boolean };
 }
 
 /**

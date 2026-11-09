@@ -50,3 +50,25 @@ export const imetaUrls = (tags: string[][]): string[] =>
     rememberMediaFile(info);
     return info.url;
   });
+
+/** Whether a `WxH` size is taller than wide; undefined when unknown */
+const isPortrait = (dim: string | undefined): boolean | undefined => {
+  const [width, height] = (dim ?? '').split('x').map(Number);
+  return width && height ? height > width : undefined;
+};
+
+/**
+ * What a media field's files are (the plugin's `describeMedia`): a photo or a video each, by its
+ * type (else its extension), and portrait when its size is known
+ */
+export const describeMediaFiles = (
+  value: unknown
+): { media: 'image' | 'video'; portrait?: boolean }[] =>
+  (Array.isArray(value) ? value : [value])
+    .filter((url): url is string => typeof url === 'string' && url !== '')
+    .map((url) => {
+      const info = mediaFileOf(url);
+      const media = info.type?.startsWith('video/') ? 'video' : 'image';
+      const portrait = isPortrait(info.dim);
+      return portrait === undefined ? { media } : { media, portrait };
+    });
