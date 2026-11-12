@@ -14,6 +14,11 @@ export interface DateValue {
   end?: string;
   /** IANA time zone of the wall-clock times, e.g. `Europe/Prague`. Default: the viewer's */
   tzid?: string;
+  /**
+   * `tzid` was guessed from the place (`guessTimeZone`): the event didn't say its zone. Views
+   * say so; read-only, never written to tags as such
+   */
+  zoneGuessed?: boolean;
 }
 
 /** `day`: a calendar date; `time`: a moment in time (unix seconds) */

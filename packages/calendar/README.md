@@ -114,7 +114,7 @@ filter misses. `<nostr-calendar-agenda calendar="31924:…">` is built on these.
 | `agendaFilters(query)`        | Relay filters of an agenda: `{ window, kinds?, authors?, tagFilters?, calendarItems?, limit? }` → the window's `#D` day tags with the tag filters (e.g. `#g` area, `#t` genre), or a calendar's events by address; none for an empty calendar |
 | `agendaItem(event, date, tzid?)` | An event as an agenda row on a day: `{ address, title, allDay, time?, continued, place?, topics }` |
 | `agendaWindowFor(from, days, tzid, view)` | The window: `days` from `from`, or in month view the month of `from` |
-| `eventTimeZone(event, window)` | The zone an event is shown in: with the window's `eventZones`, its own `start_tzid` (a city's gigs at the city's times, wherever the viewer is); else the window's `tzid` |
+| `eventTimeZone(event, window)` | The zone an event is shown in: with the window's `eventZones`, its own `start_tzid` (a city's gigs at the city's times, wherever the viewer is), or for a timed event without one the zone guessed from its place (`guessTimeZoneOfTags`, plugin-date); else the window's `tzid` |
 | `AGENDA_LIMIT`                | 500: events asked for at most                                            |
 
 ## `/web`
@@ -139,7 +139,7 @@ on events made with calendar manifests, and the kind view of 31922/31923.
 | `days`               | Number of days (default 30, at most 366) |
 | `view`               | `list` (default) or `month`: the month as a grid of weeks (from the locale's first weekday) with each day's event titles, above its list |
 | `time-zone`          | IANA time zone of the days (default the viewer's) |
-| `event-zones`        | Timed events on the days and at the times of their own zone (`start_tzid`), e.g. a city's gigs in the city's time; the window's days stay in `time-zone` |
+| `event-zones`        | Timed events on the days and at the times of their own zone (`start_tzid`, else guessed from their place), e.g. a city's gigs in the city's time; the window's days stay in `time-zone` |
 | `calendar`           | One calendar (`31924:…`): its events by address, so also all-day events of clients that write no `D` tags; its maintainer's update comments apply |
 | `addresses`          | Given events by address (`31922:…`, `31923:…`), e.g. the ones the user is going to (`answersByAddress`); like `calendar`, also other clients' all-day events |
 | `kinds`, `authors`, `tagFilters` | Narrow the events, e.g. `{ '#g': ['u09t'], '#t': ['punk'] }` |
