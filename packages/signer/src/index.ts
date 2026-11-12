@@ -8,6 +8,7 @@ import type { UnsignedNostrEvent } from '@nostr-post/core/types';
 import { isDryRun, logDryRunEvent } from './dryRun';
 import { publishCapture } from './publishSigned';
 import { DEFAULT_RELAYS } from './fetch';
+import { setKnownPublicKey } from './knownPubkey';
 import { getPublishRelays } from './relays';
 
 /** Signed Nostr event with id and sig */
@@ -97,7 +98,12 @@ export const isSignerTimeout = (error: unknown): boolean =>
 
 // nostr-login keeps one window.nostr across sign-ins: forget the pubkey when the user changes
 if (typeof document !== 'undefined') {
-  document.addEventListener('nlAuth', () => clearPublicKeyCache());
+  document.addEventListener('nlAuth', (e) => {
+    clearPublicKeyCache();
+    const detail = (e as CustomEvent<{ type?: string; pubkey?: unknown } | undefined>).detail;
+    if (detail?.type === 'logout') setKnownPublicKey(undefined);
+    else if (typeof detail?.pubkey === 'string') setKnownPublicKey(detail.pubkey);
+  });
 }
 
 /**
@@ -121,6 +127,7 @@ export async function getPublicKey(): Promise<string> {
     });
     const answer = provider.getPublicKey().then((pubkey) => {
       if (typeof pubkey !== 'string' || !pubkey) throw new Error(NO_PUBKEY);
+      setKnownPublicKey(pubkey);
       return pubkey;
     });
     const promise = Promise.race([answer, noAnswer]).finally(() => clearTimeout(timer));
@@ -354,6 +361,12 @@ export interface FetchFilter {
  * Fetch events from a single relay
  */
 export { fetchBlossomServers, newestBlossomServers } from './blossomServers';
+export {
+  KNOWN_PUBKEY_EVENT,
+  knownPublicKey,
+  onKnownPublicKeyChange,
+  setKnownPublicKey,
+} from './knownPubkey';
 export {
   DEFAULT_RELAYS,
   fetchEvents,

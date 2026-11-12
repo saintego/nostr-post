@@ -181,6 +181,9 @@ The bundle re-exports utilities for advanced usage:
 - `RELAYS_PENDING_EVENT` (`'nostr-post:relays-pending'`): `window` gets it while events are still
   being sent to relays and when the last send ends (detail `{ pending, sent, failed }`);
   `getRelaysPending()` reads it. `<np-activity>` shows it
+- `knownPublicKey()`: who is signed in as far as the app knows, without asking the signer (set by
+  `getPublicKey`'s answer, nostr-login's `nlAuth`, or the app: `setKnownPublicKey(pubkey)`);
+  `onKnownPublicKeyChange(listener)`, `KNOWN_PUBKEY_EVENT`. `<np-rsvp>` marks the user's answer by it
 - `getPublicKey` (gives up after `PUBKEY_TIMEOUT_MS`, 30 s, when the signer doesn't answer: `isSignerTimeout(error)`), `hasNostrSigner`, `fetchEvents`, `fetchEventsFromRelay`, `relaysSeenOn(id)` (the relays an event was fetched from this session)
 - `getUserRelays`, `getDefaultRelays`
 - `setDryRun(on)`, `isDryRun()`: test mode. Events are still signed, but publishing only logs them
