@@ -50,7 +50,8 @@ export class NpDateView extends NpElement {
     if (!isDateValue(this.value)) return html``;
     const m = { ...DEFAULT_DATE_MESSAGES, ...this.messages };
     const shown = dateDisplay(this.value);
-    const label = shown.zone ?? (shown.inViewerZone ? m.inYourTime : undefined);
+    const zone = shown.zone && shown.zoneGuessed ? `${shown.zone}, ${m.zoneGuessed}` : shown.zone;
+    const label = zone ?? (shown.inViewerZone ? m.inYourTime : undefined);
     return html`<div class="date">
       ${shown.text}${label ? html`<span class="tz">${label}</span>` : nothing}
       ${shown.viewerText ? html`<div class="viewer">${m.yourTime(shown.viewerText)}</div>` : nothing}

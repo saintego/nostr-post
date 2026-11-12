@@ -38,6 +38,25 @@ describe('dateDisplay', () => {
     expect(shown.viewerText).toBeUndefined();
   });
 
+  it('guesses the zone of a timed event without start_tzid from its place, and says so', () => {
+    // A bridged Berlin gig: a geohash and a country, no start_tzid
+    const value = dateValueFromTags([
+      ['start', start],
+      ['g', 'u33dc0'],
+      ['i', 'iso3166:DE'],
+    ]);
+    expect(value).toMatchObject({
+      start: '2026-11-20T19:00',
+      tzid: 'Europe/Berlin',
+      zoneGuessed: true,
+    });
+    if (!value) throw new Error('no value');
+    const shown = dateDisplay(value, { locale: 'en-US', viewerZone: 'Asia/Bangkok' });
+    expect(shown).toMatchObject({ zone: 'Europe/Berlin', zoneGuessed: true, inViewerZone: false });
+    expect(shown.text).toMatch(/7:00\sPM/);
+    expect(shown.viewerText).toMatch(/1:00\sAM/);
+  });
+
   it('shows calendar dates without zones', () => {
     expect(dateDisplay({ start: '2026-11-20' }, { locale: 'en-US' })).toEqual({
       text: 'Nov 20, 2026',

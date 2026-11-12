@@ -106,6 +106,8 @@ export {
   formatDateValue,
   dateValueFromTags,
   dayNumbers,
+  guessTimeZone,
+  guessTimeZoneOfTags,
   ALL_DAY_EVENT_KIND,
   TIMED_EVENT_KIND,
   type DateValue,

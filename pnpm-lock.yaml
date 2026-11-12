@@ -400,6 +400,9 @@ importers:
 
   packages/plugin-geo:
     dependencies:
+      '@nostr-post/core':
+        specifier: workspace:*
+        version: link:../core
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins

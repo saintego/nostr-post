@@ -49,6 +49,8 @@ export interface DateDisplay {
   text: string;
   /** Its zone (`Europe/Berlin`); undefined for calendar dates and values without one */
   zone?: string;
+  /** `zone` was guessed from the place (`DateValue.zoneGuessed`) */
+  zoneGuessed?: boolean;
   /** A timed value without a zone: `text` is in the viewer's zone */
   inViewerZone: boolean;
   /** The same moments in the viewer's zone, when theirs is another */
@@ -70,7 +72,8 @@ export const dateDisplay = (
   const text = formatValueIn(value, locale);
   const viewerText = formatValueIn(value, locale, viewerZone);
   // Another zone with the same clock (e.g. Europe/Paris for Europe/Berlin) needs no second line
+  const zone = { zone: value.tzid, ...(value.zoneGuessed ? { zoneGuessed: true } : {}) };
   return viewerText === text
-    ? { text, zone: value.tzid, inViewerZone: false }
-    : { text, zone: value.tzid, inViewerZone: false, viewerText };
+    ? { text, ...zone, inViewerZone: false }
+    : { text, ...zone, inViewerZone: false, viewerText };
 };

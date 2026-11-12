@@ -17,6 +17,8 @@ export interface DateMessages {
   yourTime: (time: string) => string;
   /** <np-date-view>: a time without a zone of its own, shown in the viewer's */
   inYourTime: string;
+  /** <np-date-view>: after a time zone guessed from the place (the event doesn't say its zone) */
+  zoneGuessed: string;
 }
 
 export const DEFAULT_DATE_MESSAGES: DateMessages = {
@@ -29,4 +31,5 @@ export const DEFAULT_DATE_MESSAGES: DateMessages = {
   unknownTimeZone: (tzid) => `Unknown time zone: ${tzid}. Pick one from the list`,
   yourTime: (time) => `Your time: ${time}`,
   inYourTime: 'your time',
+  zoneGuessed: 'guessed from the place',
 };

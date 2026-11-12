@@ -141,6 +141,17 @@ describe('eventZones', () => {
     expect(eventTimeZone(unknown, { ...window, eventZones: true })).toBe('America/Los_Angeles');
   });
 
+  it("guesses the zone of an event that doesn't say it from its place", () => {
+    const window = { from: '2026-10-23', days: 2, tzid: 'Asia/Bangkok', eventZones: true };
+    const bridged = timed('gig', utc(2026, 10, 23, 17, 0));
+    const berlin = { ...bridged, tags: [...bridged.tags, ['g', 'u33dc0']] };
+    expect(eventTimeZone(berlin, window)).toBe('Europe/Berlin');
+    const german = { ...bridged, tags: [...bridged.tags, ['i', 'iso3166:DE']] };
+    expect(eventTimeZone(german, window)).toBe('Europe/Berlin');
+    expect(eventTimeZone(bridged, window)).toBe('Asia/Bangkok');
+    expect(eventTimeZone(berlin, { ...window, eventZones: false })).toBe('Asia/Bangkok');
+  });
+
   it("puts an event on its own zone's day", () => {
     // 01:00 Saturday in Bangkok is still Friday in Los Angeles
     const late = {

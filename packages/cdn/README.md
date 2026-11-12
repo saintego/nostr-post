@@ -139,6 +139,8 @@ The bundle re-exports utilities for advanced usage:
 
 - `datePlugin`, `formatDateValue(value, locale?)`, `dateValueFromTags(tags, tagName?)`,
   `dayNumbers(value, precision)`, `DateValue`
+- `guessTimeZone({ country?, lat?, lon? })`, `guessTimeZoneOfTags(tags)`: the zone of a timed
+  event that doesn't say its own, from its country and geohash (offline)
 - `ALL_DAY_EVENT_KIND` (31922), `TIMED_EVENT_KIND` (31923)
 
 **Calendars** (NIP-52, see [calendar](../calendar/README.md))
@@ -146,7 +148,8 @@ The bundle re-exports utilities for advanced usage:
 - `CALENDAR_EVENT_MANIFEST`: calendar event, all-day or timed by publish format
 - Agenda: `agendaFilters(query)` (an agenda's relay filters), `agendaFilter(window)`,
   `groupEventsByDay(events, window)`, `eventTiming(event)`, `eventDates(timing, tzid?)`,
-  `eventTimeZone(event, window)` (with the window's `eventZones`, events in their own zone),
+  `eventTimeZone(event, window)` (with the window's `eventZones`, events in their own zone, or
+  the one guessed from their place),
   `windowDates(window)`, `shiftWindow(window, steps)`, `AgendaWindow`
 - Months: `monthWindow(month)`, `monthGrid(month)`, `shiftMonth(month, steps)`, `formatMonth(month)`
 - RSVP (kind 31925): `fetchRsvps(addresses)`, `publishRsvp(address, status)`,

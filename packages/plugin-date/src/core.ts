@@ -31,6 +31,7 @@ import {
   valueTimeZone,
 } from './dateValue';
 import { formatValueIn } from './dateDisplay';
+import { guessTimeZoneOfTags } from './zoneGuess';
 
 /** NIP-52 date-based (all-day) calendar event */
 export const ALL_DAY_EVENT_KIND = 31922;
@@ -84,19 +85,30 @@ export const calendarExtraTags = (
 const tagValue = (tags: string[][], name: string): string | undefined =>
   tags.find((tag) => tag[0] === name)?.[1];
 
+/**
+ * A timed event's zone: its `start_tzid`; without one (other clients may leave it out) the zone
+ * guessed from its place (`g`, `i iso3166:`), marked so; no guess: none, so it reads in the
+ * viewer's zone and says so (`dateDisplay`)
+ */
+const timedZoneOfTags = (tags: string[][]): { tzid?: string; guessed?: boolean } => {
+  const own = tagValue(tags, 'start_tzid');
+  if (own && isValidTimeZone(own)) return { tzid: own };
+  const guess = guessTimeZoneOfTags(tags);
+  return guess ? { tzid: guess, guessed: true } : {};
+};
+
 /** A field's value from an event's tags: its own tag, plus `end` and time zones for `start` */
 export const dateValueFromTags = (tags: string[][], tagName = 'start'): DateValue | undefined => {
   const rawStart = tagValue(tags, tagName);
   if (rawStart === undefined) return undefined;
   const allDay = !/^\d+$/.test(rawStart.trim());
-  // A timed event without `start_tzid` (other clients may leave it out) has no zone: it reads in
-  // the viewer's, and says so (`dateDisplay`)
-  const ownZone = allDay ? undefined : tagValue(tags, 'start_tzid');
-  const tzid = ownZone && isValidTimeZone(ownZone) ? ownZone : undefined;
+  const { tzid, guessed } = allDay ? {} : timedZoneOfTags(tags);
   const readZone = allDay ? undefined : (tzid ?? defaultTimeZone());
   const start = parseStoredDate(rawStart, readZone);
   if (!start) return undefined;
-  const value: DateValue = tzid ? { start, tzid } : { start };
+  const value: DateValue = tzid
+    ? { start, tzid, ...(guessed ? { zoneGuessed: true } : {}) }
+    : { start };
   const rawEnd = tagName === 'start' ? tagValue(tags, 'end') : undefined;
   const end =
     rawEnd === undefined

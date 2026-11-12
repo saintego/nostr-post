@@ -11,6 +11,7 @@ import {
   dateOfDayNumber,
   dayNumberOfDate,
   defaultTimeZone,
+  guessTimeZoneOfTags,
   isValidTimeZone,
   MAX_DAY_TAGS,
   TIMED_EVENT_KIND,
@@ -73,11 +74,17 @@ const tagValue = (tags: string[][], name: string): string | undefined =>
 export const todayIn = (tzid = defaultTimeZone(), now = Date.now()): string =>
   (unixToWall(Math.floor(now / 1000), tzid) ?? new Date(now).toISOString()).slice(0, 10);
 
-/** The zone an event is shown in: its own (`start_tzid`) with `eventZones`, else the window's */
+/**
+ * The zone an event is shown in: with `eventZones` its own (`start_tzid`), or for a timed event
+ * that doesn't say it, the zone guessed from its place (`guessTimeZoneOfTags`: `g`,
+ * `i iso3166:`); else the window's
+ */
 export const eventTimeZone = (event: CalendarEventLike, window: AgendaWindow): string => {
   const tzid = window.tzid ?? defaultTimeZone();
-  const own = window.eventZones ? tagValue(event.tags, 'start_tzid') : undefined;
-  return own && isValidTimeZone(own) ? own : tzid;
+  if (!window.eventZones) return tzid;
+  const own = tagValue(event.tags, 'start_tzid');
+  if (own && isValidTimeZone(own)) return own;
+  return (event.kind === TIMED_EVENT_KIND && guessTimeZoneOfTags(event.tags)) || tzid;
 };
 
 const resolveWindow = (window: AgendaWindow) => {

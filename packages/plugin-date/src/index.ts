@@ -31,3 +31,9 @@ export {
   wallForPrecision,
   wallToUnix,
 } from './dateValue';
+export {
+  guessTimeZone,
+  guessTimeZoneOfTags,
+  type ZonePlace,
+  zonePlaceOfTags,
+} from './zoneGuess';

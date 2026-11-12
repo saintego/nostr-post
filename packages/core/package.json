@@ -85,6 +85,10 @@
     "./imeta": {
       "types": "./dist/imeta.d.ts",
       "import": "./dist/imeta.js"
+    },
+    "./geohash": {
+      "types": "./dist/geohash.d.ts",
+      "import": "./dist/geohash.js"
     }
   },
   "scripts": {
