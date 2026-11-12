@@ -17,59 +17,29 @@ import { NpElement, npStyles } from '@nostr-post/ui/web';
 import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { MarkdownPluginConfig } from '../core';
+import { renderMarkdown } from '../render';
 import { markdownInputStyles } from './inputStyles';
 
 type EditorMode = 'raw' | 'wysiwyg';
 
-// ---- Lightweight markdown <-> HTML helpers ----
+// ---- Markdown <-> HTML for the WYSIWYG editor ----
 
-function markdownToHtml(md: string): string {
-  if (!md) return '';
-  let h = md;
-  // Code blocks (``` ... ```)
-  h = h.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-  // Inline code
-  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
-  // Headings
-  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-  // Bold + Italic
-  h = h.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-  // Bold
-  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // Italic
-  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  // Strikethrough
-  h = h.replace(/~~(.+?)~~/g, '<s>$1</s>');
-  // Links [text](url)
-  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
-  // Images ![alt](url)
-  h = h.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
-  // Unordered lists
-  h = h.replace(/^[*-] (.+)$/gm, '<li>$1</li>');
-  h = h.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-  // Blockquote
-  h = h.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-  // Horizontal rule
-  h = h.replace(/^---$/gm, '<hr>');
-  // Line breaks (convert remaining newlines in non-block context)
-  h = h.replace(/\n/g, '<br>');
-  // Clean up extra <br> inside block elements
-  h = h.replace(/<\/li><br>/g, '</li>');
-  h = h.replace(/<\/ul><br>/g, '</ul>');
-  h = h.replace(/<\/blockquote><br>/g, '</blockquote>');
-  h = h.replace(/<\/pre><br>/g, '</pre>');
-  h = h.replace(/<\/h([1-3])><br>/g, '</h$1>');
-  h = h.replace(/<\/hr><br>/g, '</hr>');
-  return h;
-}
+/** The editor's HTML of the value: the same safe HTML as the view (`renderMarkdown`) */
+const markdownToHtml = renderMarkdown;
+
+/** A list item as Markdown: numbered in an ordered list, else a bullet */
+const listItem = (el: HTMLElement, inner: string): string => {
+  const list = el.parentElement;
+  return list?.tagName.toLowerCase() === 'ol'
+    ? `${Array.from(list.children).indexOf(el) + 1}. ${inner}\n`
+    : `- ${inner}\n`;
+};
 
 function htmlToMarkdown(htmlStr: string): string {
   if (!htmlStr) return '';
 
-  // Work in a temp element to traverse DOM
-  const tmp = document.createElement('div');
+  // Parsed in a template: inert, so nothing in pasted HTML loads or runs
+  const tmp = document.createElement('template');
   tmp.innerHTML = htmlStr;
 
   function walk(node: Node): string {
@@ -117,7 +87,7 @@ function htmlToMarkdown(htmlStr: string): string {
       case 'ol':
         return `${inner}\n`;
       case 'li':
-        return `- ${inner}\n`;
+        return listItem(el, inner);
       case 'hr':
         return '---\n';
       case 'br':
@@ -130,7 +100,7 @@ function htmlToMarkdown(htmlStr: string): string {
     }
   }
 
-  let result = Array.from(tmp.childNodes).map(walk).join('');
+  let result = Array.from(tmp.content.childNodes).map(walk).join('');
   // Trim trailing whitespace but keep single trailing newline
   result = result.replace(/\n{3,}/g, '\n\n').trim();
   return result;

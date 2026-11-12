@@ -26,6 +26,11 @@ export type TagPluginsInput = {
   author?: string;
   /** The note text, placed where the manifest's content field is in its view order */
   content?: TemplateResult | typeof nothing;
+  /**
+   * The event's content as written: shown by the content field's plugin view instead of
+   * `content` when it has one (e.g. Markdown formatted by `<np-markdown-view>`)
+   */
+  text?: string;
 };
 
 /** Tag name → manifest fields mapped to that tag on `kind` */
@@ -147,11 +152,28 @@ const renderTagEntries = ({
   return { titles, entries };
 };
 
-/** The id of the field written to the event's content on `kind`, '' without one */
-const contentFieldId = (manifest: NostrPostManifest | undefined, kind: number): string =>
+/** The field written to the event's content on `kind`, if any */
+const contentField = (
+  manifest: NostrPostManifest | undefined,
+  kind: number
+): PostField | undefined =>
   manifest?.fields.find((field) =>
     getFieldTargets(field).some((t) => t.kind === kind && t.target === 'content')
-  )?.id ?? '';
+  );
+
+/** The content by its field's plugin view (e.g. formatted Markdown), else the note text */
+const renderContent = (
+  field: PostField | undefined,
+  text: string | undefined,
+  content: TemplateResult | typeof nothing | undefined
+): TemplateResult | undefined => {
+  const viewTagName = field ? pluginRegistry.get(field.uiPlugin)?.viewTagName : undefined;
+  if (field && viewTagName && text) {
+    const viewTag = unsafeStatic(viewTagName);
+    return staticHtml`<${viewTag} .value=${text} .field=${field}></${viewTag}>`;
+  }
+  return content && content !== nothing ? html`${content}` : undefined;
+};
 
 /**
  * Render tag values using registered plugin view components, and the note text (`content`).
@@ -168,6 +190,7 @@ export const renderTagPlugins = ({
   excludeFields,
   author,
   content,
+  text,
 }: TagPluginsInput): TemplateResult[] => {
   const { titles, entries } = renderTagEntries({
     kind,
@@ -177,9 +200,9 @@ export const renderTagPlugins = ({
     excludeFields,
     author,
   });
-  if (content && content !== nothing) {
-    entries.push({ fieldId: contentFieldId(manifest, kind), template: html`${content}` });
-  }
+  const field = contentField(manifest, kind);
+  const shownContent = renderContent(field, text, content);
+  if (shownContent) entries.push({ fieldId: field?.id ?? '', template: shownContent });
   const order = manifest ? viewFieldOrder(manifest) : [];
   // Fields outside the order (the text without a content field) come first
   const rank = (fieldId: string) => order.indexOf(fieldId);

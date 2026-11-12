@@ -10,6 +10,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@nostr-post/article": "workspace:*",
     "@nostr-post/calendar": "workspace:*",
     "@nostr-post/core": "workspace:*",
     "@nostr-post/list": "workspace:*",

@@ -92,9 +92,10 @@ This keeps relay I/O in one place and avoids duplicate network requests.
 | **plugin-profile**      | ✅ **Complete** | People picker: profile search or npub, `p` tags with roles             |
 | **plugin-date**         | ✅ **Complete** | Date / date-time input; NIP-52 date and `D` day tags                  |
 | **calendar**            | ✅ **Complete** | NIP-52 calendars: agenda/month, RSVP, calendars, iCalendar            |
+| **article**             | ✅ **Complete** | NIP-23 long-form articles: manifest, filters, formatted view — [README](./packages/article/README.md) |
 | **plugin-venue**        | ✅ **Complete** | OSM venue search + NIP-73 identity tags, wraps geo                    |
 | **plugin-media**        | ✅ **Complete** | Multi-file upload: the user's Blossom servers, then nostr.build        |
-| **plugin-markdown**     | ✅ **Complete** | Markdown editor with live preview                                     |
+| **plugin-markdown**     | ✅ **Complete** | Markdown editor and view; `renderMarkdown`: safe HTML of text from anyone |
 | **plugin-hashtag**      | ✅ **Complete** | Hashtag array input with optional auto-extraction via `attachTo`      |
 | **plugin-reference**    | ✅ **Complete** | URL/nostr reference list with optional auto-extraction via `attachTo` |
 
@@ -634,6 +635,7 @@ MIT
 - [Nostr Protocol](https://nostr.com/)
 - [NIP-01: Basic Protocol](https://github.com/nostr-protocol/nips/blob/master/01.md)
 - [NIP-07: Nostr Sign-in Flow](https://github.com/nostr-protocol/nips/blob/master/07.md)
+- [NIP-23: Long-form Content](https://github.com/nostr-protocol/nips/blob/master/23.md)
 - [NIP-23: Long-form Content](https://github.com/nostr-protocol/nips/blob/master/23.md)
 - [NIP-52: Calendar Events](https://github.com/nostr-protocol/nips/blob/master/52.md)
 - [NIP-73: External Content ID](https://github.com/nostr-protocol/nips/blob/master/73.md)

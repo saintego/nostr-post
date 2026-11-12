@@ -145,6 +145,20 @@ The bundle re-exports utilities for advanced usage:
   event that doesn't say its own, from its country and geohash (offline)
 - `ALL_DAY_EVENT_KIND` (31922), `TIMED_EVENT_KIND` (31923)
 
+**Articles** (NIP-23, see [article](../article/README.md))
+
+- `renderMarkdown(text)`: Markdown as safe HTML (raw HTML shown as text, no script links), as
+  `<np-markdown-view>` shows it
+
+- `ARTICLE_MANIFEST`: a long-form article (kind 30023): title, summary, image, Markdown text,
+  topics, `published_at` (the first publishing, kept by edits)
+- `<nostr-article address>`: one article by address, formatted (also how a post linking one
+  shows it); `thread` for its comments and reactions
+- `articleFilter({ authors?, topics?, limit? })`, `articleCard(event)`, `isArticleAddress`,
+  `ARTICLE_KIND`
+- `<nostr-post-address address .manifest>` (web): any addressable event by address, shown with a
+  manifest; `thread`, `editable`, `hide-sections`
+
 **Calendars** (NIP-52, see [calendar](../calendar/README.md))
 
 - `CALENDAR_EVENT_MANIFEST`: calendar event, all-day or timed by publish format

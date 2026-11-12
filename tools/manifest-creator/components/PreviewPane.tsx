@@ -68,6 +68,8 @@ export const PreviewPane = ({ manifest, manifestRef, isResolvingParents }: Previ
     import('@nostr-post/plugin-venue/web');
     // RSVP, Add to calendar and .ics on calendar events
     import('@nostr-post/calendar/web');
+    // The article view (kind view of 30023)
+    import('@nostr-post/article/web');
     import('@nostr-post/plugin-wiki-entity/web');
   }, []);
 

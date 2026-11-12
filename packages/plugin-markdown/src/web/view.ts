@@ -1,8 +1,8 @@
 /**
  * @nostr-post/plugin-markdown - <np-markdown-view>
  *
- * Read-only rendered markdown display.
- * Converts markdown to HTML for display.
+ * Read-only rendered markdown display: the text as safe HTML (`renderMarkdown`: raw HTML
+ * shown as text, no script links), so text from anyone can be shown.
  *
  * Accepts .value (markdown string) and .field (PostField).
  */
@@ -12,47 +12,7 @@ import { NpElement, npStyles } from '@nostr-post/ui/web';
 import { css, html } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
-
-function renderMarkdown(md: string): string {
-  if (!md) return '';
-  let h = md;
-  // Code blocks
-  h = h.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
-  // Inline code
-  h = h.replace(/`([^`]+)`/g, '<code>$1</code>');
-  // Headings
-  h = h.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-  h = h.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-  h = h.replace(/^# (.+)$/gm, '<h1>$1</h1>');
-  // Bold + Italic
-  h = h.replace(/\*\*\*(.+?)\*\*\*/g, '<strong><em>$1</em></strong>');
-  // Bold
-  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  // Italic
-  h = h.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  // Strikethrough
-  h = h.replace(/~~(.+?)~~/g, '<s>$1</s>');
-  // Links
-  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
-  // Images
-  h = h.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1">');
-  // Unordered lists
-  h = h.replace(/^[*-] (.+)$/gm, '<li>$1</li>');
-  h = h.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
-  // Blockquote
-  h = h.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
-  // Horizontal rule
-  h = h.replace(/^---$/gm, '<hr>');
-  // Line breaks
-  h = h.replace(/\n/g, '<br>');
-  // Clean up
-  h = h.replace(/<\/li><br>/g, '</li>');
-  h = h.replace(/<\/ul><br>/g, '</ul>');
-  h = h.replace(/<\/blockquote><br>/g, '</blockquote>');
-  h = h.replace(/<\/pre><br>/g, '</pre>');
-  h = h.replace(/<\/h([1-3])><br>/g, '</h$1>');
-  return h;
-}
+import { renderMarkdown } from '../render';
 
 @customElement('np-markdown-view')
 export class NpMarkdownView extends NpElement {

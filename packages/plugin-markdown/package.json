@@ -14,9 +14,10 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc -p tsconfig.build.json",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
     "clean": "rm -rf dist"
   },
   "keywords": [
@@ -31,9 +32,11 @@
   "dependencies": {
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/ui": "workspace:*",
-    "lit": "^3.3.3"
+    "lit": "^3.3.3",
+    "markdown-it": "^14.1.0"
   },
   "devDependencies": {
+    "@types/markdown-it": "^14.1.2",
     "typescript": "^6.0.3"
   }
 }

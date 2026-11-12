@@ -612,7 +612,7 @@ When a plugin reads a new key, add it there.
 | `@nostr-post/plugin-profile`   | `profile`   | `profile` | People picker: search profiles (NIP-50) or paste an npub, a role each; `p` tags `["p", pubkey, relay, role]` (NIP-52 participants). Text overridable through `messages` (`ProfileMessages`) |
 | `@nostr-post/plugin-venue`     | `venue`     | `geo`    | OSM venue search + NIP-73 identity tags; wraps `plugin-geo`                      |
 | `@nostr-post/plugin-media`     | `media`     | `string` | Multi-file upload: the user's Blossom servers, then nostr.build (NIP-98); `imeta` tags; paste/drop on textarea via `attachTo` |
-| `@nostr-post/plugin-markdown`  | `markdown`  | `string` | Markdown editor with live preview (WYSIWYG mode supported)                       |
+| `@nostr-post/plugin-markdown`  | `markdown`  | `string` | Markdown editor with live preview (WYSIWYG mode supported); the view and the main entry's `renderMarkdown(text)` give safe HTML (raw HTML shown as text, no script links), for text from anyone |
 | `@nostr-post/plugin-hashtag`   | `hashtag`   | `string` | Hashtag array input; auto-extracts from target field when `attachTo` is set      |
 | `@nostr-post/plugin-reference` | `reference` | `string` | URL/nostr reference list; auto-extracts from target field when `attachTo` is set |
 | `@nostr-post/plugin-identifier` | `identifier` | `string` | External identifier (NIP-73 `i` tag), e.g. an ISBN, with an optional fixed prefix |
