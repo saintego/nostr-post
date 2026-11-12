@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { formJsonSchema, PUBLISH_FORMAT_KEY, parseFormJson } from './formJson';
+import {
+  findJsonObject,
+  formJsonSchema,
+  PUBLISH_FORMAT_KEY,
+  parseFormJson,
+  withoutCitations,
+} from './formJson';
 import type { NostrPostManifest } from './types';
 
 const manifest: NostrPostManifest = {
@@ -133,6 +139,28 @@ describe('parseFormJson', () => {
     expect(parseFormJson(manifest, { [PUBLISH_FORMAT_KEY]: 'nope' })).toEqual({
       success: true,
       data: { formData: {} },
+    });
+  });
+});
+
+describe('citation markers in copied AI answers', () => {
+  it("drops Gemini's span and cite markers and ChatGPT's source marks", () => {
+    expect(withoutCitations('Blue Monkey Bar[span_1](start_span)[span_1](end_span), Saigon')).toBe(
+      'Blue Monkey Bar, Saigon'
+    );
+    expect(withoutCitations('[cite_start]Doors at 7 [cite: 1, 2].')).toBe('Doors at 7.');
+    expect(withoutCitations('Tickets 180k【4:0†source】')).toBe('Tickets 180k');
+    expect(withoutCitations('[link](https://example.com) and [1]')).toBe(
+      '[link](https://example.com) and [1]'
+    );
+  });
+
+  it('reads the JSON of an answer copied with them', () => {
+    const answer =
+      '{"title": "XÚC CẢM TRUNG TÂY[span_0](start_span)[span_0](end_span)", "tags": ["math-rock"]}';
+    expect(findJsonObject(answer)).toEqual({
+      success: true,
+      data: { title: 'XÚC CẢM TRUNG TÂY', tags: ['math-rock'] },
     });
   });
 });

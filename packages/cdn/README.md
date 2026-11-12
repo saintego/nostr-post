@@ -113,7 +113,9 @@ The bundle re-exports utilities for advanced usage:
   shape, as text (also wrapped in prose or code fences, as AIs answer) or parsed (e.g. performer names
   turned into their wiki pages)
 - `PUBLISH_FORMAT_KEY`: the property holding the chosen publish format
-- `findJsonObject(text)`: a `Result` with the JSON object in text (also inside prose or code fences)
+- `findJsonObject(text)`: a `Result` with the JSON object in text (also inside prose or code fences),
+  without the citation markers AI apps leave in copied answers (Gemini's `[span_0](start_span)`,
+  `[cite: 1]`, ChatGPT's `【4:0†source】`)
 
 **Geo helpers**
 

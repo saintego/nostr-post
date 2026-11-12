@@ -135,10 +135,26 @@ export interface FormJson {
 }
 
 /**
- * The JSON object in `text`: the text itself, or the object inside prose or code fences (as
- * AIs often wrap it)
+ * Citation markers AI apps leave in copied answers: Gemini's `[span_0](start_span)` /
+ * `[span_0](end_span)`, `[cite_start]` and `[cite: 1, 2]`, ChatGPT's `【4:0†source】`
  */
-export const findJsonObject = (text: string): Result<unknown> => {
+const CITATION_MARKERS = [
+  /\[span_\d+\]\((?:start|end)_span\)/g,
+  /\[cite_start\]/g,
+  /\s*\[cite:\s*\d+(?:\s*,\s*\d+)*\]/g,
+  /【[^】]*†[^】]*】/g,
+];
+
+/** `text` without the citation markers AI apps leave in copied answers */
+export const withoutCitations = (text: string): string =>
+  CITATION_MARKERS.reduce((rest, marker) => rest.replace(marker, ''), text);
+
+/**
+ * The JSON object in `text`: the text itself, or the object inside prose or code fences (as
+ * AIs often wrap it), without citation markers copied along (`withoutCitations`)
+ */
+export const findJsonObject = (answer: string): Result<unknown> => {
+  const text = withoutCitations(answer);
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start < 0 || end <= start) return { success: false, error: new Error('No JSON object') };
