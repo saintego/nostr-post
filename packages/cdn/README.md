@@ -1,6 +1,6 @@
 # @nostr-post/cdn
 
-A single-file CDN bundle that includes **all** nostr-post web components and plugins — no npm install, no bundler required. Works like [nostr-login](https://github.com/nicknstr/nostr-login), or [window.nostr.js](https://github.com/fiatjaf/window.nostr.js/): add one `<script>` tag and start using components.
+A single-file CDN bundle that includes **all** nostr-post web components and plugins — no npm install, no bundler required — and the same split into modules for smaller pages ([split build](#split-build-smaller-pages-esm)). Works like [nostr-login](https://github.com/nicknstr/nostr-login), or [window.nostr.js](https://github.com/fiatjaf/window.nostr.js/): add one `<script>` tag and start using components.
 
 ## Quick Start
 
@@ -24,6 +24,33 @@ A single-file CDN bundle that includes **all** nostr-post web components and plu
 ```
 
 The IIFE build exposes a global `NostrPost` object for programmatic access.
+
+### Split build (smaller pages, ESM)
+
+The same, as one module per part, for pages that need only some of it. The parts share their code
+(loaded once), and a field plugin's code loads only when a manifest uses that field (the map only
+with a map field):
+
+```html
+<script type="module">
+  import { pluginRegistry } from 'https://saintego.github.io/nostr-post/split/base.js';
+  import 'https://saintego.github.io/nostr-post/split/calendar.js';
+</script>
+```
+
+| Module | Contains | Loads at start (gzipped) |
+| --- | --- | --- |
+| `split/base.js` | composer, view, feed, sections, outbox, post menu; core, signer, posts, ui (kind-1 notes and NIP-78 manifest posts) | about 76 KB |
+| `split/plugins.js` | the field plugins' functions (geohashes, people, link players, dates, `renderMarkdown`, media upload and galleries); their inputs and views load on demand without it | +84 KB |
+| `split/wiki.js` | wiki pages (NIP-54), the entity picker, venues | +72 KB |
+| `split/calendar.js` | calendars (NIP-52): agenda, event, RSVP, iCalendar | +52 KB |
+| `split/article.js` | long-form articles (NIP-23) | +2 KB |
+| `split/list.js` | bookmark lists (NIP-51) | +9 KB |
+
+The all-in-one `nostr-post.js` is about 340 KB gzipped. Each part exports its own names (the
+lists below, by part); `nostr-post.js` exports all of them. Use either the all-in-one file or the
+split modules on a page, not both: the components would be defined twice. The IIFE build stays
+all-in-one (classic scripts can't share code).
 
 ## What's Included
 
