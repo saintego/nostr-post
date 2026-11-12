@@ -185,6 +185,10 @@ READMEs) link to issues instead of keeping their own TODO lists. ROADMAP.md is o
 a while as the record from before issues (its items are the issues labelled `roadmap`), not
 updated anymore.
 
+- A bug or request reported in chat gets an issue before the fix: the report in the user's words,
+  what you found, the area's label (`bug` for bugs). Open it yourself (one call, not an agent),
+  one per report (related small ones: one issue with a checklist), and say its number. The PR
+  that fixes it closes it.
 - A PR that completes an issue says `Closes #<number>` in its description, so merging closes it.
 - When a change completes part of an issue, comment on the issue (or edit it) to say what's left.
 - When you find new work (a bug you didn't fix, a follow-up, a TODO comment you add), open an issue
