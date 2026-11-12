@@ -1,10 +1,10 @@
 /** Template parts of <np-media-gallery>: the grid, and a photo or video as a lightbox slide */
 
 import { encodeNaddr, encodeNevent, encodeNpub } from '@nostr-post/core/nip19';
+import type { LightboxSlide } from '@nostr-post/ui/web/lightbox';
 import { html, type TemplateResult } from 'lit';
 import type { MediaItem } from '../eventMedia';
 import type { MediaGalleryMessages } from './galleryMessages';
-import type { LightboxSlide } from './lightbox';
 
 /** Where an item's post opens (a NIP-19 link: naddr for addressable posts, else nevent) */
 export const postLink = (item: MediaItem, base = 'https://njump.me/'): string => {

@@ -1,4 +1,4 @@
-/** Styles of <np-media-lightbox> */
+/** Styles of <np-lightbox> */
 
 import { css } from 'lit';
 

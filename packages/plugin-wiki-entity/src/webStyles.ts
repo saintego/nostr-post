@@ -139,16 +139,4 @@ export const pickerStyles = css`
   .create-btn:hover {
     background: color-mix(in srgb, var(--np-color-primary) 8%, transparent);
   }
-
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    z-index: 1000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-    background: color-mix(in srgb, var(--np-color-scrim) 50%, transparent);
-  }
-
 `;

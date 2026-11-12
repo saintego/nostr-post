@@ -3,7 +3,7 @@
  * view (`sections` of a manifest, shown by `<nostr-post-sections>`), which gives it `.items`.
  * On its own, `.targets` (addresses or event ids) loads the targets and every post referencing
  * them (`fetchReferences`, `@nostr-post/posts`), or `.events` gives posts. A grid, newest first;
- * a photo or video opens large (`<np-media-lightbox>`: previous and next through all of them)
+ * a photo or video opens large (`<np-lightbox>`: previous and next through all of them)
  * with its description, author, date and a link to its post.
  */
 
@@ -16,9 +16,9 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import { type MediaItem, type MediaSource, mediaOfEvents } from '../eventMedia';
 import { DEFAULT_MEDIA_GALLERY_MESSAGES, type MediaGalleryMessages } from './galleryMessages';
 import { lightboxSlide, renderGrid } from './galleryParts';
-import './lightbox';
+import '@nostr-post/ui/web/lightbox';
+import type { NpLightbox } from '@nostr-post/ui/web/lightbox';
 import { galleryStyles } from './galleryStyles';
-import type { NpMediaLightbox } from './lightbox';
 
 /** What a gallery shows on its own: heading, kinds, how many at first */
 export interface MediaGalleryConfig {
@@ -52,7 +52,7 @@ export class NpMediaGallery extends NpElement {
   @state() _items?: MediaItem[];
   @state() _shown = 12;
   @state() _names: ReadonlyMap<string, string> = new Map();
-  @query('np-media-lightbox') _lightbox?: NpMediaLightbox;
+  @query('np-lightbox') _lightbox?: NpLightbox;
   _loads = 0;
 
   get _m(): MediaGalleryMessages {
@@ -123,11 +123,11 @@ export class NpMediaGallery extends NpElement {
             }}>${m.showMore}</button>`
           : nothing
       }
-      <np-media-lightbox
+      <np-lightbox
         exportparts="dialog, button"
         .slides=${(items ?? []).map((item) => lightboxSlide(item, this._names, m))}
         .messages=${{ close: m.close }}
-      ></np-media-lightbox>
+      ></np-lightbox>
     `;
   }
 }

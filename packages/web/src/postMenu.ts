@@ -13,6 +13,8 @@ import { DRY_RUN_CHANGE_EVENT, getDryRunEntries, type SignedEvent } from '@nostr
 import { NpElement, npStyles } from '@nostr-post/ui/web';
 import { html, nothing } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
+import '@nostr-post/ui/web/dialog';
+import type { NpDialog } from '@nostr-post/ui/web/dialog';
 import './dryRunPublish';
 import type { DryRunPublishMessages } from './dryRunPublishMessages';
 import { DEFAULT_POST_MENU_MESSAGES, type PostMenuMessages } from './postMenuMessages';
@@ -38,8 +40,8 @@ export class NostrPostMenu extends NpElement {
   @state() _logged = false;
   /** The "Publish for real" dialog is open: its panel is made fresh each time */
   @state() _publishOpen = false;
-  @query('dialog.raw-dialog') _dialog?: HTMLDialogElement;
-  @query('dialog.publish-dialog') _publishDialog?: HTMLDialogElement;
+  @query('np-dialog.raw-dialog') _dialog?: NpDialog;
+  @query('np-dialog.publish-dialog') _publishDialog?: NpDialog;
 
   _onDryRunChange = () => {
     const id = this.event?.id;
@@ -129,25 +131,15 @@ export class NostrPostMenu extends NpElement {
             })
           : nothing
       }
-      <dialog
-        class="publish-dialog np-dialog"
-        part="dialog"
+      <np-dialog
+        class="publish-dialog"
+        exportparts="dialog, header, button"
+        heading=${m.publishForReal}
+        .messages=${{ close: m.close }}
         @close=${() => {
           this._publishOpen = false;
         }}
       >
-        <div class="np-dialog-header">
-          <h2 class="np-dialog-title">${m.publishForReal}</h2>
-          <button
-            type="button"
-            class="np-button np-text"
-            part="button"
-            @click=${() => this._publishDialog?.close()}
-          >
-            ${m.close}
-          </button>
-        </div>
-        <div class="np-dialog-body">
         ${
           this._publishOpen
             ? html`<nostr-dry-run-publish
@@ -156,24 +148,15 @@ export class NostrPostMenu extends NpElement {
               ></nostr-dry-run-publish>`
             : nothing
         }
-        </div>
-      </dialog>
-      <dialog class="raw-dialog np-dialog" part="dialog">
-        <div class="np-dialog-header">
-          <h2 class="np-dialog-title">${m.rawData}</h2>
-          <button
-            type="button"
-            class="np-button np-text"
-            part="button"
-            @click=${() => this._dialog?.close()}
-          >
-            ${m.close}
-          </button>
-        </div>
-        <div class="np-dialog-body">
-          ${renderRawPanel(raw, m, (target) => void this._copy(target))}
-        </div>
-      </dialog>
+      </np-dialog>
+      <np-dialog
+        class="raw-dialog"
+        exportparts="dialog, header, button"
+        heading=${m.rawData}
+        .messages=${{ close: m.close }}
+      >
+        ${renderRawPanel(raw, m, (target) => void this._copy(target))}
+      </np-dialog>
     `;
   }
 }

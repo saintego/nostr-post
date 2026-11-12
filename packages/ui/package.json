@@ -14,6 +14,14 @@
       "types": "./dist/web.d.ts",
       "import": "./dist/web.js"
     },
+    "./web/dialog": {
+      "types": "./dist/web/dialog.d.ts",
+      "import": "./dist/web/dialog.js"
+    },
+    "./web/lightbox": {
+      "types": "./dist/web/lightbox.d.ts",
+      "import": "./dist/web/lightbox.js"
+    },
     "./tokens.css": "./dist/tokens.css",
     "./ui.css": "./dist/ui.css"
   },

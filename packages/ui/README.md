@@ -11,6 +11,8 @@ No UI library dependency: the main entry has no dependencies at all, `/web` need
 |---|---|
 | `@nostr-post/ui` | Tokens as data and as CSS, the primitives as CSS, class and part names, the style overrides registry, color scheme choice. No Lit, React or DOM. |
 | `@nostr-post/ui/web` | Lit styles for shadow DOM (`npStyles`), `NpElement` (the components' base class), `installTokens`, `followColorScheme`. |
+| `@nostr-post/ui/web/dialog` | `<np-dialog>`: a modal dialog with a title, Close and its content. |
+| `@nostr-post/ui/web/lightbox` | `<np-lightbox>`: photos and videos large, one at a time, with previous and next. |
 | `@nostr-post/ui/tokens.css` | The tokens, for any page. |
 | `@nostr-post/ui/ui.css` | Tokens and primitives, for apps and plain HTML. |
 
@@ -180,3 +182,46 @@ export class MyFieldInput extends NpElement {
 - `NpElement`: a `LitElement` that installs the tokens and applies `registerStyles` overrides.
 - `installTokens(document)`: put the tokens into a document early (components do it when they
   connect).
+
+## Shared components
+
+Generic Lit components that more than one place needs (see AGENTS.md). Each takes plain data,
+has its text in a messages object with English defaults (`messages` property) and its own
+subpath, so importing `/web` doesn't load them.
+
+### `<np-dialog>` (`@nostr-post/ui/web/dialog`)
+
+```ts
+import '@nostr-post/ui/web/dialog';
+
+html`<np-dialog heading="Raw data" .messages=${{ close: 'Zavřít' }} @close=${onClose}>
+  ${content}
+</np-dialog>`;
+```
+
+- `heading`: the title; the children are its content.
+- Opens with the `open` property or attribute (render it with `open` to show it while it's in
+  the template) or `showModal()`; closes on Close, Escape and `close()`. `backdrop-close` also
+  closes it on a click outside (a press that began inside, e.g. selecting text, doesn't count).
+- Fires `close` when it closes.
+- Parts: `dialog`, `header`, `button`. Size it with `np-dialog::part(dialog) { width: … }`.
+- Messages (`DialogMessages`): `close`.
+
+### `<np-lightbox>` (`@nostr-post/ui/web/lightbox`)
+
+```ts
+import '@nostr-post/ui/web/lightbox';
+import type { LightboxSlide, NpLightbox } from '@nostr-post/ui/web/lightbox';
+
+const slides: LightboxSlide[] = [{ url, media: 'image', alt }, { url: video, media: 'video', poster }];
+html`<np-lightbox .slides=${slides}></np-lightbox>`;
+lightbox.open(1);
+```
+
+- `.slides`: `{ url, media: 'image' | 'video', alt?, poster?, caption? }` (`caption`: text or a
+  template under the photo, e.g. who posted it).
+- `open(index)`, `close()`. Previous and next with buttons, arrow keys and swiping, wrapping
+  around (`slideIndex(index, step, count)` in the main entry); "3 / 12"; full screen.
+- Parts: `dialog`, `button`.
+- Messages (`LightboxMessages`): `label`, `previous`, `next`, `position(current, count)`,
+  `fullScreen`, `close`.

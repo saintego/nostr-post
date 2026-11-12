@@ -299,6 +299,11 @@ The bundle re-exports utilities for advanced usage:
 - `tokensCss()`, `primitivesCss()`, `uiCss()`: the token and primitive stylesheets as text
 - `resolveTokens(mode, overrides?)`: every token as a plain value (for canvas or other UI libraries)
 - `npClass`, `npPart`: the primitives' class names and the components' part names
+- `<np-dialog heading open backdrop-close>`: a modal dialog with a title, Close and its children;
+  `showModal()`, `close()`, a `close` event; parts `dialog`, `header`, `button`
+- `<np-lightbox .slides>` with `open(index)`: photos and videos large, with previous/next
+  (buttons, arrow keys, swiping), full screen and close (the media gallery and `<np-media-view>`
+  open theirs in it; parts `dialog`, `button`)
 
 **Wiki (NIP-54)**: see [packages/wiki](../wiki/README.md)
 
@@ -322,9 +327,7 @@ The bundle re-exports utilities for advanced usage:
 - `eventMedia(event)`, `mediaOfEvents(events)`: the photos and videos of posts, wherever their kind
   keeps them (`imeta`, `image`, `r`, links, JSON), each file once; `fetchReferences(targets)`: the
   posts referencing addresses or event ids (comments included); `<np-media-gallery>` shows their
-  media (a section's `gallery` view); `<np-media-lightbox .slides>` with `open(index)`: photos and
-  videos large, with previous/next (buttons, arrow keys, swiping), full screen and close (the
-  gallery and `<np-media-view>` open theirs in it; parts `dialog`, `button`)
+  media (a section's `gallery` view); a photo opens in `<np-lightbox>` (see the design system)
 - `registerEntityCreator({ tagName, matches })`, `entityCreatorFor(manifest)`: a plugin's own "+ Create"
   form in the entity picker for the types it can fill (the venue plugin creates venue pages from OSM)
 - `registerEventAction({ tagName, matches })`, `eventActionsFor(manifest)`: a plugin's control shown with

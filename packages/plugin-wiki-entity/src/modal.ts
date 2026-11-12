@@ -1,10 +1,10 @@
 /**
- * @nostr-post/plugin-wiki-entity - The picker's overlay (create dialog, preview)
- *
- * Closes on its × button or a click on the backdrop. A press that began inside the dialog
- * (e.g. selecting text and letting go outside) doesn't close it.
+ * @nostr-post/plugin-wiki-entity - The picker's overlay (create dialog, preview): an
+ * <np-dialog> that also closes on a click on the backdrop, and keeps its content's events from
+ * reaching the form around the picker.
  */
 
+import '@nostr-post/ui/web/dialog';
 import { html } from 'lit';
 import { ref } from 'lit/directives/ref.js';
 
@@ -27,38 +27,24 @@ const isolate = (el?: Element) => {
   for (const type of DIALOG_EVENTS) el.addEventListener(type, (e) => e.stopPropagation());
 };
 
-/** Backdrops whose last press began on themselves */
-const pressed = new WeakSet<EventTarget>();
-
-const onBackdrop = (e: Event) => e.target === e.currentTarget;
-
 export interface ModalOptions {
   title: string;
   body: unknown;
-  /** Label of the × button */
+  /** Label of the Close button */
   closeLabel: string;
   onClose: () => void;
 }
 
 export const renderModal = ({ title, body, closeLabel, onClose }: ModalOptions) => html`
-  <div
-    class="modal-backdrop"
-    @pointerdown=${(e: Event) => {
-      if (!e.currentTarget) return;
-      if (onBackdrop(e)) pressed.add(e.currentTarget);
-      else pressed.delete(e.currentTarget);
-    }}
-    @click=${(e: Event) => {
-      if (e.currentTarget && pressed.has(e.currentTarget) && onBackdrop(e)) onClose();
-      if (e.currentTarget) pressed.delete(e.currentTarget);
-    }}
+  <np-dialog
+    open
+    backdrop-close
+    exportparts="dialog, header, button"
+    heading=${title}
+    .messages=${{ close: closeLabel }}
+    @close=${onClose}
+    ${ref(isolate)}
   >
-    <div class="modal np-dialog" part="dialog" role="dialog" aria-modal="true" aria-label=${title} ${ref(isolate)}>
-      <div class="np-dialog-header" part="header">
-        <span>${title}</span>
-        <button type="button" class="np-icon-button" part="button" aria-label=${closeLabel} @click=${onClose}>×</button>
-      </div>
-      <div class="np-dialog-body">${body}</div>
-    </div>
-  </div>
+    ${body}
+  </np-dialog>
 `;

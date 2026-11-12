@@ -27,6 +27,8 @@ import {
 import { NpElement, npStyles } from '@nostr-post/ui/web';
 import { html, nothing } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
+import '@nostr-post/ui/web/dialog';
+import type { NpDialog } from '@nostr-post/ui/web/dialog';
 import './composer';
 import { DEFAULT_SECTIONS_MESSAGES, type SectionsMessages } from './sectionsMessages';
 import { addPrefill, renderAlso, renderList, renderStats, renderView } from './sectionsParts';
@@ -77,7 +79,7 @@ export class NostrPostSections extends NpElement {
   /** The pages "Add" offers to link too, and those ticked */
   @state() _also: AlsoLinkOption[] = [];
   @state() _alsoTicked: ReadonlySet<string> = new Set();
-  @query('dialog') _dialog?: HTMLDialogElement;
+  @query('np-dialog') _dialog?: NpDialog;
   _loadedFor = '';
 
   get _m(): SectionsMessages {
@@ -218,22 +220,16 @@ export class NostrPostSections extends NpElement {
     const adding = this._adding ? this.sections[this._adding.index] : undefined;
     return html`
       ${this.sections.map((section, i) => this._renderSection(section, i))}
-      <dialog class="np-dialog" part="dialog" @close=${() => {
-        this._adding = undefined;
-      }}>
-        <div class="np-dialog-header">
-          <h2 class="np-dialog-title">${adding ? `${m.add(adding.label)}: ${adding.label}` : ''}</h2>
-          <button
-            type="button"
-            class="np-button np-text"
-            part="button"
-            @click=${() => this._dialog?.close()}
-          >
-            ${m.close}
-          </button>
-        </div>
-        <div class="np-dialog-body">${this._renderComposer()}</div>
-      </dialog>
+      <np-dialog
+        exportparts="dialog, header, button"
+        heading=${adding ? `${m.add(adding.label)}: ${adding.label}` : ''}
+        .messages=${{ close: m.close }}
+        @close=${() => {
+          this._adding = undefined;
+        }}
+      >
+        ${this._renderComposer()}
+      </np-dialog>
     `;
   }
 }

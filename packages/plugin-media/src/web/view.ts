@@ -3,7 +3,7 @@
  *
  * Read-only media gallery. Renders images inline, videos with controls,
  * and falls back to a link for unrecognized URLs. One photo shows large (e.g. an event's
- * image); a photo opens in <np-media-lightbox>, with the field's other photos and videos.
+ * image); a photo opens in <np-lightbox>, with the field's other photos and videos.
  *
  * Accepts .value (string | string[]), .field (PostField) and .author (the post's pubkey). An
  * image from a Blossom server that fails to load is tried on the author's other servers (their
@@ -16,8 +16,8 @@ import { html } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
 import { isImageUrl, isVideoUrl, type MediaPluginConfig, toArray } from '../core';
 import { mediaFileOf } from '../mediaFiles';
-import './lightbox';
-import type { LightboxSlide, NpMediaLightbox } from './lightbox';
+import '@nostr-post/ui/web/lightbox';
+import type { LightboxSlide, NpLightbox } from '@nostr-post/ui/web/lightbox';
 import { otherServersOf } from './otherServers';
 import { viewStyles } from './viewStyles';
 
@@ -39,7 +39,7 @@ export class NpMediaView extends NpElement {
   @state() _shown = new Map<string, string>();
   /** Other servers' URLs still to try, by original URL */
   _alternatives = new Map<string, string[]>();
-  @query('np-media-lightbox') _lightbox?: NpMediaLightbox;
+  @query('np-lightbox') _lightbox?: NpLightbox;
 
   /** The photos and videos, for the lightbox */
   get _slides(): LightboxSlide[] {
@@ -76,7 +76,7 @@ export class NpMediaView extends NpElement {
     return html`<div class="gallery ${urls.length === 1 ? 'single' : ''}">
         ${urls.map((url) => this.renderItem(url))}
       </div>
-      <np-media-lightbox exportparts="dialog, button" .slides=${this._slides}></np-media-lightbox>`;
+      <np-lightbox exportparts="dialog, button" .slides=${this._slides}></np-lightbox>`;
   }
 
   private renderItem(url: string) {
