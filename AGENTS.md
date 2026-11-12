@@ -123,9 +123,15 @@ not a dependency.
   places need, or that would repeat markup another component already has (a dialog with a title
   and Close, a lightbox), becomes a generic component in `packages/ui/src/web` with its own
   `*Messages.ts` and `*Styles.ts` and a subpath export (`@nostr-post/ui/web/dialog`); the places
-  use it instead of copying the markup. Before building a dialog, overlay, picker or the like,
-  look there first (`<np-dialog>`, `<np-lightbox>`). Domain or Nostr logic stays out of it: the
-  component takes plain data (`.slides`, `heading`), the caller maps its events to it.
+  use it instead of copying the markup. Domain or Nostr logic stays out of it: the component
+  takes plain data (`.slides`, `heading`), the caller maps its events to it.
+  - Before adding a component, or markup like a dialog, overlay, menu, picker or lightbox, search
+    `packages/ui/src/web` (`<np-dialog>`, `<np-lightbox>`, …) and the other packages for the same
+    pattern (`<dialog`, `showModal`, `role="dialog"`, `popover`, the same `np-*` structure). Do it
+    in the main session while making the change: you know what markup is new.
+  - For an occasional repo-wide audit (a large PR, before a release), run the read-only
+    `component-sweep` agent (`.claude/agents/componentSweep.md`, Sonnet). It reports candidates;
+    deciding and moving stays with the main session.
 - **Tokens only**: colors, font sizes, radii, spacing and shadows come from `--np-*` tokens; no
   hex/rgb values or px font sizes in component or app styles (no colors in React style objects).
   A new token goes into the token data in `packages/ui/src/tokens.ts` and its README.
