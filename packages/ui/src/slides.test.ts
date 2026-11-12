@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { slideIndex } from './lightbox';
+import { slideIndex } from './slides';
 
 describe('slideIndex', () => {
   it('moves by a step and wraps around both ends', () => {

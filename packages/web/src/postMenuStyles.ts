@@ -16,7 +16,7 @@ export const postMenuStyles = css`
     top: 100%;
     z-index: 10;
   }
-  .raw-dialog {
+  .raw-dialog::part(dialog) {
     width: min(48rem, calc(100vw - 2 * var(--np-space-4)));
   }
   .raw {

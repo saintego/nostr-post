@@ -20,6 +20,7 @@ export {
   resolveTokens,
   type TokenOverrides,
 } from './resolveTokens';
+export { slideIndex } from './slides';
 export {
   allComponents,
   clearStyles,

@@ -1,15 +1,19 @@
 /**
- * <np-media-lightbox>: photos and videos opened large, one at a time, with previous and next
+ * <np-lightbox>: photos and videos opened large, one at a time, with previous and next
  * (buttons, arrow keys, swiping), "3 / 12", full screen and close. `.slides` are what it shows;
- * `open(index)` opens it. Used by <np-media-gallery> and <np-media-view> (a post's photos, e.g.
- * an event's image); apps can use it for their own pictures.
+ * `open(index)` opens it. Used by plugin-media's <np-media-gallery> and <np-media-view> (a post's
+ * photos, e.g. an event's image); apps can use it for their own pictures.
  */
 
-import { NpElement, npStyles } from '@nostr-post/ui/web';
 import { html, nothing, type TemplateResult } from 'lit';
 import { customElement, property, query, state } from 'lit/decorators.js';
+import { slideIndex } from '../slides';
 import { DEFAULT_LIGHTBOX_MESSAGES, type LightboxMessages } from './lightboxMessages';
 import { lightboxStyles } from './lightboxStyles';
+import { NpElement } from './npElement';
+import { npStyles } from './styles';
+
+export { DEFAULT_LIGHTBOX_MESSAGES, type LightboxMessages } from './lightboxMessages';
 
 /** One photo or video of a lightbox */
 export interface LightboxSlide {
@@ -22,15 +26,11 @@ export interface LightboxSlide {
   caption?: TemplateResult | string;
 }
 
-/** The slide after `index` moving by `step` (±1), wrapping around */
-export const slideIndex = (index: number, step: number, count: number): number =>
-  count === 0 ? 0 : (((index + step) % count) + count) % count;
-
 /** Horizontal distance (px) a swipe needs to change the slide */
 const SWIPE_PX = 40;
 
-@customElement('np-media-lightbox')
-export class NpMediaLightbox extends NpElement {
+@customElement('np-lightbox')
+export class NpLightbox extends NpElement {
   static override styles = [...npStyles, lightboxStyles];
 
   @property({ attribute: false }) slides: LightboxSlide[] = [];
@@ -134,6 +134,6 @@ export class NpMediaLightbox extends NpElement {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'np-media-lightbox': NpMediaLightbox;
+    'np-lightbox': NpLightbox;
   }
 }

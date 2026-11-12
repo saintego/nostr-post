@@ -119,6 +119,13 @@ not a dependency.
   missing variant or a new kind of generic piece is added to `@nostr-post/ui`, not built in a
   component or app. Keep a component's own class next to the primitive's when code or tests use it
   (`class="preview-btn np-icon-button"`).
+- **Shared components in `@nostr-post/ui/web`**: a Lit component (or a template part) that two
+  places need, or that would repeat markup another component already has (a dialog with a title
+  and Close, a lightbox), becomes a generic component in `packages/ui/src/web` with its own
+  `*Messages.ts` and `*Styles.ts` and a subpath export (`@nostr-post/ui/web/dialog`); the places
+  use it instead of copying the markup. Before building a dialog, overlay, picker or the like,
+  look there first (`<np-dialog>`, `<np-lightbox>`). Domain or Nostr logic stays out of it: the
+  component takes plain data (`.slides`, `heading`), the caller maps its events to it.
 - **Tokens only**: colors, font sizes, radii, spacing and shadows come from `--np-*` tokens; no
   hex/rgb values or px font sizes in component or app styles (no colors in React style objects).
   A new token goes into the token data in `packages/ui/src/tokens.ts` and its README.

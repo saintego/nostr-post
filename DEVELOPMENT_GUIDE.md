@@ -189,7 +189,7 @@ Each plugin package includes: core logic + web component input + web component v
 
 **Core:** Array field support, isImageUrl/isVideoUrl helpers  
 **Input:** <np-media-input> drag-drop, multi-file, URL paste, NIP-98 signed upload; on phones "Take photo" / "Record video" open the camera  
-**View:** <np-media-view> responsive gallery (one photo large; photos open in <np-media-lightbox> with previous/next, full screen; videos + controls)  
+**View:** <np-media-view> responsive gallery (one photo large; photos open in <np-lightbox> with previous/next, full screen; videos + controls)  
 **Tags:** Multiple ["r", "https://..."] per field
 
 **Special:** Blossom upload to the user's servers (kind 24242 auth, kind 10063 list), then NIP-98 auth for nostr.build; `imeta` tags (NIP-92)

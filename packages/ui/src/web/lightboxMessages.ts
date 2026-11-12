@@ -1,5 +1,5 @@
 /**
- * User-facing text of <np-media-lightbox>, with English defaults. Apps override any of it with
+ * User-facing text of <np-lightbox>, with English defaults. Apps override any of it with
  * its `messages` property (e.g. translations).
  */
 export interface LightboxMessages {
