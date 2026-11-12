@@ -201,6 +201,10 @@ export {
   type NostrProfile,
   type ProfileOptions,
   type DryRunChangeDetail,
+  knownPublicKey,
+  setKnownPublicKey,
+  onKnownPublicKeyChange,
+  KNOWN_PUBKEY_EVENT,
 } from '@nostr-post/signer';
 
 // Publishing and reading posts without the components (@nostr-post/posts)

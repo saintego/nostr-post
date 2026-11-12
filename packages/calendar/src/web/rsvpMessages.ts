@@ -8,6 +8,8 @@ export interface RsvpMessages {
   declined: string;
   /** Accessible name of the buttons */
   label: string;
+  /** While the answers (and the user's own) load */
+  loading: string;
   /** While the answer is signed and published */
   saving: string;
   /** The answer wasn't published; the reason follows */
@@ -23,6 +25,7 @@ export const DEFAULT_RSVP_MESSAGES: RsvpMessages = {
   tentative: 'Maybe',
   declined: "Can't go",
   label: 'Will you attend?',
+  loading: 'Loading answers…',
   saving: 'Saving…',
   failed: (reason) => `Couldn't save your answer: ${reason}`,
   who: (count) => `Who (${count})`,

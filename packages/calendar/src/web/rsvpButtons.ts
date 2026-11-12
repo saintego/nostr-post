@@ -1,11 +1,13 @@
 /**
  * @nostr-post/plugin-date - <np-rsvp>
  *
- * Going / Maybe / Can't go on a calendar event, with how many people answered each. An event
+ * Going / Maybe / Can't go on a calendar event, with how many people answered each and the
+ * signed-in user's own answer marked (`knownPublicKey`; "Loading answers…" until loaded). An event
  * action (`registerEventAction`): views show it with events made with calendar manifests.
  * Accepts .target (the event's address) and .relays; reading needs no signer, answering does.
  */
 
+import { knownPublicKey, onKnownPublicKeyChange } from '@nostr-post/signer';
 import { NpElement, npStyles } from '@nostr-post/ui/web';
 import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
@@ -33,14 +35,36 @@ export class NpRsvp extends NpElement {
   @property({ type: Object }) messages: Partial<RsvpMessages> = {};
 
   @state() _summary?: RsvpSummary;
-  /** The user's answer, once they gave one here */
-  @state() _mine?: RsvpStatus;
+  /** The user's answer given here (shown before the next load has it) */
+  @state() _answered?: RsvpStatus;
+  /** The signed-in user, as far as the app knows (`knownPublicKey`): their answer is marked */
+  @state() _me = knownPublicKey();
   @state() _busy = false;
   @state() _error = '';
   @state() _whoOpen = false;
 
   /** Counts loads, so one replaced by a newer load (another target) is ignored */
   _loads = 0;
+  _unsubscribe?: () => void;
+
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this._me = knownPublicKey();
+    this._unsubscribe = onKnownPublicKeyChange((pubkey) => {
+      this._me = pubkey;
+      this._answered = undefined;
+    });
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this._unsubscribe?.();
+  }
+
+  /** The user's answer: given here, else theirs among the loaded ones */
+  get _mine(): RsvpStatus | undefined {
+    return this._answered ?? (this._me ? this._summary?.byPubkey.get(this._me) : undefined);
+  }
 
   get _m(): RsvpMessages {
     return { ...DEFAULT_RSVP_MESSAGES, ...this.messages };
@@ -53,6 +77,7 @@ export class NpRsvp extends NpElement {
   async _load(): Promise<void> {
     const load = ++this._loads;
     this._summary = undefined;
+    this._answered = undefined;
     if (!isCalendarEventAddress(this.target)) return;
     const target = this.target;
     const events = await fetchRsvps([target], { relays: this.relays }).catch(() => []);
@@ -68,13 +93,14 @@ export class NpRsvp extends NpElement {
       this._error = this._m.failed(result.error.message);
       return;
     }
-    this._mine = status;
+    this._answered = status;
     this._summary = withAnswer(this._summary, result.data.pubkey, status);
   }
 
   override render() {
     if (!isCalendarEventAddress(this.target)) return nothing;
     const m = this._m;
+    const mine = this._mine;
     const counts = this._summary?.counts;
     const answers = counts ? counts.accepted + counts.tentative + counts.declined : 0;
     return html`
@@ -83,9 +109,9 @@ export class NpRsvp extends NpElement {
           (status) => html`
             <button
               type="button"
-              class="np-chip ${status === this._mine ? 'np-selected' : ''}"
+              class="np-chip ${status === mine ? 'np-selected' : ''}"
               part="chip"
-              aria-pressed=${status === this._mine ? 'true' : 'false'}
+              aria-pressed=${status === mine ? 'true' : 'false'}
               ?disabled=${this._busy}
               @click=${() => this._answer(status)}
             >
@@ -109,6 +135,11 @@ export class NpRsvp extends NpElement {
             : ''
         }
         ${this._busy ? html`<span class="np-hint">${m.saving}</span>` : ''}
+        ${
+          !this._busy && !this._summary
+            ? html`<span class="np-hint" role="status">${m.loading}</span>`
+            : ''
+        }
       </div>
       ${this._whoOpen ? renderRsvpWho(this._summary, m) : ''}
       ${this._error ? html`<p class="error np-field-error" part="error" role="alert">${this._error}</p>` : ''}

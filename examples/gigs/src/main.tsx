@@ -12,6 +12,7 @@ import '@nostr-post/wiki/web';
 import '@nostr-post/plugin-wiki-entity/web';
 import '@nostr-post/plugin-embed/web';
 import { onSignInNeeded } from '@nostr-post/plugins/signIn';
+import { setKnownPublicKey } from '@nostr-post/signer';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
@@ -21,6 +22,8 @@ import { App } from './App';
 window.NostrBridge?.init({ layout: 'floating' }).catch((err: unknown) => {
   console.error('nostr-bridge: sign-in could not start', err);
 });
+// Who is signed in, for views that mark the user's own answers (RSVPs) without asking the signer
+window.NostrBridge?.onAuthChange((state) => setKnownPublicKey(state.pubkey ?? undefined));
 // An upload or a publish without a signed-in user opens the sign-in
 onSignInNeeded(() => {
   window.NostrBridge?.login().catch((err: unknown) => console.error('nostr-bridge: sign-in', err));
