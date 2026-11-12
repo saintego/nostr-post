@@ -36,16 +36,13 @@
   "license": "MIT",
   "dependencies": {
     "@nostr-post/core": "workspace:*",
-    "@nostr-post/plugin-date": "workspace:*",
-    "@nostr-post/plugin-hashtag": "workspace:*",
-    "@nostr-post/plugin-markdown": "workspace:*",
-    "@nostr-post/plugin-media": "workspace:*",
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/ui": "workspace:*",
     "@nostr-post/web": "workspace:*",
     "lit": "^3.3.3"
   },
   "devDependencies": {
+    "@nostr-post/plugin-date": "workspace:*",
     "typescript": "^6.0.3"
   }
 }

@@ -2,6 +2,9 @@ import { build, context } from 'esbuild';
 
 const isWatch = process.argv.includes('--watch');
 
+/** The split build's parts (src/<name>.ts → dist/split/<name>.js); index.ts is their sum */
+const SPLIT_ENTRIES = ['base', 'plugins', 'wiki', 'calendar', 'article', 'list'];
+
 const shared = {
   entryPoints: ['src/index.ts'],
   bundle: true,
@@ -41,5 +44,20 @@ if (isWatch) {
     minify: true,
   });
 
-  console.log('Built dist/nostr-post.js (ESM) and dist/nostr-post.iife.js (IIFE)');
+  // Split ESM: one module per part, sharing their code (chunks); field plugins load on demand
+  // (plugin autoload's dynamic imports become their own chunks)
+  await build({
+    ...shared,
+    entryPoints: SPLIT_ENTRIES.map((name) => `src/${name}.ts`),
+    format: 'esm',
+    splitting: true,
+    outdir: 'dist/split',
+    entryNames: '[name]',
+    chunkNames: 'chunks/[name]-[hash]',
+    minify: true,
+  });
+
+  console.log(
+    'Built dist/nostr-post.js (ESM), dist/nostr-post.iife.js (IIFE) and dist/split/ (ESM parts)'
+  );
 }

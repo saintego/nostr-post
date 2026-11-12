@@ -5,14 +5,11 @@
  * with the article manifest, which loads the newest version and shows it (title, image,
  * summary, the formatted text, topics, publishing date). The kind view of 30023: a post linking
  * an article (`nostr:naddr…`) shows it like this. With `thread`, the article's own page: its
- * comments (NIP-22), reactions and update comments too.
+ * comments (NIP-22), reactions and update comments too. The fields' plugins (Markdown, image,
+ * topics, date) load when the view needs them (web's plugin autoload).
  */
 
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import '@nostr-post/plugin-date/web';
-import '@nostr-post/plugin-hashtag/web';
-import '@nostr-post/plugin-markdown/web';
-import '@nostr-post/plugin-media/web';
 import { npExportParts } from '@nostr-post/ui';
 import { NpElement, npStyles } from '@nostr-post/ui/web';
 import '@nostr-post/web';

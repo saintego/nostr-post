@@ -202,18 +202,6 @@ importers:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
-      '@nostr-post/plugin-date':
-        specifier: workspace:*
-        version: link:../plugin-date
-      '@nostr-post/plugin-hashtag':
-        specifier: workspace:*
-        version: link:../plugin-hashtag
-      '@nostr-post/plugin-markdown':
-        specifier: workspace:*
-        version: link:../plugin-markdown
-      '@nostr-post/plugin-media':
-        specifier: workspace:*
-        version: link:../plugin-media
       '@nostr-post/plugins':
         specifier: workspace:*
         version: link:../plugins
@@ -227,6 +215,9 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      '@nostr-post/plugin-date':
+        specifier: workspace:*
+        version: link:../plugin-date
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
