@@ -265,7 +265,7 @@ styles, mapped to `t` for posts and wiki entities; the beer entity extends it an
 | `reference`          | `string` | `urlDedupeMode` (`'normalized'` \| `'exact'` \| `'origin-path'`)                                                                                                                                                               |
 | `identifier`         | `string` | `prefix` (`i` tag namespace, e.g. NIP-73 `isbn`; others are [our own](./NOSTR_CONVENTIONS.md#external-ids-i-tags))                                                                                                                                                                                       |
 | `geo`                | `geo`    | `precision` (geohash length, default 6), `defaultZoom`, `allowSearch`                                                                                                                                                          |
-| `date`               | `date`   | `precision` (`'day'` default \| `'time'`), on kinds other than NIP-52 calendar events, see [dates](#dates)                                                                                                                      |
+| `date`               | `date`   | `precision` (`'day'` default \| `'time'`), on kinds other than NIP-52 calendar events; `defaultNow: true`: left empty, the value is the time of publishing (an article's `published_at`; an edit keeps the value it opened with), see [dates](#dates) |
 | `embed`              | `string` | `multiple` (several links). Links show as players (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp player links), others as links |
 | `profile`            | `profile` | `roles` (role suggestions, e.g. `['host', 'speaker']`), `max` (most people), `searchRelays` (NIP-50 relays to search profiles; default `DEFAULT_SEARCH_RELAYS`). The value: `{ pubkey, role?, relay? }[]`, written as `["p", pubkey, relay, role]`. With `attachTo` a text field: `@` mentions in it (`nostr:npub…`), the people mentioned get `p` tags |
 | `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub), and `requirePage` (no opt-out from it); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts)); `multiple` (several venues, a list)                                                                                  |
@@ -286,6 +286,9 @@ kind it is written to:
 | 31922 (all-day) | `YYYY-MM-DD`; `end` is the day after the last day  | one `D` tag per day                           |
 | 31923 (timed)   | unix seconds                                       | `start_tzid`, `end_tzid`, one `D` tag per day |
 | any other       | its `mapTo` tag at `metadata.precision`, no `end`  | nothing                                       |
+
+With `metadata.defaultNow`, an empty value becomes the time of publishing (today with `precision:
+'day'`), e.g. NIP-23's `published_at`: the first publishing, kept by edits.
 
 `D` tags are unix day numbers (`floor(unix / 86400)`), at most 366 per event. NIP-52 defines them
 for timed events; on all-day events they are an extra tag, so relays can return those by day too.

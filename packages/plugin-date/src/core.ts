@@ -28,6 +28,7 @@ import {
   parseStoredDate,
   serializeAllDayEnd,
   serializeWall,
+  unixToWall,
   valueTimeZone,
 } from './dateValue';
 import { formatValueIn } from './dateDisplay';
@@ -95,6 +96,14 @@ const timedZoneOfTags = (tags: string[][]): { tzid?: string; guessed?: boolean }
   if (own && isValidTimeZone(own)) return { tzid: own };
   const guess = guessTimeZoneOfTags(tags);
   return guess ? { tzid: guess, guessed: true } : {};
+};
+
+/** Now as a value, in the viewer's zone: today for calendar dates, else this minute */
+const nowValue = (precision: DatePrecision): DateValue => {
+  const tzid = defaultTimeZone();
+  const wall =
+    unixToWall(Math.floor(Date.now() / 1000), tzid) ?? new Date().toISOString().slice(0, 16);
+  return precision === 'day' ? { start: wall.slice(0, 10) } : { start: wall, tzid };
 };
 
 /** A field's value from an event's tags: its own tag, plus `end` and time zones for `start` */
@@ -180,6 +189,15 @@ export const datePlugin: NostrUIPlugin = {
     if (!isCalendarKind(target?.kind) || target?.tagName !== 'start') return [];
     return calendarExtraTags(value, datePrecision(field));
   },
+
+  /**
+   * `metadata.defaultNow`: an empty value is the time of publishing, e.g. an article's
+   * `published_at` (NIP-23: when it was first published; an edit keeps the value it opened with)
+   */
+  enrichFormData: (formData: Record<string, unknown>, field: PostField): Record<string, unknown> =>
+    field.metadata?.defaultNow === true && !isDateValue(formData[field.id])
+      ? { [field.id]: nowValue(datePrecision(field)) }
+      : {},
 
   resolveFromTags: (tags: string[][], field: PostField): unknown =>
     dateValueFromTags(tags, activeTarget(field)?.tagName),

@@ -32,6 +32,7 @@ export { NostrPostMenu, renderPostMenu } from './postMenu';
 export { DEFAULT_POST_MENU_MESSAGES, type PostMenuMessages } from './postMenuMessages';
 export { NostrPostFeed } from './feed';
 export { NostrPostSections } from './sections';
+export { NostrPostAddress } from './addressView';
 export { DEFAULT_SECTIONS_MESSAGES, type SectionsMessages } from './sectionsMessages';
 export { DEFAULT_FEED_MESSAGES, type FeedMessages } from './feedMessages';
 // For feed layouts (`<nostr-post-feed .layout>`, e.g. @nostr-post/calendar's agenda)

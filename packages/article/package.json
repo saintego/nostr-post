@@ -1,0 +1,51 @@
+{
+  "name": "@nostr-post/article",
+  "version": "0.1.0",
+  "description": "NIP-23 long-form articles for nostr-post: article manifest (kind 30023), relay filters and the article view",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    }
+  },
+  "sideEffects": [
+    "./dist/web.js",
+    "./dist/web/*.js"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
+    "test:watch": "vitest --dir src",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "nostr",
+    "nip-23",
+    "long-form",
+    "article",
+    "blog"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nostr-post/core": "workspace:*",
+    "@nostr-post/plugin-date": "workspace:*",
+    "@nostr-post/plugin-hashtag": "workspace:*",
+    "@nostr-post/plugin-markdown": "workspace:*",
+    "@nostr-post/plugin-media": "workspace:*",
+    "@nostr-post/plugins": "workspace:*",
+    "@nostr-post/ui": "workspace:*",
+    "@nostr-post/web": "workspace:*",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

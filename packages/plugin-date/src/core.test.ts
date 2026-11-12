@@ -157,3 +157,30 @@ describe('validate / formatDateValue', () => {
     );
   });
 });
+
+describe('defaultNow', () => {
+  const field: PostField = {
+    id: 'published',
+    type: 'date',
+    uiPlugin: 'date',
+    mapTo: { kind: 30023, target: 'tag' as const, tagName: 'published_at' },
+    metadata: { precision: 'time', defaultNow: true },
+  };
+
+  it('fills an empty value with the time of publishing, written as unix seconds', () => {
+    const before = Math.floor(Date.now() / 1000) - 60;
+    const filled = datePlugin.enrichFormData?.({}, field);
+    const value = filled?.published;
+    const serialized = Number(datePlugin.serializeValue?.(value, field));
+    expect(serialized).toBeGreaterThanOrEqual(before);
+    expect(serialized).toBeLessThanOrEqual(before + 120);
+  });
+
+  it('keeps a value it has (an edit), and leaves fields without defaultNow alone', () => {
+    const kept = { start: '2020-01-02T10:00', tzid: 'UTC' };
+    expect(datePlugin.enrichFormData?.({ published: kept }, field)).toEqual({});
+    expect(datePlugin.enrichFormData?.({}, { ...field, metadata: { precision: 'time' } })).toEqual(
+      {}
+    );
+  });
+});

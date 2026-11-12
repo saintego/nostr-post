@@ -19,6 +19,7 @@ import '@nostr-post/plugin-stars/web';
 import '@nostr-post/plugin-geo/web';
 import '@nostr-post/plugin-date/web';
 import '@nostr-post/calendar/web';
+import '@nostr-post/article/web';
 import '@nostr-post/plugin-profile/web';
 import '@nostr-post/plugin-embed/web';
 import '@nostr-post/plugin-venue/web';
@@ -148,6 +149,19 @@ export {
   agendaText,
 } from '@nostr-post/calendar';
 export { agendaImage, drawAgendaImage } from '@nostr-post/calendar/web';
+
+// Markdown as safe HTML (raw HTML shown as text, no script links)
+export { renderMarkdown } from '@nostr-post/plugin-markdown';
+
+// Long-form articles (NIP-23): <nostr-article>, the article manifest, filters and list cards
+export {
+  ARTICLE_KIND,
+  ARTICLE_MANIFEST,
+  articleCard,
+  articleFilter,
+  isArticleAddress,
+  type ArticleCard,
+} from '@nostr-post/article';
 export { eventsToIcs, icsToDrafts, icsDTag, type IcsDraft } from '@nostr-post/calendar/ics';
 
 // Signing & relay utilities

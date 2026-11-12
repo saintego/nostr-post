@@ -1,3 +1,4 @@
+import { ARTICLE_MANIFEST } from '@nostr-post/article';
 import { CALENDAR_EVENT_MANIFEST } from '@nostr-post/calendar';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';
@@ -104,6 +105,9 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
         : field
     ),
   },
+
+  // NIP-23 long-form article (kind 30023) from @nostr-post/article
+  article: ARTICLE_MANIFEST,
 
   // The BJCP style list as a base manifest (lib/manifests/beerStyleBjcp2021.json).
   // The beer entity extends it by id; other apps by its address once it's published.
@@ -875,58 +879,6 @@ export const EXAMPLE_MANIFESTS: Record<string, NostrPostManifest | WikiManifest>
       description:
         'Review a venue as a public Kind 1 note, a structured NIP-78 review, or both using one form.',
       tags: ['venue', 'review', 'kind1', 'nip78'],
-    },
-  },
-
-  article: {
-    id: 'article-v1',
-    version: '1.0.0',
-    publishFormats: [
-      {
-        id: 'nip23-article',
-        label: 'NIP-23 Article',
-        kinds: [30023],
-        default: true,
-        userSelectable: true,
-      },
-    ],
-    fields: [
-      {
-        id: 'title',
-        type: 'string',
-        uiPlugin: 'text',
-        mapTo: { kind: 30023, target: 'tag', tagName: 'title' },
-        required: true,
-        metadata: {
-          label: 'Title',
-          placeholder: 'Article title',
-        },
-      },
-      {
-        id: 'summary',
-        type: 'string',
-        uiPlugin: 'textarea',
-        mapTo: { kind: 30023, target: 'tag', tagName: 'summary' },
-        metadata: {
-          label: 'Summary',
-          placeholder: 'Brief summary',
-        },
-      },
-      {
-        id: 'content',
-        type: 'string',
-        uiPlugin: 'textarea',
-        mapTo: { kind: 30023, target: 'content' },
-        required: true,
-        metadata: {
-          label: 'Content',
-          placeholder: 'Write your article...',
-        },
-      },
-    ],
-    metadata: {
-      name: 'Article (NIP-23)',
-      description: 'Long-form content',
     },
   },
 
