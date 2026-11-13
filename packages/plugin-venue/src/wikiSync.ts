@@ -50,6 +50,7 @@ export async function findVenueEntity(
   if (ids.length === 0) return undefined;
   const events = (await fetchEvents({ kinds: [WIKI_KIND], '#i': ids, limit: 50 } as never, relays, {
     waitForAll: true,
+    complete: true,
     relayTimeoutMs: 8000,
   })) as unknown as WikiEvent[];
   const dTag = selectNewestEntity(events, defaultResolver);
@@ -91,6 +92,7 @@ export async function findVenueEntityByName(
     relays,
     {
       waitForAll: true,
+      complete: true,
       relayTimeoutMs: 8000,
     }
   )) as unknown as WikiEvent[];

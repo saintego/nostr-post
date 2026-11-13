@@ -15,7 +15,7 @@ export async function fetchEntityVersions(
   const events = (await fetchEvents(
     { kinds: [WIKI_KIND], '#d': [dTag], limit: 50 } as never,
     relays,
-    { waitForAll: true, relayTimeoutMs: 5000 }
+    { waitForAll: true, complete: true, relayTimeoutMs: 5000 }
   )) as unknown as WikiEvent[];
   return [...events].sort((a, b) => b.created_at - a.created_at);
 }

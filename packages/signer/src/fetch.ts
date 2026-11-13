@@ -1,5 +1,7 @@
 import { dryRunEventsForReads } from './dryRun';
+import { cachedEvents, cacheEvent } from './eventCache';
 import type { FetchFilter, SignedEvent } from './index';
+import { subscribe } from './relayPool';
 /** Default relays to publish to */
 export const DEFAULT_RELAYS = ['wss://relay.damus.io', 'wss://nos.lol', 'wss://relay.primal.net'];
 
@@ -36,9 +38,10 @@ const noteSeenOn = (id: string, relayUrl: string) => {
 export const relaysSeenOn = (id: string): string[] => seenOn.get(id) ?? [];
 
 /**
- * Fetch events from a single relay. Events that don't match any of the
- * filters are dropped (see matchesFilter). In dry-run mode, logged events
- * matching the filters are returned too.
+ * Fetch events from a single relay, over its shared connection (`relayPool`). Events that don't
+ * match any of the filters are dropped (see matchesFilter); those that do are kept in the
+ * session cache (`eventCache`). In dry-run mode, logged events matching the filters are returned
+ * too.
  */
 export function fetchEventsFromRelay(
   relayUrl: string,
@@ -52,24 +55,30 @@ export function fetchEventsFromRelay(
 ): Promise<SignedEvent[]> {
   return new Promise((resolve, reject) => {
     const events: SignedEvent[] = [];
-    const ws = new WebSocket(relayUrl);
-    const subId = Math.random().toString(36).substring(7);
     const filters = Array.isArray(filter) ? filter : [filter];
+    let unsubscribe = () => {};
+    let settled = false;
+    const finish = (error?: Error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      unsubscribe();
+      if (error) reject(error);
+      else resolve(events);
+    };
 
     const timeoutMs = options?.relayTimeoutMs ?? 10000;
     const timeout = setTimeout(() => {
-      ws.close();
-      if (options?.rejectOnTimeout) reject(new Error(`Timeout waiting for ${relayUrl}`));
-      else resolve(events); // Return what we have
+      // Return what we have, or reject when asked to
+      finish(options?.rejectOnTimeout ? new Error(`Timeout waiting for ${relayUrl}`) : undefined);
     }, timeoutMs);
 
-    ws.onopen = () => {
-      ws.send(JSON.stringify(['REQ', subId, ...filters]));
-    };
-
     const acceptEvent = (ev: SignedEvent, fromRelay = false) => {
-      if (!filters.some((f) => matchesFilter(ev, f))) return;
-      if (fromRelay) noteSeenOn(ev.id, relayUrl);
+      if (settled || !filters.some((f) => matchesFilter(ev, f))) return;
+      if (fromRelay) {
+        noteSeenOn(ev.id, relayUrl);
+        cacheEvent(ev);
+      }
       events.push(ev);
       // Notify progressive listeners
       try {
@@ -86,49 +95,52 @@ export function fetchEventsFromRelay(
       });
     }
 
-    ws.onmessage = (msg) => {
-      try {
-        const data = JSON.parse(msg.data);
-        if (data[0] === 'EVENT' && data[1] === subId) {
-          acceptEvent(data[2] as SignedEvent, true);
-        } else if (data[0] === 'CLOSED' && data[1] === subId) {
-          // The relay refused or ended the subscription (e.g. an unsupported filter)
-          clearTimeout(timeout);
-          ws.close();
-          resolve(events);
-        } else if (data[0] === 'EOSE') {
-          clearTimeout(timeout);
-          ws.send(JSON.stringify(['CLOSE', subId]));
-          ws.close();
-          resolve(events);
-        }
-      } catch {
-        // Ignore parse errors
-      }
-    };
-
-    ws.onerror = () => {
-      clearTimeout(timeout);
-      reject(new Error(`Failed to connect to ${relayUrl}`));
-    };
+    unsubscribe = subscribe(relayUrl, filters, {
+      onEvent: (ev) => acceptEvent(ev as SignedEvent, true),
+      onEose: () => finish(),
+      // The relay refused or ended the subscription (e.g. an unsupported filter)
+      onClosed: () => finish(),
+      onError: () => finish(new Error(`Failed to connect to ${relayUrl}`)),
+    });
   });
 }
 
+/** Replaceable kinds (NIP-01): one event per author and kind */
+const isReplaceableKind = (kind: number): boolean =>
+  kind === 0 || kind === 3 || (kind >= 10000 && kind < 20000);
+
 /**
- * Fetch events from multiple relays in parallel.
- *
- * - Resolves as soon as the first relay returns events (or once all relays
- *   replied empty).
- *   Other relay connections continue running in the background.
- * - `onEvent` fires for every unique event across all relays (deduplicated by id).
- * - `relayTimeoutMs` controls per-relay timeout (default 10 000 ms).
+ * Whether the filters ask for particular events: by id, or one author's addressable or
+ * replaceable events. The cache's copy answers those at once (relays may still have newer).
  */
+const asksForParticularEvents = (filters: FetchFilter[]): boolean =>
+  filters.length > 0 &&
+  filters.every(
+    (f) =>
+      !f.search &&
+      (!!f.ids?.length ||
+        (!!f.authors?.length &&
+          (!!f['#d']?.length || (!!f.kinds?.length && f.kinds.every(isReplaceableKind)))))
+  );
+
+/** How long the other relays get once the first one finished, waiting for all (ms) */
+const SETTLE_MS = 2500;
+
 /**
- * Hybrid fetchEvents: resolves with first batch, continues to update via onUpdate.
- * @param filter Nostr filter(s)
- * @param relays List of relay URLs
- * @param options.onUpdate Called with deduped array of all events so far as new events arrive
- * @returns Promise that resolves with the first batch of events (from any relay)
+ * Fetch events from multiple relays in parallel, over shared connections, cache first:
+ *
+ * - The session cache answers first: its matching events are shown at once (`onUpdate`), and a
+ *   query for particular events (by id, an author's addressable or replaceable events) resolves
+ *   with them right away. The relays are asked all the same: newer and more events follow
+ *   through `onUpdate` (and are cached for the next query).
+ * - Otherwise it resolves with the first relay that returns events (or once all replied empty);
+ *   the other relays keep going in the background, through `onUpdate`.
+ * - `waitForAll`: for callers that need everything (a slug's availability, a page's newest
+ *   version): resolves once every relay finished (EOSE, CLOSED, error or its timeout), or
+ *   `settleMs` (default 2.5 s) after the first relay finished, so one slow relay doesn't hold it.
+ *   With `complete`, every relay's answer, each up to its timeout: for callers that write on top
+ *   of what they read (a list, a page's newest version) or create what isn't found.
+ * - `relayTimeoutMs`: per-relay timeout (default 10 000 ms).
  */
 export const fetchEvents = (
   filter: FetchFilter | FetchFilter[],
@@ -137,8 +149,16 @@ export const fetchEvents = (
     onUpdate?: (events: SignedEvent[]) => void;
     relayTimeoutMs?: number;
     waitForAll?: boolean;
+    /** With `waitForAll`: how long the others get after the first relay finished (ms) */
+    settleMs?: number;
+    /**
+     * With `waitForAll`: every relay's answer (each up to its timeout), for callers that write on
+     * top of what they read (a list, a page's newest version) or create what isn't found
+     */
+    complete?: boolean;
   }
 ): Promise<SignedEvent[]> => {
+  const filters = Array.isArray(filter) ? filter : [filter];
   const seenIds = new Set<string>();
   const allEvents: SignedEvent[] = [];
 
@@ -156,32 +176,34 @@ export const fetchEvents = (
     }
   };
 
+  // Cache first: what this session already has
+  const cached = cachedEvents(filters);
+  for (const ev of cached) addEvent(ev);
+  if (cached.length > 0 && options?.onUpdate) {
+    const onUpdate = options.onUpdate;
+    queueMicrotask(() => onUpdate([...allEvents]));
+  }
+
   const relayPromises = relays.map((relay) =>
-    fetchEventsFromRelay(relay, filter, {
+    fetchEventsFromRelay(relay, filters, {
       onEvent,
       relayTimeoutMs: options?.relayTimeoutMs,
     })
   );
 
-  if (options?.waitForAll) {
-    // Wait for all relays to settle
-    return Promise.allSettled(relayPromises).then((results) => {
-      for (const res of results) {
-        if (res.status === 'fulfilled') {
-          for (const ev of res.value) {
-            addEvent(ev);
-          }
-        }
-      }
-      if (options?.onUpdate) options.onUpdate([...allEvents]);
-      return [...allEvents];
-    });
+  if (options?.waitForAll) return waitForRelays(relayPromises, allEvents, addEvent, options);
+
+  // Particular events the cache has: answered now, the relays go on in the background
+  if (cached.length > 0 && asksForParticularEvents(filters)) {
+    for (const promise of relayPromises) promise.catch(() => {});
+    return Promise.resolve([...allEvents]);
   }
+
   // Resolve with the first relay that returns events; an empty answer from a
   // fast relay must not hide events another relay has. Empty if all are empty.
   return new Promise<SignedEvent[]>((resolve) => {
     let pending = relayPromises.length;
-    if (pending === 0) resolve([]);
+    if (pending === 0) resolve([...allEvents]);
     for (const promise of relayPromises) {
       promise
         .then((batch) => {
@@ -199,3 +221,36 @@ export const fetchEvents = (
     return events;
   });
 };
+
+/**
+ * Every relay's answer, ending when all finished or `settleMs` after the first one did: one slow
+ * relay doesn't hold the caller up to its timeout
+ */
+const waitForRelays = (
+  relayPromises: Promise<SignedEvent[]>[],
+  allEvents: SignedEvent[],
+  addEvent: (ev: SignedEvent) => boolean,
+  options: { onUpdate?: (events: SignedEvent[]) => void; settleMs?: number; complete?: boolean }
+): Promise<SignedEvent[]> =>
+  new Promise<SignedEvent[]>((resolve) => {
+    let pending = relayPromises.length;
+    let settleTimer: ReturnType<typeof setTimeout> | undefined;
+    const done = () => {
+      clearTimeout(settleTimer);
+      if (options.onUpdate) options.onUpdate([...allEvents]);
+      resolve([...allEvents]);
+    };
+    if (pending === 0) return done();
+    for (const promise of relayPromises) {
+      promise
+        .then((batch) => {
+          for (const ev of batch) addEvent(ev);
+        })
+        .catch(() => {})
+        .finally(() => {
+          pending--;
+          if (pending === 0) return done();
+          if (!options.complete) settleTimer ??= setTimeout(done, options.settleMs ?? SETTLE_MS);
+        });
+    }
+  });
