@@ -203,7 +203,7 @@ up to 500 posts, and still lists `limit`; numbers are computed when shown, never
 | `target`    | Stored in                                                                     | Notes                                                   |
 | ----------- | ----------------------------------------------------------------------------- | ------------------------------------------------------- |
 | `'content'` | The event content. For NIP-78 (30078) posts a JSON object, at `path` if given | `path`: dot path, e.g. `"venue.address.city"`           |
-| `'tag'`     | A tag named `tagName`: relay-filterable                                       | e.g. `t`, `a`, `i`, `g`, `title`, `rating`              |
+| `'tag'`     | A tag named `tagName`: relay-filterable                                       | e.g. `t`, `a`, `i`, `g`, `title`, `rating`. `tagExtra`: fixed elements after the value, e.g. `{ tagName: "proxy", tagExtra: ["web"] }` writes NIP-48's `["proxy", <url>, "web"]` |
 | `'table'`   | A row of the infobox table in a wiki entity's content (kind 30818 only)       | Written by `@nostr-post/wiki`, not the core coordinator |
 
 ## Field metadata

@@ -171,7 +171,8 @@ const appendTagValue = (
     serializeTagValue(value);
   // Skip empty values — plugins can return '' from serializeValue to suppress emission
   if (!stringValue) return;
-  tags.push([tagName, stringValue]);
+  const tagExtra = Array.isArray(field.mapTo) ? [] : (field.mapTo.tagExtra ?? []);
+  tags.push([tagName, stringValue, ...tagExtra]);
 };
 
 const appendGeohashTags = (

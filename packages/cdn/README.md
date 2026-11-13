@@ -213,6 +213,13 @@ The bundle re-exports utilities for advanced usage:
 - `encodeNaddr(address, relays?)`, `decodeNaddr(naddr)`: an address (`kind:pubkey:d-tag`) as `naddr1…` and back
 - `encodeNevent(id, { relays, author, kind })`: an event id as `nevent1…`
 
+**Imported events (NIP-48)**
+
+- `proxyTag(id, protocol?)`: `["proxy", <id>, "web" | "activitypub" | "rss" | "atproto"]`, marking an
+  event as coming from elsewhere; `proxyOf(tags)`: its `{ id, protocol }`; `sourceUrl(source)`: a link
+  a browser opens; `siteOf(url)`: `facebook.com`. `<nostr-post-view>` shows "Imported from <site>"
+  (`messages.importedFrom`)
+
 **Signing & Relays**
 
 - `signEvent`, `signAndPublish`, `publishToRelay`, `publishToRelays` (`signAndPublish` without

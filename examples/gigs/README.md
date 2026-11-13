@@ -49,7 +49,10 @@ players, RSVP, `.ics` import and export.
   hint when it seems to be on Nostr already → the composer, prefilled, to correct and publish.
   Or "fill in the form yourself": the empty composer, without AI.
   Nothing the AI returns is published without you. The AI's JSON follows the gig manifest
-  (`formJsonSchema`). Only links the post's text has are kept (`keepKnownLinks`) (with a poster, others are kept but
+  (`formJsonSchema`). The AI is asked for the gig's source, the page it was published on first (a
+  URL of the event or post in the text, or a page it knows): the gig carries it as NIP-48's proxy
+  tag and shows "Imported from <site>"; a source not in the text is offered to confirm like other
+  found links. Only links the post's text has are kept (`keepKnownLinks`) (with a poster, others are kept but
   marked "read from the poster"); the performers' links show as players. Optionally the AI also
   suggests performers' links from any site, offered as players or links to confirm ("It's them"):
   Spotify, SoundCloud and YouTube video links are checked with their site (`checkLink`,

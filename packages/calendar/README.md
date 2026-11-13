@@ -20,7 +20,8 @@ import { CALENDAR_EVENT_MANIFEST, agendaFilters, groupEventsByDay } from '@nostr
 
 `CALENDAR_EVENT_MANIFEST` is ready to use: `<nostr-post-composer .manifest=${CALENDAR_EVENT_MANIFEST}>`.
 All-day or timed is its publish format. Its fields use the `date`, `venue`, `profile`, `media` and
-`hashtag` plugins, which the composer loads by itself. How to build your own is in
+`hashtag` plugins, which the composer loads by itself. Its **Source** field marks an event imported
+from a page (NIP-48 `["proxy", <url>, "web"]`); views show "Imported from <site>". How to build your own is in
 [MANIFEST.md](../../MANIFEST.md#dates).
 
 ### Agenda
@@ -64,7 +65,7 @@ a month grid can use the same functions with a month as the window.
 | Export                                   | Does                                                                     |
 | ---------------------------------------- | ------------------------------------------------------------------------ |
 | `eventsToIcs(events, name?, refs?)`      | An `.ics` file (RFC 5545) of calendar events: UID = the event's address, all-day dates or UTC times, title, description, location, link. Role lines (`Performers: nostr:naddr1…`) are written as the names in `refs` (by address, `{ name, links }`) with the first link, one line per role (`icsDescription`); pages without a name are left out |
-| `icsToDrafts(text, viewerZone?)`         | The entries of an `.ics` file (e.g. a Facebook events export) as drafts: `{ uid, dTag, allDay, formData, private }`, `formData` for CALENDAR_EVENT_MANIFEST (title, when, place, link, description). `CLASS:PRIVATE` entries are flagged, not left out. UTC times and unknown zones are read in the calendar's `X-WR-TIMEZONE`, else in `viewerZone` |
+| `icsToDrafts(text, viewerZone?)`         | The entries of an `.ics` file (e.g. a Facebook events export) as drafts: `{ uid, dTag, allDay, formData, private }`, `formData` for CALENDAR_EVENT_MANIFEST (title, when, place, link, description; the entry's `URL` also as `source`, NIP-48). `CLASS:PRIVATE` entries are flagged, not left out. UTC times and unknown zones are read in the calendar's `X-WR-TIMEZONE`, else in `viewerZone` |
 | `icsDTag(uid)`                           | `ics:<UID>`: publishing a draft with it replaces the event on a later import instead of adding a copy |
 | `draftFormatId(draft)`, `draftKind(draft)` | The publish format (`all-day` / `timed`) and kind of a draft            |
 | `fetchEventsAsIcs(addresses, options?)`  | The `.ics` of events loaded from relays by address, with the pages their role lines link as names |

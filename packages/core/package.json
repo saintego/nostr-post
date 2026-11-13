@@ -89,6 +89,10 @@
     "./geohash": {
       "types": "./dist/geohash.d.ts",
       "import": "./dist/geohash.js"
+    },
+    "./proxy": {
+      "types": "./dist/proxy.d.ts",
+      "import": "./dist/proxy.js"
     }
   },
   "scripts": {
