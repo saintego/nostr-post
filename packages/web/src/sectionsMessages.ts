@@ -10,6 +10,8 @@ export interface SectionsMessages {
   /** A section's "Add" button, e.g. "Add" next to "Reviews" */
   add: (sectionLabel: string) => string;
   close: string;
+  /** "Add" queued the post in the outbox: its files upload later, then it's published */
+  queued: string;
   /** The "Add" composer couldn't be loaded */
   noComposer: string;
   /** Above the pages "Add" can link too (`add.also`), e.g. the venue of a gig */
@@ -26,6 +28,7 @@ export const DEFAULT_SECTIONS_MESSAGES: SectionsMessages = {
   showMore: 'Show more',
   add: () => 'Add',
   close: 'Close',
+  queued: "Your post waits in the outbox: it's published when its files upload.",
   noComposer: "The form couldn't be loaded",
   alsoShowOn: 'Also show on',
   byline: (author, date) => `${author} · ${date}`,
