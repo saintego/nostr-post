@@ -17,6 +17,7 @@ import {
 } from './core';
 import type { GoogleMapsLink } from './googleLink';
 import type { VenueLevel } from './levels';
+import { osmPlaceNear } from './osmNearby';
 
 /** OSM places the link may be: at its point, or nearby (`spot` false; OSM's point may be off) */
 export interface GoogleLinkMatches {
@@ -38,6 +39,9 @@ export async function searchGoogleLink(
 ): Promise<GoogleLinkMatches> {
   const { name, lat, lon } = link;
   if (!name || lat === undefined || lon === undefined) return { results: [], spot: false };
+  // The named places at the link's point, compared our way ("Speakerbox" is OSM's "Speaker Box")
+  const near = await osmPlaceNear(name, { lat, lon });
+  if (near) return { results: [near], spot: true };
   const atSpot = await searchNominatim(name, levels, { lat, lon });
   if (atSpot.length > 0) return { results: atSpot, spot: true };
   const around = await searchNominatim(name, levels, { lat, lon }, AREA_DEGREES);

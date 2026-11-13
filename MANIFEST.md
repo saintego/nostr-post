@@ -488,15 +488,20 @@ Without a manifest, `<nostr-wiki-view>` uses `STANDARD_WIKI_MANIFEST`, which sho
 
 Authors can paste a Google Maps link into a venue field's search. The link is read from its text
 alone (no request to Google, whose terms don't allow taking data from its pages): its name, its
-point and its CID. The same place is then searched on OpenStreetMap by that name around that
-point. When OSM doesn't have it, the author clicks the place on the map (it zooms to the link's
+point and its CID. The same place is then looked for on OpenStreetMap around that point: among
+the named places there (Overpass), by its name compared without case, accents, spaces or
+punctuation, also when one name contains the other ("Speakerbox" is OSM's "Speaker Box"); else
+with Nominatim's search by that name around the point. When OSM doesn't have it, the author clicks the place on the map (it zooms to the link's
 point, without setting it), and the venue gets the author's point, OSM's address there and the link's name; its venue
 page is created from that.
 
 The CID is kept as `["i", "gcid:<cid>"]` ([our namespace](./NOSTR_CONVENTIONS.md#external-ids-i-tags), not NIP-73); the Google Maps link
 (`https://maps.google.com/?cid=…`) is worked out from it when shown. Venue pages are also found by
 it, so a page created without OSM is filled from OSM once a post picks the OSM place with the same
-link. Short share links (`maps.app.goo.gl`) only Google can open: the author pastes the full link.
+link. Short share links (`maps.app.goo.gl`) only Google can open: with the app's Places key
+(`configureVenuePlugin({ getGooglePlacesKey })`) the place is searched by the share text's name and
+address, else the author pastes the full link. An AI draft's venue (`{ name, address }`) whose name
+isn't found is looked for the same way around its address's spot.
 
 With an app's Google Maps Embed API key (`configureVenuePlugin({ googleMapsEmbedKey })`, free and
 unlimited; not a manifest key, since manifests are public), venues with a Google link show Google's

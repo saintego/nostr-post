@@ -79,8 +79,10 @@ describe('venue in form JSON', () => {
     };
     const district = { ...JAM, addresstype: 'suburb', class: 'boundary', type: 'administrative' };
     const answers = [[], [district], [street]];
-    const fetchMock = vi.fn(
-      async (_url: unknown) => new Response(JSON.stringify(answers.shift() ?? []))
+    const fetchMock = vi.fn(async (url: unknown) =>
+      String(url).includes('overpass')
+        ? new Response(JSON.stringify({ elements: [] }))
+        : new Response(JSON.stringify(answers.shift() ?? []))
     );
     vi.stubGlobal('fetch', fetchMock);
     const { value } =
@@ -92,7 +94,9 @@ describe('venue in form JSON', () => {
         },
         field()
       )) ?? {};
-    const queries = fetchMock.mock.calls.map(([url]) => new URL(String(url)).searchParams.get('q'));
+    const queries = fetchMock.mock.calls
+      .filter(([url]) => !String(url).includes('overpass'))
+      .map(([url]) => new URL(String(url)).searchParams.get('q'));
     expect(queries).toEqual([
       'Blueprint Livehouse, Bangkok',
       '120/1 Sukhumvit 26, A Square, 2nd Floor, Khlong Toei, Bangkok 10110',
@@ -132,8 +136,10 @@ describe('venue in form JSON', () => {
     };
     // The name: nothing; the address: the street; near it, the full name: nothing; shorter: the bar
     const answers = [[], [street], [], [bar]];
-    const fetchMock = vi.fn(
-      async (_url: unknown) => new Response(JSON.stringify(answers.shift() ?? []))
+    const fetchMock = vi.fn(async (url: unknown) =>
+      String(url).includes('overpass')
+        ? new Response(JSON.stringify({ elements: [] }))
+        : new Response(JSON.stringify(answers.shift() ?? []))
     );
     vi.stubGlobal('fetch', fetchMock);
     const { value } =
@@ -141,7 +147,9 @@ describe('venue in form JSON', () => {
         { name: 'Blue Monkey Bar Saigon', address: '199M Nguyễn Văn Hưởng, Ho Chi Minh City' },
         field()
       )) ?? {};
-    const urls = fetchMock.mock.calls.map(([url]) => new URL(String(url)));
+    const urls = fetchMock.mock.calls
+      .filter(([url]) => !String(url).includes('overpass'))
+      .map(([url]) => new URL(String(url)));
     expect(urls.map((u) => u.searchParams.get('q')).slice(2)).toEqual([
       'Blue Monkey Bar Saigon',
       'Blue Monkey Bar',

@@ -13,6 +13,7 @@
 import type { PostField } from '@nostr-post/plugins/types';
 import { nominatimToVenue, searchNominatim, type VenueData, type VenuePluginConfig } from './core';
 import { resultLevel, venueLevels } from './levels';
+import { osmPlaceNear, sameVenueName } from './osmNearby';
 import { venueNameKey } from './wikiEntity';
 
 const DESCRIPTION: Record<string, string> = {
@@ -125,13 +126,6 @@ const nameVariants = (name: string): string[] => {
   return variants.filter(Boolean);
 };
 
-/** Whether OpenStreetMap's name is the venue's: one contains the other, ignoring case and accents */
-const sameName = (osmName: string, name: string): boolean => {
-  const a = venueNameKey(osmName);
-  const b = venueNameKey(name);
-  return a.length >= 3 && b.length >= 3 && (a.includes(b) || b.includes(a));
-};
-
 /**
  * The venue on OpenStreetMap around its address's spot, by its name (the name search alone missed
  * it, e.g. under a longer name); undefined when OSM doesn't have it there
@@ -141,6 +135,10 @@ const findNearSpot = async (
   spot: { lat: number; lon: number },
   config: VenuePluginConfig
 ): Promise<VenueData | undefined> => {
+  // The named places there, compared our way ("Speakerbox" is OSM's "Speaker Box")
+  const near = await osmPlaceNear(name, spot);
+  if (near) return nominatimToVenue(near, config.precision);
+  // Overpass didn't answer or has nothing: Nominatim's word search around the spot
   for (const variant of nameVariants(name)) {
     const results = await searchNominatim(variant, ['place'], spot, NEAR_SPOT_DEGREES).catch(
       () => []
@@ -148,7 +146,7 @@ const findNearSpot = async (
     const match = results.find(
       (r) =>
         !AREA_TYPES.has(r.addresstype ?? '') &&
-        sameName(r.name || r.display_name.split(',')[0] || '', variant)
+        sameVenueName(r.name || r.display_name.split(',')[0] || '', variant)
     );
     if (match) return nominatimToVenue(match, config.precision);
   }
