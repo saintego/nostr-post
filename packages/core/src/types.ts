@@ -23,6 +23,11 @@ export type NostrTarget = {
   target: 'content' | 'tag' | 'table';
   tagName?: string;
   path?: string;
+  /**
+   * Fixed elements written after the value in the tag, e.g. `['web']` for NIP-48's
+   * `["proxy", <url>, "web"]`. Reading takes the value (the tag's second element) as usual
+   */
+  tagExtra?: string[];
 };
 
 export type FieldMapBehavior = 'first-active' | 'all-active';

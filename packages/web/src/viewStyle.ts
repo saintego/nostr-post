@@ -68,6 +68,13 @@ export const viewStyle = css`
     align-self: start;
   }
 
+  .view-source {
+    margin-top: var(--np-space-2);
+    font-size: var(--np-text-sm);
+  }
+  .view-source a {
+    color: inherit;
+  }
   .view-manifest-note {
     margin-top: 0.5rem;
     font-size: var(--np-text-sm);

@@ -33,7 +33,10 @@ export interface IcsDraft {
   dTag: string;
   /** Whole days (kind 31922) or at a time (kind 31923) */
   allDay: boolean;
-  /** Form data of CALENDAR_EVENT_MANIFEST: title, when, place, link, description */
+  /**
+   * Form data of CALENDAR_EVENT_MANIFEST: title, when, place, link, description, and the
+   * entry's `URL` as its source (NIP-48 `proxy`: imported from there)
+   */
   formData: Record<string, unknown>;
   /** `CLASS:PRIVATE` or `CONFIDENTIAL`: not for publishing */
   private: boolean;
@@ -205,7 +208,7 @@ const whenOf = (start: IcsDate, end: IcsDate | undefined): DateValue => {
   return when;
 };
 
-/** Title, description, place and link of an entry, as form data */
+/** Title, description, place, link and source of an entry, as form data */
 const textFields = (get: (name: string) => IcsProperty | undefined): Record<string, unknown> => {
   const fields: Record<string, unknown> = {};
   const add = (key: string, name: string) => {
@@ -217,7 +220,8 @@ const textFields = (get: (name: string) => IcsProperty | undefined): Record<stri
   add('description', 'DESCRIPTION');
   add('place', 'LOCATION');
   const url = get('URL')?.value.trim();
-  if (url && /^https?:\/\//.test(url)) fields.link = url;
+  // The entry's page: its link, and where it comes from (NIP-48 `proxy`)
+  if (url && /^https?:\/\//.test(url)) Object.assign(fields, { link: url, source: url });
   return fields;
 };
 

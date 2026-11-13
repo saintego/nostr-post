@@ -52,8 +52,14 @@ import {
   renderLinkedEvents,
   renderManifestEventData,
 } from './viewLinked';
-import { DEFAULT_RAW_DATA_MESSAGES, type RawDataMessages, renderRawData } from './viewRawData';
+import {
+  DEFAULT_RAW_DATA_MESSAGES,
+  type RawDataMessages,
+  renderManifestNote,
+  renderRawData,
+} from './viewRawData';
 import { postRoleView } from './viewRoles';
+import { DEFAULT_SOURCE_MESSAGES, renderSource, type SourceMessages } from './viewSource';
 import { viewStyle } from './viewStyle';
 import {
   DEFAULT_SUGGESTION_MESSAGES,
@@ -137,7 +143,7 @@ export class NostrPostView extends NostrPostElement {
 
   /** Overrides for the "All data" section's and the edit form's text (e.g. translations) */
   @property({ attribute: false })
-  messages?: Partial<RawDataMessages & EditMessages & SuggestionMessages>;
+  messages?: Partial<RawDataMessages & EditMessages & SuggestionMessages & SourceMessages>;
 
   /** Base URL that `nostr:` references in the text link to; the NIP-19 entity is appended */
   @property({ attribute: 'nostr-link-base' })
@@ -459,17 +465,9 @@ export class NostrPostView extends NostrPostElement {
                     : nothing,
                 })
           } ${roleRows}
+          ${renderSource(tags, { ...DEFAULT_SOURCE_MESSAGES, ...this.messages })}
         </div>
-        ${
-          this._manifestSource && !this.manifest
-            ? html`<div class="view-manifest-note">
-                ${{ ...DEFAULT_RAW_DATA_MESSAGES, ...this.messages }.shownWithManifest(
-                  this._manifestSource.manifest.id,
-                  truncatePubkey(this._manifestSource.pubkey ?? '')
-                )}
-              </div>`
-            : nothing
-        }
+        ${this.manifest ? nothing : renderManifestNote(this._manifestSource, { ...DEFAULT_RAW_DATA_MESSAGES, ...this.messages })}
 
         ${renderLinkedEvents(this.allLinkedEvents, this.effectiveManifest)}
         ${renderUpdateComments(

@@ -1,4 +1,6 @@
-import { html, type TemplateResult } from 'lit';
+import { truncatePubkey } from '@nostr-post/posts';
+import { html, nothing, type TemplateResult } from 'lit';
+import type { EventManifest } from './signer';
 
 /** The parts of an event the section shows; unsigned events have no id yet */
 interface RawEvent {
@@ -67,3 +69,11 @@ export function renderRawData(event: RawEvent, m: RawDataMessages): TemplateResu
     </details>
   `;
 }
+
+/** "Shown with <manifest> by <author>" under a post shown with a manifest it named itself */
+export const renderManifestNote = (source: EventManifest | undefined, messages: RawDataMessages) =>
+  source
+    ? html`<div class="view-manifest-note">
+        ${messages.shownWithManifest(source.manifest.id, truncatePubkey(source.pubkey ?? ''))}
+      </div>`
+    : nothing;

@@ -28,6 +28,16 @@ export const gigSchema = () => formJsonSchema(GIG_MANIFEST);
  */
 export const loadGigPlugins = () => ensurePluginsForManifest(GIG_MANIFEST);
 
+/**
+ * Asks for the page the gig comes from (the `source` field: NIP-48, marks it as imported from
+ * there), so the gig credits where it was published first
+ */
+const ASK_SOURCE = `
+Give the gig's source: the page it was published on first, e.g. a Facebook event, the venue's or
+promoter's event page, a Resident Advisor, Gancio or ticket page. Take it from the post when it has
+a URL of the event or of the post itself; when it doesn't but names where it's from and you know
+that page, give it (it's checked before use). null when there's none.`;
+
 /** Asks the AI for performers' links the post doesn't have; they're checked before use */
 const SUGGEST_LINKS = `
 Performers' media may also have links you know for them that the post doesn't: every page about
@@ -46,7 +56,7 @@ export const gigPrompt = (
 ): string =>
   `Extract the event from this post about a concert or party. Today is ${today}: a date without a
 year is the next one. Use only what the post says; null when it doesn't say. The time zone is
-the venue's, from its city or country, even when the post doesn't name it.${suggestLinks ? SUGGEST_LINKS : ''}
+the venue's, from its city or country, even when the post doesn't name it.${ASK_SOURCE}${suggestLinks ? SUGGEST_LINKS : ''}
 Answer with JSON only, no other text, valid against this JSON Schema:
 ${JSON.stringify(gigSchema())}
 

@@ -29,6 +29,16 @@ export {
 } from '@nostr-post/core/manifest';
 // NIP-19 addresses (`kind:pubkey:d-tag` ↔ `naddr1…`), e.g. for links to an event
 export { decodeNaddr, encodeNaddr, encodeNevent } from '@nostr-post/core/nip19';
+// Where an event comes from (NIP-48 proxy tags): imported and bridged events
+export {
+  PROXY_PROTOCOLS,
+  type ProxyProtocol,
+  type ProxySource,
+  proxyOf,
+  proxyTag,
+  siteOf,
+  sourceUrl,
+} from '@nostr-post/core/proxy';
 export type { PostSection } from '@nostr-post/core/types';
 // Posts published later: drafts, timed posts, upload later (@nostr-post/outbox)
 export {

@@ -89,6 +89,20 @@ export const CALENDAR_EVENT_MANIFEST: NostrPostManifest = {
       },
     },
     {
+      id: 'source',
+      type: 'string',
+      uiPlugin: 'text',
+      // NIP-48: the event comes from that page (`["proxy", <url>, "web"]`)
+      mapTo: bothKinds({ target: 'tag', tagName: 'proxy', tagExtra: ['web'] }),
+      metadata: {
+        label: 'Source',
+        description:
+          "The page the event was published on first, e.g. the venue's page or a Facebook event: marks it as imported from there",
+        placeholder: 'https://',
+        expandable: true,
+      },
+    },
+    {
       id: 'participants',
       type: 'profile',
       uiPlugin: 'profile',

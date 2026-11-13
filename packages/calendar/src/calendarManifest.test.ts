@@ -110,3 +110,17 @@ describe('CALENDAR_EVENT_MANIFEST', () => {
     expect(coordinateEvents(CALENDAR_EVENT_MANIFEST, noDate, config).success).toBe(false);
   });
 });
+
+describe('source (NIP-48)', () => {
+  it('marks an imported event with a proxy tag', () => {
+    const result = coordinateEvents(
+      CALENDAR_EVENT_MANIFEST,
+      { ...formData, source: 'https://www.facebook.com/events/1/' },
+      config
+    );
+    if (!result.success) throw new Error(JSON.stringify(result.error));
+    expect(result.data.events[0]?.tags).toEqual(
+      expect.arrayContaining([['proxy', 'https://www.facebook.com/events/1/', 'web']])
+    );
+  });
+});

@@ -131,6 +131,20 @@ Bookmark sets (kind 30003) and people sets (30000) are standard; their d-tags ar
 `nostr-post:<listType>:<id>` (`nostr-post:venue:visited`), `nostr-post:<slug of the name>` for
 lists created by name, or a manifest's fixed `dTag`. Other clients show them as normal sets.
 
+## Imported events (NIP-48)
+
+Events that come from elsewhere (a gig from a venue's page or a Facebook event, an `.ics` entry,
+a Gancio event) carry NIP-48's proxy tag, `["proxy", <id>, <protocol>]`: `web` with the page's
+URL, `activitypub` with the object's URL, `rss` with the feed URL and the item's guid as
+fragment, `atproto` with an AT URI. No convention of our own and no extra label: the tag itself
+says the event is imported.
+
+- Written by the calendar manifest's **Source** field (`tagExtra: ['web']`), filled by
+  `icsToDrafts` (an entry's `URL`) and the gigs AI (the page the post came from).
+- Shown under any post that has one as "Imported from <site>", linking the source; this also
+  covers notes bridged from Mastodon (Mostr).
+- `#proxy` queries tell whether an event was already imported, so importers can avoid duplicates.
+
 ## Calendar (NIP-52)
 
 - **`D` tags on all-day events (31922):** one per day, as on timed events, so a `#D` query finds

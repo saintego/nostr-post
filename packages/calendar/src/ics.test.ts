@@ -107,6 +107,7 @@ describe('icsToDrafts', () => {
         place: 'Barnaby Jones, Medellín',
         description: 'Bands: Doom\nTickets at the door',
         link: 'https://www.facebook.com/events/123456789/',
+        source: 'https://www.facebook.com/events/123456789/',
       },
     });
     expect(family).toMatchObject({
