@@ -140,10 +140,14 @@ fragment, `atproto` with an AT URI. No convention of our own and no extra label:
 says the event is imported.
 
 - Written by the calendar manifest's **Source** field (`tagExtra: ['web']`), filled by
-  `icsToDrafts` (an entry's `URL`) and the gigs AI (the page the post came from).
+  `icsToDrafts` (an entry's `URL`) and the gigs AI (the page the post came from). The field also
+  writes the page as an `r` link: relays index only single-letter tags (NIP-01), so a `#proxy`
+  filter finds nothing on most relays, while `#r` does.
 - Shown under any post that has one as "Imported from <site>", linking the source; this also
   covers notes bridged from Mastodon (Mostr).
-- `#proxy` queries tell whether an event was already imported, so importers can avoid duplicates.
+- Before importing, `importedFilter(urls)` asks relays by `#r` and `fromSource(events, url)` keeps
+  the events whose proxy tag or links name the page (`@nostr-post/calendar`), so the user can RSVP
+  to the one already there.
 
 ## Calendar (NIP-52)
 

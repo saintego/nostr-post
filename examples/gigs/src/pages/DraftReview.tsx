@@ -1,11 +1,9 @@
 import { isDryRun } from '@nostr-post/signer';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { type GigDraft, unlinkedNames } from '../lib/ai';
-import { addressOf, findDuplicates, previewEvent } from '../lib/draft';
+import { addressOf, type Duplicate, findDuplicates, previewEvent } from '../lib/draft';
 import { GIG_MANIFEST } from '../lib/manifests';
 import { artistEditLink, artistLink, eventLink } from '../lib/routes';
-
-type Duplicate = Awaited<ReturnType<typeof findDuplicates>>[number];
 
 /** The performers' links as players, so the user sees what the AI found (and from where) */
 function PerformerLinks({ draft }: { draft: GigDraft }) {
@@ -81,9 +79,10 @@ function Duplicates({ draft }: { draft: GigDraft }) {
     };
   }, [draft]);
   if (!duplicates.length) return null;
+  const samePage = duplicates.some((d) => d.samePage);
   return (
     <div className="np-message np-warning">
-      Maybe already on Nostr:{' '}
+      {samePage ? 'Already on Nostr from the same page: ' : 'Maybe already on Nostr: '}
       {duplicates.map(({ event }, i) => {
         const address = addressOf(event) ?? '';
         const title = event.tags.find((t) => t[0] === 'title')?.[1] ?? address;

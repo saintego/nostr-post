@@ -203,7 +203,8 @@ The bundle re-exports utilities for advanced usage:
   `calendarEventFilters(addresses)`; edited with the list functions and `{ listKind: CALENDAR_LISTS }`
 - iCalendar: `eventsToIcs(events, name?)`, `icsToDrafts(text)` (an `.ics` file as drafts for
   CALENDAR_EVENT_MANIFEST, d-tag `ics:<UID>`), `icsDTag(uid)`, `fetchEventsAsIcs(addresses)` (linked pages, e.g. performers, as names), `fetchIcsRefs(addresses)`
-- Duplicates: `similarEvents(draft, events)`, `titleSimilarity(a, b)`
+- Duplicates: `similarEvents(draft, events)`, `titleSimilarity(a, b)`; events imported from the same
+  page: `importedFilter(urls)` (relays by `#r`), `fromSource(events, url)` (NIP-48 proxy or link)
 - Sharing: `agendaWindowFor(from, days, tzid, view)` (an agenda element's window),
   `agendaSummary(events, window)`, `agendaText(events, window, { title, link })` (a message),
   `agendaImage(summary, { title, footer, dark })` (a PNG), `drawAgendaImage` (the canvas)
