@@ -58,6 +58,19 @@ export async function findVenueEntity(
 }
 
 /**
+ * The page of a venue a post doesn't link (e.g. a gig published without creating it): found by
+ * the venue's ids (`i osm:…`, `i gcid:…`, `i gplace:…`); undefined when there's none
+ */
+export async function findVenuePage(
+  venue: VenueData,
+  relays?: string[]
+): Promise<{ pubkey: string; dTag: string } | undefined> {
+  const page = await findVenueEntity(venue, relays).catch(() => undefined);
+  const dTag = page?.tags.find((t) => t[0] === 'd')?.[1];
+  return page && dTag ? { pubkey: page.pubkey, dTag } : undefined;
+}
+
+/**
  * The venue's page when its IDs don't find it: a venue hub nearby with the same name
  * (`isSameVenueByName`), e.g. made from OSM while this venue was picked from Google
  */

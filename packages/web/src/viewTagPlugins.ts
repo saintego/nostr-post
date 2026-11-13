@@ -129,8 +129,11 @@ const renderTagField = (
 ): TemplateResult | undefined => {
   const plugin = pluginRegistry.get(field.uiPlugin);
   if (!plugin) {
+    // A field of one value shows its own, the first: later tags of the name are plugins' extra
+    // tags (e.g. a venue's `location` after a gig's place text)
+    const own = field.metadata?.multiple === true ? values : values.slice(0, 1);
     return BUILT_IN_INPUTS.has(field.uiPlugin)
-      ? renderPlainTagField(field, tagName, values)
+      ? renderPlainTagField(field, tagName, own)
       : undefined;
   }
   if (!plugin.viewTagName) return undefined;

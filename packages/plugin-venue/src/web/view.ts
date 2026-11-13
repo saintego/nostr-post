@@ -21,6 +21,7 @@ import { googleMapsPlaceUrl, osmUrl, pageAddress, type VenueData } from '../core
 import { googleEmbedUrl } from '../googleEmbed';
 import { googleMapsCidUrl } from '../googleLink';
 import { loadVenueFromPage, needsPage } from '../venuePage';
+import { findVenuePage } from '../wikiSync';
 import { DEFAULT_VENUE_VIEW_MESSAGES, type VenueViewMessages } from './venueMessages';
 
 // Ensure <np-geo-view> and <nostr-wiki-view> are defined
@@ -111,6 +112,11 @@ export class NpVenueView extends NpElement {
   messages?: Partial<VenueViewMessages>;
 
   @state() private wikiOpen = false;
+  /**
+   * The page of a venue the post doesn't link, looked up by its ids when the row is opened:
+   * 'looking', then the page or null (none)
+   */
+  @state() private _foundPage?: { pubkey: string; dTag: string } | null | 'looking';
 
   private get m(): VenueViewMessages {
     return { ...DEFAULT_VENUE_VIEW_MESSAGES, ...this.messages };
@@ -123,6 +129,7 @@ export class NpVenueView extends NpElement {
   override willUpdate(changed: Map<string, unknown>): void {
     if (!changed.has('value')) return;
     this._fromPage = undefined;
+    this._foundPage = undefined;
     const value = this.value;
     if (!needsPage(value) || !this.field || value === this._loadingFor) return;
     this._loadingFor = value;
@@ -215,28 +222,46 @@ export class NpVenueView extends NpElement {
     });
   }
 
+  /**
+   * Whether the venue may have a page: the post links one, or the field's venues get pages
+   * (`metadata.wikiEntity`) and this one has ids to find it by
+   */
+  private _mayHavePage(v: VenueData): boolean {
+    if (v.wikiEntity) return true;
+    return !!this.field?.metadata?.wikiEntity && !!(v.osmId || v.googleCid || v.googlePlaceId);
+  }
+
+  /** Opened: the linked page, else the venue's page looked up by its ids (once) */
+  private _onWikiToggle(open: boolean, v: VenueData): void {
+    this.wikiOpen = open;
+    if (!open || v.wikiEntity || this._foundPage !== undefined) return;
+    this._foundPage = 'looking';
+    void findVenuePage(v).then((page) => {
+      if (this.value === v || this._fromPage === v) this._foundPage = page ?? null;
+    });
+  }
+
   /** The venue's wiki page, loaded only when opened (feeds show many posts) */
   private renderWikiPage(v: VenueData) {
-    if (!v.wikiEntity) return nothing;
+    if (!this._mayHavePage(v)) return nothing;
     const ref = this.field?.metadata?.wikiEntity as EntityManifestRef | undefined;
     const known = getEntityManifest(ref);
     // A published manifest's address: fetch it once; unknown manifests show the article text
     if (!known && ref && this.wikiOpen) {
       void resolveEntityManifest(ref).then((manifest) => manifest && this.requestUpdate());
     }
+    const found = this._foundPage;
+    const page = v.wikiEntity ?? (found && found !== 'looking' ? found : undefined);
+    const body = page
+      ? html`<nostr-wiki-view .manifest=${known} .entityId=${page.dTag}></nostr-wiki-view>`
+      : html`<p class="np-hint">${found === 'looking' ? this.m.wikiPageLooking : this.m.wikiPageNone}</p>`;
     return html`
       <details
         class="venue-wiki"
-        @toggle=${(e: Event) => {
-          this.wikiOpen = (e.target as HTMLDetailsElement).open;
-        }}
+        @toggle=${(e: Event) => this._onWikiToggle((e.target as HTMLDetailsElement).open, v)}
       >
         <summary>${this.m.wikiPage}</summary>
-        ${
-          this.wikiOpen
-            ? html`<nostr-wiki-view .manifest=${known} .entityId=${v.wikiEntity.dTag}></nostr-wiki-view>`
-            : nothing
-        }
+        ${this.wikiOpen ? body : nothing}
       </details>
     `;
   }
