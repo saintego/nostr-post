@@ -8,10 +8,14 @@ import '@nostr-post/plugin-wiki-entity/web';
 
 // Venues and the venue hub (wiki entity filled from OpenStreetMap)
 export {
-  // The app's Google Maps Embed key for venues' place card
+  // The app's Google keys: Embed (venues' place card), Places (short links, the user's key)
   configureVenuePlugin,
   fetchOsmElement,
   findVenueEntity,
+  googlePlaceIdForVenue,
+  lookUpShortLink,
+  parseGoogleMapsUrl,
+  searchGooglePlaces,
   searchNominatim,
   syncVenueEntity,
 } from '@nostr-post/plugin-venue';

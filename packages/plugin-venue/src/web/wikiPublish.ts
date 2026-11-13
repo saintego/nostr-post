@@ -21,6 +21,7 @@ import {
 import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { VenueData } from '../core';
+import { googlePlaceIdForVenue } from '../googlePlaces';
 import { type GoogleLinkProblem, googleLinkChange, lacksGoogleLink } from '../venueLinks';
 import {
   OSM_COPYRIGHT_URL,
@@ -52,7 +53,7 @@ export class NpVenueWikiPublish extends NpElement {
   @state() private _plan: Plan = { kind: 'checking' };
   @state() private _slug: DTagAvailability | 'checking' = 'checking';
   /** The Google Maps link as typed (the field stays while there's text: the venue then has it) */
-  @state() private _link: { text: string; problem?: GoogleLinkProblem } = { text: '' };
+  @state() private _link: { text: string; problem?: GoogleLinkProblem | 'looking' } = { text: '' };
   private _plannedKey = '';
   private _checkedDTag = '';
   private _planId = 0;
@@ -208,7 +209,12 @@ export class NpVenueWikiPublish extends NpElement {
     const { text, problem } = this._link;
     if (!text && (this._plan.kind !== 'create' || !lacksGoogleLink(this._venue))) return nothing;
     const m = this._m;
-    const note = problem === 'short' ? m.googleShortLink : problem && m.googleLinkInvalid;
+    const note =
+      problem === 'short'
+        ? m.googleShortLink
+        : problem === 'looking'
+          ? m.googleShortLooking
+          : problem && m.googleLinkInvalid;
     return html`
       <label class="extra-link">
         ${m.googleLinkLabel}
@@ -228,7 +234,19 @@ export class NpVenueWikiPublish extends NpElement {
   private _setLink(text: string): void {
     const result = googleLinkChange(text);
     this._link = { text, problem: 'problem' in result ? result.problem : undefined };
-    if ('change' in result) this._emit(result.change);
+    if ('change' in result) this._emit({ ...result.change, googlePlaceId: undefined });
+    else if (result.problem === 'short') void this._lookUpShortLink(text);
+  }
+
+  /** A short link: the venue's own place id on Google, with the app's key (`googlePlaceIdForVenue`) */
+  private async _lookUpShortLink(text: string): Promise<void> {
+    const venue = this._venue;
+    if (!venue) return;
+    this._link = { text, problem: 'looking' };
+    const placeId = await googlePlaceIdForVenue(venue);
+    if (this._link.text !== text) return; // changed since
+    this._link = { text, problem: placeId ? undefined : 'short' };
+    if (placeId) this._emit({ googleCid: undefined, googlePlaceId: placeId });
   }
 
   /** Only when another venue uses the slug: details to append to it */

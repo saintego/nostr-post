@@ -20,7 +20,6 @@ import {
   lookupNominatimByOsmId,
   type NominatimResult,
   nominatimToVenue,
-  osmUrl,
   searchNominatim,
   type VenueData,
   type VenuePluginConfig,
@@ -29,9 +28,12 @@ import {
 // Ensure the geo input web component is registered
 import '@nostr-post/plugin-geo/web';
 import { type GoogleMapsLink, parseGoogleMapsUrl } from '../googleLink';
+import { type GooglePlace, lookUpShortLink, placeLink } from '../googlePlaces';
 import { googleLinkFocus, searchGoogleLink, venueAtPoint } from '../googleSearch';
-import { resultLevel, type VenueLevel, venueLevels } from '../levels';
+import { type VenueLevel, venueLevels } from '../levels';
 import { loadVenueFromPage, needsPage } from '../venuePage';
+import { renderGooglePlaces, renderShortLinkName } from './googleShortParts';
+import { renderOsmResults, renderVenueCard } from './inputParts';
 import { venueInputStyles } from './inputStyles';
 import { DEFAULT_VENUE_INPUT_MESSAGES, type VenueInputMessages } from './venueMessages';
 
@@ -70,6 +72,9 @@ export class NpVenueInput extends NpElement {
   /** A pasted Google Maps link: its CID goes with the picked place */
   @state() private _googleLink?: GoogleMapsLink;
   @state() private _googleNote?: string;
+  /** A pasted short link being looked up: waiting for its name, or for a pick among `_googlePlaces` */
+  @state() private _shortLink?: GoogleMapsLink;
+  @state() private _googlePlaces: GooglePlace[] = [];
 
   private searchTimeout: ReturnType<typeof setTimeout> | null = null;
   private resolvedOsmId: string | null = null; // Track resolved OSM IDs to avoid re-resolving
@@ -163,6 +168,8 @@ export class NpVenueInput extends NpElement {
       // A cleared search box drops a pasted Google link too
       this._googleLink = undefined;
       this._googleNote = undefined;
+      this._shortLink = undefined;
+      this._googlePlaces = [];
     }
     if (this.searchQuery.length < 3) {
       this.searchResults = [];
@@ -193,17 +200,66 @@ export class NpVenueInput extends NpElement {
 
   /** A pasted Google Maps link: the same place on OSM, else a note to set it on the map */
   private async _searchGoogleLink(link: GoogleMapsLink) {
-    this._googleLink = link.short ? undefined : link;
+    if (link.short) return this._lookUpShortLink(link);
+    this._googleLink = link;
     this.showResults = true;
     this.isSearching = true;
-    const { results, spot } = link.short
-      ? { results: [], spot: false }
-      : await searchGoogleLink(link, this.levels).catch(() => ({ results: [], spot: false }));
+    const { results, spot } = await searchGoogleLink(link, this.levels).catch(() => ({
+      results: [],
+      spot: false,
+    }));
     this.searchResults = results;
     this.isSearching = false;
-    if (link.short) this._googleNote = this.m.googleShortLink;
-    else if (results.length === 0) this._googleNote = this.m.googleNotOnOsm(link.name);
+    if (results.length === 0) this._googleNote = this.m.googleNotOnOsm(link.name);
     else this._googleNote = spot ? undefined : this.m.googleNearby(link.name);
+  }
+
+  /**
+   * A short link: its place on Google (`lookUpShortLink`, with the app's key), then on OSM like a
+   * long link. Without its share text it waits for the place's name
+   */
+  private async _lookUpShortLink(link: GoogleMapsLink) {
+    this._googleLink = undefined;
+    this._shortLink = link;
+    this._googlePlaces = [];
+    this.searchResults = [];
+    this._googleNote = link.name ? this.m.googleShortSearching : this.m.googleShortName;
+    const found = await lookUpShortLink(link);
+    if (this._shortLink !== link) return; // another link or search since
+    if (found.status === 'needs-name') return;
+    if (found.status === 'found' && found.places.length > 1) {
+      this._googlePlaces = found.places;
+      this._googleNote = this.m.googleShortPick;
+      return;
+    }
+    this._shortLink = undefined;
+    if (found.status === 'found' && found.places[0])
+      return this._pickGooglePlace(link, found.places[0]);
+    this._googleNote =
+      found.status === 'no-key'
+        ? this.m.googleShortLink
+        : this.m.googleShortNotFound(link.name ?? '');
+  }
+
+  /** The picked Google place: searched on OSM around its point, its id kept with the venue */
+  private _pickGooglePlace(link: GoogleMapsLink, place: GooglePlace) {
+    this._shortLink = undefined;
+    this._googlePlaces = [];
+    void this._searchGoogleLink(placeLink(link, place));
+  }
+
+  /**
+   * A pasted share text keeps its lines here (a one-line input drops them): the phone apps put
+   * the place's name and address on their own lines above a short link
+   */
+  private _onPaste(e: ClipboardEvent) {
+    const text = e.clipboardData?.getData('text') ?? '';
+    const link = text.includes('\n') ? parseGoogleMapsUrl(text) : undefined;
+    if (!link?.short) return;
+    e.preventDefault();
+    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+    this.searchQuery = text.replace(/\s*\n\s*/g, ' · ').trim();
+    void this._searchGoogleLink(link);
   }
 
   private onSearchKeydown(e: KeyboardEvent) {
@@ -220,7 +276,12 @@ export class NpVenueInput extends NpElement {
     const venue = nominatimToVenue(result, this.precision);
     // A pasted link's CID, or the CID of a venue set on the map from one (now found on OSM)
     const fromLink = this.value && !this.value.osmId ? this.value.googleCid : undefined;
-    this.emitValue({ ...venue, googleCid: this._googleLink?.cid ?? fromLink });
+    const placeId = this._googleLink?.placeId;
+    this.emitValue({
+      ...venue,
+      googleCid: this._googleLink?.cid ?? fromLink,
+      ...(placeId ? { googlePlaceId: placeId } : {}),
+    });
     this._googleLink = undefined;
     this._googleNote = undefined;
     this.searchQuery = '';
@@ -379,6 +440,7 @@ export class NpVenueInput extends NpElement {
           placeholder=${this.m.searchPlaceholder(this.levels)}
           .value=${this.searchQuery}
           @input=${this.onSearchInput}
+          @paste=${(e: ClipboardEvent) => this._onPaste(e)}
           @keydown=${this.onSearchKeydown}
           @focus=${() => {
             if (this.searchResults.length > 0) this.showResults = true;
@@ -395,53 +457,29 @@ export class NpVenueInput extends NpElement {
 
       ${this.isSearching ? html`<div class="loading">${this.m.searching}</div>` : nothing}
       ${this._googleNote ? html`<div class="loading">${this._googleNote}</div>` : nothing}
+      ${this._renderShortLink()}
       ${
         this.showResults && this.searchResults.length > 0
-          ? html`
-            <div class="results">
-              ${this.searchResults.map(
-                (r) => html`
-                  <div class="result-item" @click=${() => this.selectResult(r)}>
-                    ${r.display_name}
-                    <div class="result-type">
-                      ${this.levels.length > 1 ? `${this.m.levelLabel[resultLevel(r)]} · ` : ''}${r.class}/${r.type} ·
-                      ${r.osm_type}:${r.osm_id}
-                    </div>
-                  </div>
-                `
-              )}
-            </div>
-          `
+          ? renderOsmResults(this.searchResults, this.levels, this.m, (r) => this.selectResult(r))
           : nothing
       }
     `;
   }
 
-  private renderVenueCard() {
-    if (!this.value) return nothing;
-    const v = this.value;
+  /** A short link waiting for its place's name, or for a pick among Google's matches */
+  private _renderShortLink() {
+    const link = this._shortLink;
+    if (!link) return nothing;
+    if (!link.name) {
+      return renderShortLinkName(this.m, (name) => void this._lookUpShortLink({ ...link, name }));
+    }
+    return renderGooglePlaces(this._googlePlaces, this.m, (place) =>
+      this._pickGooglePlace(link, place)
+    );
+  }
 
-    return html`
-      <div class="venue-card">
-        ${v.name ? html`<div class="venue-name">📍 ${v.name}</div>` : nothing}
-        <div class="venue-meta">
-          ${
-            v.osmType && v.osmId
-              ? html`<a
-                href="${osmUrl(v.osmType, v.osmId)}"
-                target="_blank"
-                rel="noopener"
-              >
-                OSM ${v.osmType}:${v.osmId} ↗
-              </a>`
-              : nothing
-          }
-        </div>
-        <button class="np-button np-text np-small np-danger" part="button" @click=${this.clearVenue}>
-          Clear venue info
-        </button>
-      </div>
-    `;
+  private renderVenueCard() {
+    return this.value ? renderVenueCard(this.value, this.m, () => this.clearVenue()) : nothing;
   }
 }
 

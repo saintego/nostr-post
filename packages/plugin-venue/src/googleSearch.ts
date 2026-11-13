@@ -2,8 +2,9 @@
  * The venue input with a pasted Google Maps link: find the same place on
  * OpenStreetMap by the link's name around its point; if OSM doesn't have it,
  * the author sets the place on the map and the venue is built from their point
- * (address from OSM's reverse lookup), the link's name and its CID. Nothing is
- * taken from Google beyond what the pasted link says.
+ * (address from OSM's reverse lookup), the link's name and its CID, or the place id of a
+ * short link's place (`googlePlaces.ts`). Nothing else is taken from Google: its point only
+ * centres the search and the map.
  */
 
 import { decodeGeohash, encodeGeohash } from '@nostr-post/plugin-geo';
@@ -72,5 +73,6 @@ export async function venueAtPoint(
     level: 'place',
     countryCode: here?.address?.country_code?.toUpperCase(),
     googleCid: link.cid,
+    ...(link.placeId ? { googlePlaceId: link.placeId } : {}),
   };
 }
