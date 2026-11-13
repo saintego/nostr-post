@@ -24,8 +24,10 @@ export interface VenueWikiMessages {
   googleLinkPlaceholder: string;
   /** The pasted text isn't a Google Maps link to a place */
   googleLinkInvalid: string;
-  /** A short Google Maps share link: only Google could open it */
+  /** A short Google Maps share link that couldn't be looked up (no key from the app, or not found) */
   googleShortLink: string;
+  /** While a short link's place is looked up on Google */
+  googleShortLooking: string;
 }
 
 export const DEFAULT_VENUE_WIKI_MESSAGES: VenueWikiMessages = {
@@ -46,7 +48,8 @@ export const DEFAULT_VENUE_WIKI_MESSAGES: VenueWikiMessages = {
   googleLinkInvalid:
     "Not a Google Maps link to a place: open the place on Google Maps and copy the address bar's link.",
   googleShortLink:
-    'Short links can only be opened by Google: open it, then paste the full link from the address bar.',
+    'Short links can only be opened by Google: open it, then paste the full link from the address bar (or add a Google key in the app to look them up).',
+  googleShortLooking: 'Looking it up on Google…',
 };
 
 /** User-facing text of <np-venue-view> (overridable via its `messages` property) */
@@ -74,14 +77,26 @@ export interface VenueInputMessages {
   searching: string;
   /** Badge on a search result */
   levelLabel: Record<VenueLevel, string>;
-  /** A short Google Maps share link: only Google could open it */
+  /** A short Google Maps share link, and the app gave no Google key to look it up */
   googleShortLink: string;
+  /** A short link pasted without its share text: the place's name is needed to search */
+  googleShortName: string;
+  googleShortNamePlaceholder: string;
+  googleShortFind: string;
+  /** While a short link's place is looked up on Google */
+  googleShortSearching: string;
+  /** Google found several places for a short link: the author picks one */
+  googleShortPick: string;
+  /** Google didn't find a short link's place */
+  googleShortNotFound: (name: string) => string;
   /** A pasted Google Maps link whose place isn't found on OpenStreetMap around its point */
   googleNotOnOsm: (name: string | undefined) => string;
   /** Not found at the link's point, but places with its name in the area */
   googleNearby: (name: string | undefined) => string;
   /** Searching by name after pasting a Google Maps link */
   googleLinkKept: string;
+  /** The picked venue's card: remove it */
+  clearVenue: string;
 }
 
 export const DEFAULT_VENUE_INPUT_MESSAGES: VenueInputMessages = {
@@ -93,13 +108,21 @@ export const DEFAULT_VENUE_INPUT_MESSAGES: VenueInputMessages = {
   searching: 'Searching…',
   levelLabel: { country: 'country', city: 'city', place: 'place' },
   googleShortLink:
-    'Short links can only be opened by Google: open it, then paste the full link from the address bar.',
+    'Short links can only be opened by Google: open it, then paste the full link from the address bar (or add a Google key in the app to look them up).',
+  googleShortName: "This link has no name with it: type the place's name to find it on Google.",
+  googleShortNamePlaceholder: 'Name of the place',
+  googleShortFind: 'Find',
+  googleShortSearching: 'Looking it up on Google…',
+  googleShortPick: 'Which place is it?',
+  googleShortNotFound: (name) =>
+    `"${name}" wasn't found on Google: search for it by name, or click its spot on the map.`,
   googleNotOnOsm: (name) =>
     `${name ? `"${name}" wasn't` : "This place wasn't"} found on OpenStreetMap around the link's spot: search for it by name (the Google link is kept), or click its spot on the map.`,
   googleNearby: (name) =>
     `Not found at the link's spot, but ${name ? `"${name}"` : 'places with its name'} nearby on OpenStreetMap: pick it if it's the same place, search by name, or click its spot on the map.`,
   googleLinkKept:
     'The Google Maps link goes with the place you pick (clear the search to drop it).',
+  clearVenue: 'Clear venue info',
 };
 
 /** User-facing text of <np-venue-entity-create> (overridable via its `messages` property) */

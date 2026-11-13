@@ -20,7 +20,22 @@ export {
 } from './core';
 
 export { geohashTags, resultLevel, type VenueLevel, venueLevels } from './levels';
-export { configureVenuePlugin, googleEmbedUrl, type VenuePluginSettings } from './googleEmbed';
+export {
+  configureVenuePlugin,
+  googleEmbedUrl,
+  googlePlacesKey,
+  type VenuePluginSettings,
+} from './googleEmbed';
+export { type GoogleMapsLink, parseGoogleMapsUrl } from './googleLink';
+export {
+  type GooglePlace,
+  googlePlaceIdForVenue,
+  lookUpShortLink,
+  nearestGooglePlace,
+  placeLink,
+  type ShortLinkLookup,
+  searchGooglePlaces,
+} from './googlePlaces';
 export { fetchOsmElement, type OsmElement } from './osm';
 export { type GoogleLinkProblem, googleLinkChange, lacksGoogleLink } from './venueLinks';
 export { type GoogleLinkMatches, searchGoogleLink } from './googleSearch';

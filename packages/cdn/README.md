@@ -403,6 +403,14 @@ The bundle re-exports utilities for advanced usage:
 - `configureVenuePlugin({ googleMapsEmbedKey })`: the app's Google Maps Embed API key (free, restrict it to
   your domain); venues with a Google link then show Google's place card (name, address, rating), loaded
   when opened, nothing stored. Keep keys out of manifests: they're public on Nostr
+- `configureVenuePlugin({ getGooglePlacesKey: async () => key })`: the user's Google Places API key, asked
+  only when a Google Maps short link (`maps.app.goo.gl`, what phones share) is pasted. The place is
+  searched by the share text's name and address (or a name the author types), the author picks among
+  several, and it's matched on OpenStreetMap like a long link. Only Google's place id is kept
+  (`i gplace:`); Google's point only centres the search and the map (Google's terms allow keeping
+  coordinates 30 days at most). The key is never stored, published or logged by nostr-post. Also
+  `parseGoogleMapsUrl(text)` (a link or a share text), `lookUpShortLink(link)`,
+  `searchGooglePlaces(query, key)`, `googlePlaceIdForVenue(venue)`
 
 **Bookmark lists (NIP-51)**
 

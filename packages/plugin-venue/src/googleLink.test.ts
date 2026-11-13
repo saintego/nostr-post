@@ -32,6 +32,16 @@ describe('Google Maps links', () => {
 
   it('knows short links, and rejects other text', () => {
     expect(parseGoogleMapsUrl('https://maps.app.goo.gl/AbCd123')).toEqual({ short: true });
+    // The phone apps' share text: name and address above the link
+    expect(
+      parseGoogleMapsUrl(
+        'Blue Monkey Bar Saigon\n199M Nguyễn Văn Hưởng, Thảo Điền, Thủ Đức\nhttps://maps.app.goo.gl/xYz987'
+      )
+    ).toEqual({
+      short: true,
+      name: 'Blue Monkey Bar Saigon',
+      address: '199M Nguyễn Văn Hưởng, Thảo Điền, Thủ Đức',
+    });
     expect(parseGoogleMapsUrl('U Fleků Praha')).toBeUndefined();
     expect(parseGoogleMapsUrl('https://www.openstreetmap.org/node/1')).toBeUndefined();
     expect(parseGoogleMapsUrl('https://www.google.com/search?q=beer')).toBeUndefined();

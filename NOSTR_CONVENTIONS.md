@@ -48,7 +48,7 @@ IDs. We also write our own namespaces:
 | Value                        | Written by                    | Meaning                                                  |
 | ---------------------------- | ----------------------------- | -------------------------------------------------------- |
 | `osm:node\|way\|relation:<id>` | venue field, venue wiki pages | An OpenStreetMap object                                  |
-| `gplace:<place id>`          | venue field (Google provider) | A Google Places place ID                                 |
+| `gplace:<place id>`          | venue field (Google provider; a pasted short link) | A Google Places place ID: the only thing kept from Google (its terms allow keeping coordinates 30 days at most) |
 | `gcid:<cid>`                 | venue field (Google Maps link) | A Google Maps CID, link worked out from it               |
 | `wikidata:Q<id>`             | venue field (cities, countries) | A Wikidata item                                        |
 | `<prefix>:<id>`              | `identifier` field            | Any prefix a manifest sets (`metadata.prefix`), e.g. the examples' `gtin`, `ean`, `upc`, `asin` |

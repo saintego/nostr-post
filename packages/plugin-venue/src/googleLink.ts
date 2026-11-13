@@ -14,8 +14,15 @@ export interface GoogleMapsLink {
   lon?: number;
   /** Google's customer id of the place (decimal) */
   cid?: string;
-  /** A short share link (maps.app.goo.gl): only Google could resolve it */
+  /**
+   * A short share link (maps.app.goo.gl): only Google can open it, so the place is searched by
+   * the name and address of the share text (`googlePlaces.ts`)
+   */
   short?: boolean;
+  /** A share text's address line (the phone apps put name and address above the link) */
+  address?: string;
+  /** The Google place id, once a short link's place was found (kept as `i gplace:`) */
+  placeId?: string;
 }
 
 const isGoogleMapsHost = (host: string, path: string): boolean =>
@@ -43,17 +50,30 @@ const pointOf = (path: string): { lat?: number; lon?: number } => {
   return found ? { lat: Number(found[1]), lon: Number(found[2]) } : {};
 };
 
-/** What a pasted Google Maps link says; undefined if the text isn't one */
+/** The lines of a share text around its link: the place's name, then its address */
+const shareLines = (text: string, link: string): { name?: string; address?: string } => {
+  const [name, address] = text
+    .split(/\r?\n/)
+    .map((line) => line.replace(link, '').trim())
+    .filter((line) => line && !/^https?:\/\//i.test(line));
+  return { ...(name ? { name } : {}), ...(address ? { address } : {}) };
+};
+
+/**
+ * What a pasted Google Maps link says, also inside a share text ("Name\nAddress\nlink", as the
+ * phone apps share a place); undefined if the text has no Google Maps link
+ */
 export function parseGoogleMapsUrl(text: string): GoogleMapsLink | undefined {
+  const link = text.match(/https?:\/\/\S+/)?.[0] ?? text.trim();
   let url: URL;
   try {
-    url = new URL(text.trim());
+    url = new URL(link);
   } catch {
     return undefined;
   }
   const host = url.hostname.toLowerCase();
   if (host === 'maps.app.goo.gl' || (host === 'goo.gl' && url.pathname.startsWith('/maps'))) {
-    return { short: true };
+    return { short: true, ...shareLines(text, link) };
   }
   if (!isGoogleMapsHost(host, url.pathname)) return undefined;
 
