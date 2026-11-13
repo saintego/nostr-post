@@ -3,8 +3,10 @@
  *
  * A venue field asks for a place as text ("JAM, Bangkok"), and reads it back as the first place
  * OpenStreetMap finds for it, at the field's levels. A single exact place may also come as
- * `{ name, address }`: a venue OpenStreetMap doesn't have is then placed at its street address,
- * under its own name (no OSM id: the street isn't the venue). The user checks it in the composer
+ * `{ name, address }`: when the name alone isn't found, the address is, and the venue is searched
+ * by its name around that spot (also without a trailing word, as posts add the city); a venue
+ * OpenStreetMap doesn't have there is placed at its street address, under its own name (no OSM
+ * id: the street isn't the venue). The user checks it in the composer
  * (the map shows it). No DOM dependencies.
  */
 
@@ -109,6 +111,50 @@ const findByAddress = async (
   return undefined;
 };
 
+/** How far around an address's spot the venue is searched by its name: ~500 m */
+const NEAR_SPOT_DEGREES = 0.005;
+
+/**
+ * The venue's name as searched near its spot: as given, then without its last word, as posts
+ * often add the city ("Blue Monkey Bar Saigon" for OpenStreetMap's "Blue Monkey Bar")
+ */
+const nameVariants = (name: string): string[] => {
+  const words = (name.split(',')[0] ?? '').trim().split(/\s+/).filter(Boolean);
+  const variants = [words.join(' ')];
+  if (words.length > 2) variants.push(words.slice(0, -1).join(' '));
+  return variants.filter(Boolean);
+};
+
+/** Whether OpenStreetMap's name is the venue's: one contains the other, ignoring case and accents */
+const sameName = (osmName: string, name: string): boolean => {
+  const a = venueNameKey(osmName);
+  const b = venueNameKey(name);
+  return a.length >= 3 && b.length >= 3 && (a.includes(b) || b.includes(a));
+};
+
+/**
+ * The venue on OpenStreetMap around its address's spot, by its name (the name search alone missed
+ * it, e.g. under a longer name); undefined when OSM doesn't have it there
+ */
+const findNearSpot = async (
+  name: string,
+  spot: { lat: number; lon: number },
+  config: VenuePluginConfig
+): Promise<VenueData | undefined> => {
+  for (const variant of nameVariants(name)) {
+    const results = await searchNominatim(variant, ['place'], spot, NEAR_SPOT_DEGREES).catch(
+      () => []
+    );
+    const match = results.find(
+      (r) =>
+        !AREA_TYPES.has(r.addresstype ?? '') &&
+        sameName(r.name || r.display_name.split(',')[0] || '', variant)
+    );
+    if (match) return nominatimToVenue(match, config.precision);
+  }
+  return undefined;
+};
+
 /** `{ name, address }` or a text, as the name and the address */
 const placeQuery = (value: unknown): { name: string; address: string } => {
   if (typeof value === 'string') return { name: value.trim(), address: '' };
@@ -128,7 +174,11 @@ const findVenue = async (value: unknown, field: PostField): Promise<VenueData | 
   const results = await searchNominatim(name, venueLevels(config.levels)).catch(() => []);
   const first = results[0];
   if (first) return nominatimToVenue(first, config.precision);
-  return address ? findByAddress(name, address, config) : undefined;
+  if (!address) return undefined;
+  const atAddress = await findByAddress(name, address, config);
+  // Found the address: the venue may still be on OpenStreetMap there, under a shorter name
+  const onOsm = atAddress ? await findNearSpot(name, atAddress, config) : undefined;
+  return onOsm ?? atAddress;
 };
 
 /** Texts looked up as places (one by one: Nominatim takes a request a second) */

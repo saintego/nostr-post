@@ -116,6 +116,8 @@ export interface VenueAddress {
 export interface NominatimResult {
   lat: string;
   lon: string;
+  /** The place's own name (Nominatim's `name`), when it has one */
+  name?: string;
   display_name: string;
   osm_type: 'node' | 'way' | 'relation';
   osm_id: number;

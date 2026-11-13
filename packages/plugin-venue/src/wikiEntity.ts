@@ -108,9 +108,13 @@ export function mergeOsmFields(
 export const venuePageRequired = (field: PostField): boolean =>
   field.metadata?.requirePage === true || field.metadata?.linkOnly === true;
 
-/** Whether publishing creates/updates the venue's page: required, or the user didn't opt out */
+/**
+ * Whether publishing creates/updates the venue's page: required, else the author's choice
+ * (`VenueData.syncWiki`). Unchosen: yes for a venue with an OpenStreetMap or Google id, no for
+ * one placed by its address or pin (the author ticks it to make its page)
+ */
 export const syncsVenuePage = (venue: VenueData, field: PostField): boolean =>
-  venuePageRequired(field) || venue.syncWiki !== false;
+  venuePageRequired(field) || (venue.syncWiki ?? venueIdentifiers(venue).length > 0);
 
 /** Shortest geohash a venue without ids is placed precisely enough by (6 chars ≈ ±610 m) */
 const PAGE_POINT_PRECISION = 6;

@@ -1,3 +1,4 @@
+import type { PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
 import { osm, venue, venueManifest } from './fixtures.testHelpers';
 import { geohashTags } from './levels';
@@ -9,6 +10,7 @@ import {
   mergeOsmFields,
   slugBody,
   syncedOsmVersion,
+  syncsVenuePage,
   venueDTag,
   venueEntityTags,
   venueNameKey,
@@ -186,6 +188,19 @@ describe("a venue OpenStreetMap and Google don't have", () => {
       ],
     };
     expect(isSameVenueByName(page as never, pinned)).toBe(true);
+  });
+
+  it('gets a page only when the author chooses it (OSM venues by default)', () => {
+    const field: PostField = {
+      id: 'location',
+      type: 'geo',
+      uiPlugin: 'venue',
+      mapTo: { kind: 1, target: 'tag' },
+    };
+    expect(syncsVenuePage(pinned, field)).toBe(false);
+    expect(syncsVenuePage({ ...pinned, syncWiki: true }, field)).toBe(true);
+    expect(syncsVenuePage({ ...pinned, osmType: 'node', osmId: '42' }, field)).toBe(true);
+    expect(syncsVenuePage(pinned, { ...field, metadata: { requirePage: true } })).toBe(true);
   });
 
   it('can take a Google Maps link on its page', () => {

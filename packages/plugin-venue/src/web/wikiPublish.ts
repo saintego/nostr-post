@@ -27,6 +27,7 @@ import {
   canHaveVenuePage,
   OSM_COPYRIGHT_URL,
   slugBody,
+  syncsVenuePage,
   venueDTag,
   venuePageKey,
   venuePageRequired,
@@ -293,7 +294,7 @@ export class NpVenueWikiPublish extends NpElement {
     const m = this._m;
     // A required page has no opt-out: the plan below says what happens to it
     const required = !!this.field && venuePageRequired(this.field);
-    const checked = required || this._venue.syncWiki !== false;
+    const checked = !!this.field && syncsVenuePage(this._venue, this.field);
     return html`
       <div class="wiki-publish np-card" part="card">
         ${
