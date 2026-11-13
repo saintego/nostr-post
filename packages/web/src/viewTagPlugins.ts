@@ -33,15 +33,24 @@ export type TagPluginsInput = {
   text?: string;
 };
 
-/** Tags shown elsewhere in the view: the source (NIP-48 `proxy`), as "Imported from …" */
-const SHOWN_APART = new Set(['proxy']);
+/**
+ * Fields shown elsewhere in the view: a source (NIP-48 `proxy`) as "Imported from …"; its `r`
+ * link shows among the post's links
+ */
+const shownApart = (manifest: NostrPostManifest): Set<string> =>
+  new Set(
+    manifest.fields
+      .filter((f) => getFieldTargets(f).some((t) => t.tagName === 'proxy'))
+      .map((f) => f.id)
+  );
 
 /** Tag name → manifest fields mapped to that tag on `kind` */
 const tagFieldMap = (manifest: NostrPostManifest | undefined, kind: number) => {
   const map = new Map<string, PostField[]>();
   if (!manifest) return map;
+  const apart = shownApart(manifest);
   for (const field of getFieldsByKind(manifest, kind, [kind])) {
-    if (Array.isArray(field.mapTo) || SHOWN_APART.has(field.mapTo.tagName ?? '')) continue;
+    if (Array.isArray(field.mapTo) || apart.has(field.id)) continue;
     if (field.mapTo.target === 'tag' && field.mapTo.tagName) {
       const fields = map.get(field.mapTo.tagName) ?? [];
       fields.push(field);

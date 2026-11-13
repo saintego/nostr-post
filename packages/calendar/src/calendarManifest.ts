@@ -92,8 +92,13 @@ export const CALENDAR_EVENT_MANIFEST: NostrPostManifest = {
       id: 'source',
       type: 'string',
       uiPlugin: 'text',
-      // NIP-48: the event comes from that page (`["proxy", <url>, "web"]`)
-      mapTo: bothKinds({ target: 'tag', tagName: 'proxy', tagExtra: ['web'] }),
+      // NIP-48: the event comes from that page (`["proxy", <url>, "web"]`). Also an `r` link:
+      // relays index only single-letter tags, so `#r` finds what was imported from a page
+      // (`importedFilter`), and calendar clients without NIP-48 show the link
+      mapTo: [
+        ...bothKinds({ target: 'tag', tagName: 'proxy', tagExtra: ['web'] }),
+        ...bothKinds({ target: 'tag', tagName: 'r' }),
+      ],
       metadata: {
         label: 'Source',
         description:

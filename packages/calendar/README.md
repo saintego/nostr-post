@@ -21,7 +21,8 @@ import { CALENDAR_EVENT_MANIFEST, agendaFilters, groupEventsByDay } from '@nostr
 `CALENDAR_EVENT_MANIFEST` is ready to use: `<nostr-post-composer .manifest=${CALENDAR_EVENT_MANIFEST}>`.
 All-day or timed is its publish format. Its fields use the `date`, `venue`, `profile`, `media` and
 `hashtag` plugins, which the composer loads by itself. Its **Source** field marks an event imported
-from a page (NIP-48 `["proxy", <url>, "web"]`); views show "Imported from <site>". How to build your own is in
+from a page (NIP-48 `["proxy", <url>, "web"]`, plus the page as an `r` link, which relays can query);
+views show "Imported from <site>". How to build your own is in
 [MANIFEST.md](../../MANIFEST.md#dates).
 
 ### Agenda
@@ -75,6 +76,7 @@ a month grid can use the same functions with a month as the window.
 
 | Export                                    | Does                                                                     |
 | ----------------------------------------- | ------------------------------------------------------------------------ |
+| `importedFilter(urls)`, `fromSource(events, url)`, `sameUrl(url)` | Events already imported from a page: a relay filter by `#r` (relays don't index `proxy`), then the newest version of each event whose proxy tag (NIP-48) or `r` link names it, URLs compared without `www.` or a trailing slash. Before importing an event, offer the existing one |
 | `similarEvents(draft, events, options?)`  | Events sharing a day with a draft (`{ title, when }`) whose titles are alike (`minScore`, default 0.5), most alike first: before creating an event, offer the existing one |
 | `titleSimilarity(a, b)`                   | 0–1: shared words over the shorter title's (case, accents, punctuation and filler words ignored) |
 

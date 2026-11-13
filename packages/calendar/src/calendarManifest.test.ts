@@ -112,7 +112,7 @@ describe('CALENDAR_EVENT_MANIFEST', () => {
 });
 
 describe('source (NIP-48)', () => {
-  it('marks an imported event with a proxy tag', () => {
+  it('marks an imported event with a proxy tag, and links the page', () => {
     const result = coordinateEvents(
       CALENDAR_EVENT_MANIFEST,
       { ...formData, source: 'https://www.facebook.com/events/1/' },
@@ -120,7 +120,10 @@ describe('source (NIP-48)', () => {
     );
     if (!result.success) throw new Error(JSON.stringify(result.error));
     expect(result.data.events[0]?.tags).toEqual(
-      expect.arrayContaining([['proxy', 'https://www.facebook.com/events/1/', 'web']])
+      expect.arrayContaining([
+        ['proxy', 'https://www.facebook.com/events/1/', 'web'],
+        ['r', 'https://www.facebook.com/events/1/'],
+      ])
     );
   });
 });
