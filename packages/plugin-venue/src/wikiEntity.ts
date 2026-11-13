@@ -10,9 +10,11 @@
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { decodeGeohash } from '@nostr-post/plugin-geo';
 import {
+  type EntityManifestRef,
   type EntityTypeAffixes,
   entityDTagFor,
   entityTypeAffixes,
+  getEntityManifest,
   normalizeDTag,
   type WikiEvent,
 } from '@nostr-post/wiki';
@@ -219,4 +221,30 @@ export function venueDTag(
   const affixes = entityTypeAffixes(manifest);
   const edited = slugBody(normalizeDTag(editedSlug ?? ''), affixes);
   return edited ? `${affixes.prefix}${edited}${affixes.suffix}` : entityDTagFor(manifest, data);
+}
+
+/** The d-tag suffix of venue pages when the field's venue page type isn't loaded: `{…}-(venue)` */
+const VENUE_SUFFIX = '-venue';
+
+/**
+ * The venue's page among a post's tags: the last `a` tag to a wiki page of the venue page type
+ * (its d-tag's fixed prefix and suffix, from the field's `metadata.wikiEntity`, else `-venue`).
+ * Other pages the post links (a gig's performers) aren't its page; a post without one has none
+ */
+export function venuePageOf(
+  tags: string[][],
+  field: PostField | undefined
+): { pubkey: string; dTag: string } | undefined {
+  const manifest = getEntityManifest(field?.metadata?.wikiEntity as EntityManifestRef | undefined);
+  const { prefix, suffix } = manifest
+    ? entityTypeAffixes(manifest)
+    : { prefix: '', suffix: VENUE_SUFFIX };
+  for (const tag of [...tags].reverse()) {
+    if (tag[0] !== 'a' || !tag[1]?.startsWith('30818:')) continue;
+    const [, pubkey = '', ...rest] = tag[1].split(':');
+    const dTag = rest.join(':');
+    const ofVenueType = dTag.startsWith(prefix) && dTag.endsWith(suffix);
+    if (pubkey && dTag && ofVenueType) return { pubkey, dTag };
+  }
+  return undefined;
 }

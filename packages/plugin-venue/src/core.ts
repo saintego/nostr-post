@@ -17,6 +17,7 @@ import { decodeGeohash, encodeGeohash } from '@nostr-post/plugin-geo';
 import type { NostrUIPlugin, PostField, Result, ValidationError } from '@nostr-post/plugins/types';
 import { googleCidIdentifier } from './googleLink';
 import { parseVenueJson, venueJsonSchema } from './venueJson';
+import { venuePageOf } from './wikiEntity';
 import {
   type VenueLevel,
   geohashTags,
@@ -476,14 +477,10 @@ export const venuePlugin: NostrUIPlugin = {
       venue.name = locationTag[1];
     }
 
-    // The venue's wiki entity (`a` tag "30818:<pubkey>:<d-tag>"): the last one, as the plugin's
-    // extra tags follow the fields' (e.g. a gig's performers' pages come first)
-    const [, pubkey, ...dTag] =
-      [...tags]
-        .reverse()
-        .find((t) => t[0] === 'a' && t[1]?.startsWith('30818:'))?.[1]
-        ?.split(':') ?? [];
-    if (pubkey && dTag.length > 0) venue.wikiEntity = { pubkey, dTag: dTag.join(':') };
+    // The venue's wiki entity (`a` tag "30818:<pubkey>:<d-tag>"): the last page of the venue page
+    // type, not a gig's performers' pages
+    const page = venuePageOf(tags, field);
+    if (page) venue.wikiEntity = page;
 
     venue.level = publishedLevel(venue, field);
     return venue;
