@@ -58,6 +58,10 @@ export interface VenueViewMessages {
   googleMaps: string;
   /** Summary of the collapsible wiki page of the venue */
   wikiPage: string;
+  /** While the page of a venue the post doesn't link is looked up by the venue's ids */
+  wikiPageLooking: string;
+  /** No page found for the venue */
+  wikiPageNone: string;
   /** Summary of Google's place card (shown when the app set a Maps Embed key) */
   googleCard: string;
 }
@@ -66,6 +70,8 @@ export const DEFAULT_VENUE_VIEW_MESSAGES: VenueViewMessages = {
   viewOnOsm: 'View on OSM ↗',
   googleMaps: 'Google Maps ↗',
   wikiPage: 'Venue wiki page',
+  wikiPageLooking: 'Looking for its page…',
+  wikiPageNone: 'No wiki page for this place yet',
   googleCard: 'On Google Maps',
 };
 

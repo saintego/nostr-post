@@ -188,7 +188,8 @@ On events made with manifests that publish calendar events (`publishesCalendarEv
 
 - `<np-rsvp>`: Going / Maybe / Can't go with counts, and "Who" (once someone answered): the people of
   each answer with avatars and names (plugin-profile's `<np-profile-view>`). Loading the counts needs
-  no signer. "Loading answers…" until they're loaded; then the signed-in user's own answer is marked,
+  no signer. "Loading answers…" until they're loaded (the buttons disabled then, and while an answer
+  is saved); then the signed-in user's own answer is marked,
   by the pubkey the app already knows (signer's `knownPublicKey()`: no signer prompt just to look;
   apps with their own sign-in call `setKnownPublicKey`). `Partial<RsvpMessages>`
   (`DEFAULT_RSVP_MESSAGES`).

@@ -2,7 +2,8 @@
  * @nostr-post/plugin-date - <np-rsvp>
  *
  * Going / Maybe / Can't go on a calendar event, with how many people answered each and the
- * signed-in user's own answer marked (`knownPublicKey`; "Loading answers…" until loaded). An event
+ * signed-in user's own answer marked (`knownPublicKey`; "Loading answers…" until loaded). The
+ * buttons are disabled while the answers load and while an answer is saved. An event
  * action (`registerEventAction`): views show it with events made with calendar manifests.
  * Accepts .target (the event's address) and .relays; reading needs no signer, answering does.
  */
@@ -112,7 +113,7 @@ export class NpRsvp extends NpElement {
               class="np-chip ${status === mine ? 'np-selected' : ''}"
               part="chip"
               aria-pressed=${status === mine ? 'true' : 'false'}
-              ?disabled=${this._busy}
+              ?disabled=${this._busy || !this._summary}
               @click=${() => this._answer(status)}
             >
               ${m[status]}${counts ? html` <span class="count">${counts[status]}</span>` : ''}
