@@ -190,17 +190,21 @@ describe("a venue OpenStreetMap and Google don't have", () => {
     expect(isSameVenueByName(page as never, pinned)).toBe(true);
   });
 
-  it('gets a page only when the author chooses it (OSM venues by default)', () => {
+  it("gets a page by default (manual creation), unless the manifest's createPage says no", () => {
     const field: PostField = {
       id: 'location',
       type: 'geo',
       uiPlugin: 'venue',
       mapTo: { kind: 1, target: 'tag' },
     };
-    expect(syncsVenuePage(pinned, field)).toBe(false);
-    expect(syncsVenuePage({ ...pinned, syncWiki: true }, field)).toBe(true);
-    expect(syncsVenuePage({ ...pinned, osmType: 'node', osmId: '42' }, field)).toBe(true);
-    expect(syncsVenuePage(pinned, { ...field, metadata: { requirePage: true } })).toBe(true);
+    const noPages = { ...field, metadata: { createPage: false } };
+    expect(syncsVenuePage(pinned, field)).toBe(true);
+    expect(syncsVenuePage(pinned, noPages)).toBe(false);
+    expect(syncsVenuePage({ ...pinned, syncWiki: true }, noPages)).toBe(true);
+    expect(syncsVenuePage({ ...pinned, syncWiki: false }, field)).toBe(false);
+    expect(
+      syncsVenuePage({ ...pinned, syncWiki: false }, { ...field, metadata: { requirePage: true } })
+    ).toBe(true);
   });
 
   it('can take a Google Maps link on its page', () => {

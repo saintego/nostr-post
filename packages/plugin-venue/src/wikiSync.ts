@@ -175,17 +175,21 @@ function addMissingTags(tags: Tag[], extra: Tag[]): Tag[] {
 /**
  * Publish a new or updated version of the venue's entity when needed and
  * return the tag that links the post to it (`a`). Nothing is published when
- * the entity is up to date with OSM.
+ * the entity is up to date with OSM, or when the page isn't made or updated now
+ * (`syncsVenuePage`: unticked, or the app's `createPages: false` for imports): an
+ * existing page is then only linked.
  */
 export async function syncVenueEntity(venue: VenueData, field: PostField): Promise<Tag[]> {
   // A registered id, an inline manifest, or a published manifest's address
   const manifest = await resolveEntityManifest(field.metadata?.wikiEntity as EntityManifestRef);
-  if (!manifest || !syncsVenuePage(venue, field) || !canHaveVenuePage(venue)) return [];
+  if (!manifest || !canHaveVenuePage(venue)) return [];
 
   const relays = DEFAULT_WIKI_RELAYS;
   const { action, osm } = await planVenueEntity(venue, relays);
-  if (action.kind === 'none') {
-    return [['a', buildWikiATag(action.base.pubkey, dTagOf(action.base))]];
+  if (action.kind === 'none' || !syncsVenuePage(venue, field)) {
+    return action.kind === 'create'
+      ? []
+      : [['a', buildWikiATag(action.base.pubkey, dTagOf(action.base))]];
   }
 
   const fromOsm = venueToEntityData(venue, osm, manifest);
