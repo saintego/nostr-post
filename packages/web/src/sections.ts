@@ -30,6 +30,7 @@ import { customElement, property, query, state } from 'lit/decorators.js';
 import '@nostr-post/ui/web/dialog';
 import type { NpDialog } from '@nostr-post/ui/web/dialog';
 import './composer';
+import { ensurePluginsForManifest } from './pluginAutoLoad';
 import { DEFAULT_SECTIONS_MESSAGES, type SectionsMessages } from './sectionsMessages';
 import { addPrefill, renderAlso, renderList, renderStats, renderView } from './sectionsParts';
 import { sectionsStyles } from './sectionsStyles';
@@ -79,6 +80,8 @@ export class NostrPostSections extends NpElement {
   /** The pages "Add" offers to link too, and those ticked */
   @state() _also: AlsoLinkOption[] = [];
   @state() _alsoTicked: ReadonlySet<string> = new Set();
+  /** The section whose "Add" just queued a post (files uploading later) */
+  @state() _queuedIn?: number;
   @query('np-dialog') _dialog?: NpDialog;
   _loadedFor = '';
 
@@ -134,6 +137,7 @@ export class NostrPostSections extends NpElement {
     if (!ref) return;
     const manifest = (await resolveManifest(ref, this.relays)) ?? null;
     this._also = [];
+    this._queuedIn = undefined;
     this._adding = { index, manifest };
     await this.updateComplete;
     this._dialog?.showModal();
@@ -145,6 +149,8 @@ export class NostrPostSections extends NpElement {
     const section = this.sections[index];
     const [address] = this.target.addresses;
     if (!section || !this.manifest || !address) return;
+    // The page's fields are read by their plugins (e.g. a gig's venue page from its venue field)
+    await ensurePluginsForManifest(this.manifest);
     const options = await loadAlsoLinks(section, this.manifest, address, {
       event: this.self?.[0],
       relays: this.relays,
@@ -167,6 +173,13 @@ export class NostrPostSections extends NpElement {
     void this._load(index);
   }
 
+  /** Queued in the outbox (its files upload later): closed, saying so; it shows once published */
+  _queued(index: number): void {
+    this._dialog?.close();
+    this._adding = undefined;
+    this._queuedIn = index;
+  }
+
   _renderComposer() {
     const adding = this._adding;
     const section = adding ? this.sections[adding.index] : undefined;
@@ -179,6 +192,7 @@ export class NostrPostSections extends NpElement {
       .prefill=${addPrefill(section, adding.manifest, this.linkValue)}
       .extraTags=${alsoLinkTags([...this._alsoTicked]) || undefined}
       @nostr-post-published=${() => this._published(adding.index)}
+      @nostr-post-queued=${() => this._queued(adding.index)}
     ></nostr-post-composer>`;
   }
 
@@ -210,6 +224,11 @@ export class NostrPostSections extends NpElement {
       </div>
       ${items === undefined ? html`<div class="status">${m.loading}</div>` : nothing}
       ${items?.length === 0 ? html`<div class="status">${m.empty}</div>` : nothing}
+      ${
+        this._queuedIn === index
+          ? html`<div class="np-message np-info" part="message" role="status">${m.queued}</div>`
+          : nothing
+      }
       ${renderStats(section, stats, m)}
       ${items?.length ? renderView(section, items, this.relays, list) : nothing}
     </section>`;
