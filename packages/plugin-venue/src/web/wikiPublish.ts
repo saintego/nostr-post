@@ -24,10 +24,11 @@ import type { VenueData } from '../core';
 import { googlePlaceIdForVenue } from '../googlePlaces';
 import { type GoogleLinkProblem, googleLinkChange, lacksGoogleLink } from '../venueLinks';
 import {
+  canHaveVenuePage,
   OSM_COPYRIGHT_URL,
   slugBody,
   venueDTag,
-  venueIdentifiers,
+  venuePageKey,
   venuePageRequired,
   venueQualifierSuggestions,
   venueToEntityData,
@@ -88,7 +89,7 @@ export class NpVenueWikiPublish extends NpElement {
   private get _enabled(): boolean {
     // Only an exact place gets a venue wiki page
     const isPlace = !this._venue?.level || this._venue.level === 'place';
-    return !!this._manifest && !!this._venue && isPlace && venueIdentifiers(this._venue).length > 0;
+    return !!this._manifest && !!this._venue && isPlace && canHaveVenuePage(this._venue);
   }
 
   /** The new page's slug: as edited by the user, else generated from the template */
@@ -106,7 +107,7 @@ export class NpVenueWikiPublish extends NpElement {
   override updated(): void {
     if (Array.isArray(this.value)) return;
     this._resolveManifest();
-    const key = this._enabled && this._venue ? venueIdentifiers(this._venue).join(',') : '';
+    const key = this._enabled && this._venue ? venuePageKey(this._venue) : '';
     if (key && key !== this._plannedKey) {
       this._plannedKey = key;
       void this._loadPlan();

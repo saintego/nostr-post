@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { osm, venue, venueManifest } from './fixtures.testHelpers';
 import { geohashTags } from './levels';
+import { lacksGoogleLink } from './venueLinks';
 import {
+  canHaveVenuePage,
   entitySyncAction,
   isSameVenueByName,
   mergeOsmFields,
@@ -10,6 +12,7 @@ import {
   venueDTag,
   venueEntityTags,
   venueNameKey,
+  venuePageKey,
   venueQualifierSuggestions,
   venueToEntityData,
 } from './wikiEntity';
@@ -145,5 +148,48 @@ describe('isSameVenueByName', () => {
     expect(isSameVenueByName(page('Café Louvre', 'u2fm00'), venue)).toBe(false);
     // Not a venue hub: no place ID
     expect(isSameVenueByName(page('Café Louvre', 'u2fkbh', 'iso3166:CZ'), venue)).toBe(false);
+  });
+});
+
+describe("a venue OpenStreetMap and Google don't have", () => {
+  const pinned = {
+    geohash: 'w3gvsb',
+    lat: 10.8133,
+    lon: 106.7377,
+    name: 'Blue Monkey Bar Saigon, Nguyen Van Huong, Ho Chi Minh City',
+  };
+
+  it('can have a page by its name and a precise point', () => {
+    expect(canHaveVenuePage(pinned)).toBe(true);
+    expect(canHaveVenuePage({ ...pinned, geohash: 'w3gv' })).toBe(false);
+    expect(canHaveVenuePage({ ...pinned, name: '' })).toBe(false);
+    expect(venuePageKey(pinned)).toBe('Blue Monkey Bar Saigon@w3gvsb');
+    expect(venuePageKey({ ...pinned, osmType: 'node', osmId: '42' })).toBe('osm:node:42');
+  });
+
+  it('marks its page with its point as id (NIP-73 geo:), found again by its name there', () => {
+    const tags = venueEntityTags(pinned, null);
+    expect(tags).toContainEqual(['i', 'geo:w3gvsb']);
+    expect(venueEntityTags({ ...pinned, osmType: 'node', osmId: '42' }, null)).not.toContainEqual([
+      'i',
+      'geo:w3gvsb',
+    ]);
+    const page = {
+      kind: 30818,
+      pubkey: 'pk',
+      created_at: 1,
+      content: '',
+      tags: [
+        ['d', 'blue-monkey-bar-saigon-venue'],
+        ['title', 'Blue Monkey Bar Saigon (venue)'],
+        ...tags,
+      ],
+    };
+    expect(isSameVenueByName(page as never, pinned)).toBe(true);
+  });
+
+  it('can take a Google Maps link on its page', () => {
+    expect(lacksGoogleLink(pinned)).toBe(true);
+    expect(lacksGoogleLink({ ...pinned, googleCid: '1' })).toBe(false);
   });
 });

@@ -21,6 +21,7 @@ import { googleMapsPlaceUrl, osmUrl, pageAddress, type VenueData } from '../core
 import { googleEmbedUrl } from '../googleEmbed';
 import { googleMapsCidUrl } from '../googleLink';
 import { loadVenueFromPage, needsPage } from '../venuePage';
+import { canHaveVenuePage } from '../wikiEntity';
 import { findVenuePage } from '../wikiSync';
 import { DEFAULT_VENUE_VIEW_MESSAGES, type VenueViewMessages } from './venueMessages';
 
@@ -228,7 +229,7 @@ export class NpVenueView extends NpElement {
    */
   private _mayHavePage(v: VenueData): boolean {
     if (v.wikiEntity) return true;
-    return !!this.field?.metadata?.wikiEntity && !!(v.osmId || v.googleCid || v.googlePlaceId);
+    return !!this.field?.metadata?.wikiEntity && canHaveVenuePage(v);
   }
 
   /** Opened: the linked page, else the venue's page looked up by its ids (once) */
