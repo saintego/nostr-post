@@ -255,3 +255,38 @@ describe('<wiki-entity-picker> unlinked entities', () => {
     picker.remove();
   });
 });
+
+describe('<np-wiki-entity-view> page links', () => {
+  it("links each page to the app's own page for it, when the app has one", async () => {
+    const { setEntityPageHref } = await import('./entityPageHref');
+    registerEntityManifest(breweryManifest);
+    setEntityPageHref((entity, manifest) =>
+      manifest?.id === 'brewery-entity-test' ? `#/brewery/${entity.dTag}` : undefined
+    );
+    const view = document.createElement('np-wiki-entity-view') as HTMLElement & {
+      value: unknown;
+      field: unknown;
+      updateComplete: Promise<boolean>;
+    };
+    view.field = {
+      id: 'brewery',
+      type: 'ref',
+      uiPlugin: 'wiki-entity-picker',
+      mapTo: { kind: 1, target: 'tag', tagName: 'a' },
+      metadata: { entityManifest: 'brewery-entity-test' },
+    };
+    view.value = [
+      { dTag: 'jam-(brewery)', resolvedPubkey: 'pk', externalIds: [], displayName: 'JAM' },
+    ];
+    document.body.appendChild(view);
+    await view.updateComplete;
+    const link = view.shadowRoot?.querySelector('a.open');
+    expect(link?.getAttribute('href')).toBe('#/brewery/jam-(brewery)');
+    expect(link?.textContent?.trim()).toBe('Open page');
+    setEntityPageHref(undefined);
+    view.value = [...(view.value as unknown[])];
+    await view.updateComplete;
+    expect(view.shadowRoot?.querySelector('a.open')).toBeNull();
+    view.remove();
+  });
+});

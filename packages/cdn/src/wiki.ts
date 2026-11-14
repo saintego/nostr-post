@@ -27,6 +27,7 @@ export {
   entityTypeAffixes,
   resolveEntities,
   searchEntities,
+  setEntityPageHref,
   withPageLinks,
 } from '@nostr-post/plugin-wiki-entity';
 // Wiki (NIP-54 kind:30818)

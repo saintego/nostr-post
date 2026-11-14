@@ -24,9 +24,12 @@ export {
   type WikiEntityPickerConfig,
 } from './core';
 
+export { type EntityPageHref, entityPageHref, setEntityPageHref } from './entityPageHref';
 export {
   DEFAULT_WIKI_ENTITY_PICKER_MESSAGES,
+  DEFAULT_WIKI_ENTITY_VIEW_MESSAGES,
   type WikiEntityPickerMessages,
+  type WikiEntityViewMessages,
 } from './pickerMessages';
 export {
   type EntityItem,

@@ -566,7 +566,9 @@ user's choice: next to the publish button each one has a checkbox, ticked when i
 unticked for a name alone. A page of its type published meanwhile with one of its links is linked
 instead, and a name another page has gets a qualifier (a handle, a genre); when none is free,
 nothing is published. A found page missing some of the links gets an `update`
-suggestion. Without plugins:
+suggestion. In a post's view (`<np-wiki-entity-view>`) each linked page opens in place, and an
+app with a page of its own for them sets where with `setEntityPageHref((entity, manifest) => href)`:
+each row then links there ("Open page", `WikiEntityViewMessages`). Without plugins:
 `formJsonSchema(manifest, { fieldSchema })` and `parseFormJson` (synchronous) in
 `@nostr-post/core/formJson`.
 

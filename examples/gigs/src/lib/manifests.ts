@@ -200,6 +200,18 @@ export const EVENT_MEDIA_MANIFEST: NostrPostManifest = {
   },
 };
 
+/** An artist's photos and videos: posts linking their page (e.g. a gig's with "Also show on") */
+const ARTIST_MEDIA_SECTION = {
+  id: 'media',
+  label: 'Photos and videos',
+  view: 'gallery',
+  kinds: MEDIA_KINDS,
+  add: { manifest: EVENT_MEDIA_MANIFEST, field: 'event' },
+};
+
+/** An artist's page as a gig's performer opens it in place: with their photos and videos */
+const PERFORMER_MANIFEST: WikiManifest = { ...ARTIST_MANIFEST, sections: [ARTIST_MEDIA_SECTION] };
+
 /** A gig: the calendar event manifest with performers (artist pages) and genre suggestions */
 export const GIG_MANIFEST: NostrPostManifest = {
   ...CALENDAR_EVENT_MANIFEST,
@@ -224,7 +236,7 @@ export const GIG_MANIFEST: NostrPostManifest = {
       metadata: {
         label: 'Performers',
         description: 'The artists or bands playing',
-        entityManifest: ARTIST_MANIFEST,
+        entityManifest: PERFORMER_MANIFEST,
         multiple: true,
       },
     },
@@ -266,12 +278,6 @@ export const ARTIST_PAGE_MANIFEST: WikiManifest = {
       view: 'agenda',
       add: { manifest: GIG_MANIFEST, field: 'performers' },
     },
-    {
-      id: 'media',
-      label: 'Photos and videos',
-      view: 'gallery',
-      kinds: MEDIA_KINDS,
-      add: { manifest: EVENT_MEDIA_MANIFEST, field: 'event' },
-    },
+    ARTIST_MEDIA_SECTION,
   ],
 };

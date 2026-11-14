@@ -3,7 +3,8 @@
  * e.g. a gig's performers. A row per linked page, named by the page's title; opening a row loads
  * the page (`<nostr-wiki-view>`) in place, so a view with many posts loads no pages up front.
  * Entities without a page are listed by name with their links, or as their page when one of the
- * type created later has one of their links; the event's other links after them.
+ * type created later has one of their links; the event's other links after them. A page the app
+ * shows on its own (`setEntityPageHref`) is linked there too ("Open page").
  */
 
 import { fieldLabel } from '@nostr-post/core/manifest';
@@ -19,7 +20,9 @@ import {
   type WikiEntityData,
   type WikiEntityPickerConfig,
 } from './core';
+import { entityPageHref } from './entityPageHref';
 import { entityPages, entityRows, titlesOf } from './pageTitles';
+import { DEFAULT_WIKI_ENTITY_VIEW_MESSAGES, type WikiEntityViewMessages } from './pickerMessages';
 
 /** A link's host and path, shorter than its URL */
 const linkText = (url: string): string =>
@@ -40,7 +43,7 @@ export class NpWikiEntityView extends NpElement {
     details, .named, .links { margin: 0.25rem 0; }
     summary { cursor: pointer; font-weight: 500; }
     .named { font-weight: 500; }
-    .named a, .links a { font-weight: 400; color: var(--np-color-primary); margin-left: 0.375rem; }
+    .named a, .links a, .open { font-weight: 400; color: var(--np-color-primary); margin-left: 0.375rem; }
 
   `,
   ];
@@ -49,6 +52,8 @@ export class NpWikiEntityView extends NpElement {
   @property({ attribute: false }) field?: PostField;
   /** Leave out the field's label (a label above shows it) */
   @property({ type: Boolean, attribute: 'hide-label' }) hideLabel = false;
+  /** Overrides of DEFAULT_WIKI_ENTITY_VIEW_MESSAGES (e.g. translations) */
+  @property({ type: Object, attribute: false }) messages: Partial<WikiEntityViewMessages> = {};
 
   /** The shown pages, once loaded: their titles, and their links apart from the event's others */
   @state() private _pages: WikiEvent[] = [];
@@ -80,6 +85,16 @@ export class NpWikiEntityView extends NpElement {
     details.appendChild(view);
   }
 
+  /** The link to the entity's own page in the app, if it has one */
+  private _pageLink(entity: WikiEntityData, manifest: ReturnType<typeof getEntityManifest>) {
+    const href = entityPageHref(entity, manifest);
+    if (!href) return nothing;
+    const m = { ...DEFAULT_WIKI_ENTITY_VIEW_MESSAGES, ...this.messages };
+    return html`<a class="open" part="link" href=${href} @click=${(e: Event) => e.stopPropagation()}
+      >${m.openPage}</a
+    >`;
+  }
+
   override render() {
     const manifest = getEntityManifest(this._config.entityManifest);
     const affixes = manifest ? entityTypeAffixes(manifest) : undefined;
@@ -95,7 +110,10 @@ export class NpWikiEntityView extends NpElement {
       ${linked.map(
         (entity) => html`
           <details @toggle=${(e: Event) => this._open(e, entity)}>
-            <summary>${titles.get(entity.dTag) ?? entity.displayName ?? entity.dTag}</summary>
+            <summary>
+              ${titles.get(entity.dTag) ?? entity.displayName ?? entity.dTag}
+              ${this._pageLink(entity, manifest)}
+            </summary>
           </details>
         `
       )}
