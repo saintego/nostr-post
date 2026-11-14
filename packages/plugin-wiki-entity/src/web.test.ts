@@ -261,7 +261,7 @@ describe('<np-wiki-entity-view> page links', () => {
     const { setEntityPageHref } = await import('./entityPageHref');
     registerEntityManifest(breweryManifest);
     setEntityPageHref((entity, manifest) =>
-      manifest?.id === breweryManifest.id ? `#/brewery/${entity.dTag}` : undefined
+      manifest?.id === 'brewery-entity-test' ? `#/brewery/${entity.dTag}` : undefined
     );
     const view = document.createElement('np-wiki-entity-view') as HTMLElement & {
       value: unknown;
@@ -273,7 +273,7 @@ describe('<np-wiki-entity-view> page links', () => {
       type: 'ref',
       uiPlugin: 'wiki-entity-picker',
       mapTo: { kind: 1, target: 'tag', tagName: 'a' },
-      metadata: { entityManifest: breweryManifest.id },
+      metadata: { entityManifest: 'brewery-entity-test' },
     };
     view.value = [
       { dTag: 'jam-(brewery)', resolvedPubkey: 'pk', externalIds: [], displayName: 'JAM' },
