@@ -67,3 +67,13 @@ export const DEFAULT_WIKI_ENTITY_PICKER_MESSAGES: WikiEntityPickerMessages = {
   notThem: 'Not them',
   checkFound: (name) => `Check that the page found for ${name} is theirs (👁 next to it)`,
 };
+
+/** User-facing text of <np-wiki-entity-view>, with English defaults */
+export interface WikiEntityViewMessages {
+  /** The link to an entity's own page in the app (`setEntityPageHref`) */
+  openPage: string;
+}
+
+export const DEFAULT_WIKI_ENTITY_VIEW_MESSAGES: WikiEntityViewMessages = {
+  openPage: 'Open page',
+};

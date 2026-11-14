@@ -395,6 +395,8 @@ The bundle re-exports utilities for advanced usage:
 - `registerEventAction({ tagName, matches })`, `eventActionsFor(manifest)`: a plugin's control shown with
   events made with a manifest, in `<nostr-post-view>` and `<nostr-wiki-view>` (the list plugin's Save button)
 - `searchEntities`, `entityTypeAffixes`
+- `setEntityPageHref((entity, manifest) => href)`: where an entity's own page opens in your app;
+  a post's view (`<np-wiki-entity-view>`, e.g. a gig's performers) links each page there ("Open page")
 - `entityJsonSchema(manifest)`, `resolveEntities(items, { entityManifest, relays })`: entities in form JSON
   (name and links) and their wiki pages, found by link (`#i`) or name; the others as unlinked values
 - `createsPage(entity)`, `createEntityPage(entity, field)`: the picker's publish hook: an unlinked
