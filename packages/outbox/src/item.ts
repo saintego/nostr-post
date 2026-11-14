@@ -236,11 +236,12 @@ export const waitingFor = (item: OutboxItem, now = nowSeconds()): number =>
   Math.max(0, now - item.createdAt);
 
 /** What the user can do with an item */
-export type OutboxAction = 'upload-now' | 'send-now' | 'retry' | 'edit' | 'remove';
+export type OutboxAction = 'upload-now' | 'send-now' | 'retry' | 'cancel' | 'edit' | 'remove';
 
 /**
  * The actions an item offers: a draft is edited, files waiting for wifi can go now, a timed
- * post can go now, a failed item is retried; every item can be removed
+ * post can go now, a failed item is retried, a running one is cancelled (a hanging upload or
+ * signer); every item that isn't running can be removed
  */
 export const itemActions = (item: OutboxItem, now = nowSeconds()): OutboxAction[] => {
   const actions: OutboxAction[] = [];
@@ -253,7 +254,7 @@ export const itemActions = (item: OutboxItem, now = nowSeconds()): OutboxAction[
   }
   const busy =
     (item.state === 'uploading' || item.state === 'publishing') && !isInterrupted(item, now);
-  if (!busy) actions.push('remove');
+  actions.push(busy ? 'cancel' : 'remove');
   return actions;
 };
 

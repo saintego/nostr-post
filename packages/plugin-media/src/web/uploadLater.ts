@@ -134,12 +134,18 @@ const deferUnsigned = (
 
 /**
  * The outbox's upload job: the file with its authorization signed at capture (Blossom), or the
- * usual upload, signing now (a placeholder); its URL
+ * usual upload, signing now (a placeholder); its URL. `signal` aborts it (the outbox's Cancel)
  */
-export async function uploadPrepared(upload: OutboxUpload, file: Blob): Promise<string> {
+export async function uploadPrepared(
+  upload: OutboxUpload,
+  file: Blob,
+  { signal }: { signal?: AbortSignal } = {}
+): Promise<string> {
   if (upload.auth) {
     const auth = upload.auth;
-    await withRetries(() => uploadBlossom(file, upload.server, upload.sha256, auth));
+    await withRetries(() => uploadBlossom(file, upload.server, upload.sha256, auth, { signal }), {
+      signal,
+    });
     return upload.url;
   }
   const named = new File([file], upload.name ?? `upload.${upload.type.split('/')[1] ?? 'bin'}`, {
@@ -147,7 +153,7 @@ export async function uploadPrepared(upload: OutboxUpload, file: Blob): Promise<
   });
   // Already shrunk and without metadata: uploaded as it is
   const config = { ...((upload.config ?? {}) as MediaPluginConfig), keepMetadata: true };
-  return (await uploadMedia(named, { config })).url;
+  return (await uploadMedia(named, { config, signal })).url;
 }
 
 // Module state: previews of files not on their server yet, by URL

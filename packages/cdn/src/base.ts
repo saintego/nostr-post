@@ -42,6 +42,7 @@ export {
 export type { PostSection } from '@nostr-post/core/types';
 // Posts published later: drafts, timed posts, upload later (@nostr-post/outbox)
 export {
+  CANCELLED,
   captureEvents,
   combineStorage,
   createOutbox,

@@ -54,10 +54,13 @@ await outbox.runAll(pubkey);
 `createOutbox(storage, jobs?)` returns:
 
 - `list(pubkey?)`, `add(item, files?)` (files by `fileKey`), `update(item)`, `remove(id)` (with its files)
-- `run(id, conditions?)`: uploads the item's files (`jobs.upload(upload, file)`, with the
+- `run(id, conditions?)`: uploads the item's files (`jobs.upload(upload, file, { signal })`, with the
   authorization signed at capture), then sends its events (`jobs.publish`, default the signer's
   `publishSignedEvents`; in test mode only logged). A published item is removed. A failed one
   keeps the reason and only the events not sent yet, for a retry (`force: true`).
+- `cancel(id)`: stops an item uploading or publishing (a hanging upload or signer): the upload's
+  `signal` aborts, and the item fails with `CANCELLED` as its error, to retry (files uploaded so
+  far stay) or remove
 - `runAll(pubkey, conditions?)`: every item with a step to take now
 - `subscribe(listener)`: `{ type: 'added' | 'updated' | 'removed', item }` on every change
 
@@ -74,7 +77,7 @@ files are photos that stay on the device.
 ## Actions
 
 `itemActions(item)`: what the user can do with it: `'edit'` (a draft), `'upload-now'` (files
-waiting for wifi), `'send-now'` (a timed post before its time), `'retry'` (failed or interrupted), `'remove'` (not while running).
+waiting for wifi), `'send-now'` (a timed post before its time), `'retry'` (failed or interrupted), `'cancel'` (running), `'remove'` (not while running).
 `pendingBytes(item)`: bytes still to upload.
 
 ## `/web`
