@@ -84,3 +84,37 @@ describe('venuePlugin.resolveFromTags', () => {
     expect(level([['g', 'u2fk']], { ...levels, precision: 4 })).toBe('place');
   });
 });
+
+describe("a gig's venue page", () => {
+  const field = {
+    id: 'location',
+    type: 'geo',
+    uiPlugin: 'venue',
+    mapTo: [{ kind: 31923, target: 'tag' as const, tagName: 'g' }],
+    metadata: { wikiEntity: 'not-loaded-venue-type' },
+  };
+  const performers = [
+    ['a', '30818:pk:irihi-入日-musician'],
+    ['a', '30818:pk:iro-musician'],
+  ];
+
+  it("isn't a performer's page: a gig without a venue page has none", () => {
+    const venue = venuePlugin.resolveFromTags?.(
+      [['g', 'w3gvsb'], ['location', 'Blue Monkey Bar Saigon'], ...performers],
+      field as never
+    ) as { wikiEntity?: unknown; name?: string };
+    expect(venue.name).toBe('Blue Monkey Bar Saigon');
+    expect(venue.wikiEntity).toBeUndefined();
+  });
+
+  it('is the page of the venue type among the linked pages', () => {
+    const venue = venuePlugin.resolveFromTags?.(
+      [['g', 'w3gvsb'], ['a', '30818:pk:blue-monkey-bar-saigon-thu-duc-venue'], ...performers],
+      field as never
+    ) as { wikiEntity?: unknown };
+    expect(venue.wikiEntity).toEqual({
+      pubkey: 'pk',
+      dTag: 'blue-monkey-bar-saigon-thu-duc-venue',
+    });
+  });
+});

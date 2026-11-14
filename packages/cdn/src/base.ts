@@ -156,7 +156,9 @@ export {
 } from '@nostr-post/posts';
 // Signing & relay utilities
 export {
+  cachedEvents,
   clearDryRunEntries,
+  clearEventCache,
   clearManifestCache,
   DRY_RUN_CHANGE_EVENT,
   type DryRunChangeDetail,

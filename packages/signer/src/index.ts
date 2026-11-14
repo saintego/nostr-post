@@ -361,6 +361,7 @@ export interface FetchFilter {
  * Fetch events from a single relay
  */
 export { fetchBlossomServers, newestBlossomServers } from './blossomServers';
+export { cachedEvents, clearEventCache } from './eventCache';
 export {
   KNOWN_PUBKEY_EVENT,
   knownPublicKey,

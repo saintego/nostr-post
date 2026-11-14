@@ -234,6 +234,11 @@ The bundle re-exports utilities for advanced usage:
   `getPublicKey`'s answer, nostr-login's `nlAuth`, or the app: `setKnownPublicKey(pubkey)`);
   `onKnownPublicKeyChange(listener)`, `KNOWN_PUBKEY_EVENT`. `<np-rsvp>` marks the user's answer by it
 - `getPublicKey` (gives up after `PUBKEY_TIMEOUT_MS`, 30 s, when the signer doesn't answer: `isSignerTimeout(error)`), `hasNostrSigner`, `fetchEvents`, `fetchEventsFromRelay`, `relaysSeenOn(id)` (the relays an event was fetched from this session)
+- Loading: one shared connection per relay; every event fetched is kept for the session
+  (`cachedEvents(filters)`, `clearEventCache()`). `fetchEvents` answers from that cache first and
+  still asks the relays (newer and more events follow through `onUpdate`); `waitForAll` ends when every
+  relay answered or `settleMs` (2.5 s) after the first did, `complete: true` waits for every relay
+  (for reads a write builds on, e.g. a list or a page's newest version)
 - `getUserRelays`, `getDefaultRelays`
 - `setDryRun(on)`, `isDryRun()`: test mode. Events are still signed, but publishing only logs them
   (every relay reports success), and reads (`fetchEvents`, feeds, pickers) also return logged
@@ -404,6 +409,9 @@ The bundle re-exports utilities for advanced usage:
 - `configureVenuePlugin({ googleMapsEmbedKey })`: the app's Google Maps Embed API key (free, restrict it to
   your domain); venues with a Google link then show Google's place card (name, address, rating), loaded
   when opened, nothing stored. Keep keys out of manifests: they're public on Nostr
+- `configureVenuePlugin({ createPages: false })`: publishing creates or updates no venue pages unless
+  the author ticks it (over manifests' `metadata.createPage`), e.g. for automatic imports; existing
+  pages are still linked
 - `configureVenuePlugin({ getGooglePlacesKey: async () => key })`: the user's Google Places API key, asked
   only when a Google Maps short link (`maps.app.goo.gl`, what phones share) is pasted. The place is
   searched by the share text's name and address (or a name the author types), the author picks among

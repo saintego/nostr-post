@@ -56,7 +56,7 @@ export async function fetchLists(
       { kinds: [DELETION_KIND], authors: [pubkey], '#k': [String(listKind.set)] },
     ],
     relays,
-    { waitForAll: true }
+    { waitForAll: true, complete: true }
   );
   return withBookmarks(currentLists(events), pubkey, listKind);
 }
@@ -74,6 +74,7 @@ async function latestEvent(list: BookmarkList, options: ListRelayOptions): Promi
       : { kinds: [list.kind], authors: [list.pubkey] };
   const events = await fetchEvents(filter, await readRelays(list.pubkey, options), {
     waitForAll: true,
+    complete: true,
   });
   return events.reduce<ListEvent>(
     (newest, e) => (e.created_at > newest.created_at ? e : newest),

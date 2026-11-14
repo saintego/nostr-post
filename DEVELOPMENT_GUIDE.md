@@ -84,7 +84,9 @@
 - ✅ NIP-07 extension detection and fallback retry (up to 10x)
 - ✅ Event signing
 - ✅ Event publishing to relays
-- ✅ Event fetching from relays with filters
+- ✅ Event fetching from relays with filters: one shared connection per relay, a session cache
+  answering first (the relays still asked), the first answer then the rest (`waitForAll` with a settle
+  time; `complete` for reads a write builds on)
 
 #### 3. **@nostr-post/plugins** ✅ (Registry + Types)
 

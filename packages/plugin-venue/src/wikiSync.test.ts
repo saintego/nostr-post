@@ -1,5 +1,6 @@
 import type { Mock } from 'vitest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { configureVenuePlugin } from './googleEmbed';
 
 vi.mock('./osm', () => ({ fetchOsmElement: vi.fn() }));
 vi.mock('@nostr-post/signer', () => ({
@@ -149,9 +150,32 @@ describe('syncVenueEntity', () => {
     expect(signedTags()).toContainEqual(['d', 'café-louvre-prague-venue']);
   });
 
-  it('does nothing when the user opted out', async () => {
+  it('creates nothing when the user opted out', async () => {
     expect(await syncVenueEntity({ ...venue, syncWiki: false }, field)).toEqual([]);
     expect(signEvent).not.toHaveBeenCalled();
+  });
+
+  it('only links an existing page when the user opted out, without updating it', async () => {
+    const old = existing(3);
+    (fetchEvents as Mock).mockResolvedValue([old]);
+    (fetchEntityVersions as Mock).mockResolvedValue([old]);
+    (fetchOsmElement as Mock).mockResolvedValue(osm(5));
+    const tags = await syncVenueEntity({ ...venue, syncWiki: false }, field);
+    expect(tags).toEqual([['a', expect.stringMatching(/^30818:.*:cafe-louvre-prague-venue$/)]]);
+    expect(signEvent).not.toHaveBeenCalled();
+  });
+
+  it("follows the app's createPages (imports: link only) and the manifest's createPage", async () => {
+    configureVenuePlugin({ createPages: false });
+    expect(await syncVenueEntity(venue, field)).toEqual([]);
+    expect(signEvent).not.toHaveBeenCalled();
+    configureVenuePlugin({ createPages: undefined });
+    const unticked = {
+      ...(field as object),
+      metadata: { wikiEntity: 'venue-entity-test', createPage: false },
+    };
+    expect(await syncVenueEntity(venue, unticked as never)).toEqual([]);
+    expect(await syncVenueEntity({ ...venue, syncWiki: true }, unticked as never)).toHaveLength(1);
   });
 
   it.each([

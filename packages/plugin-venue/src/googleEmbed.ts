@@ -17,6 +17,12 @@ export interface VenuePluginSettings {
    * It's used for that search only, never stored, published or logged by nostr-post
    */
   getGooglePlacesKey?: () => Promise<string | undefined>;
+  /**
+   * Whether publishing creates and updates venues' pages by default, over the manifests'
+   * `metadata.createPage`: e.g. `false` for automatic imports, which then only link the pages
+   * that exist. The author's tick in the composer and a manifest's `requirePage` still win
+   */
+  createPages?: boolean;
 }
 
 // Module state: set once by the app
@@ -26,6 +32,9 @@ let settings: VenuePluginSettings = {};
 export function configureVenuePlugin(next: VenuePluginSettings): void {
   settings = { ...settings, ...next };
 }
+
+/** The app's venue plugin settings */
+export const venueSettings = (): Readonly<VenuePluginSettings> => settings;
 
 /** The Places API key from the app's provider; undefined without one, or when it fails */
 export async function googlePlacesKey(): Promise<string | undefined> {

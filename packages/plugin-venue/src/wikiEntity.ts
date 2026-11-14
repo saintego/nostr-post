@@ -10,13 +10,16 @@
 import type { NostrPostManifest, PostField } from '@nostr-post/core/types';
 import { decodeGeohash } from '@nostr-post/plugin-geo';
 import {
+  type EntityManifestRef,
   type EntityTypeAffixes,
   entityDTagFor,
   entityTypeAffixes,
+  getEntityManifest,
   normalizeDTag,
   type WikiEvent,
 } from '@nostr-post/wiki';
 import type { VenueData } from './core';
+import { venueSettings } from './googleEmbed';
 import { geohashTags } from './levels';
 import type { OsmElement } from './osm';
 
@@ -106,9 +109,35 @@ export function mergeOsmFields(
 export const venuePageRequired = (field: PostField): boolean =>
   field.metadata?.requirePage === true || field.metadata?.linkOnly === true;
 
-/** Whether publishing creates/updates the venue's page: required, or the user didn't opt out */
+/**
+ * Whether publishing creates/updates venues' pages unless the author chooses: the app's
+ * `configureVenuePlugin({ createPages })`, else the manifest's `metadata.createPage`, else yes
+ */
+export const createsVenuePages = (field: PostField): boolean =>
+  venueSettings().createPages ?? field.metadata?.createPage !== false;
+
+/**
+ * Whether publishing creates/updates the venue's page: required, else the author's tick
+ * (`VenueData.syncWiki`), else `createsVenuePages`. Without it an existing page is only linked
+ */
 export const syncsVenuePage = (venue: VenueData, field: PostField): boolean =>
-  venuePageRequired(field) || venue.syncWiki !== false;
+  venuePageRequired(field) || (venue.syncWiki ?? createsVenuePages(field));
+
+/** Shortest geohash a venue without ids is placed precisely enough by (6 chars ≈ ±610 m) */
+const PAGE_POINT_PRECISION = 6;
+
+/**
+ * Whether a venue can have a wiki page: it has an OpenStreetMap or Google id, or (a venue
+ * OpenStreetMap doesn't have, placed by its address or the author's pin) a name and a precise
+ * point; its page is then found again by its name near that point (`findVenueEntityByName`)
+ */
+export const canHaveVenuePage = (venue: VenueData): boolean =>
+  venueIdentifiers(venue).length > 0 ||
+  (!!venue.name?.split(',')[0]?.trim() && (venue.geohash?.length ?? 0) >= PAGE_POINT_PRECISION);
+
+/** What tells a venue's page apart, to plan it once per venue: its ids, else its name and point */
+export const venuePageKey = (venue: VenueData): string =>
+  venueIdentifiers(venue).join(',') || `${venue.name?.split(',')[0]?.trim()}@${venue.geohash}`;
 
 export function venueIdentifiers(venue: VenueData): string[] {
   const ids: string[] = [];
@@ -120,7 +149,11 @@ export function venueIdentifiers(venue: VenueData): string[] {
 
 /** Hub tags for a venue entity: its identifiers, area, address and OSM attribution */
 export function venueEntityTags(venue: VenueData, osm: OsmElement | null): Tag[] {
-  const tags: Tag[] = venueIdentifiers(venue).map((id): Tag => ['i', id]);
+  const ids = venueIdentifiers(venue);
+  const tags: Tag[] = ids.map((id): Tag => ['i', id]);
+  // A venue OpenStreetMap and Google don't have: its point as its id (NIP-73 `geo:`), so it's a
+  // venue page that `isSameVenueByName` finds again by its name there
+  if (ids.length === 0 && venue.geohash) tags.push(['i', `geo:${venue.geohash}`]);
   // Not identifiers of this venue (not used to find its page), but queryable: its country, Wikidata item
   if (venue.countryCode) tags.push(['i', `iso3166:${venue.countryCode}`]);
   if (venue.wikidata) tags.push(['i', `wikidata:${venue.wikidata}`]);
@@ -182,7 +215,7 @@ export function isSameVenueByName(event: WikiEvent, venue: VenueData): boolean {
   // The venue's name is its label's first part ("Speakerbox, 1000/39 Soi Sukhumvit 55, …")
   const key = venueNameKey(venue.name?.split(',')[0] ?? '');
   const title = event.tags.find((t) => t[0] === 'title')?.[1] ?? '';
-  const isHub = event.tags.some((t) => t[0] === 'i' && /^(osm|gplace|gcid):/.test(t[1] ?? ''));
+  const isHub = event.tags.some((t) => t[0] === 'i' && /^(osm|gplace|gcid|geo):/.test(t[1] ?? ''));
   const geohash = event.tags
     .filter((t) => t[0] === 'g' && t[1])
     .reduce((longest, t) => ((t[1] ?? '').length > longest.length ? (t[1] ?? '') : longest), '');
@@ -219,4 +252,30 @@ export function venueDTag(
   const affixes = entityTypeAffixes(manifest);
   const edited = slugBody(normalizeDTag(editedSlug ?? ''), affixes);
   return edited ? `${affixes.prefix}${edited}${affixes.suffix}` : entityDTagFor(manifest, data);
+}
+
+/** The d-tag suffix of venue pages when the field's venue page type isn't loaded: `{…}-(venue)` */
+const VENUE_SUFFIX = '-venue';
+
+/**
+ * The venue's page among a post's tags: the last `a` tag to a wiki page of the venue page type
+ * (its d-tag's fixed prefix and suffix, from the field's `metadata.wikiEntity`, else `-venue`).
+ * Other pages the post links (a gig's performers) aren't its page; a post without one has none
+ */
+export function venuePageOf(
+  tags: string[][],
+  field: PostField | undefined
+): { pubkey: string; dTag: string } | undefined {
+  const manifest = getEntityManifest(field?.metadata?.wikiEntity as EntityManifestRef | undefined);
+  const { prefix, suffix } = manifest
+    ? entityTypeAffixes(manifest)
+    : { prefix: '', suffix: VENUE_SUFFIX };
+  for (const tag of [...tags].reverse()) {
+    if (tag[0] !== 'a' || !tag[1]?.startsWith('30818:')) continue;
+    const [, pubkey = '', ...rest] = tag[1].split(':');
+    const dTag = rest.join(':');
+    const ofVenueType = dTag.startsWith(prefix) && dTag.endsWith(suffix);
+    if (pubkey && dTag && ofVenueType) return { pubkey, dTag };
+  }
+  return undefined;
 }

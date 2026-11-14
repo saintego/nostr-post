@@ -25,6 +25,7 @@ import {
 import type { VenueData } from './core';
 import { fetchOsmElement, type OsmElement } from './osm';
 import {
+  canHaveVenuePage,
   type EntitySyncAction,
   entitySyncAction,
   isSameVenueByName,
@@ -49,6 +50,7 @@ export async function findVenueEntity(
   if (ids.length === 0) return undefined;
   const events = (await fetchEvents({ kinds: [WIKI_KIND], '#i': ids, limit: 50 } as never, relays, {
     waitForAll: true,
+    complete: true,
     relayTimeoutMs: 8000,
   })) as unknown as WikiEvent[];
   const dTag = selectNewestEntity(events, defaultResolver);
@@ -59,13 +61,17 @@ export async function findVenueEntity(
 
 /**
  * The page of a venue a post doesn't link (e.g. a gig published without creating it): found by
- * the venue's ids (`i osm:…`, `i gcid:…`, `i gplace:…`); undefined when there's none
+ * the venue's ids (`i osm:…`, `i gcid:…`, `i gplace:…`), else by its name near its point;
+ * undefined when there's none
  */
 export async function findVenuePage(
   venue: VenueData,
   relays?: string[]
 ): Promise<{ pubkey: string; dTag: string } | undefined> {
-  const page = await findVenueEntity(venue, relays).catch(() => undefined);
+  // By its ids, else (a venue OpenStreetMap doesn't have) by its name near its point
+  const page =
+    (await findVenueEntity(venue, relays).catch(() => undefined)) ??
+    (await findVenueEntityByName(venue, relays).catch(() => undefined));
   const dTag = page?.tags.find((t) => t[0] === 'd')?.[1];
   return page && dTag ? { pubkey: page.pubkey, dTag } : undefined;
 }
@@ -86,6 +92,7 @@ export async function findVenueEntityByName(
     relays,
     {
       waitForAll: true,
+      complete: true,
       relayTimeoutMs: 8000,
     }
   )) as unknown as WikiEvent[];
@@ -127,13 +134,18 @@ export async function slugAvailability(dTag: string, relays: string[]): Promise<
  */
 /**
  * The newest version of the page at `dTag` if it's this venue's page (same OSM
- * or Google ID): e.g. published moments ago by another field of the same post,
+ * or Google ID, or for a venue without them its name near its point): e.g. published moments ago by another field of the same post,
  * before relays answer the ID lookup
  */
 async function samePlaceAt(dTag: string, venue: VenueData, relays: string[]) {
   const ids = new Set(venueIdentifiers(venue));
   const versions = await fetchEntityVersions(dTag, relays);
-  const ours = versions.filter((v) => v.tags.some((t) => t[0] === 'i' && ids.has(t[1] ?? '')));
+  // A venue without ids: the page with its name near its point
+  const ours = versions.filter((v) =>
+    ids.size > 0
+      ? v.tags.some((t) => t[0] === 'i' && ids.has(t[1] ?? ''))
+      : isSameVenueByName(v, venue)
+  );
   return defaultResolver(ours) ?? undefined;
 }
 
@@ -165,19 +177,21 @@ function addMissingTags(tags: Tag[], extra: Tag[]): Tag[] {
 /**
  * Publish a new or updated version of the venue's entity when needed and
  * return the tag that links the post to it (`a`). Nothing is published when
- * the entity is up to date with OSM.
+ * the entity is up to date with OSM, or when the page isn't made or updated now
+ * (`syncsVenuePage`: unticked, or the app's `createPages: false` for imports): an
+ * existing page is then only linked.
  */
 export async function syncVenueEntity(venue: VenueData, field: PostField): Promise<Tag[]> {
   // A registered id, an inline manifest, or a published manifest's address
   const manifest = await resolveEntityManifest(field.metadata?.wikiEntity as EntityManifestRef);
-  if (!manifest || !syncsVenuePage(venue, field) || venueIdentifiers(venue).length === 0) {
-    return [];
-  }
+  if (!manifest || !canHaveVenuePage(venue)) return [];
 
   const relays = DEFAULT_WIKI_RELAYS;
   const { action, osm } = await planVenueEntity(venue, relays);
-  if (action.kind === 'none') {
-    return [['a', buildWikiATag(action.base.pubkey, dTagOf(action.base))]];
+  if (action.kind === 'none' || !syncsVenuePage(venue, field)) {
+    return action.kind === 'create'
+      ? []
+      : [['a', buildWikiATag(action.base.pubkey, dTagOf(action.base))]];
   }
 
   const fromOsm = venueToEntityData(venue, osm, manifest);

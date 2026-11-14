@@ -13,9 +13,15 @@ const place = (name: string, lat: number, lon: number) => ({
   place_rank: 30,
 });
 
-/** Nominatim answering by the box's size: `atSpot` in the small box, `around` in the area */
-const nominatim = (atSpot: unknown[], around: unknown[]) =>
+/**
+ * Nominatim answering by the box's size: `atSpot` in the small box, `around` in the area;
+ * Overpass (named places near the point) with `nearby`, and Nominatim's lookup with its match
+ */
+const nominatim = (atSpot: unknown[], around: unknown[], nearby: unknown[] = []) =>
   vi.fn(async (url: string) => {
+    if (url.includes('overpass')) return new Response(JSON.stringify({ elements: nearby }));
+    if (url.includes('/lookup'))
+      return new Response(JSON.stringify([place('Speaker Box', 13.7446, 100.5622)]));
     const box = new URL(url).searchParams.get('viewbox')?.split(',').map(Number) ?? [];
     const small = (box[2] ?? 0) - (box[0] ?? 0) < 0.01;
     return new Response(JSON.stringify(small ? atSpot : around));
@@ -41,6 +47,26 @@ describe('searchGoogleLink', () => {
     const { results, spot } = await searchGoogleLink(link, ['place']);
     expect(spot).toBe(false);
     expect(results.map((r) => r.display_name)).toEqual(['near', 'far']);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // Overpass (nothing named so there), then Nominatim at the spot and in the area
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('matches a name spelled otherwise among the places at the point ("Speakerbox")', async () => {
+    const speakerBox = {
+      type: 'node',
+      id: 5,
+      lat: 13.7447,
+      lon: 100.5621,
+      tags: { name: 'Speaker Box', amenity: 'bar' },
+    };
+    const fetchMock = nominatim([], [], [speakerBox]);
+    vi.stubGlobal('fetch', fetchMock);
+    const { results, spot } = await searchGoogleLink(
+      { name: 'Speakerbox', lat: 13.7446, lon: 100.5622 },
+      ['place']
+    );
+    expect(spot).toBe(true);
+    expect(results.map((r) => r.display_name)).toEqual(['Speaker Box']);
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain('osm_ids=N5');
   });
 });

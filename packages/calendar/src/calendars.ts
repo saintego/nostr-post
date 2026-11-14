@@ -60,7 +60,7 @@ export async function fetchCalendarItems(
       { kinds: [5], authors: [pubkey], '#a': [address] },
     ],
     options.relays ?? DEFAULT_RELAYS,
-    { waitForAll: true }
+    { waitForAll: true, complete: true }
   );
   const calendar = currentLists(events).find((list) => list.address === address);
   return (calendar?.items ?? [])

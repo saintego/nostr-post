@@ -10,9 +10,12 @@ import { parseGoogleMapsUrl } from './googleLink';
 /** Why a pasted link can't be used: not a Google Maps place link, or a short one */
 export type GoogleLinkProblem = 'invalid' | 'short';
 
-/** A venue from OSM without a Google identity */
+/**
+ * A venue without a Google identity: from OSM, or one OSM doesn't have (placed by its address or
+ * the author's pin), whose page can then carry its Google Maps link
+ */
 export const lacksGoogleLink = (venue: VenueData): boolean =>
-  !!venue.osmId && !venue.googleCid && !venue.googlePlaceId;
+  !!(venue.osmId || venue.geohash) && !venue.googleCid && !venue.googlePlaceId;
 
 /** What a pasted Google Maps link changes in the venue; empty text removes the link */
 export function googleLinkChange(

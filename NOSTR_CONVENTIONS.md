@@ -61,6 +61,10 @@ wiki pages from `manifestToWikiEvent` and the venue hub.
 Geohashes are `g` tags with every prefix (`u2fk`, `u2fkb`, …), as NIP-52 suggests, on kind 1 and
 wiki pages too.
 
+A venue page of a place OpenStreetMap and Google don't have (placed by its address or the author's
+pin) carries NIP-73's `geo:<geohash>` as its id: it marks the page as a venue's, and the page is
+found again by its name within 300 m of that point (`isSameVenueByName`).
+
 ## Wiki pages (NIP-54, kind 30818)
 
 - **d-tag:** the normalized title plus a type suffix from the entity manifest's `dTagTemplate`

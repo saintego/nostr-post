@@ -1,15 +1,20 @@
+import type { PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
 import { osm, venue, venueManifest } from './fixtures.testHelpers';
 import { geohashTags } from './levels';
+import { lacksGoogleLink } from './venueLinks';
 import {
+  canHaveVenuePage,
   entitySyncAction,
   isSameVenueByName,
   mergeOsmFields,
   slugBody,
   syncedOsmVersion,
+  syncsVenuePage,
   venueDTag,
   venueEntityTags,
   venueNameKey,
+  venuePageKey,
   venueQualifierSuggestions,
   venueToEntityData,
 } from './wikiEntity';
@@ -145,5 +150,65 @@ describe('isSameVenueByName', () => {
     expect(isSameVenueByName(page('Café Louvre', 'u2fm00'), venue)).toBe(false);
     // Not a venue hub: no place ID
     expect(isSameVenueByName(page('Café Louvre', 'u2fkbh', 'iso3166:CZ'), venue)).toBe(false);
+  });
+});
+
+describe("a venue OpenStreetMap and Google don't have", () => {
+  const pinned = {
+    geohash: 'w3gvsb',
+    lat: 10.8133,
+    lon: 106.7377,
+    name: 'Blue Monkey Bar Saigon, Nguyen Van Huong, Ho Chi Minh City',
+  };
+
+  it('can have a page by its name and a precise point', () => {
+    expect(canHaveVenuePage(pinned)).toBe(true);
+    expect(canHaveVenuePage({ ...pinned, geohash: 'w3gv' })).toBe(false);
+    expect(canHaveVenuePage({ ...pinned, name: '' })).toBe(false);
+    expect(venuePageKey(pinned)).toBe('Blue Monkey Bar Saigon@w3gvsb');
+    expect(venuePageKey({ ...pinned, osmType: 'node', osmId: '42' })).toBe('osm:node:42');
+  });
+
+  it('marks its page with its point as id (NIP-73 geo:), found again by its name there', () => {
+    const tags = venueEntityTags(pinned, null);
+    expect(tags).toContainEqual(['i', 'geo:w3gvsb']);
+    expect(venueEntityTags({ ...pinned, osmType: 'node', osmId: '42' }, null)).not.toContainEqual([
+      'i',
+      'geo:w3gvsb',
+    ]);
+    const page = {
+      kind: 30818,
+      pubkey: 'pk',
+      created_at: 1,
+      content: '',
+      tags: [
+        ['d', 'blue-monkey-bar-saigon-venue'],
+        ['title', 'Blue Monkey Bar Saigon (venue)'],
+        ...tags,
+      ],
+    };
+    expect(isSameVenueByName(page as never, pinned)).toBe(true);
+  });
+
+  it("gets a page by default (manual creation), unless the manifest's createPage says no", () => {
+    const field: PostField = {
+      id: 'location',
+      type: 'geo',
+      uiPlugin: 'venue',
+      mapTo: { kind: 1, target: 'tag' },
+    };
+    const noPages = { ...field, metadata: { createPage: false } };
+    expect(syncsVenuePage(pinned, field)).toBe(true);
+    expect(syncsVenuePage(pinned, noPages)).toBe(false);
+    expect(syncsVenuePage({ ...pinned, syncWiki: true }, noPages)).toBe(true);
+    expect(syncsVenuePage({ ...pinned, syncWiki: false }, field)).toBe(false);
+    expect(
+      syncsVenuePage({ ...pinned, syncWiki: false }, { ...field, metadata: { requirePage: true } })
+    ).toBe(true);
+  });
+
+  it('can take a Google Maps link on its page', () => {
+    expect(lacksGoogleLink(pinned)).toBe(true);
+    expect(lacksGoogleLink({ ...pinned, googleCid: '1' })).toBe(false);
   });
 });

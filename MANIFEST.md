@@ -268,7 +268,7 @@ styles, mapped to `t` for posts and wiki entities; the beer entity extends it an
 | `date`               | `date`   | `precision` (`'day'` default \| `'time'`), on kinds other than NIP-52 calendar events; `defaultNow: true`: left empty, the value is the time of publishing (an article's `published_at`; an edit keeps the value it opened with), see [dates](#dates) |
 | `embed`              | `string` | `multiple` (several links). Links show as players (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp player links), others as links |
 | `profile`            | `profile` | `roles` (role suggestions, e.g. `['host', 'speaker']`), `max` (most people), `searchRelays` (NIP-50 relays to search profiles; default `DEFAULT_SEARCH_RELAYS`). The value: `{ pubkey, role?, relay? }[]`, written as `["p", pubkey, relay, role]`. With `attachTo` a text field: `@` mentions in it (`nostr:npub…`), the people mentioned get `p` tags |
-| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub), and `requirePage` (no opt-out from it); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts)); `multiple` (several venues, a list)                                                                                  |
+| `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub), `requirePage` (no opt-out from it) and `createPage: false` (its checkbox starts unticked); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts)); `multiple` (several venues, a list)                                                                                  |
 | `list`               | `string` | `saveField`: the field whose wiki entity is saved (a `venue` field's page, a `wiki-entity-picker`'s entity); without it, the post itself. `relays`. The value: list addresses and `new:<title>`. See [lists](#lists) |
 | `wiki-entity-picker` | `ref`    | `entityManifest`: the entity type ([reference](#referencing-entity-manifests)), which limits search to it and enables "+ Create"; `relays`; `minSearchLength` (2); `emitExtraTags` (`false`: don't copy the entity's `i` tags); `multiple` (pick several; the value is a list). In a post's view, each linked page is a row that opens it; "+ Create" pages are published with the post |
 
@@ -488,15 +488,20 @@ Without a manifest, `<nostr-wiki-view>` uses `STANDARD_WIKI_MANIFEST`, which sho
 
 Authors can paste a Google Maps link into a venue field's search. The link is read from its text
 alone (no request to Google, whose terms don't allow taking data from its pages): its name, its
-point and its CID. The same place is then searched on OpenStreetMap by that name around that
-point. When OSM doesn't have it, the author clicks the place on the map (it zooms to the link's
+point and its CID. The same place is then looked for on OpenStreetMap around that point: among
+the named places there (Overpass), by its name compared without case, accents, spaces or
+punctuation, also when one name contains the other ("Speakerbox" is OSM's "Speaker Box"); else
+with Nominatim's search by that name around the point. When OSM doesn't have it, the author clicks the place on the map (it zooms to the link's
 point, without setting it), and the venue gets the author's point, OSM's address there and the link's name; its venue
 page is created from that.
 
 The CID is kept as `["i", "gcid:<cid>"]` ([our namespace](./NOSTR_CONVENTIONS.md#external-ids-i-tags), not NIP-73); the Google Maps link
 (`https://maps.google.com/?cid=…`) is worked out from it when shown. Venue pages are also found by
 it, so a page created without OSM is filled from OSM once a post picks the OSM place with the same
-link. Short share links (`maps.app.goo.gl`) only Google can open: the author pastes the full link.
+link. Short share links (`maps.app.goo.gl`) only Google can open: with the app's Places key
+(`configureVenuePlugin({ getGooglePlacesKey })`) the place is searched by the share text's name and
+address, else the author pastes the full link. An AI draft's venue (`{ name, address }`) whose name
+isn't found is looked for the same way around its address's spot.
 
 With an app's Google Maps Embed API key (`configureVenuePlugin({ googleMapsEmbedKey })`, free and
 unlimited; not a manifest key, since manifests are public), venues with a Google link show Google's
@@ -529,7 +534,11 @@ links to it with an `a` tag. The author sees what will happen, an editable slug 
 checkbox next to the publish button: a page is one more event to sign, and without it the post
 keeps the venue's own tags, so a page made later still finds it. `metadata.requirePage: true`
 removes the opt-out (the manifest requires the page); `linkOnly` fields always require it, as their
-post has nothing but the page's link. This runs when `<nostr-post-composer auto-publish>` or
+post has nothing but the page's link. The checkbox starts ticked; `metadata.createPage: false` starts
+it unticked, and an app overrides both with `configureVenuePlugin({ createPages })`, e.g. `false` for
+automatic imports. Unticked, no page is created or updated, but an existing page of the venue is
+still linked. A place OpenStreetMap doesn't have (placed by its address or the author's pin) gets a
+page too, with NIP-73's `i geo:<geohash>` as its id. This runs when `<nostr-post-composer auto-publish>` or
 `<nostr-wiki-composer auto-publish>` publishes; apps that publish `nostr-post-submit` or
 `nostr-wiki-submit` themselves call `runBeforePublish` (see the
 [composer docs](./USAGE_GUIDE.md#nostr-post-composer)).
