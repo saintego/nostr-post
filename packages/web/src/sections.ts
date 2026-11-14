@@ -137,6 +137,7 @@ export class NostrPostSections extends NpElement {
     if (!ref) return;
     const manifest = (await resolveManifest(ref, this.relays)) ?? null;
     this._also = [];
+    this._alsoTicked = new Set();
     this._queuedIn = undefined;
     this._adding = { index, manifest };
     await this.updateComplete;
@@ -151,13 +152,22 @@ export class NostrPostSections extends NpElement {
     if (!section || !this.manifest || !address) return;
     // The page's fields are read by their plugins (e.g. a gig's venue page from its venue field)
     await ensurePluginsForManifest(this.manifest);
+    const show = (options: AlsoLinkOption[]) => {
+      if (this._adding?.index !== index) return;
+      // Ticked by default, unless the author changed it meanwhile
+      const known = new Set(this._also.map((o) => o.address));
+      this._also = options;
+      this._alsoTicked = new Set([
+        ...[...this._alsoTicked].filter((a) => known.has(a)),
+        ...options.filter((o) => o.checked && !known.has(o.address)).map((o) => o.address),
+      ]);
+    };
     const options = await loadAlsoLinks(section, this.manifest, address, {
       event: this.self?.[0],
       relays: this.relays,
+      onOptions: show,
     });
-    if (this._adding?.index !== index) return;
-    this._also = options;
-    this._alsoTicked = new Set(options.filter((o) => o.checked).map((o) => o.address));
+    show(options);
   }
 
   _tickAlso(address: string, on: boolean): void {

@@ -53,27 +53,43 @@ export interface AlsoLinkOption extends AlsoLink {
 /** A page's name from its title, without the type in brackets: "Faustus (musician)" → "Faustus" */
 const pageName = (event: SignedEvent | undefined, address: string): string => {
   const title = event?.tags.find((t) => t[0] === 'title')?.[1] ?? '';
-  return title.replace(/\s*\([^)]*\)\s*$/, '').trim() || address.split(':').slice(2).join(':');
+  return (
+    title.replace(/\s*\([^)]*\)\s*$/, '').trim() ||
+    // Until the page arrives: its d-tag as words ("1981-soul-&-sold-musician" → "1981 soul & sold musician")
+    address.split(':').slice(2).join(':').replace(/-/g, ' ')
+  );
 };
 
 /**
  * The pages `section.add.also` offers for the page or event at `address`, with their names:
- * loads its newest version (unless given as `event`) and the pages it links
+ * loads its newest version (unless given as `event`) and the pages it links. Quick: the event
+ * page has usually loaded both (the session cache answers at once), else the first relay's
+ * answer is enough. `onOptions` gets the options as soon as they're known, labelled from the
+ * pages' addresses until their titles arrive
  */
 export async function loadAlsoLinks(
   section: PostSection,
   manifest: NostrPostManifest,
   address: string,
-  { event, relays = DEFAULT_RELAYS }: { event?: DisplayableEvent; relays?: string[] } = {}
+  {
+    event,
+    relays = DEFAULT_RELAYS,
+    onOptions,
+  }: {
+    event?: DisplayableEvent;
+    relays?: string[];
+    onOptions?: (options: AlsoLinkOption[]) => void;
+  } = {}
 ): Promise<AlsoLinkOption[]> {
   if (!section.add?.also?.length) return [];
   const fetch = (targets: string[]) =>
-    fetchEvents(targetFilters(targets), relays, { waitForAll: true })
+    fetchEvents(targetFilters(targets), relays)
       .then(newestItems)
       .catch(() => [] as SignedEvent[]);
   const owner = event ?? (await fetch([address]))[0];
   if (!owner) return [];
   const options = alsoLinkOptions(section, manifest, owner, address);
+  onOptions?.(options.map((o) => ({ ...o, label: pageName(undefined, o.address) })));
   const pages = await fetch(options.map((o) => o.address));
   const byAddress = new Map(pages.map((p) => [addressOf(p) ?? p.id, p]));
   return options.map((o) => ({ ...o, label: pageName(byAddress.get(o.address), o.address) }));
