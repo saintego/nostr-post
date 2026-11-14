@@ -2,7 +2,8 @@
  * @nostr-post/outbox/web - <nostr-post-outbox>: the queue
  *
  * Each item with its thumbnail, title, state, size to upload, how long it has waited, its
- * time (timed posts), the reason it failed, and its actions: Upload now, Send now, Retry,
+ * time (timed posts), the reason it failed, and its actions: Upload now, Send now, Retry, Cancel
+ * (a running upload or publish),
  * Edit (drafts: fires `outbox-edit` with the item, for the app to open its composer), Remove;
  * and "Send all now". Default: the browser outbox (`browserOutbox`) and the signer's pubkey.
  */
@@ -108,6 +109,7 @@ export class NostrPostOutbox extends NpElement {
 
   _act(item: OutboxItem, action: OutboxAction): void {
     if (action === 'remove') void this._box.remove(item.id);
+    else if (action === 'cancel') void this._box.cancel(item.id);
     else if (action === 'edit') {
       this.dispatchEvent(
         new CustomEvent('outbox-edit', { detail: item, bubbles: true, composed: true })

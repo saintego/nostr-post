@@ -78,7 +78,7 @@ describe('venue in form JSON', () => {
       },
     };
     const district = { ...JAM, addresstype: 'suburb', class: 'boundary', type: 'administrative' };
-    const answers = [[], [district], [street]];
+    const answers = [[district], [street], [], []];
     const fetchMock = vi.fn(async (url: unknown) =>
       String(url).includes('overpass')
         ? new Response(JSON.stringify({ elements: [] }))
@@ -98,11 +98,12 @@ describe('venue in form JSON', () => {
       .filter(([url]) => !String(url).includes('overpass'))
       .map(([url]) => new URL(String(url)).searchParams.get('q'));
     expect(queries).toEqual([
-      'Blueprint Livehouse, Bangkok',
       '120/1 Sukhumvit 26, A Square, 2nd Floor, Khlong Toei, Bangkok 10110',
       '120/1 Sukhumvit 26, Bangkok 10110',
-      // The venue by its name around the address's spot: not there either
+      // The venue by its name around the address's spot: not there
       'Blueprint Livehouse',
+      // Nor by its name alone
+      'Blueprint Livehouse, Bangkok',
     ]);
     expect(value).toMatchObject({
       name: 'Blueprint Livehouse, Soi Sukhumvit 26, Bangkok',
@@ -134,8 +135,8 @@ describe('venue in form JSON', () => {
       display_name: 'Blue Monkey Bar, Nguyễn Văn Hưởng, Thủ Đức, Ho Chi Minh City, Vietnam',
       address: { road: 'Nguyễn Văn Hưởng', city: 'Ho Chi Minh City', country_code: 'vn' },
     };
-    // The name: nothing; the address: the street; near it, the full name: nothing; shorter: the bar
-    const answers = [[], [street], [], [bar]];
+    // The address: the street; near it, the full name: nothing; shorter: the bar
+    const answers = [[street], [], [bar]];
     const fetchMock = vi.fn(async (url: unknown) =>
       String(url).includes('overpass')
         ? new Response(JSON.stringify({ elements: [] }))
@@ -150,12 +151,82 @@ describe('venue in form JSON', () => {
     const urls = fetchMock.mock.calls
       .filter(([url]) => !String(url).includes('overpass'))
       .map(([url]) => new URL(String(url)));
-    expect(urls.map((u) => u.searchParams.get('q')).slice(2)).toEqual([
+    expect(urls.map((u) => u.searchParams.get('q')).slice(1)).toEqual([
       'Blue Monkey Bar Saigon',
       'Blue Monkey Bar',
     ]);
-    expect(urls[2]?.searchParams.get('bounded')).toBe('1');
+    expect(urls[1]?.searchParams.get('bounded')).toBe('1');
     expect(value).toMatchObject({ osmId: '99', osmType: 'node' });
+  });
+
+  it('does not take a same-named place elsewhere for the venue at its address', async () => {
+    const street = {
+      ...JAM,
+      lat: '13.7340',
+      lon: '100.5810',
+      osm_type: 'way',
+      osm_id: 7,
+      class: 'highway',
+      type: 'residential',
+      addresstype: 'road',
+      name: 'Soi Sukhumvit 55',
+      display_name: 'Soi Sukhumvit 55, Watthana, Bangkok, Thailand',
+      address: { road: 'Soi Sukhumvit 55', city: 'Bangkok', country_code: 'th' },
+    };
+    const alabama = {
+      ...JAM,
+      lat: '34.75',
+      lon: '-86.65',
+      osm_id: 12941636184,
+      name: 'Speakerbox',
+      display_name: 'Speakerbox, University Drive Northwest, Huntsville, Alabama, United States',
+      address: { city: 'Huntsville', country_code: 'us' },
+    };
+    // The address: the street; near it: nothing; the name alone: only the namesake in Alabama
+    const answers = [[street], [], [alabama]];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: unknown) =>
+        String(url).includes('overpass')
+          ? new Response(JSON.stringify({ elements: [] }))
+          : new Response(JSON.stringify(answers.shift() ?? []))
+      )
+    );
+    const { value } =
+      (await venuePlugin.parseJson?.(
+        { name: 'Speakerbox', address: '1000/39 Soi Sukhumvit 55, Watthana, Bangkok' },
+        field()
+      )) ?? {};
+    expect(value).toMatchObject({ name: 'Speakerbox, Soi Sukhumvit 55, Bangkok' });
+    expect((value as { osmId?: string }).osmId).toBeUndefined();
+  });
+
+  it("takes a place found by its name alone when it's near the address, or in its area", async () => {
+    const street = { ...JAM, osm_type: 'way', addresstype: 'road', class: 'highway' };
+    const near = { ...JAM, lat: '13.7600', osm_id: 43 };
+    const answers = [[street], [], [{ ...JAM, lat: '34.7', osm_id: 1 }, near]];
+    const fetchMock = vi.fn(async (url: unknown) =>
+      String(url).includes('overpass')
+        ? new Response(JSON.stringify({ elements: [] }))
+        : new Response(JSON.stringify(answers.shift() ?? []))
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { value } =
+      (await venuePlugin.parseJson?.({ name: 'JAM', address: 'Silom Soi 2, Bangkok' }, field())) ??
+      {};
+    expect(value).toMatchObject({ osmId: '43' });
+    // The address not found: the name alone, in the address's city only
+    const elsewhere = { ...JAM, osm_id: 2, display_name: 'JAM, Lincoln, Nebraska, United States' };
+    const answers2 = [[], [elsewhere, JAM]];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(JSON.stringify(answers2.shift() ?? [])))
+    );
+    const found = await venuePlugin.parseJson?.(
+      { name: 'JAM', address: 'Silom Soi 2, Bangkok' },
+      field()
+    );
+    expect(found?.value).toMatchObject({ osmId: '42' });
   });
 
   it('reads { name } like the text', async () => {

@@ -12,7 +12,7 @@ import {
   signedItem,
   withState,
 } from './item';
-import { createOutbox } from './outbox';
+import { CANCELLED, createOutbox } from './outbox';
 import { memoryStorage } from './storage';
 
 const nowSecondsPlus = (s: number) => Math.floor(Date.now() / 1000) + s;
@@ -81,7 +81,7 @@ describe('interrupted items', () => {
     const item = signedItem({ pubkey: 'pk', events: [entry('post')], now: 100 });
     const stuck = { ...withState(item, 'uploading', { now: 100 }), uploads: [photo] };
     expect(nextStep(stuck, { now: 200, wifi: true })).toBe('none');
-    expect(itemActions(stuck, 200)).toEqual([]);
+    expect(itemActions(stuck, 200)).toEqual(['cancel']);
     const later = 101 + INTERRUPTED_AFTER_SECONDS;
     expect(nextStep(stuck, { now: later, wifi: true })).toBe('upload');
     expect(itemActions(stuck, later)).toEqual(['retry', 'remove']);
@@ -137,6 +137,51 @@ describe('a run hanging in the same page', () => {
     wake('https://blossom.example/abc.jpg');
     await hanging;
     expect(publish).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('cancelling a run', () => {
+  it('aborts the upload, fails the item as cancelled, and a retry finishes it', async () => {
+    const storage = memoryStorage();
+    let signal: AbortSignal | undefined;
+    let wake: (url: string) => void = () => undefined;
+    const upload = vi
+      .fn()
+      .mockImplementationOnce((_u: OutboxUpload, _f: Blob, options?: { signal?: AbortSignal }) => {
+        signal = options?.signal;
+        return new Promise<string>((resolve) => (wake = resolve));
+      })
+      .mockResolvedValue('https://blossom.example/abc.jpg');
+    const publish = vi.fn(async (entries: SignedEntry[]) =>
+      entries.map((e) => ({ id: e.event.id, ok: true, relays: [] }))
+    );
+    const box = createOutbox(storage, { upload, publish: publish as never });
+    const item = {
+      ...signedItem({ pubkey: 'pk', events: [entry('post')], now: 100 }),
+      uploads: [photo],
+    };
+    await box.add(item, { f1: new Blob(['a']) });
+    const hanging = box.run(item.id, { wifi: true });
+    await vi.waitFor(() => expect(upload).toHaveBeenCalledTimes(1));
+    const cancelled = await box.cancel(item.id);
+    expect(signal?.aborted).toBe(true);
+    expect(cancelled).toMatchObject({ state: 'failed', error: CANCELLED });
+    expect(itemActions(cancelled as never)).toEqual(['retry', 'remove']);
+    // The old run waking up later changes nothing
+    wake('https://blossom.example/abc.jpg');
+    expect((await hanging)?.state).toBe('failed');
+    expect(publish).not.toHaveBeenCalled();
+    expect((await box.run(item.id, { wifi: true, force: true }))?.state).toBe('published');
+  });
+
+  it('frees an item left running by an earlier page', async () => {
+    const storage = memoryStorage();
+    const item = withState(
+      signedItem({ pubkey: 'pk', events: [entry('post')], now: 100 }),
+      'publishing'
+    );
+    await storage.putItem(item);
+    expect((await createOutbox(storage).cancel(item.id))?.state).toBe('failed');
   });
 });
 
@@ -234,7 +279,7 @@ describe('itemActions', () => {
     expect(pendingBytes({ ...item, uploads: [photo, { ...photo, uploaded: true }] })).toBe(3);
     expect(itemActions({ ...item, sendAt: 500 }, 100)).toEqual(['send-now', 'remove']);
     expect(itemActions(withState(item, 'failed'), 100)).toEqual(['retry', 'remove']);
-    expect(itemActions(withState(item, 'uploading'), 100)).toEqual([]);
+    expect(itemActions(withState(item, 'uploading', { now: 100 }), 100)).toEqual(['cancel']);
     expect(itemActions(draftItem({ pubkey: 'pk', draft: { manifest: {}, formData: {} } }))).toEqual(
       ['edit', 'remove']
     );

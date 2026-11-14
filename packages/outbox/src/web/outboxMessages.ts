@@ -54,6 +54,7 @@ export const DEFAULT_OUTBOX_MESSAGES: OutboxMessages = {
     'upload-now': 'Upload now',
     'send-now': 'Send now',
     retry: 'Retry',
+    cancel: 'Cancel',
     edit: 'Edit',
     remove: 'Remove',
   },

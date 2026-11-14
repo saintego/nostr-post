@@ -26,9 +26,14 @@ import type { OutboxStorage } from './storage';
 export interface OutboxJobs {
   /**
    * Uploads a file (with its authorization signed at capture, or signing now); resolves with its
-   * URL once the server has it (with the same hash), throws with the reason otherwise
+   * URL once the server has it (with the same hash), throws with the reason otherwise. `signal`
+   * aborts when the user cancels the run
    */
-  upload?: (upload: OutboxUpload, file: Blob) => Promise<string | undefined>;
+  upload?: (
+    upload: OutboxUpload,
+    file: Blob,
+    options?: { signal?: AbortSignal }
+  ) => Promise<string | undefined>;
   /**
    * Builds and signs a sign-later item's events from its form (`draft`, with the uploaded URLs
    * in it, `withUploadedUrls`), without sending them: the post first, then what its publish made
@@ -57,11 +62,19 @@ export interface Outbox {
   file(key: string): Promise<Blob | undefined>;
   /** Runs an item's next step (`nextStep`): uploads, then publishes; the item as it ends */
   run(id: string, conditions?: RunConditions): Promise<OutboxItem | undefined>;
+  /**
+   * Stops an item uploading or publishing (a hanging upload or signer): the run is aborted, the
+   * item fails as cancelled and can be retried (files uploaded so far stay) or removed
+   */
+  cancel(id: string): Promise<OutboxItem | undefined>;
   /** Runs every item of `pubkey` that has a step to take now, one after the other */
   runAll(pubkey: string, conditions?: RunConditions): Promise<OutboxItem[]>;
   /** Hears every change; returns the function that stops it */
   subscribe(listener: (change: OutboxChange) => void): () => void;
 }
+
+/** The error of a run the user cancelled */
+export const CANCELLED = 'Cancelled';
 
 const message = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
@@ -98,6 +111,8 @@ export function createOutbox(
   // the item is interrupted (`isInterrupted`: a run hanging, e.g. on a signer that never
   // answered); the new run then takes over, and the old one stops if it ever goes on
   const running = new Map<string, object>();
+  // The running uploads' aborts, by item id
+  const aborts = new Map<string, AbortController>();
   const abandoned = new Error('Run taken over');
   const checkOwner = (id: string, token: object) => {
     if (running.get(id) !== token) throw abandoned;
@@ -110,7 +125,7 @@ export function createOutbox(
       if (!jobs.upload) throw new Error('No upload job');
       const blob = await storage.file(file.fileKey);
       if (!blob) throw new Error(`The file of ${file.name ?? file.url} is gone`);
-      const url = await jobs.upload(file, blob);
+      const url = await jobs.upload(file, blob, { signal: aborts.get(item.id)?.signal });
       checkOwner(item.id, token);
       current = await save({
         ...current,
@@ -162,7 +177,8 @@ export function createOutbox(
       if (step === 'upload') current = await upload(current, token);
       return await publish(current, token);
     } catch (error) {
-      if (error === abandoned) return find(item.id);
+      // Taken over or cancelled: the item's state is the new run's, or the cancel's
+      if (error === abandoned || running.get(item.id) !== token) return find(item.id);
       const latest = (await find(item.id)) ?? current;
       return save(withState(latest, 'failed', { error: message(error) }));
     }
@@ -175,11 +191,25 @@ export function createOutbox(
     if (step !== 'upload' && step !== 'publish') return item;
     const token = {};
     running.set(id, token);
+    aborts.set(id, new AbortController());
     try {
       return await runSteps(item, step, token);
     } finally {
-      if (running.get(id) === token) running.delete(id);
+      if (running.get(id) === token) {
+        running.delete(id);
+        aborts.delete(id);
+      }
     }
+  };
+
+  // The run (here, or one lost with an earlier page) is abandoned: `checkOwner` stops it
+  const cancel = async (id: string) => {
+    running.delete(id);
+    aborts.get(id)?.abort();
+    aborts.delete(id);
+    const item = await find(id);
+    if (!item || (item.state !== 'uploading' && item.state !== 'publishing')) return item;
+    return save(withState(item, 'failed', { error: CANCELLED }));
   };
 
   return {
@@ -197,6 +227,7 @@ export function createOutbox(
     },
     file: (key) => storage.file(key),
     run,
+    cancel,
     runAll: async (pubkey, conditions = {}) => {
       const ran: OutboxItem[] = [];
       for (const item of await storage.items(pubkey)) {

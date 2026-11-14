@@ -3,15 +3,22 @@
  *
  * A venue field asks for a place as text ("JAM, Bangkok"), and reads it back as the first place
  * OpenStreetMap finds for it, at the field's levels. A single exact place may also come as
- * `{ name, address }`: when the name alone isn't found, the address is, and the venue is searched
- * by its name around that spot (also without a trailing word, as posts add the city); a venue
- * OpenStreetMap doesn't have there is placed at its street address, under its own name (no OSM
- * id: the street isn't the venue). The user checks it in the composer
+ * `{ name, address }`: the address is found first, and the venue by its name around that spot
+ * (also without a trailing word, as posts add the city); then the name alone, but only a place
+ * near the address (a common name has namesakes worldwide); a venue OpenStreetMap doesn't have
+ * there is placed at its street address, under its own name (no OSM id: the street isn't the
+ * venue). The user checks it in the composer
  * (the map shows it). No DOM dependencies.
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
-import { nominatimToVenue, searchNominatim, type VenueData, type VenuePluginConfig } from './core';
+import {
+  type NominatimResult,
+  nominatimToVenue,
+  searchNominatim,
+  type VenueData,
+  type VenuePluginConfig,
+} from './core';
 import { resultLevel, venueLevels } from './levels';
 import { osmPlaceNear, sameVenueName } from './osmNearby';
 import { venueNameKey } from './wikiEntity';
@@ -161,22 +168,56 @@ const placeQuery = (value: unknown): { name: string; address: string } => {
   return { name: text(place.name), address: text(place.address) };
 };
 
+/** How far from the address's spot a place found by its name alone may be: ~5 km */
+const NEAR_ADDRESS_DEGREES = 0.05;
+
+const isNear = (result: NominatimResult, spot: { lat: number; lon: number }): boolean =>
+  Math.abs(Number(result.lat) - spot.lat) <= NEAR_ADDRESS_DEGREES &&
+  Math.abs(Number(result.lon) - spot.lon) <= NEAR_ADDRESS_DEGREES;
+
 /**
- * The first place OpenStreetMap finds for a text, as the field's value, else (with an address) the
- * venue at its address; undefined for none
+ * A place found by its name alone that lies in the address's area: its description names one of
+ * the address's parts after the street (the district, the city), e.g. "Bangkok"
+ */
+const inAddressArea = (result: NominatimResult, address: string): boolean => {
+  const described = venueNameKey(result.display_name);
+  return address
+    .split(',')
+    .slice(1)
+    .map((part) => venueNameKey(part.replace(/\d+/g, ' ')))
+    .some((part) => part.length > 2 && described.includes(part));
+};
+
+/**
+ * One exact place with its address: the address's spot first, then the venue by its name around
+ * it; else the name alone, worldwide, but only a place near the address (a common name elsewhere
+ * isn't it); else the venue at its street address; undefined when nothing fits
+ */
+const findWithAddress = async (
+  name: string,
+  address: string,
+  config: VenuePluginConfig
+): Promise<VenueData | undefined> => {
+  const atAddress = await findByAddress(name, address, config);
+  const onOsm = atAddress ? await findNearSpot(name, atAddress, config) : undefined;
+  if (onOsm) return onOsm;
+  const results = await searchNominatim(name, venueLevels(config.levels)).catch(() => []);
+  const hit = results.find((r) => (atAddress ? isNear(r, atAddress) : inAddressArea(r, address)));
+  return hit ? nominatimToVenue(hit, config.precision) : atAddress;
+};
+
+/**
+ * The first place OpenStreetMap finds for a text, as the field's value; with an address, the
+ * place at that address (`findWithAddress`); undefined for none
  */
 const findVenue = async (value: unknown, field: PostField): Promise<VenueData | undefined> => {
   const { name, address } = placeQuery(value);
   if (!name) return undefined;
   const config = (field.metadata ?? {}) as VenuePluginConfig;
+  if (address) return findWithAddress(name, address, config);
   const results = await searchNominatim(name, venueLevels(config.levels)).catch(() => []);
   const first = results[0];
-  if (first) return nominatimToVenue(first, config.precision);
-  if (!address) return undefined;
-  const atAddress = await findByAddress(name, address, config);
-  // Found the address: the venue may still be on OpenStreetMap there, under a shorter name
-  const onOsm = atAddress ? await findNearSpot(name, atAddress, config) : undefined;
-  return onOsm ?? atAddress;
+  return first ? nominatimToVenue(first, config.precision) : undefined;
 };
 
 /** Texts looked up as places (one by one: Nominatim takes a request a second) */
