@@ -459,7 +459,9 @@ was bought. A `ref` field mapped to an `a` tag and to the content:
   created a page for) gets a text line instead, its name and web links, `Performers: Not Proven
   (https://notproven.bandcamp.com)`, also when the text names it; reading gives it back as an
   entity without a page, and the view lists it with its links, or as the page of its type that one
-  of its links has (`i` tag) when a page was created for it later.
+  of its links has (`i` tag) when a page was created for it later. A field its lines show isn't
+  shown again from its tags (where the post's other `a` tags, e.g. its venue's page, would read as
+  its entities).
 - NIP-78 (JSON): the entity's address under the field's key, `{"tasting_at": "30818:…"}`.
 - Every entity is also a plain `a` tag; a reference field without a content mapping (the reviewed
   beer) gets the `a` tags no role claims.

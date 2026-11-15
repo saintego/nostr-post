@@ -406,7 +406,8 @@ export class NostrPostView extends NostrPostElement {
     );
     const { kind, created_at, pubkey } = event;
     // Role lines (`Tasted at: nostr:naddr1…`) show as rows, not in the text
-    const { text: content, rows: roleRows, tags } = postRoleView(event, this.effectiveManifest);
+    const roles = postRoleView(event, this.effectiveManifest);
+    const { text: content, rows: roleRows, tags } = roles;
     const showTechnicalMeta = Boolean(this.showKind || this.showTags);
     const manifestRenderedData = renderManifestEventData(event, this.effectiveManifest);
     const shouldUseManifestRendering =
@@ -453,7 +454,7 @@ export class NostrPostView extends NostrPostElement {
                   manifest: this.effectiveManifest,
                   tags,
                   tokens,
-                  excludeFields: this.excludeFields,
+                  excludeFields: [...(this.excludeFields ?? []), ...roles.fields],
                   author: pubkey,
                   text: content,
                   content: content
