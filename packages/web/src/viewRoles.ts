@@ -57,16 +57,25 @@ const roleRows = (field: PostField, value: unknown) => {
   });
 };
 
-/** The post's text without role lines, a row per referenced entity, and the remaining tags */
+/**
+ * The post's text without role lines, a row per referenced entity, the remaining tags, and the
+ * fields the rows show (`fields`: not shown again from the tags, where the other `a` tags, e.g.
+ * the venue's page, would read as theirs)
+ */
 export function postRoleView(
   event: DisplayableEvent,
   manifest: NostrPostManifest | undefined
-): { text: string; rows: TemplateResult | typeof nothing; tags: string[][] } {
-  if (!manifest) return { text: event.content, rows: nothing, tags: event.tags };
+): { text: string; rows: TemplateResult | typeof nothing; tags: string[][]; fields: string[] } {
+  if (!manifest) return { text: event.content, rows: nothing, tags: event.tags, fields: [] };
   const { text, values, tags } = readPostRoles(event, manifest.fields);
   const rows = manifest.fields.flatMap((field) =>
     field.id in values ? roleRows(field, values[field.id]) : []
   );
   // Tags without the roles' `a` tags, for the other fields (e.g. the reviewed beer)
-  return { text, rows: rows.length > 0 ? html`${rows}` : nothing, tags };
+  return {
+    text,
+    rows: rows.length > 0 ? html`${rows}` : nothing,
+    tags,
+    fields: Object.keys(values),
+  };
 }
