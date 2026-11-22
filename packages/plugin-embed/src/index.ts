@@ -13,6 +13,13 @@ export {
   linkProvider,
   linksOf,
 } from './core';
+export {
+  configureEmbedPlugin,
+  type EmbedPluginSettings,
+  embedSettings,
+  linkText,
+  showsUrl,
+} from './settings';
 export { checkLink, isCheckableLink, type LinkCheck, namesMatch } from './linkCheck';
 export {
   checkSuggestedLinks,

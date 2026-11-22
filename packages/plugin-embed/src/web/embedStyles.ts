@@ -48,6 +48,13 @@ export const embedStyles = css`
     word-break: break-all;
   }
 
+  /* A player's link, under it */
+  .source {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: var(--np-text-sm);
+  }
+
   .row {
     display: flex;
     gap: 0.5rem;

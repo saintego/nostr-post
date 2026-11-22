@@ -20,6 +20,7 @@ export {
 export {
   checkLink,
   checkSuggestedLinks,
+  configureEmbedPlugin,
   type Embed,
   embedFor,
   embedPlugin,

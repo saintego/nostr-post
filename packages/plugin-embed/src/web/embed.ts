@@ -3,13 +3,15 @@
  *
  * One link: its provider's player behind a "Play" button (the player, and with it the
  * provider, loads only when asked), or the link itself when it has no player.
- * Accepts .url; `autoplay-load` loads the player right away.
+ * Accepts .url; `autoplay-load` loads the player right away. The link shows under the player
+ * (`show-url="false"` / `.showUrl = false` hides it; default: `showsUrl`, the app's setting).
  */
 
 import { NpElement, npStyles } from '@nostr-post/ui/web';
 import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { embedFor } from '../core';
+import { type Embed, embedFor } from '../core';
+import { linkText, showsUrl } from '../settings';
 import { DEFAULT_EMBED_MESSAGES, type EmbedMessages } from './embedMessages';
 import { embedStyles } from './embedStyles';
 
@@ -21,6 +23,12 @@ export class NpEmbed extends NpElement {
   /** Load the player without waiting for a click */
   @property({ type: Boolean, attribute: 'autoplay-load' }) autoplayLoad = false;
   @property({ type: Object }) messages: Partial<EmbedMessages> = {};
+  /** Show the link under its player; unset: the app's setting (`configureEmbedPlugin`), else yes */
+  @property({
+    attribute: 'show-url',
+    converter: (value) => (value === null ? undefined : value !== 'false'),
+  })
+  showUrl?: boolean;
 
   @state() _loaded = false;
 
@@ -41,6 +49,16 @@ export class NpEmbed extends NpElement {
           >`
         : nothing;
     }
+    return html`${this._player(embed)}${
+      showsUrl(undefined, this.showUrl)
+        ? html`<a class="link source" href=${this.url} target="_blank" rel="noopener noreferrer"
+            >${linkText(this.url)} ↗</a
+          >`
+        : nothing
+    }`;
+  }
+
+  _player(embed: Embed) {
     const m = this._m;
     const name = m.providers[embed.provider];
     const size = embed.height ? `height: ${embed.height}px` : '';
