@@ -19,6 +19,8 @@ embedFor('https://youtu.be/dQw4w9WgXcQ');
 | `linkProvider(link)`  | The provider of a link, also of a Bandcamp page (which gets no player)             |
 | `linksOf(value)`      | The links in a field's value (one or a list)                                       |
 | `embedPlugin`         | The plugin: `validate` (web links only); profile links also written as `i` tags    |
+| `configureEmbedPlugin({ showUrl })` | The app's settings: `showUrl: false` shows players without their link under them (default: shown) |
+| `showsUrl(field?, own?)` | Whether a player shows its link: the element's own choice, else the field's `metadata.showUrl`, else the app's setting, else yes |
 | `profileLink(link)`   | The profile a link points to, in canonical form: `{ platform, url, handle? }`, or undefined for links that aren't profiles |
 | `profileUrls(links)`  | The canonical profile URLs among links, without repeats                            |
 | `linkFromEmbedCode(text)` | The link in a site's embed code (`<iframe src="…">`), e.g. Bandcamp's; other text as it is |
@@ -39,7 +41,8 @@ Players by provider:
 | Vimeo      | `vimeo.com/<id>`                                            | `player.vimeo.com/video/<id>`  |
 | Bandcamp   | only `bandcamp.com/EmbeddedPlayer/…` links, or Bandcamp's embed code (Share / Embed): the album or track number is only on the page, not in its link | as given |
 
-The field: `type: 'string'`, mapped to a tag such as `r`; `metadata.multiple` for several links.
+The field: `type: 'string'`, mapped to a tag such as `r`; `metadata.multiple` for several links;
+`metadata.showUrl: false` for players without their link under them.
 
 Profile links are also written as NIP-73 `i` tags with the canonical URL, so relays find
 everything that links the same profile (`#i`), e.g. an artist's wiki page and the gigs that link
@@ -75,8 +78,9 @@ It also registers `<np-embed>` as the link view (`registerLinkView`, `@nostr-pos
 for links with a player, so a post's or comment's YouTube link shows as the player.
 
 - `<np-embed>`: one link (`.url`). A "▶ Play on …" button first: the player, and with it the
-  provider, loads only when asked (`autoplay-load` loads it right away). Links without a player
-  show as links.
+  provider, loads only when asked (`autoplay-load` loads it right away). The link shows under the
+  player (`show-url="false"` / `.showUrl = false` hides it; unset: `showsUrl`). Links without a
+  player show as links.
 - `<np-embed-view>`: a field's links as `<np-embed>`s.
 - `<np-embed-input>`: each link as its preview with Edit (its text box instead) and Remove; "Add
   link" with `metadata.multiple`. Pasted embed code becomes its link; a Bandcamp page link gets a

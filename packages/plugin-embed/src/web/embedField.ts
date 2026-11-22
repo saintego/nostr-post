@@ -12,6 +12,7 @@ import { NpElement, npStyles } from '@nostr-post/ui/web';
 import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { linkFromEmbedCode, linksOf } from '../core';
+import { showsUrl } from '../settings';
 import './embed';
 import { renderLinkEditor, renderLinkPreview } from './embedInputRow';
 import { DEFAULT_EMBED_MESSAGES, type EmbedMessages } from './embedMessages';
@@ -29,7 +30,14 @@ export class NpEmbedView extends NpElement {
     const links = linksOf(this.value);
     if (links.length === 0) return nothing;
     return html`<div class="embeds">
-      ${links.map((url) => html`<np-embed .url=${url} .messages=${this.messages}></np-embed>`)}
+      ${links.map(
+        (url) =>
+          html`<np-embed
+            .url=${url}
+            .showUrl=${showsUrl(this.field)}
+            .messages=${this.messages}
+          ></np-embed>`
+      )}
     </div>`;
   }
 }

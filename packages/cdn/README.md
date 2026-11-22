@@ -154,6 +154,7 @@ The bundle re-exports utilities for advanced usage:
 **People helpers** (see [plugin-profile](../plugin-profile/README.md))
 
 - Embeds: `embedFor(link)` (a link's player), `linkProvider(link)`, `embedPlugin`, `Embed`;
+  `configureEmbedPlugin({ showUrl: false })`: players without their link under them;
   `profileLink(link)`, `profileUrls(links)`: profile links in canonical form (NIP-73 `i` tags);
   `linkFromEmbedCode(text)`; `checkLink(link)`, `isCheckableLink(link)`, `namesMatch(name, names)`:
   whether a Spotify, SoundCloud or YouTube link exists, and whose it is; `linksInText(text)`,

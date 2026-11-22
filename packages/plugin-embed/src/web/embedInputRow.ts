@@ -16,7 +16,7 @@ export const renderLinkPreview = (
   { onEdit, onRemove }: { onEdit: () => void; onRemove: () => void }
 ): TemplateResult => html`
   <div class="link-row" part="item">
-    <np-embed .url=${url} .messages=${messages}></np-embed>
+    <np-embed .url=${url} .showUrl=${true} .messages=${messages}></np-embed>
     ${
       linkProvider(url) === 'bandcamp' && !embedFor(url)
         ? html`<p class="np-hint">${m.bandcampHint}</p>`
