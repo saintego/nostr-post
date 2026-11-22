@@ -33,7 +33,7 @@
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/ui": "workspace:*",
     "lit": "^3.3.3",
-    "nostr-tools": "^2.25.2"
+    "nostr-tools": "^2.26.0"
   },
   "devDependencies": {
     "typescript": "^6.0.3"
