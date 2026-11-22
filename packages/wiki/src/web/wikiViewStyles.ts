@@ -87,6 +87,8 @@ export const viewStyles = css`
     white-space: pre-wrap;
     word-break: break-word;
   }
+  /* A plugin's view (e.g. formatted Markdown) lays out its own text */
+  .wiki-prose > * { white-space: normal; }
 
   /* ── Sections (reviews, photos…): the same side padding as the text ── */
   nostr-post-sections { padding: 0 1.25rem 0.75rem; }

@@ -440,6 +440,7 @@ export class NostrPostFeed extends NostrPostElement {
       showKind: this.showKind,
       showTags: this.showTags,
       activeReplyTarget: this.activeReplyTarget,
+      sendComment: this._m.sendComment,
       trustedEditors: this.trustedEditors,
       hideMenu: this.hideMenu,
       menuMessages: this.menuMessages,

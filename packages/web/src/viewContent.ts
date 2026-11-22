@@ -6,7 +6,7 @@
 import { blossomFallbacks, blossomHash } from '@nostr-post/core/blossom';
 import { decodeNaddr } from '@nostr-post/core/nip19';
 import type { NoteToken } from '@nostr-post/core/noteContent';
-import { kindViewFor } from '@nostr-post/plugins/entities';
+import { kindViewFor, linkViewFor } from '@nostr-post/plugins/entities';
 import { fetchBlossomServers, type NostrProfile } from '@nostr-post/signer';
 import { html, type TemplateResult } from 'lit';
 import { unsafeHTML } from 'lit/directives/unsafe-html.js';
@@ -96,9 +96,7 @@ const renderToken = (token: NoteToken, options: NoteContentOptions): TemplateRes
       if (token.media === 'video') {
         return html`<video class="note-media" src=${token.url} controls preload="metadata"></video>`;
       }
-      return html`<a class="note-link" href=${token.url} target="_blank" rel="noopener noreferrer"
-        >${linkLabel(token.url)}</a
-      >`;
+      return renderLink(token.url);
     case 'hashtag':
       return html`<span class="note-hashtag">#${token.tag}</span>`;
     case 'nostr': {
@@ -119,6 +117,18 @@ const renderToken = (token: NoteToken, options: NoteContentOptions): TemplateRes
       >`;
     }
   }
+};
+
+/** A link: the view a plugin registered for it (e.g. a YouTube player), else the link */
+const renderLink = (url: string): TemplateResult => {
+  const view = linkViewFor(url);
+  if (view) {
+    const tag = unsafeStatic(view.tagName);
+    return staticHtml`<${tag} class="note-embed" .url=${url}></${tag}>`;
+  }
+  return html`<a class="note-link" href=${url} target="_blank" rel="noopener noreferrer"
+    >${linkLabel(url)}</a
+  >`;
 };
 
 export const renderNoteContent = (

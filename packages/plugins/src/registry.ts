@@ -9,6 +9,7 @@
  *   import '@nostr-post/plugin-geo/web';   // auto-registers geo plugin
  */
 
+import type { NostrPostManifest } from '@nostr-post/core/types';
 import type { FieldType, NostrUIPlugin } from './types';
 
 /**
@@ -81,3 +82,23 @@ export const pluginRegistry = new PluginRegistry();
 
 // Export for custom registries
 export { PluginRegistry };
+
+/** Loads the field plugins a manifest uses (their web entries, which register them) */
+export type PluginLoader = (manifest: NostrPostManifest) => Promise<void>;
+
+// Module state: the loader `@nostr-post/web` sets when it loads (its plugin autoload)
+let pluginLoader: PluginLoader | undefined;
+
+/** Sets how plugins load on demand; `@nostr-post/web` sets its autoload */
+export function setPluginLoader(loader: PluginLoader | undefined): void {
+  pluginLoader = loader;
+}
+
+/**
+ * Loads the field plugins `manifest` uses, where a loader is set (an app with
+ * `@nostr-post/web`); resolves at once without one. For packages below `web`, e.g. the wiki view
+ * showing a page's Markdown text with its plugin
+ */
+export const loadPluginsFor = async (manifest: NostrPostManifest): Promise<void> => {
+  await pluginLoader?.(manifest);
+};

@@ -30,7 +30,7 @@ import {
   withoutClaimed,
 } from './roleRefs';
 import type { WikiManifest } from './types';
-import { leadFields, wikiLead, withoutLead } from './wikiLead';
+import { leadFields, leadLabels, wikiLead, withoutLead } from './wikiLead';
 
 export const WIKI_KIND = 30818;
 
@@ -279,10 +279,11 @@ function readTableTarget(tableByKey: Map<string, string[]>, field: PostField): u
 }
 
 /**
- * Splits content into the infobox table and prose. A table counts as the
- * infobox only if it is the first block and has a row for one of `tableKeys`
- * (manifest table field ids/labels); otherwise, e.g. in articles not written
- * with this manifest, the whole content is prose.
+ * Splits content into the infobox table and prose. The first table counts as
+ * the infobox if it has a row for one of `tableKeys` (manifest table field
+ * ids/labels), also after text (a page another client wrote, or a lead not
+ * recognised); otherwise, e.g. in articles not written with this manifest,
+ * the whole content is prose.
  */
 function parseWikiContent(
   content: string,
@@ -294,8 +295,7 @@ function parseWikiContent(
 } {
   const ast = parse(content) as unknown as AstDoc;
   const extracted = extractTableFromAst(ast);
-  const isInfobox =
-    extracted.tableIndex === 0 && extracted.rows.some(([key]) => tableKeys.has(key));
+  const isInfobox = extracted.tableIndex >= 0 && extracted.rows.some(([key]) => tableKeys.has(key));
   // Without an infobox the content is all prose: keep it verbatim. Re-rendering
   // the AST escapes markup like [[wikilinks]], which editing would then publish.
   if (!isInfobox) return { tableByKey: new Map(), linksByKey: new Map(), prose: content.trim() };
@@ -310,7 +310,7 @@ function parseWikiContent(
     linksByKey.set(key, [...(linksByKey.get(key) ?? []), ...links]);
   }
 
-  const proseChildren = tableIndex === -1 ? ast.children : ast.children.slice(tableIndex + 1);
+  const proseChildren = ast.children.filter((_, index) => index !== tableIndex);
   const prose =
     proseChildren.length > 0 ? renderDjot({ ...ast, children: proseChildren } as never).trim() : '';
   return { tableByKey, linksByKey, prose };
@@ -350,7 +350,7 @@ const manifestTableKeys = (manifest: NostrPostManifest): Set<string> =>
 function contentWithoutLead(event: WikiEvent, manifest: NostrPostManifest): string {
   const ctx: WikiReadContext = { event, tableByKey: new Map(), prose: '' };
   const data = Object.fromEntries(leadFields(manifest).map((f) => [f.id, readField(ctx, f)]));
-  return withoutLead(event.content, wikiLead(manifest, data));
+  return withoutLead(event.content, wikiLead(manifest, data), leadLabels(manifest));
 }
 
 /**

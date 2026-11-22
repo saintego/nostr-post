@@ -310,16 +310,28 @@ function getFieldActions(field: PostField, ctx: FieldRenderContext): BoundFieldA
   return actions;
 }
 
+/** An attached field whose plugin adds its own toolbar buttons (e.g. media's "Add media") */
+const hasOwnActions = (field: PostField): boolean =>
+  ((pluginRegistry.get(field.uiPlugin) as NostrUIPlugin | undefined)?.getFieldActions?.(field)
+    .length ?? 0) > 0;
+
+const hasValue = (value: unknown): boolean =>
+  Array.isArray(value) ? value.length > 0 : value !== undefined && value !== null && value !== '';
+
 /** Render the toolbar row of action icons for an attached-plugins field. */
 function renderFieldToolbar(
   field: PostField,
   ctx: FieldRenderContext
 ): TemplateResult | typeof nothing {
   const actions = getFieldActions(field, ctx);
-  // Also collect expandable attached fields as toggle buttons
+  // Also collect expandable attached fields as toggle buttons; not those whose plugin has its own
+  // button (media: "Add media"), which show once they have a value
   const attached = ctx.attachedByTarget.get(field.id) ?? [];
   const expandableAttached = attached.filter(
-    (f) => (f.metadata as Record<string, unknown>)?.expandable && f.visibility?.edit !== 'hidden'
+    (f) =>
+      (f.metadata as Record<string, unknown>)?.expandable &&
+      f.visibility?.edit !== 'hidden' &&
+      !hasOwnActions(f)
   );
 
   if (!actions.length && !expandableAttached.length) return nothing;
@@ -368,7 +380,9 @@ function renderAttachedExpandedFields(
   const attached = ctx.attachedByTarget.get(field.id) ?? [];
   const expanded = attached.filter(
     (attachedField) =>
-      attachedField.visibility?.edit !== 'hidden' && ctx.expandedFields.has(attachedField.id)
+      attachedField.visibility?.edit !== 'hidden' &&
+      (ctx.expandedFields.has(attachedField.id) ||
+        (hasOwnActions(attachedField) && hasValue(ctx.formData[attachedField.id])))
   );
 
   if (!expanded.length) return nothing;

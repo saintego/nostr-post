@@ -277,6 +277,7 @@ Create and publish Nostr posts.
 - `exclude-fields`, `readonly-fields` - JSON arrays of field IDs
 - `extra-tags` - Extra tags added to the post
 - `default-format-id`, `hide-publish-format-selector` - Publish format choice
+- `hide-header` - Leave out the manifest's name and description above the form (e.g. a reply box)
 - `reply-to-event-id`, `reply-to-pubkey`, `root-event-id`, `root-pubkey`, `root-address` (an addressable root: the reply is a NIP-22 comment, kind 1111), `show-reply-target`, `editable-reply-target` - Replies
 - `drafts` - Offer "Save draft": the form goes to the outbox (`@nostr-post/outbox`), unsigned, with its photos to upload later
 - `setComposerDefaults({ drafts?, schedule?, uploadLater? })` (`@nostr-post/web`) turns these on for every composer the page creates, also those packages open themselves (a section's "Add" dialog); a composer's own attributes still decide for it

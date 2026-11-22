@@ -535,7 +535,10 @@ if (parsed.success) {
 
 Both need the fields' plugins registered: import their entries, or with `@nostr-post/web` call
 `await ensurePluginsForManifest(manifest)` first (composers load them themselves, but a schema
-built before any composer is shown would leave their fields out).
+built before any composer is shown would leave their fields out). Packages below `web` use
+`loadPluginsFor(manifest)` (`@nostr-post/plugins/registry`): it loads them through the loader
+`@nostr-post/web` sets (`setPluginLoader`), and resolves at once without one; `<nostr-wiki-view>`
+does, so a page's Markdown text and hashtags show formatted.
 
 Fields get their schema from their plugin's `jsonSchema`; fields without a plugin (`text`,
 `textarea`, `number`, `select`) from their type (`string`, `number`, `boolean`, `enum`, an array
@@ -587,6 +590,10 @@ depending on them (or on each other):
   such an event (`nostr:naddr…`) shows it in place of the link (`kindViewFor(kind)`); a later
   registration for the same kind wins, so an app can replace a package's. The wiki registers
   `<nostr-wiki-view>` for 30818, the list plugin `<np-list-view>` for 10003/30003.
+- `registerLinkView({ matches, tagName })`: an element for links in a post's text that a plugin shows
+  richer than a link, a custom element with a `url` property; `matches(url)` says which
+  (`linkViewFor(url)`, a later registration wins). The embed plugin registers `<np-embed>` for links
+  with a player (YouTube, Spotify, SoundCloud…), so a comment's YouTube link shows its player.
 - `registerSectionView({ view, tagName })`: how a page section with that `view` shows its items
   (`sections` of a manifest, see [MANIFEST.md](./MANIFEST.md#sections)), a custom element with `items`
   (the section's events, newest first), `section` and `relays` properties (`sectionViewFor(view)`); a

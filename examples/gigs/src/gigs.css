@@ -215,3 +215,13 @@ textarea.np-input {
     margin-left: 0;
   }
 }
+
+/* A page's way back and its actions (PageActions) */
+.page-actions {
+  margin: var(--np-space-3) 0;
+  flex-wrap: wrap;
+}
+
+.page-actions a.np-button {
+  text-decoration: none;
+}

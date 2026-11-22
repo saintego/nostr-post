@@ -392,7 +392,10 @@ client that shows only the text, e.g. a Nostr app showing wiki pages in its feed
 the infobox. `wikiConfig.lead` lists such fields: the page starts with a paragraph per field,
 `Label: value` (the plugin's text for the value, e.g. `Genres: #punk #hardcore`), before the infobox.
 The lead is written from the values each time the page is published, and reading the page builds it
-again from the tags and strips it, so it never becomes a field's text. Fields mapped to the infobox,
+again from the tags and strips it, so it never becomes a field's text. Leading paragraphs that start
+with a lead field's label (`Listen: …`) are stripped too, also when their values read otherwise (a
+plugin not loaded, another client, tags changed since): they're written again on the next publish.
+The first table with a row for one of the manifest's infobox fields is the infobox, also after text. Fields mapped to the infobox,
 the content, the `title` or `d` tag, and references are left out (the infobox shows them).
 
 ### References with a role

@@ -379,7 +379,9 @@ Tag values the text already shows (`r` URLs, `t` hashtags) aren't repeated below
 `<nostr-post-composer>` extended reply context API:
 
 - `reply-to-event-id`, `reply-to-pubkey`, `root-event-id`, `root-pubkey`, `root-address` (an addressable root: the reply is a NIP-22 comment, kind 1111, naming it by address)
-- `show-reply-target` to show current reply target
+- `show-reply-target` to show current reply target (event ids and pubkeys; hidden otherwise)
+- `hide-header` to leave out the manifest's name and description (`<nostr-post-feed>`'s reply box
+  does, with the send button `FeedMessages.sendComment`, "Comment", and no "Publish at")
 - `editable-reply-target` to allow editing reply target directly in the composer
 
 `<nostr-post-composer>` submit feedback: next to the submit button it shows the running step

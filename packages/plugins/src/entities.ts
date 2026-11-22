@@ -60,6 +60,30 @@ export function kindViewFor(kind: number): KindView | undefined {
 }
 
 /**
+ * A plugin's element for links in note text it shows richer than a link, e.g.
+ * `@nostr-post/plugin-embed`'s player for YouTube, Spotify or SoundCloud links. A custom element
+ * with a `url` property.
+ */
+export interface LinkView {
+  /** Whether the element shows this link */
+  matches: (url: string) => boolean;
+  tagName: string;
+}
+
+// Module state: views register once when their package's web entry loads
+const linkViews: LinkView[] = [];
+
+/** Registers a link view; a later one matching the same link wins (an app can replace one) */
+export function registerLinkView(view: LinkView): void {
+  linkViews.unshift(view);
+}
+
+/** The view registered for a link, if any */
+export function linkViewFor(url: string): LinkView | undefined {
+  return linkViews.find((view) => view.matches(url));
+}
+
+/**
  * How a page section (`sections` of a manifest, `PostSection`) shows its items, e.g. `gallery`
  * (`@nostr-post/plugin-media`) or `agenda` (`@nostr-post/calendar`). A custom element with the
  * properties `items` (the section's events, newest first), `section` and `relays`.

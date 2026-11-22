@@ -71,13 +71,16 @@ import '@nostr-post/plugin-embed/web';
 
 Defines `<np-embed>`, `<np-embed-view>` and `<np-embed-input>` and registers the plugin with the
 last two. The composer and view load it by themselves for manifests with `uiPlugin: 'embed'`.
+It also registers `<np-embed>` as the link view (`registerLinkView`, `@nostr-post/plugins/entities`)
+for links with a player, so a post's or comment's YouTube link shows as the player.
 
 - `<np-embed>`: one link (`.url`). A "▶ Play on …" button first: the player, and with it the
   provider, loads only when asked (`autoplay-load` loads it right away). Links without a player
   show as links.
 - `<np-embed-view>`: a field's links as `<np-embed>`s.
-- `<np-embed-input>`: one link per row with a preview; "Add link" with `metadata.multiple`. Pasted
-  embed code becomes its link; a Bandcamp page link gets a hint to paste the embed code instead.
+- `<np-embed-input>`: each link as its preview with Edit (its text box instead) and Remove; "Add
+  link" with `metadata.multiple`. Pasted embed code becomes its link; a Bandcamp page link gets a
+  hint to paste the embed code instead.
 
 They take `messages` (`Partial<EmbedMessages>`, defaults in `DEFAULT_EMBED_MESSAGES`) for
 translations.
