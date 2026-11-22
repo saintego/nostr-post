@@ -9,7 +9,6 @@ import { type NostrPostManifest, STANDARD_KIND1_POST_MANIFEST } from '@nostr-pos
 import {
   buildInitialFormData,
   type CoordinateOptions,
-  hasReplyTarget,
   invalidFieldLabels,
   isFieldReadonly,
   type NostrPostSubmitDetail,
@@ -87,8 +86,11 @@ export class NostrPostComposer extends NostrPostElement {
   /** The root's address when it's addressable: replies follow it across its versions */
   @property({ type: String, attribute: 'root-address' }) rootAddress?: string;
 
-  /** Show reply target context panel when reply tags are in use. */
+  /** Show the reply's target (event ids and pubkeys) in a panel, e.g. for developers */
   @property({ type: Boolean, attribute: 'show-reply-target' }) showReplyTarget = false;
+
+  /** Leave out the manifest's name and description above the form (e.g. a reply box) */
+  @property({ type: Boolean, attribute: 'hide-header' }) hideHeader = false;
 
   /** Allow editing reply target ids/pubkeys directly in the composer panel. */
   @property({ type: Boolean, attribute: 'editable-reply-target' }) editableReplyTarget = false;
@@ -438,12 +440,11 @@ export class NostrPostComposer extends NostrPostElement {
 
     const replyTarget = this._replyTarget;
 
-    const showReplyPanel =
-      this.showReplyTarget || this.editableReplyTarget || hasReplyTarget(replyTarget);
+    const showReplyPanel = this.showReplyTarget || this.editableReplyTarget;
 
     return html`
       <div class="composer np-card np-outlined" part="container">
-        ${renderComposerHeader(manifest.metadata)}
+        ${this.hideHeader ? '' : renderComposerHeader(manifest.metadata)}
         ${this.successMessage ? html`<div class="np-message np-success" role="status">${this.successMessage}</div>` : ''}
         ${renderHiddenFieldErrors(manifest, this.errors, this.excludeFields, this.prefill)}
         <form novalidate @submit=${this.handleSubmit}>

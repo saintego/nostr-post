@@ -200,6 +200,10 @@ manifest knows; `addToFormData(formData, additions)` adds values to them (new li
 fields), as the composer's `additions` does. `unmappedTableRows(event, manifest)` returns the infobox rows it doesn't, and
 `<nostr-wiki-view>` shows them under "All data". Nothing is lost.
 
+`<nostr-wiki-view>` shows the page's text with its field's plugin (Markdown formatted), loading the
+manifest's plugins where the app has `@nostr-post/web` (`loadPluginsFor`); its "Links" row leaves out
+links a field shows already (e.g. "Listen" with its players).
+
 ### Generated Nostr event
 
 ```json

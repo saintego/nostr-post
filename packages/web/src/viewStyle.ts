@@ -92,6 +92,13 @@ export const viewStyle = css`
     text-decoration: underline;
   }
 
+  /* An event or a link shown by its view (a calendar event, a YouTube player) */
+  .note-embed {
+    display: block;
+    margin: 0.5rem 0;
+    white-space: normal;
+  }
+
   .note-media {
     display: block;
     width: fit-content;

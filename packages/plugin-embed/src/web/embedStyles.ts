@@ -58,4 +58,10 @@ export const embedStyles = css`
     flex: 1;
   }
 
+  .link-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
 `;

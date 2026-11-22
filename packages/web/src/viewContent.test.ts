@@ -27,3 +27,14 @@ describe('linked events in note text', () => {
     expect(rendered).toContain('class="note-link"');
   });
 });
+
+describe('links in note text', () => {
+  it('show a registered link view (a player), other links as links', async () => {
+    const { registerLinkView } = await import('@nostr-post/plugins/entities');
+    registerLinkView({ matches: (url) => url.includes('youtube.com'), tagName: 'test-player' });
+    const content = 'Watch https://www.youtube.com/watch?v=abc and https://example.com/page';
+    const rendered = text(renderNoteContent(tokenizeNoteContent(content)));
+    expect(rendered).toContain('<test-player');
+    expect(rendered).toContain('example.com/page</a');
+  });
+});

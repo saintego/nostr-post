@@ -1,7 +1,7 @@
 import { fieldDescription, fieldLabel } from '@nostr-post/core/manifest';
 import type { NostrPostManifest } from '@nostr-post/core/types';
 import { eventActionsFor } from '@nostr-post/plugins/entities';
-import { pluginRegistry } from '@nostr-post/plugins/registry';
+import { loadPluginsFor } from '@nostr-post/plugins/registry';
 import { type EventManifest, fetchEvents, fetchManifestForEvent } from '@nostr-post/signer';
 import { NpElement, npStyles } from '@nostr-post/ui/web';
 import { html, nothing } from 'lit';
@@ -10,7 +10,7 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { html as staticHtml, unsafeStatic } from 'lit/static-html.js';
 import { entityLinks } from '../externalIds';
 import { fetchEntityVersions } from '../fetch';
-import { manifestLinks } from '../links';
+import { manifestLinks, shownUrls, urlKey } from '../links';
 import {
   DEFAULT_WIKI_RELAYS,
   STANDARD_WIKI_MANIFEST,
@@ -74,6 +74,8 @@ export class NostrWikiView extends NpElement {
   @state() private _found?: EventManifest;
   private _fetchId = 0;
   private _manifestLookup?: string;
+  /** The manifest whose plugins were asked for */
+  private _pluginsFor?: NostrPostManifest;
 
   // First fetch happens in the initial updated() call, which reports every
   // property set before the first render — no separate connectedCallback fetch.
@@ -86,6 +88,9 @@ export class NostrWikiView extends NpElement {
 
   override updated(changed: Map<string, unknown>): void {
     if (changed.has('manifest')) this._resolveGiven();
+    if (['_winningEvent', 'manifest', '_found', '_givenResolved'].some((k) => changed.has(k))) {
+      this._loadPlugins();
+    }
     if (changed.has('_winningEvent') || changed.has('manifest')) void this._findManifest();
     if (this.event && (changed.has('event') || changed.has('manifest'))) {
       this._showEvent(this.event);
@@ -211,6 +216,20 @@ export class NostrWikiView extends NpElement {
     this._refreshData();
   }
 
+  /**
+   * The manifest's field plugins (where an app has `@nostr-post/web`'s autoload): the page is read
+   * again with them (their text formats, e.g. hashtags in the lead), and their views show it
+   * (Markdown text, players)
+   */
+  private _loadPlugins(): void {
+    const manifest = this._manifest;
+    if (this._pluginsFor === manifest) return;
+    this._pluginsFor = manifest;
+    void loadPluginsFor(manifest).then(() => {
+      if (this._manifest === manifest) this._refreshData();
+    });
+  }
+
   /** Read the shown page again with the manifest now in effect */
   private _refreshData(): void {
     if (this._winningEvent) {
@@ -222,12 +241,16 @@ export class NostrWikiView extends NpElement {
     return { ...DEFAULT_WIKI_VIEW_MESSAGES, ...this.messages };
   }
 
-  /** Links to the entity's external pages: `i` tags of known kinds, `r` URLs, manifest links */
+  /**
+   * Links to the entity's external pages: `i` tags of known kinds, `r` URLs, manifest links;
+   * not those a field shows already (e.g. "Listen" with its players)
+   */
   private _renderLinks(event: WikiEvent) {
+    const shown = shownUrls(this._formData);
     const links = [
       ...entityLinks(event.tags),
       ...manifestLinks(this._manifest, event.tags, this._formData ?? {}),
-    ];
+    ].filter((link) => !shown.has(urlKey(link.url)));
     if (links.length === 0) return nothing;
     return html`<div class="wiki-links">
       <span class="wiki-links-label">${this._m.links}</span>
@@ -405,11 +428,8 @@ export class NostrWikiView extends NpElement {
     if (!contentField) return nothing;
     const value = this._formData[contentField.id];
     if (!value) return nothing;
-    const plugin = pluginRegistry.get(contentField.uiPlugin);
-    if (plugin?.renderView) {
-      return html`<div class="wiki-prose">${plugin.renderView(value, contentField)}</div>`;
-    }
-    return html`<div class="wiki-prose">${String(value)}</div>`;
+    // Its plugin's view, e.g. Markdown formatted
+    return html`<div class="wiki-prose">${renderFieldValue(contentField, value)}</div>`;
   }
 }
 

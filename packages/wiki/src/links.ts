@@ -68,3 +68,20 @@ export function manifestLinks(
     .map((template) => linkFromTemplate(template, tags, formData, manifest.fields))
     .filter((link): link is ExternalIdLink => !!link);
 }
+
+/** A URL as links are compared: without the scheme, `www.` and a trailing slash, lower case */
+export const urlKey = (url: string): string =>
+  url
+    .trim()
+    .replace(/^https?:\/\/(www\.)?/i, '')
+    .replace(/\/+$/, '')
+    .toLowerCase();
+
+/** The web links a page's fields hold (e.g. its "Listen" players), as `urlKey`s */
+export const shownUrls = (data: Record<string, unknown> | undefined): Set<string> =>
+  new Set(
+    Object.values(data ?? {})
+      .flat()
+      .filter((v): v is string => typeof v === 'string' && /^https?:\/\/\S+$/.test(v.trim()))
+      .map(urlKey)
+  );

@@ -55,6 +55,20 @@ export const wikiLead = (
     })
     .join('\n\n');
 
-/** The content without its lead, when it starts with exactly this lead */
-export const withoutLead = (content: string, lead: string): string =>
-  lead && content.startsWith(lead) ? content.slice(lead.length).trimStart() : content;
+/** The lead fields' labels, as their lead paragraphs start ("Listen", "Genres") */
+export const leadLabels = (manifest: NostrPostManifest | WikiManifest): string[] =>
+  leadFields(manifest).map((field) => (field.metadata?.label as string | undefined) ?? field.id);
+
+/**
+ * The content without its lead: this lead where it starts with exactly it, and the leading
+ * paragraphs that start with a lead field's label ("Listen: …"), e.g. a lead written with
+ * another formatting of the values (a plugin not loaded, another client) or before the tags changed
+ */
+export const withoutLead = (content: string, lead: string, labels: string[] = []): string => {
+  const rest = lead && content.startsWith(lead) ? content.slice(lead.length).trimStart() : content;
+  const paragraphs = rest.split(/\n\s*\n/);
+  const isLead = (p: string) => labels.some((label) => p.trimStart().startsWith(`${label}: `));
+  const kept = paragraphs.findIndex((p) => !isLead(p));
+  if (kept === -1) return '';
+  return kept === 0 ? rest : paragraphs.slice(kept).join('\n\n').trimStart();
+};

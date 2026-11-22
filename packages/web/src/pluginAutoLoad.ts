@@ -1,5 +1,5 @@
 import type { NostrPostManifest } from '@nostr-post/core/types';
-import { pluginRegistry } from '@nostr-post/plugins/registry';
+import { pluginRegistry, setPluginLoader } from '@nostr-post/plugins/registry';
 
 const builtInPluginLoaders: Record<string, () => Promise<unknown>> = {
   identifier: () => import('@nostr-post/plugin-identifier/web'),
@@ -54,3 +54,6 @@ export const ensurePluginsForManifest = async (manifest?: NostrPostManifest) => 
 
   await Promise.all(pluginIds.map((pluginId) => ensurePluginLoaded(pluginId)));
 };
+
+// Packages below `web` (the wiki view) load plugins through the registry's loader
+setPluginLoader(ensurePluginsForManifest);

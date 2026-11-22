@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { manifestToWikiEvent, wikiEventToManifestData } from './nip54';
 import type { WikiManifest } from './types';
-import { wikiLead } from './wikiLead';
+import { wikiLead, withoutLead } from './wikiLead';
 
 const manifest: WikiManifest = {
   id: 'artist-v1',
@@ -77,10 +77,50 @@ describe('wikiLead', () => {
     expect(read.title).toBe('Monument X');
   });
 
-  it('stays when the tags no longer give it (an edited text): it is then text', () => {
-    const event = manifestToWikiEvent(manifest, data);
+  it("is stripped by its labels when the tags no longer give it exactly (it's written again)", () => {
+    const event = manifestToWikiEvent(manifest, { ...data, about: 'From Bangkok.' });
     const edited = { ...event, tags: event.tags.filter((t) => t[0] !== 'r') };
     const read = wikiEventToManifestData({ ...edited, id: 'x', pubkey: 'p', sig: '' }, manifest);
-    expect(String(read.about)).toContain('Listen:');
+    expect(read.about).toBe('From Bangkok.');
+    expect(read.title).toBe('Monument X');
+  });
+
+  it('is stripped when its values are formatted otherwise (a plugin, another client)', () => {
+    const content = [
+      'Genres: #hardcore #youth-crew',
+      'Listen: https://monumentx.bandcamp.com',
+      '| Field | Value |\n|---|---|\n| title | Monument X |',
+      'From **Bangkok**.',
+    ].join('\n\n');
+    const tags = [
+      ['d', 'monument-x-musician'],
+      ['t', 'hardcore'],
+      ['r', 'https://monumentx.bandcamp.com'],
+    ];
+    const read = wikiEventToManifestData(
+      { kind: 30818, content, tags, created_at: 1, id: 'x', pubkey: 'p', sig: '' },
+      manifest
+    );
+    expect(read.title).toBe('Monument X');
+    expect(read.about).toBe('From **Bangkok**.');
+  });
+
+  it('keeps a text that only mentions a label later on', () => {
+    expect(withoutLead('About us\n\nListen: here', '', ['Listen'])).toBe(
+      'About us\n\nListen: here'
+    );
+    expect(withoutLead('Listen: a\n\nGenres: b', '', ['Listen', 'Genres'])).toBe('');
+  });
+});
+
+describe('the infobox after text', () => {
+  it('is read as the infobox; the text around it is the prose', () => {
+    const content = 'From Bangkok.\n\n| Field | Value |\n|---|---|\n| title | Monument X |';
+    const read = wikiEventToManifestData(
+      { kind: 30818, content, tags: [['d', 'x']], created_at: 1, id: 'x', pubkey: 'p', sig: '' },
+      manifest
+    );
+    expect(read.title).toBe('Monument X');
+    expect(read.about).toBe('From Bangkok.');
   });
 });

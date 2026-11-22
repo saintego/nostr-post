@@ -28,6 +28,8 @@ export interface FeedThreadContext {
   hideMenu?: boolean;
   menuMessages?: Partial<PostMenuMessages>;
   activeReplyTarget?: ReplyTarget;
+  /** The reply box's send button (`FeedMessages.sendComment`) */
+  sendComment?: string;
   displayName: (pubkey: string) => string;
   renderEventActions: (event: SignedEvent, rootEvent?: SignedEvent) => TemplateResult;
   onCommentPublished: (event: Event) => void;
@@ -74,6 +76,9 @@ export const renderFeedThread = (thread: FeedThread, ctx: FeedThreadContext): Te
             <div class="reply-composer">
               <nostr-post-composer
                 auto-publish
+                hide-header
+                .schedule=${false}
+                .messages=${ctx.sendComment ? { submit: ctx.sendComment } : undefined}
                 .manifest=${ctx.commentManifest}
                 .excludeFields=${ctx.excludeFields}
                 .replyToEventId=${ctx.activeReplyTarget?.replyToEventId}

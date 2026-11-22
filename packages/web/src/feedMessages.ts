@@ -5,9 +5,12 @@
 export interface FeedMessages {
   loading: string;
   empty: string;
+  /** The reply box's send button */
+  sendComment: string;
 }
 
 export const DEFAULT_FEED_MESSAGES: FeedMessages = {
   loading: 'Loading...',
   empty: 'No posts yet',
+  sendComment: 'Comment',
 };
