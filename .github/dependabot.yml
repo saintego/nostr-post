@@ -17,9 +17,14 @@ updates:
     commit-message:
       prefix: "chore(deps)"
     groups:
-      # Minor and patch updates together, in one PR a week; majors get a PR each
+      # Minor and patch updates together, in one PR a week
       minor-and-patch:
         update-types: [minor, patch]
+      # A major update gets one PR per dependency for all directories (one PR per directory
+      # left pnpm-lock.yaml out of sync when merged one after another, #423)
+      majors:
+        update-types: [major]
+        group-by: dependency-name
     ignore:
       # Workspace packages depend on each other with workspace:*
       - dependency-name: "@nostr-post/*"
