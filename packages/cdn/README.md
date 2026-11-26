@@ -40,14 +40,14 @@ with a map field):
 
 | Module | Contains | Loads at start (gzipped) |
 | --- | --- | --- |
-| `split/base.js` | composer, view, feed, sections, outbox, post menu; core, signer, posts, ui (kind-1 notes and NIP-78 manifest posts) | about 76 KB |
-| `split/plugins.js` | the field plugins' functions (geohashes, people, link players, dates, `renderMarkdown`, media upload and galleries); their inputs and views load on demand without it | +84 KB |
-| `split/wiki.js` | wiki pages (NIP-54), the entity picker, venues | +72 KB |
-| `split/calendar.js` | calendars (NIP-52): agenda, event, RSVP, iCalendar | +52 KB |
+| `split/base.js` | composer, view, feed, sections, support panel, outbox, post menu; core, signer, posts, ui (kind-1 notes and NIP-78 manifest posts) | about 82 KB |
+| `split/plugins.js` | the field plugins' functions (geohashes, people, link players, dates, `renderMarkdown`, media upload and galleries, QR codes, Lightning, support links); their inputs and views load on demand without it | +82 KB |
+| `split/wiki.js` | wiki pages (NIP-54), the entity picker, venues | +75 KB |
+| `split/calendar.js` | calendars (NIP-52): agenda, event, RSVP, iCalendar | +53 KB |
 | `split/article.js` | long-form articles (NIP-23) | +2 KB |
 | `split/list.js` | bookmark lists (NIP-51) | +9 KB |
 
-The all-in-one `nostr-post.js` is about 340 KB gzipped. Each part exports its own names (the
+The all-in-one `nostr-post.js` is about 345 KB gzipped. Each part exports its own names (the
 lists below, by part); `nostr-post.js` exports all of them. Use either the all-in-one file or the
 split modules on a page, not both: the components would be defined twice. The IIFE build stays
 all-in-one (classic scripts can't share code).
@@ -63,6 +63,7 @@ Loading the bundle automatically registers every custom element:
 | Feed      | `<nostr-post-feed>`     |
 | Post menu | `<nostr-post-menu>` (the "⋯" menu of every post; `hide-menu` on the view or feed turns it off; a post in the test-mode log also gets "Publish for real…") |
 | Outbox | `<nostr-post-outbox>` (posts published later: drafts, timed posts, upload later; see [@nostr-post/outbox](../outbox/README.md)) |
+| Support panel | `<nostr-post-support npub="npub1…">` (how to support a person: their support page with Lightning zaps and invoices, tip links, Bitcoin addresses; the owner edits it there) and `<nostr-post-support-button>` (the panel in a dialog); see [USAGE_GUIDE](../../USAGE_GUIDE.md) |
 | Publish a test post | `<nostr-dry-run-publish event-id="…">` (a post from the test-mode log with the logged events it links, e.g. the pages it created: lists them, sends them for real, fires `dry-run-published`; `messages`: `DEFAULT_DRY_RUN_PUBLISH_MESSAGES`) |
 
 Every component shares the look of `@nostr-post/ui` (Material 3 style tokens and primitives) and
@@ -82,6 +83,10 @@ The plugins and their UI elements are also registered:
 - **Media** — `@nostr-post/plugin-media`
 - **Markdown** — `@nostr-post/plugin-markdown`
 - **Hashtag** — `@nostr-post/plugin-hashtag`
+- **QR** — `@nostr-post/plugin-qr`: `<np-qr text="lightning:…">`, QR codes made locally
+- **Lightning** — `@nostr-post/plugin-lightning`: `<np-lightning target="alice@getalby.com">`, zaps
+  (NIP-57) and invoices, WebLN or a QR code
+- **Support links** — `@nostr-post/plugin-links`: tip pages, on-chain Bitcoin addresses, notes
 - **Lists** — `@nostr-post/list`: the `list` field, `<np-list-save target="30818:<pubkey>:<d-tag>">`
   (Save to the user's lists; also on events made with manifests that have `lists`) and
   `<np-list-view>` (the user's lists, or one list by `address`)
@@ -165,6 +170,21 @@ The bundle re-exports utilities for advanced usage:
   text fields with an attached `profile` field (the standard kind 1 post has one)
 - `searchProfiles(query, { relays? })`, `profileName(pubkey, profile?)`, `DEFAULT_SEARCH_RELAYS`, `FoundProfile`
 
+**Payments and support** (see [plugin-lightning](../plugin-lightning/README.md),
+[plugin-links](../plugin-links/README.md), [plugin-qr](../plugin-qr/README.md))
+
+- `qrSvg(text, options?)`: a QR code as SVG, made locally; `isQrPayload(text)`, `QR_SCHEMES`
+- `parseLightningTarget(text)`, `lightningAddressUrl(address)`, `resolvePayee(text, owner, deps)`,
+  `requestPayment(payee, request, deps)`, `findZapReceipt(payee, payment, deps)`, `canZap(payee)`,
+  `fetchPayParams(url)`, `requestInvoice(params, amountMsat, options)`, `buildZapRequest(options)`,
+  `isZapReceiptFor(receipt, check)`, `bolt11AmountMsat(invoice)`, `hasWebln()`,
+  `payWithWebln(invoice)`, `LightningTarget`, `Payee`, `Payment`
+- `supportLinks(value)`, `supportSite(link)`, `KNOWN_SUPPORT_SITES`, `bitcoinAddress(text)`,
+  `SupportLink`
+- Support pages (base): `SUPPORT_MANIFEST`, `SUPPORT_D_TAG`, `supportPageAddress(pubkey)`,
+  `fetchSupportPage(pubkey, relays?)`, `supportPageValues(event)`, `DEFAULT_SUPPORT_MESSAGES`,
+  `SupportMessages`
+
 **Date field** (see [plugin-date](../plugin-date/README.md))
 
 - `datePlugin`, `formatDateValue(value, locale?)`, `dateValueFromTags(tags, tagName?)`,
@@ -214,6 +234,7 @@ The bundle re-exports utilities for advanced usage:
 
 - `encodeNaddr(address, relays?)`, `decodeNaddr(naddr)`: an address (`kind:pubkey:d-tag`) as `naddr1…` and back
 - `encodeNevent(id, { relays, author, kind })`: an event id as `nevent1…`
+- `decodeLnurl(lnurl)`, `encodeLnurl(url)`: an LNURL (LUD-01, e.g. a profile's `lud06`) as its `https:` URL and back
 
 **Imported events (NIP-48)**
 

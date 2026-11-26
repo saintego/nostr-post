@@ -13,6 +13,7 @@ No UI library dependency: the main entry has no dependencies at all, `/web` need
 | `@nostr-post/ui/web` | Lit styles for shadow DOM (`npStyles`), `NpElement` (the components' base class), `installTokens`, `followColorScheme`. |
 | `@nostr-post/ui/web/dialog` | `<np-dialog>`: a modal dialog with a title, Close and its content. |
 | `@nostr-post/ui/web/lightbox` | `<np-lightbox>`: photos and videos large, one at a time, with previous and next. |
+| `@nostr-post/ui/web/copy` | `<np-copy>`: a button that copies text and says so; `copyText(text)`. |
 | `@nostr-post/ui/tokens.css` | The tokens, for any page. |
 | `@nostr-post/ui/ui.css` | Tokens and primitives, for apps and plain HTML. |
 
@@ -225,3 +226,17 @@ lightbox.open(1);
 - Parts: `dialog`, `button`.
 - Messages (`LightboxMessages`): `label`, `previous`, `next`, `position(current, count)`,
   `fullScreen`, `close`.
+
+### `<np-copy>` (`@nostr-post/ui/web/copy`)
+
+```ts
+import '@nostr-post/ui/web/copy';
+
+html`<np-copy .text=${address}></np-copy>`;
+```
+
+- `text`: what it copies; `label`: the button's text instead of "Copy".
+- Says "Copied" (or "Couldn't copy" when the browser refuses) for a moment; fires `np-copied` with
+  `{ ok }`. `copyText(text)` copies without the button (`Promise<boolean>`).
+- Part: `button`.
+- Messages (`CopyMessages`): `copy`, `copied`, `failed`.

@@ -200,3 +200,20 @@ export function decodeProfile(entity: string): ProfilePointer | undefined {
   }
   return undefined;
 }
+
+/**
+ * An LNURL (LUD-01, bech32 with the `lnurl` prefix, e.g. a profile's `lud06`) as the URL it
+ * encodes; undefined if invalid or not an `https:` URL (`http:` only for `.onion` hosts)
+ */
+export function decodeLnurl(lnurl: string): string | undefined {
+  const decoded = decodeBech32(lnurl.trim().replace(/^lightning:/i, ''));
+  if (decoded?.prefix !== 'lnurl') return undefined;
+  const url = fromUtf8(decoded.bytes);
+  const onion = /^http:\/\/[^/?#:]+\.onion(?:[/?#:]|$)/i.test(url);
+  return /^https:\/\/[^/?#\s]+/i.test(url) || onion ? url : undefined;
+}
+
+/** A URL as an LNURL (LUD-01: bech32 with the `lnurl` prefix, in upper case as wallets print it) */
+export function encodeLnurl(url: string): string {
+  return encodeBech32('lnurl', utf8(url)).toUpperCase();
+}

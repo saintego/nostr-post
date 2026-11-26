@@ -1,6 +1,6 @@
 /**
  * @nostr-post/cdn - plugins: the field plugins' helpers (geohashes, people, link players, dates,
- * Markdown, media upload and galleries). The plugins' inputs and views load on demand without
+ * Markdown, media upload and galleries, QR codes, Lightning payments and support links). The plugins' inputs and views load on demand without
  * this; import it for their functions.
  */
 
@@ -42,6 +42,33 @@ export {
   type GeoPluginConfig,
   geoPlugin,
 } from '@nostr-post/plugin-geo';
+// Lightning: pay a Lightning address or npub, as a NIP-57 zap or a plain invoice
+export {
+  bolt11AmountMsat,
+  buildZapRequest,
+  canZap,
+  fetchPayParams,
+  findZapReceipt,
+  hasWebln,
+  isZapReceiptFor,
+  type LightningTarget,
+  lightningAddressUrl,
+  type Payee,
+  type Payment,
+  parseLightningTarget,
+  payWithWebln,
+  requestInvoice,
+  requestPayment,
+  resolvePayee,
+} from '@nostr-post/plugin-lightning';
+// Support links: tip pages, on-chain Bitcoin addresses, notes
+export {
+  bitcoinAddress,
+  KNOWN_SUPPORT_SITES,
+  type SupportLink,
+  supportLinks,
+  supportSite,
+} from '@nostr-post/plugin-links';
 // Markdown as safe HTML (raw HTML shown as text, no script links)
 export { renderMarkdown } from '@nostr-post/plugin-markdown';
 // Photos and videos of posts (galleries), and the posts referencing events
@@ -79,3 +106,5 @@ export {
   profilePlugin,
   searchProfiles,
 } from '@nostr-post/plugin-profile';
+// QR codes of payment and share URIs (lightning:, bitcoin:, nostr:, https:), made locally
+export { isQrPayload, QR_SCHEMES, qrSvg } from '@nostr-post/plugin-qr';

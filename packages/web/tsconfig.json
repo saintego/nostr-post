@@ -13,6 +13,7 @@
       "@nostr-post/core/enrichment": ["../core/dist/enrichment.d.ts"],
       "@nostr-post/core/manifestMappings": ["../core/dist/manifestMappings.d.ts"],
       "@nostr-post/core/eventUpdates": ["../core/dist/eventUpdates.d.ts"],
+      "@nostr-post/core/nip19": ["../core/dist/nip19.d.ts"],
       "@nostr-post/plugin-geo/web": ["../plugin-geo/dist/web.d.ts"],
       "@nostr-post/plugin-date": ["../plugin-date/dist/index.d.ts"],
       "@nostr-post/plugin-date/web": ["../plugin-date/dist/web.d.ts"],

@@ -618,6 +618,9 @@ When a plugin reads a new key, add it there.
 | `@nostr-post/plugin-geo`       | `geo`       | `geo`    | Map location picker using Leaflet/OpenStreetMap (NIP-52 geohash)                 |
 | `@nostr-post/plugin-date`      | `date`      | `date`   | Date or date and time with time zone; on NIP-52 calendar events (31922/31923) also `end`, `start_tzid`/`end_tzid` and `D` day tags (the events themselves: `@nostr-post/calendar`). Text overridable through `messages` (`DateMessages`, `DEFAULT_DATE_MESSAGES`) |
 | `@nostr-post/plugin-embed`     | `embed`     | `string` | Players for links: YouTube, Spotify, SoundCloud, Vimeo, Bandcamp player links; a "Play" button first, the provider loads on click |
+| `@nostr-post/plugin-qr`        | `qr`        | `string` | QR codes of payment and share URIs (`lightning:`, `bitcoin:`, `nostr:`, `https:`), made locally (`qrSvg`), with Copy and an Open link |
+| `@nostr-post/plugin-lightning` | `lightning` | `string` | Pay a Lightning address, LNURL or npub: LNURL-pay, NIP-57 zaps (zap request signed by the payer, receipt checked), WebLN or a QR code |
+| `@nostr-post/plugin-links`     | `links`     | `object` | Support entries: tip page links (`https:` only, known sites named), on-chain Bitcoin addresses (checked, with a QR code), notes |
 | `@nostr-post/plugin-profile`   | `profile`   | `profile` | People picker: search profiles (NIP-50) or paste an npub, a role each; `p` tags `["p", pubkey, relay, role]` (NIP-52 participants). Text overridable through `messages` (`ProfileMessages`) |
 | `@nostr-post/plugin-venue`     | `venue`     | `geo`    | OSM venue search + NIP-73 identity tags; wraps `plugin-geo`                      |
 | `@nostr-post/plugin-media`     | `media`     | `string` | Multi-file upload: the user's Blossom servers, then nostr.build (NIP-98); `imeta` tags; paste/drop on textarea via `attachTo` |
@@ -630,7 +633,7 @@ When a plugin reads a new key, add it there.
 
 ## Custom Field Types
 
-The `FieldType` union currently supports `'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date' | 'profile'`.
+The `FieldType` union currently supports `'string' | 'number' | 'boolean' | 'enum' | 'geo' | 'ref' | 'date' | 'profile' | 'object'`. `'object'` is for a plugin's structured value (an object or a list of them, e.g. `plugin-links`' entries): core only checks that it is objects, the plugin's `validate` checks the rest.
 
 If your plugin needs a custom type that doesn't fit these, you have two options:
 

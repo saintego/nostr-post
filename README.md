@@ -98,6 +98,9 @@ This keeps relay I/O in one place and avoids duplicate network requests.
 | **plugin-markdown**     | ✅ **Complete** | Markdown editor and view; `renderMarkdown`: safe HTML of text from anyone |
 | **plugin-hashtag**      | ✅ **Complete** | Hashtag array input with optional auto-extraction via `attachTo`      |
 | **plugin-reference**    | ✅ **Complete** | URL/nostr reference list with optional auto-extraction via `attachTo` |
+| **plugin-qr**           | ✅ **Complete** | QR codes of payment and share URIs, made locally — [README](./packages/plugin-qr/README.md) |
+| **plugin-lightning**    | ✅ **Complete** | Pay a Lightning address or npub: NIP-57 zaps, WebLN, invoices as QR codes — [README](./packages/plugin-lightning/README.md) |
+| **plugin-links**        | ✅ **Complete** | Support links: tip pages, on-chain Bitcoin addresses, notes — [README](./packages/plugin-links/README.md) |
 
 ## � Key Features
 
@@ -185,6 +188,9 @@ Ready-to-use UI components via Web Components or React:
 - **plugin-hashtag** - Tag arrays with optional auto-extraction via `attachTo`
 - **plugin-reference** - URL/nostr reference list with optional auto-extraction via `attachTo`
 - **plugin-stars** - Customizable rating (1-5 scale)
+- **plugin-qr** - QR codes of `lightning:`, `bitcoin:`, `nostr:` and web links, made locally
+- **plugin-lightning** - Zaps (NIP-57) and Lightning invoices to an address or npub, WebLN or QR
+- **plugin-links** - Support links: tip pages, on-chain Bitcoin addresses, notes
 
 ### 5. **Field-Level Controls**
 

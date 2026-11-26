@@ -8,3 +8,6 @@ declare module '@nostr-post/plugin-media/web';
 declare module '@nostr-post/plugin-markdown/web';
 declare module '@nostr-post/plugin-hashtag/web';
 declare module '@nostr-post/list/web';
+declare module '@nostr-post/plugin-qr/web';
+declare module '@nostr-post/plugin-links/web';
+declare module '@nostr-post/plugin-lightning/web';

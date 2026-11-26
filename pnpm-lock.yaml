@@ -287,6 +287,12 @@ importers:
       '@nostr-post/plugin-hashtag':
         specifier: workspace:*
         version: link:../plugin-hashtag
+      '@nostr-post/plugin-lightning':
+        specifier: workspace:*
+        version: link:../plugin-lightning
+      '@nostr-post/plugin-links':
+        specifier: workspace:*
+        version: link:../plugin-links
       '@nostr-post/plugin-markdown':
         specifier: workspace:*
         version: link:../plugin-markdown
@@ -296,6 +302,9 @@ importers:
       '@nostr-post/plugin-profile':
         specifier: workspace:*
         version: link:../plugin-profile
+      '@nostr-post/plugin-qr':
+        specifier: workspace:*
+        version: link:../plugin-qr
       '@nostr-post/plugin-reference':
         specifier: workspace:*
         version: link:../plugin-reference
@@ -479,6 +488,50 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
+  packages/plugin-lightning:
+    dependencies:
+      '@nostr-post/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nostr-post/plugin-qr':
+        specifier: workspace:*
+        version: link:../plugin-qr
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      '@nostr-post/signer':
+        specifier: workspace:*
+        version: link:../signer
+      '@nostr-post/ui':
+        specifier: workspace:*
+        version: link:../ui
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
+  packages/plugin-links:
+    dependencies:
+      '@nostr-post/plugin-qr':
+        specifier: workspace:*
+        version: link:../plugin-qr
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      '@nostr-post/ui':
+        specifier: workspace:*
+        version: link:../ui
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
   packages/plugin-markdown:
     dependencies:
       '@nostr-post/plugins':
@@ -549,6 +602,25 @@ importers:
       lit:
         specifier: ^3.3.3
         version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
+  packages/plugin-qr:
+    dependencies:
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      '@nostr-post/ui':
+        specifier: workspace:*
+        version: link:../ui
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+      uqr:
+        specifier: ^0.1.3
+        version: 0.1.3
     devDependencies:
       typescript:
         specifier: ^7.0.2
@@ -769,6 +841,12 @@ importers:
       '@nostr-post/plugin-identifier':
         specifier: workspace:*
         version: link:../plugin-identifier
+      '@nostr-post/plugin-lightning':
+        specifier: workspace:*
+        version: link:../plugin-lightning
+      '@nostr-post/plugin-links':
+        specifier: workspace:*
+        version: link:../plugin-links
       '@nostr-post/plugin-markdown':
         specifier: workspace:*
         version: link:../plugin-markdown
@@ -778,6 +856,9 @@ importers:
       '@nostr-post/plugin-profile':
         specifier: workspace:*
         version: link:../plugin-profile
+      '@nostr-post/plugin-qr':
+        specifier: workspace:*
+        version: link:../plugin-qr
       '@nostr-post/plugin-reference':
         specifier: workspace:*
         version: link:../plugin-reference
@@ -2556,6 +2637,9 @@ packages:
     resolution: {integrity: sha512-+fdndUTwBP86cVjihTp21hZHo7d6oj1c/47XPA3lL8mM0XHs+C4EkcjmgRsFnFk2f/UONGDy9ItBItmXsLOQHw==}
     engines: {node: '>=22.19.0'}
 
+  uqr@0.1.3:
+    resolution: {integrity: sha512-0rjE8iEJe4YmT9TOhwsZtqCMRLc5DXZUI2UEYUUg63ikBkqqE5EYWaI0etFe/5KUcmcYwLih2RND1kq+hrUJXA==}
+
   vite@8.3.8:
     resolution: {integrity: sha512-LzOn3h9rG/0vhLdXrV4yJ4QFA9eEoqCl+Yx+kGJd7aB9w6nfNgVHKSYwLPZUHrz4ZGa+t+kXjV9itvcHDLQouA==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -4034,6 +4118,8 @@ snapshots:
   undici-types@8.9.0: {}
 
   undici@8.12.3: {}
+
+  uqr@0.1.3: {}
 
   vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2):
     dependencies:

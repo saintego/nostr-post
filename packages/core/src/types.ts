@@ -61,7 +61,9 @@ export type FieldType =
   | 'geo'
   | 'ref'
   | 'date'
-  | 'profile';
+  | 'profile'
+  /** A plugin's structured value: an object or a list of them, checked by the plugin's `validate` */
+  | 'object';
 
 /**
  * Defines a single field in a post manifest.

@@ -1,0 +1,42 @@
+{
+  "name": "@nostr-post/plugin-links",
+  "version": "0.1.0",
+  "description": "Support links for nostr-post: links to tip pages (Buy Me a Coffee, GitHub Sponsors, Ko-fi, any https link), on-chain Bitcoin addresses and notes",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
+    "test:watch": "vitest --dir src",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "nostr",
+    "plugin",
+    "support",
+    "donation",
+    "bitcoin"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nostr-post/plugin-qr": "workspace:*",
+    "@nostr-post/plugins": "workspace:*",
+    "@nostr-post/ui": "workspace:*",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
