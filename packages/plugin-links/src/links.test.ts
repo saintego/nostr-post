@@ -51,6 +51,7 @@ describe('support links', () => {
   it('knows tip sites by host and by GitHub Sponsors path', () => {
     expect(supportSite('https://www.buymeacoffee.com/alice')?.label).toBe('Buy Me a Coffee');
     expect(supportSite('https://github.com/sponsors/alice')?.label).toBe('GitHub Sponsors');
+    expect(supportSite('https://coff.ee/alice')?.label).toBe('Buy Me a Coffee');
     expect(supportSite('https://github.com/alice')).toBeUndefined();
     expect(
       supportSite('https://example.com/tip', { 'example.com': { label: 'Ex', icon: '🍺' } })

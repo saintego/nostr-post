@@ -119,12 +119,18 @@ export class NostrPostSupport extends NpElement {
         this._listPeople = people;
       });
     }
-    if (!owner) return;
-    void fetchProfile(owner).then((profile) => {
-      this._profile = profile;
-    });
+    if (owner) {
+      void fetchProfile(owner).then((profile) => {
+        this._profile = profile;
+      });
+    }
+    // An inline page needs no owner (then a Lightning address gets plain invoices, not zaps)
     if (this.page) {
       this._values = this.page;
+      return;
+    }
+    if (!owner) {
+      this._values = {};
       return;
     }
     this._loading = true;

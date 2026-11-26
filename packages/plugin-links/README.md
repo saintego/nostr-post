@@ -1,8 +1,9 @@
 # @nostr-post/plugin-links
 
 Support links for nostr-post, for people without Lightning or Nostr: links to tip pages (Buy Me a
-Coffee, GitHub Sponsors, Ko-fi, any `https:` link), on-chain Bitcoin addresses and notes. The `links`
-field plugin of the support panel (`<nostr-post-support>`, `@nostr-post/web`) and of any manifest.
+Coffee and its `coff.ee` short links, GitHub Sponsors, Ko-fi, any `https:` link), on-chain Bitcoin
+addresses and notes. The `links` field plugin of the support panel (`<nostr-post-support>`,
+`@nostr-post/web`) and of any manifest.
 
 ## Main entry (no UI)
 

@@ -35,6 +35,7 @@ export {
   encodeLnurl,
   encodeNaddr,
   encodeNevent,
+  encodeNpub,
 } from '@nostr-post/core/nip19';
 // Where an event comes from (NIP-48 proxy tags): imported and bridged events
 export {

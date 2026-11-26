@@ -33,6 +33,8 @@ export interface SupportSite {
  */
 export const KNOWN_SUPPORT_SITES: Readonly<Record<string, SupportSite>> = {
   'buymeacoffee.com': { label: 'Buy Me a Coffee', icon: '☕' },
+  // Buy Me a Coffee's short links
+  'coff.ee': { label: 'Buy Me a Coffee', icon: '☕' },
   'github.com/sponsors': { label: 'GitHub Sponsors', icon: '💜' },
   'ko-fi.com': { label: 'Ko-fi', icon: '☕' },
   'patreon.com': { label: 'Patreon', icon: '🎨' },

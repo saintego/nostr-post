@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>nostr-post Support Panel</title>
+  <!-- The design system's primitives (np-button, np-input), at the Pages root next to the bundle -->
+  <link rel="stylesheet" href="../../ui.css" />
+  <style>
+    body {
+      margin: 0;
+      padding: var(--np-space-6, 24px) var(--np-space-4, 16px);
+      font-family: var(--np-font-family, system-ui, sans-serif);
+      background: var(--np-color-surface);
+      color: var(--np-color-on-surface);
+    }
+
+    main {
+      max-width: 44rem;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--np-space-6, 24px);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: var(--np-text-2xl);
+    }
+
+    h2 {
+      margin: 0 0 var(--np-space-2, 8px);
+      font-size: var(--np-text-lg);
+    }
+
+    p {
+      margin: 0 0 var(--np-space-3, 12px);
+      color: var(--np-color-on-surface-variant);
+    }
+
+    section {
+      padding: var(--np-space-4, 16px);
+      border-radius: var(--np-radius-lg);
+      background: var(--np-color-surface-container-low);
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--np-space-2, 8px);
+      align-items: center;
+      margin-bottom: var(--np-space-3, 12px);
+    }
+
+    .row input {
+      flex: 1;
+      min-width: 12rem;
+    }
+
+    code {
+      font-family: var(--np-font-family-mono);
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Support panel</h1>
+      <p>
+        How to support a person or project, from plugins: Lightning (zaps and invoices, a browser
+        wallet or a QR code), tip pages, on-chain Bitcoin and notes. Each entry is a field of the
+        <code>support-v1</code> manifest shown by its plugin.
+      </p>
+      <div class="row">
+        <button type="button" class="np-button np-outlined" id="theme">Dark / light</button>
+      </div>
+    </header>
+
+    <section>
+      <h2>WorldTrip's support page (inline)</h2>
+      <p>
+        The options of <a href="https://www.worldtrip.guide/support">worldtrip.guide/support</a>,
+        given to the panel inline (<code>.page</code>): nothing is read from relays. Without an npub
+        the Lightning entry pays with a plain invoice, not a zap.
+      </p>
+      <nostr-post-support id="worldtrip"></nostr-post-support>
+    </section>
+
+    <section>
+      <h2>Behind a button</h2>
+      <p>
+        <code>&lt;nostr-post-support-button&gt;</code> opens the same panel in a dialog, e.g. for a
+        footer.
+      </p>
+      <nostr-post-support-button id="worldtrip-button" label="♥ Support WorldTrip"></nostr-post-support-button>
+    </section>
+
+    <section>
+      <h2>Anyone's support page (from relays)</h2>
+      <p>
+        A person's support page is one event of theirs (kind 30078, d-tag
+        <code>nostr-post-support</code>). Load it by npub. Signed in with your own npub, you get
+        "Set up your support page" (or Edit) to publish yours.
+      </p>
+      <div class="row">
+        <input class="np-input" id="npub" placeholder="npub1…" aria-label="npub" />
+        <button type="button" class="np-button np-outlined" id="load">Load</button>
+        <button type="button" class="np-button np-filled" id="me">Sign in and load mine</button>
+      </div>
+      <nostr-post-support id="by-npub" hidden></nostr-post-support>
+    </section>
+  </main>
+
+  <!-- Sign-in: extension (NIP-07), bunker (NIP-46) or OAuth, through the shard signer bridge -->
+  <script src="https://saintego.github.io/nostr-shard-signer/nostr-bridge.js" data-layout="floating"></script>
+  <script type="module">
+    // The CDN bundle at the Pages root; use https://saintego.github.io/nostr-post/nostr-post.js elsewhere
+    import { encodeNpub, getPublicKey } from '../../nostr-post.js';
+
+    // WorldTrip's options, as on https://www.worldtrip.guide/support
+    const worldtrip = {
+      intro:
+        'Help keep **WorldTrip** running and ad-free! Your support means the world to us. ' +
+        'Every contribution helps us keep improving WorldTrip.',
+      lightning: ['ourfood4180@cake.cash'],
+      links: [
+        { type: 'link', value: 'https://coff.ee/worldtripguide' },
+        { type: 'bitcoin', value: 'bc1qs8may66mj4tj5wwd6s7n8ztnc87adh477hctkx' },
+      ],
+    };
+    const messages = { heading: () => 'Support WorldTrip' };
+
+    for (const id of ['worldtrip', 'worldtrip-button']) {
+      const panel = document.getElementById(id);
+      panel.page = worldtrip;
+      panel.messages = messages;
+    }
+
+    const byNpub = document.getElementById('by-npub');
+    const input = document.getElementById('npub');
+    const load = (npub) => {
+      byNpub.npub = npub;
+      byNpub.hidden = !npub;
+    };
+    document.getElementById('load').addEventListener('click', () => load(input.value.trim()));
+    document.getElementById('me').addEventListener('click', async () => {
+      const pubkey = await getPublicKey();
+      input.value = encodeNpub(pubkey) ?? pubkey;
+      load(input.value);
+    });
+
+    document.getElementById('theme').addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+  </script>
+</body>
+</html>

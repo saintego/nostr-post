@@ -234,6 +234,7 @@ The bundle re-exports utilities for advanced usage:
 
 - `encodeNaddr(address, relays?)`, `decodeNaddr(naddr)`: an address (`kind:pubkey:d-tag`) as `naddr1…` and back
 - `encodeNevent(id, { relays, author, kind })`: an event id as `nevent1…`
+- `encodeNpub(pubkey)`: a hex pubkey as `npub1…`
 - `decodeLnurl(lnurl)`, `encodeLnurl(url)`: an LNURL (LUD-01, e.g. a profile's `lud06`) as its `https:` URL and back
 
 **Imported events (NIP-48)**
