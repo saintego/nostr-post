@@ -1,16 +1,20 @@
 import { css } from 'lit';
 
 export const qrStyles = css`
+  /* Never wider than its container: a long invoice's code shrinks to fit (it stays scannable) */
   :host {
     display: block;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .qr {
-    display: inline-flex;
+    display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--np-space-2);
-    max-width: 100%;
+    width: 100%;
+    min-width: 0;
   }
 
   /* QR codes scan best dark on light, so the image keeps its own white square in dark themes */
@@ -56,6 +60,7 @@ export const qrStyles = css`
   }
 
   .qr-text {
+    max-width: 100%;
     font-family: var(--np-font-family-mono);
     font-size: var(--np-text-sm);
     color: var(--np-color-on-surface-variant);

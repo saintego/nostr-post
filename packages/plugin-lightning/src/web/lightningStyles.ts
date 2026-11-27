@@ -9,10 +9,7 @@ export const lightningStyles = css`
     display: flex;
     flex-direction: column;
     gap: var(--np-space-3);
-  }
-
-  .ln np-qr {
-    align-self: center;
+    min-width: 0;
   }
 
   .wide {

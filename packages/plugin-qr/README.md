@@ -37,7 +37,8 @@ html`<np-qr .text=${'bitcoin:bc1q…'}></np-qr>`;
   `rel="noopener noreferrer"`). A tap on the code opens it full screen (large, on white) for
   scanning with another phone. Properties: `text`, `caption` (shown and copied instead of the
   text, e.g. the address of a `bitcoin:` URI), `show-text`, `show-link` (default true), `messages`.
-  The image is a quarter rem a module, at least 12rem, so long invoices stay scannable.
+  The image is a quarter rem a module, at least 12rem, so long invoices stay scannable, and never
+  wider than its container (it shrinks to fit a card).
   Parts: `image`, `text`, `button`, `link`.
 - `<np-qr-view>`, `<np-qr-input>`: the `qr` field (`.value`, `.field`; `metadata.multiple` for
   several codes). The input shows each code under its text box.

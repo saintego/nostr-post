@@ -27,8 +27,8 @@ export const linksStyles = css`
     display: contents;
   }
 
-  .method np-qr {
-    align-self: center;
+  .method {
+    min-width: 0;
   }
 
   .link-button {
