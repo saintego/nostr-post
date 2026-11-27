@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { configureLinks, linkText, showsUrl } from './settings';
 
 const field = (metadata: Record<string, unknown> = {}) =>
-  ({ id: 'media', type: 'string', uiPlugin: 'embed', metadata }) as unknown as PostField;
+  ({ id: 'media', type: 'string', uiPlugin: 'links', metadata }) as unknown as PostField;
 
 afterEach(() => configureLinks({ showUrl: undefined }));
 

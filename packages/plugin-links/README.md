@@ -7,8 +7,7 @@ Links in nostr-post, each shown the way its **rule** says:
 - a plain **link**.
 
 Every link has a ⋯ menu: QR code (full screen), Copy link, Share, Open. The rules are JSON, so apps
-and manifests add their own. Fields use it with `uiPlugin: 'links'`; `'embed'` is the same plugin
-under its former name (it was `@nostr-post/plugin-embed`).
+and manifests add their own. Fields use it with `uiPlugin: 'links'` (it was `@nostr-post/plugin-embed`, `uiPlugin: 'embed'`).
 
 ## Main entry (no UI)
 
@@ -42,9 +41,14 @@ A rule (`LinkRule`) is plain JSON:
 
 The order: a field's rules (`metadata.rules`), then the app's (`configureLinks({ rules })`), then
 the built-in ones (`DEFAULT_LINK_RULES`, in `defaultRules.ts`). A rule given again with the same
-`id` replaces the later one. Manifests come from relays, so a field's rules may only make buttons,
-QR codes and links, with hex colours (`safeFieldRules`). They can't add players, which would load
-another site's page into the reader's.
+`id` replaces the later one.
+
+Manifests come from relays, so a field's rules are checked (`safeFieldRules`): colours must be hex,
+and a player is kept only when its `src` starts with a literal `https://<host>` on the allowed hosts.
+A player loads another site's page into the reader's. The allowed hosts default to the built-in
+players' (`DEFAULT_EMBED_HOSTS`); an app sets its own with
+`configureLinks({ embedHosts: [...DEFAULT_EMBED_HOSTS, 'video.example'] })`. A host allows its
+subdomains.
 
 Text without a scheme that looks like a domain (`ko-fi.com/alice`, `coff.ee/x`,
 `youtube.com/watch?v=…`) is an `https://` link (`normalizeLink`). Text with `@` (an email, a
@@ -54,14 +58,15 @@ Lightning address) or spaces is not.
 | --- | --- |
 | `viewLink(link, rules)` | How a link shows: `{ url, format, rule?, src?, height? }` |
 | `linkRules(field?)`, `DEFAULT_LINK_RULES` | A field's rules in order (its own, the app's, the built-in ones); the built-in ones |
-| `configureLinks({ rules?, showUrl? })`, `linksSettings()` | The app's settings: its rules; `showUrl: false` shows players without their link under them (default: shown) |
+| `configureLinks({ rules?, showUrl?, embedHosts? })`, `linksSettings()` | The app's settings: its rules; `showUrl: false` shows players without their link under them (default: shown); the hosts whose players manifests' fields may use |
+| `DEFAULT_EMBED_HOSTS`, `templateHost(src)`, `isAllowedHost(host, hosts)` | The built-in players' hosts; the host a player template names; whether it is allowed |
 | `normalizeLink(text)`, `isShowableLink(link, rules)` | `https://` added to a bare domain; whether a link is a web link or a URI a rule takes (no `javascript:` or `data:`) |
 | `findRule`, `fillTemplate`, `mergeRules`, `safeFieldRules` | The rule engine's parts |
 | `embedFor(link, rules?)` | The player for a link: `{ provider, src, height? }`, undefined for links without one. Built from the link alone, no requests |
 | `linkProvider(link, rules?)` | The provider of a link, also of a Bandcamp page (which gets no player) |
 | `linkEntries(value, field?)`, `linksOf(value, field?)` | The entries (`LinkEntry`: `{ url, label?, icon?, description? }`), or links, of a field's value that its rules can show |
 | `parseLinkEntry(raw)`, `storedEntry(entry)` | An entry from stored data (a link, an object or its JSON); the stored form (the link alone when it has nothing else) |
-| `linksPlugin`, `embedPlugin` | The plugin (`links`, and `embed` under its former id): `validate`; one entry per tag (JSON when it has a label); profile links also written as `i` tags |
+| `linksPlugin` | The plugin: `validate`; one entry per tag (JSON when it has a label); profile links also written as `i` tags |
 | `showsUrl(field?, own?)` | Whether a player shows its link: the element's own choice, else the field's `metadata.showUrl`, else the app's setting, else yes |
 | `profileLink(link)`   | The profile a link points to, in canonical form: `{ platform, url, handle? }`, or undefined for links that aren't profiles |
 | `profileUrls(links)`  | The canonical profile URLs among links, without repeats                            |
@@ -120,8 +125,7 @@ import '@nostr-post/plugin-links/web';
 ```
 
 Defines `<np-link>`, `<np-embed>`, `<np-links-view>` and `<np-links-input>`, and registers the
-plugin as `links` and `embed` with the last two. The composer and view load it by themselves for
-manifests that use either id. It also registers `<np-embed>` as the link view (`registerLinkView`,
+plugin with the last two. The composer and view load it by themselves for manifests that use it. It also registers `<np-embed>` as the link view (`registerLinkView`,
 `@nostr-post/plugins/entities`) for links with a player, so a post's or comment's YouTube link
 shows as the player.
 

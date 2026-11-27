@@ -6,8 +6,7 @@ Payments for nostr-post: ways to pay as a **registry of payment methods**. Built
 - **On-chain Bitcoin**: an address, as a QR code, with an amount when the payer sets one.
 
 Apps add methods (`registerPaymentMethod`), e.g. Czech QR payments, SEPA EPC QR or Monero. Fields
-use it with `uiPlugin: 'payment'`; `'lightning'` is the same plugin under its former name. It works
-without the app registering anything.
+use it with `uiPlugin: 'payment'`. It works without the app registering anything.
 
 ## Payment methods
 
@@ -35,7 +34,7 @@ with `{ first: true }`), so `alice@getalby.com` in a payment field is a Lightnin
 | `detectPayment(text)`, `paymentMethods()`, `registerPaymentMethod(method, { first? })` | The method that recognises a value and its stored form; the methods in order; adding one (an id given again replaces it) |
 | `bitcoinMethod`, `bitcoinAddress(text)`, `bitcoinUri(address, amountSats?)`, `btcAmount(sats)` | On-chain Bitcoin: stored as `bitcoin:<address>`. Segwit and taproot (`bc1…`) are checked fully (bech32/bech32m checksum), legacy (`1…`, `3…`) by format. BIP-21 URIs give the amount in BTC |
 | `lightningMethod` | Lightning: a Lightning address, an LNURL or an npub (below) |
-| `paymentPlugin`, `lightningPlugin`, `paymentTexts(value)`, `presetAmounts(field)`, `DEFAULT_AMOUNTS` | The field plugin (`payment`, and `lightning` under its former id): `validate` takes what a method recognises; preset amounts (`metadata.amounts`, default 21, 100, 1000, 5000 sats) |
+| `paymentPlugin`, `paymentTexts(value)`, `presetAmounts(field)`, `DEFAULT_AMOUNTS` | The field plugin: `validate` takes what a method recognises; preset amounts (`metadata.amounts`, default 21, 100, 1000, 5000 sats) |
 
 ## Lightning (no UI)
 
@@ -84,8 +83,8 @@ Results are `Result` values; errors (`LightningError`) have a `code`: `invalid-t
 import '@nostr-post/plugin-payment/web';
 ```
 
-Defines the elements below and registers the plugin as `payment` and `lightning` with
-`<np-payment-input>` and `<np-payment-view>`. The composer and view load it by themselves.
+Defines the elements below and registers the plugin with `<np-payment-input>` and
+`<np-payment-view>`. The composer and view load it by themselves.
 
 - `<np-payment-view>`: each value as a card of its method, with the field's preset amounts.
   - A view passes the event's author (`.author`; also `.recipient`) and address (`.address`), so a

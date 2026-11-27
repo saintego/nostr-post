@@ -1,5 +1,5 @@
 /**
- * <np-payment-view> and <np-payment-input>: the `payment` field (also `lightning`). The view
+ * <np-payment-view> and <np-payment-input>: the `payment` field. The view
  * shows each value as a card of its method: Lightning as <np-lightning> (its LNURL QR, invoices,
  * zaps), static methods (on-chain Bitcoin) as <np-payment-qr>, with the field's preset amounts
  * (`metadata.amounts`). A page showing the field passes whose it is (`.author`, hex; also

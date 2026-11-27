@@ -124,30 +124,72 @@ export const mergeRules = (
   return merged;
 };
 
+/** The host a player's URL template names: a literal `https://<host>`, no `{group}` in it */
+export const templateHost = (src: string): string | undefined =>
+  src.match(/^https:\/\/([a-z\d.-]+)(?:[/?#:]|$)/i)?.[1]?.toLowerCase();
+
+/** Whether a host is one of the allowed hosts or their subdomain */
+export const isAllowedHost = (host: string, allowed: readonly string[]): boolean =>
+  allowed.some((h) => host === h.toLowerCase() || host.endsWith(`.${h.toLowerCase()}`));
+
+/** A field rule's player part: kept when its URL template's host is allowed */
+const safeEmbed = (
+  rule: Partial<LinkRule>,
+  embedHosts: readonly string[]
+): Partial<LinkRule> | undefined => {
+  const host = typeof rule.src === 'string' ? templateHost(rule.src) : undefined;
+  if (!host || !isAllowedHost(host, embedHosts)) return undefined;
+  const height =
+    typeof rule.height === 'number' && rule.height > 0 && rule.height <= 2000
+      ? { height: rule.height }
+      : {};
+  return {
+    src: rule.src,
+    ...height,
+    ...(typeof rule.provider === 'string' ? { provider: rule.provider } : {}),
+  };
+};
+
+const FORMATS: readonly string[] = ['embed', 'button', 'qr', 'link'];
+
+/** A rule's colours, when both are hex */
+const safeBrand = (brand: LinkRule['brand']): Pick<LinkRule, 'brand'> =>
+  brand && HEX_COLOR.test(brand.background) && HEX_COLOR.test(brand.color)
+    ? { brand: { background: brand.background, color: brand.color } }
+    : {};
+
+/** A rule's text keys (name, icon), when they are text */
+const safeTexts = (rule: Partial<LinkRule>): Pick<LinkRule, 'name' | 'icon'> => ({
+  ...(typeof rule.name === 'string' ? { name: rule.name } : {}),
+  ...(typeof rule.icon === 'string' ? { icon: rule.icon } : {}),
+});
+
+/** One field rule, checked; undefined when it isn't a rule or is a player from another host */
+const safeFieldRule = (item: unknown, embedHosts: readonly string[]): LinkRule | undefined => {
+  const rule = item as Partial<LinkRule> | null;
+  if (!rule || typeof rule.id !== 'string' || typeof rule.match !== 'string') return undefined;
+  if (typeof rule.format !== 'string' || !FORMATS.includes(rule.format)) return undefined;
+  const embed = rule.format === 'embed' ? safeEmbed(rule, embedHosts) : {};
+  if (!embed) return undefined;
+  return {
+    id: rule.id,
+    match: rule.match,
+    format: rule.format,
+    ...safeTexts(rule),
+    ...safeBrand(rule.brand),
+    ...embed,
+  };
+};
+
 /**
  * Rules a manifest's field may add (`metadata.rules`), read from relays: buttons, QR codes and
- * links only (no players, which load another site's page into the reader's), colours as hex
+ * links, colours as hex; players only from the allowed hosts (`embedHosts`, default
+ * `DEFAULT_EMBED_HOSTS`), as a player loads another site's page into the reader's
  */
-export const safeFieldRules = (value: unknown): LinkRule[] =>
-  (Array.isArray(value) ? value : []).flatMap((item): LinkRule[] => {
-    const rule = item as Partial<LinkRule> | null;
-    if (!rule || typeof rule.id !== 'string' || typeof rule.match !== 'string') return [];
-    if (rule.format !== 'button' && rule.format !== 'qr' && rule.format !== 'link') return [];
-    const brand =
-      rule.brand && HEX_COLOR.test(rule.brand.background) && HEX_COLOR.test(rule.brand.color)
-        ? { brand: { background: rule.brand.background, color: rule.brand.color } }
-        : {};
-    return [
-      {
-        id: rule.id,
-        match: rule.match,
-        format: rule.format,
-        ...(typeof rule.name === 'string' ? { name: rule.name } : {}),
-        ...(typeof rule.icon === 'string' ? { icon: rule.icon } : {}),
-        ...brand,
-      },
-    ];
-  });
+export const safeFieldRules = (value: unknown, embedHosts: readonly string[] = []): LinkRule[] =>
+  (Array.isArray(value) ? value : [])
+    .map((item) => safeFieldRule(item, embedHosts))
+    .filter((rule): rule is LinkRule => rule !== undefined);
 
 /** How a link shows under the rules: its format, and a player's URL and height */
 export const viewLink = (link: string, rules: readonly LinkRule[]): LinkView => {

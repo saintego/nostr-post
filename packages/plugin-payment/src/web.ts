@@ -3,26 +3,23 @@
  *
  * Importing this module:
  * 1. Defines <np-lightning>, <np-payment-qr>, <np-payment-view> and <np-payment-input>
- * 2. Registers the `payment` field plugin, and the same as `lightning` (its former id), with
- *    their tag names in the shared PluginRegistry
+ * 2. Registers the `payment` field plugin (with tag names) in the shared PluginRegistry
  */
 
 import { pluginRegistry } from '@nostr-post/plugins/registry';
-import { lightningPlugin, paymentPlugin } from './core';
+import { paymentPlugin } from './core';
 
 import './web/lightning';
 import './web/paymentField';
 import './web/paymentQr';
 
-for (const plugin of [paymentPlugin, lightningPlugin]) {
-  pluginRegistry.register({
-    ...plugin,
-    inputTagName: 'np-payment-input',
-    viewTagName: 'np-payment-view',
-  });
-}
+pluginRegistry.register({
+  ...paymentPlugin,
+  inputTagName: 'np-payment-input',
+  viewTagName: 'np-payment-view',
+});
 
-export { lightningPlugin, paymentPlugin } from './core';
+export { paymentPlugin } from './core';
 export { NpLightning, type PaymentStatus } from './web/lightning';
 export { DEFAULT_LIGHTNING_MESSAGES, type LightningMessages } from './web/lightningMessages';
 export { targetLabel } from './web/lightningParts';

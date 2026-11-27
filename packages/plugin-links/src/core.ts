@@ -1,8 +1,7 @@
 /**
  * @nostr-post/plugin-links - Core
  *
- * The `links` field plugin (also under the id `embed`, from before it was merged with it): a
- * field's links, one or several (`metadata.multiple`), each shown by the rules (`rules.ts`): a
+ * The `links` field plugin: a field's links, one or several (`metadata.multiple`), each shown by the rules (`rules.ts`): a
  * player, a site's button, a QR code or a link. A value is a link (`r` tags, for example) or an
  * entry with a label, icon and description (`LinkEntry`, in a NIP-78 post's content). Links to
  * profiles (`profileLinks.ts`) are also written as NIP-73 `i` tags in canonical form.
@@ -104,8 +103,8 @@ export const storedEntry = (entry: LinkEntry): string | LinkEntry =>
 
 // ── Plugin definition ───────────────────────────────────────────────
 
-const definition = (id: string): NostrUIPlugin => ({
-  id,
+export const linksPlugin: NostrUIPlugin = {
+  id: 'links',
   type: ['string', 'object'],
 
   validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
@@ -151,9 +150,4 @@ const definition = (id: string): NostrUIPlugin => ({
   /** Profile links (an artist's Bandcamp, Instagram, …) as NIP-73 `i` tags, in canonical form */
   extraTags: (value: unknown): [string, ...string[]][] =>
     profileUrls(linksOf(value)).map((url): [string, string] => ['i', url]),
-});
-
-export const linksPlugin: NostrUIPlugin = definition('links');
-
-/** The same plugin under its former id, for manifests that use `uiPlugin: 'embed'` */
-export const embedPlugin: NostrUIPlugin = definition('embed');
+};

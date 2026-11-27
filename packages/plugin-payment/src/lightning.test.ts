@@ -1,6 +1,6 @@
 import { encodeLnurl, encodeNpub } from '@nostr-post/core/nip19';
 import { describe, expect, it } from 'vitest';
-import { lightningPlugin, presetAmounts } from './core';
+import { paymentPlugin, presetAmounts } from './core';
 import {
   invoiceUrl,
   lightningAddressUrl,
@@ -31,7 +31,7 @@ const params: PayParams = {
 const field = {
   id: 'ln',
   type: 'string',
-  uiPlugin: 'lightning',
+  uiPlugin: 'payment',
   mapTo: { kind: 1, target: 'tag', tagName: 'ln' },
 } as const;
 
@@ -298,12 +298,12 @@ describe('paying', () => {
   });
 });
 
-describe('lightningPlugin', () => {
+describe('paymentPlugin', () => {
   it('validates payees and reads preset amounts', () => {
-    expect(
-      lightningPlugin.validate?.(['alice@getalby.com', encodeNpub(PAYEE)], field).success
-    ).toBe(true);
-    expect(lightningPlugin.validate?.('alice', field).success).toBe(false);
+    expect(paymentPlugin.validate?.(['alice@getalby.com', encodeNpub(PAYEE)], field).success).toBe(
+      true
+    );
+    expect(paymentPlugin.validate?.('alice', field).success).toBe(false);
     expect(presetAmounts({ ...field, metadata: { amounts: [10, -1, 2.5, 50] } })).toEqual([10, 50]);
     expect(presetAmounts(field)).toEqual([21, 100, 1000, 5000]);
   });

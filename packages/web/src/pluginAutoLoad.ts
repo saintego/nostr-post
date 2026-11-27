@@ -7,7 +7,6 @@ const builtInPluginLoaders: Record<string, () => Promise<unknown>> = {
   geo: () => import('@nostr-post/plugin-geo/web'),
   date: () => import('@nostr-post/plugin-date/web'),
   profile: () => import('@nostr-post/plugin-profile/web'),
-  embed: () => import('@nostr-post/plugin-links/web'),
   venue: () => import('@nostr-post/plugin-venue/web'),
   media: () => import('@nostr-post/plugin-media/web'),
   reference: () => import('@nostr-post/plugin-reference/web'),
@@ -17,7 +16,6 @@ const builtInPluginLoaders: Record<string, () => Promise<unknown>> = {
   qr: () => import('@nostr-post/plugin-qr/web'),
   links: () => import('@nostr-post/plugin-links/web'),
   payment: () => import('@nostr-post/plugin-payment/web'),
-  lightning: () => import('@nostr-post/plugin-payment/web'),
 };
 
 const pendingPluginLoads = new Map<string, Promise<unknown>>();

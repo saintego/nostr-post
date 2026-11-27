@@ -9,7 +9,6 @@ export {
   type Embed,
   type EmbedProvider,
   embedFor,
-  embedPlugin,
   type LinkEntry,
   linkEntries,
   linkFromEmbedCode,
@@ -19,7 +18,7 @@ export {
   parseLinkEntry,
   storedEntry,
 } from './core';
-export { DEFAULT_LINK_RULES } from './defaultRules';
+export { DEFAULT_EMBED_HOSTS, DEFAULT_LINK_RULES } from './defaultRules';
 export { checkLink, isCheckableLink, type LinkCheck, namesMatch } from './linkCheck';
 export {
   checkSuggestedLinks,
@@ -37,6 +36,7 @@ export {
 export {
   fillTemplate,
   findRule,
+  isAllowedHost,
   isShowableLink,
   type LinkFormat,
   type LinkRule,
@@ -44,6 +44,7 @@ export {
   mergeRules,
   normalizeLink,
   safeFieldRules,
+  templateHost,
   viewLink,
 } from './rules';
 export {

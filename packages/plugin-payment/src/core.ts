@@ -1,7 +1,7 @@
 /**
  * @nostr-post/plugin-payment - Core
  *
- * The `payment` field plugin (also under its former id `lightning`): ways to pay, one or a list
+ * The `payment` field plugin: ways to pay, one or a list
  * (`metadata.multiple`), each a value a payment method recognises: a Lightning address
  * (`alice@getalby.com`), an LNURL or an npub, an on-chain Bitcoin address, or what an app's
  * methods add. `metadata.amounts`: the preset amounts in sats. No DOM dependencies.
@@ -28,8 +28,8 @@ export const paymentTexts = (value: unknown): string[] =>
     (v): v is string => typeof v === 'string' && v.trim() !== ''
   );
 
-const definition = (id: string): NostrUIPlugin => ({
-  id,
+export const paymentPlugin: NostrUIPlugin = {
+  id: 'payment',
   type: 'string',
 
   validate: (value: unknown, field: PostField): Result<void, ValidationError> => {
@@ -56,9 +56,4 @@ const definition = (id: string): NostrUIPlugin => ({
   },
 
   formatValue: (value: unknown): string => paymentTexts(value).join(', '),
-});
-
-export const paymentPlugin: NostrUIPlugin = definition('payment');
-
-/** The same plugin under its former id, for manifests that use `uiPlugin: 'lightning'` */
-export const lightningPlugin: NostrUIPlugin = definition('lightning');
+};

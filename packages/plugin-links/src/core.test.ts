@@ -1,6 +1,6 @@
 import type { PostField } from '@nostr-post/plugins/types';
 import { describe, expect, it } from 'vitest';
-import { embedFor, embedPlugin, linkProvider, linksOf } from './core';
+import { embedFor, linkProvider, linksOf, linksPlugin } from './core';
 
 describe('embedFor', () => {
   it('makes privacy-friendly YouTube players from any YouTube link', () => {
@@ -48,19 +48,19 @@ describe('embedFor', () => {
   });
 });
 
-describe('embedPlugin', () => {
+describe('linksPlugin', () => {
   const field: PostField = {
     id: 'media',
     type: 'string',
-    uiPlugin: 'embed',
+    uiPlugin: 'links',
     mapTo: { kind: 30818, target: 'tag', tagName: 'r' },
   };
 
   it('accepts links only', () => {
-    expect(embedPlugin.validate?.(['https://a.example', 'https://b.example'], field).success).toBe(
+    expect(linksPlugin.validate?.(['https://a.example', 'https://b.example'], field).success).toBe(
       true
     );
-    expect(embedPlugin.validate?.('nope', field).success).toBe(false);
+    expect(linksPlugin.validate?.('nope', field).success).toBe(false);
     expect(linksOf(['https://a.example', 'x', 3])).toEqual(['https://a.example']);
   });
 });

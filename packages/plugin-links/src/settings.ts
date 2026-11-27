@@ -6,12 +6,15 @@
  * - `showUrl`: a link with a player shows its URL under the player too (default); a field turns
  *   it off with `metadata.showUrl: false`.
  *
- * A field adds rules in `metadata.rules` (buttons, QR codes and links only: manifests come from
- * relays, see `safeFieldRules`). No DOM dependencies.
+ * - `embedHosts`: the hosts whose players a manifest's field may use (default
+ *   `DEFAULT_EMBED_HOSTS`, the built-in players'), to allow players we don't list.
+ *
+ * A field adds rules in `metadata.rules` (manifests come from relays: players only from
+ * `embedHosts`, see `safeFieldRules`). No DOM dependencies.
  */
 
 import type { PostField } from '@nostr-post/plugins/types';
-import { DEFAULT_LINK_RULES } from './defaultRules';
+import { DEFAULT_EMBED_HOSTS, DEFAULT_LINK_RULES } from './defaultRules';
 import { type LinkRule, mergeRules, safeFieldRules } from './rules';
 
 export interface LinksSettings {
@@ -19,6 +22,8 @@ export interface LinksSettings {
   rules?: LinkRule[];
   /** Show a player's link under it (default true) */
   showUrl?: boolean;
+  /** Hosts whose players manifests' fields may use (replaces `DEFAULT_EMBED_HOSTS`) */
+  embedHosts?: string[];
 }
 
 // Module state: the app's settings, set once at start
@@ -34,7 +39,11 @@ export const linksSettings = (): LinksSettings => settings;
 
 /** The rules of a field: its own (`metadata.rules`), then the app's, then the built-in ones */
 export const linkRules = (field?: PostField): LinkRule[] =>
-  mergeRules(safeFieldRules(field?.metadata?.rules), settings.rules, DEFAULT_LINK_RULES);
+  mergeRules(
+    safeFieldRules(field?.metadata?.rules, settings.embedHosts ?? DEFAULT_EMBED_HOSTS),
+    settings.rules,
+    DEFAULT_LINK_RULES
+  );
 
 /**
  * Whether a player shows its link: the element's own choice, else the field's

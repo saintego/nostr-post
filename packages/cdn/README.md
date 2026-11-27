@@ -161,10 +161,11 @@ The bundle re-exports utilities for advanced usage:
 **People helpers** (see [plugin-profile](../plugin-profile/README.md))
 
 - Links: `viewLink(link, rules)` (how a link shows: player, button, QR code, link),
-  `linkRules(field?)`, `DEFAULT_LINK_RULES`, `configureLinks({ rules, showUrl })` (the app's link
-  rules; `showUrl: false`: players without their link under them), `normalizeLink(text)`,
+  `linkRules(field?)`, `DEFAULT_LINK_RULES`, `configureLinks({ rules, showUrl, embedHosts })` (the
+  app's link rules; `showUrl: false`: players without their link under them; `embedHosts`: hosts
+  whose players manifests may use, default `DEFAULT_EMBED_HOSTS`), `normalizeLink(text)`,
   `linkEntries(value)`, `LinkEntry`, `LinkRule`; `embedFor(link)` (a link's player),
-  `linkProvider(link)`, `linksPlugin`, `embedPlugin`, `Embed`;
+  `linkProvider(link)`, `linksPlugin`, `Embed`;
   `profileLink(link)`, `profileUrls(links)`: profile links in canonical form (NIP-73 `i` tags);
   `linkFromEmbedCode(text)`; `checkLink(link)`, `isCheckableLink(link)`, `namesMatch(name, names)`:
   whether a Spotify, SoundCloud or YouTube link exists, and whose it is; `linksInText(text)`,

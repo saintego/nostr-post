@@ -1,8 +1,16 @@
 import type { PostField } from '@nostr-post/plugins/types';
 import { afterEach, describe, expect, it } from 'vitest';
 import { linkEntries, linksPlugin, storedEntry } from './core';
-import { DEFAULT_LINK_RULES } from './defaultRules';
-import { isShowableLink, mergeRules, normalizeLink, safeFieldRules, viewLink } from './rules';
+import { DEFAULT_EMBED_HOSTS, DEFAULT_LINK_RULES } from './defaultRules';
+import {
+  isAllowedHost,
+  isShowableLink,
+  mergeRules,
+  normalizeLink,
+  safeFieldRules,
+  templateHost,
+  viewLink,
+} from './rules';
 import { configureLinks, linkRules } from './settings';
 
 const field = (metadata: Record<string, unknown> = {}): PostField => ({
@@ -13,7 +21,7 @@ const field = (metadata: Record<string, unknown> = {}): PostField => ({
   metadata,
 });
 
-afterEach(() => configureLinks({ rules: undefined }));
+afterEach(() => configureLinks({ rules: undefined, embedHosts: undefined }));
 
 describe('normalizeLink', () => {
   it('adds https:// to bare domains with or without a path', () => {
@@ -148,6 +156,47 @@ describe('entries', () => {
     expect(linksPlugin.deserializeValue?.(raw, field())).toEqual({
       url: 'https://a.test',
       label: 'A',
+    });
+  });
+});
+
+describe('players from manifests', () => {
+  const peertube = {
+    id: 'peertube',
+    match: '^https://video\\.example/w/(?<id>\\w+)',
+    format: 'embed',
+    provider: 'peertube',
+    name: 'PeerTube',
+    src: 'https://video.example/videos/embed/{id}',
+  };
+
+  it('takes a field player only from an allowed host', () => {
+    expect(safeFieldRules([peertube], DEFAULT_EMBED_HOSTS)).toEqual([]);
+    expect(safeFieldRules([peertube], ['video.example'])).toMatchObject([
+      { format: 'embed', provider: 'peertube' },
+    ]);
+    const youtube = { ...peertube, id: 'yt', src: 'https://www.youtube-nocookie.com/embed/{id}' };
+    expect(safeFieldRules([youtube], DEFAULT_EMBED_HOSTS)).toHaveLength(1);
+  });
+
+  it('needs a literal host in the template', () => {
+    const tricky = [
+      { ...peertube, src: 'https://{host}/embed' },
+      { ...peertube, src: 'https://video.example.evil.test/embed' },
+      { ...peertube, src: 'http://video.example/embed' },
+    ];
+    expect(safeFieldRules(tricky, ['video.example'])).toEqual([]);
+    expect(templateHost('https://a.b.example:8443/x')).toBe('a.b.example');
+    expect(isAllowedHost('player.video.example', ['video.example'])).toBe(true);
+  });
+
+  it("follows the app's allowed hosts", () => {
+    const own = field({ rules: [peertube] });
+    expect(viewLink('https://video.example/w/abc', linkRules(own)).format).toBe('link');
+    configureLinks({ embedHosts: [...DEFAULT_EMBED_HOSTS, 'video.example'] });
+    expect(viewLink('https://video.example/w/abc', linkRules(own))).toMatchObject({
+      format: 'embed',
+      src: 'https://video.example/videos/embed/abc',
     });
   });
 });

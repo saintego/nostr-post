@@ -8,7 +8,6 @@
 export { bitcoinAddress, bitcoinMethod, bitcoinUri, btcAmount } from './bitcoin';
 export {
   DEFAULT_AMOUNTS,
-  lightningPlugin,
   paymentPlugin,
   paymentTexts,
   presetAmounts,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { embedPlugin } from './core';
+import { linksPlugin } from './core';
 import { profileLink, profileUrls } from './profileLinks';
 
 describe('profileLink', () => {
@@ -61,10 +61,10 @@ describe('profile links as i tags', () => {
     const field = {
       id: 'media',
       type: 'string' as const,
-      uiPlugin: 'embed',
+      uiPlugin: 'links',
       mapTo: { kind: 30818, target: 'tag' as const, tagName: 'r' },
     };
-    expect(embedPlugin.extraTags?.(links, field)).toEqual([['i', 'https://doomsday.bandcamp.com']]);
+    expect(linksPlugin.extraTags?.(links, field)).toEqual([['i', 'https://doomsday.bandcamp.com']]);
   });
 });
 
@@ -76,10 +76,10 @@ describe('profile handles as qualifiers', () => {
       'https://open.spotify.com/artist/abc',
     ];
     expect(
-      embedPlugin.qualifiers?.(links, {
+      linksPlugin.qualifiers?.(links, {
         id: 'media',
         type: 'string',
-        uiPlugin: 'embed',
+        uiPlugin: 'links',
         mapTo: { kind: 1, target: 'tag', tagName: 'r' },
       })
     ).toEqual(['doomsday']);

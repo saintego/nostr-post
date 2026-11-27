@@ -10,6 +10,19 @@
 
 import type { LinkRule } from './rules';
 
+/**
+ * Hosts whose players a manifest's field may use (its `metadata.rules`): the built-in players'.
+ * A host allows its subdomains too. An app replaces the list with `configureLinks({ embedHosts })`
+ * (spread this one in to keep them).
+ */
+export const DEFAULT_EMBED_HOSTS: readonly string[] = [
+  'www.youtube-nocookie.com',
+  'open.spotify.com',
+  'w.soundcloud.com',
+  'player.vimeo.com',
+  'bandcamp.com',
+];
+
 const YOUTUBE_HOST = '(?:www\\.|m\\.|music\\.)?youtube(?:-nocookie)?\\.com';
 const YOUTUBE_EMBED = 'https://www.youtube-nocookie.com/embed/{id}';
 
