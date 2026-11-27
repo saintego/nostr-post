@@ -208,6 +208,12 @@ export interface NostrPostManifest {
    */
   viewOrder?: string[];
   /**
+   * How views lay out the fields: `list` (default: each field a row with its label) or `cards`
+   * (text fields such as Markdown first, without labels; the other plugin fields as one grid of
+   * cards, e.g. a support page's ways to pay)
+   */
+  viewLayout?: 'list' | 'cards';
+  /**
    * What the page of an event made with this manifest lists besides the event itself (a wiki
    * page, a calendar event's page): posts referencing it, filtered and shown each its way, e.g.
    * a venue's reviews, photos and upcoming events, an artist's gigs (`<nostr-post-sections>`)

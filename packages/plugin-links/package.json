@@ -1,7 +1,7 @@
 {
   "name": "@nostr-post/plugin-links",
   "version": "0.1.0",
-  "description": "Support links for nostr-post: links to tip pages (Buy Me a Coffee, GitHub Sponsors, Ko-fi, any https link), on-chain Bitcoin addresses and notes",
+  "description": "Links for nostr-post: each link as a player (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp), a branded button, a QR code or a plain link, chosen by JSON rules apps and manifests can extend",
   "type": "module",
   "exports": {
     ".": {
@@ -24,13 +24,16 @@
   "keywords": [
     "nostr",
     "plugin",
-    "support",
-    "donation",
-    "bitcoin"
+    "links",
+    "embed",
+    "youtube",
+    "spotify",
+    "qr"
   ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@nostr-post/core": "workspace:*",
     "@nostr-post/plugin-qr": "workspace:*",
     "@nostr-post/plugins": "workspace:*",
     "@nostr-post/ui": "workspace:*",

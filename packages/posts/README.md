@@ -89,20 +89,6 @@ With `@nostr-post/outbox`; the outbox is passed in (in a browser `browserOutbox(
 | `draftForComposer(outbox, item)` | A draft's `manifest` or `manifestRef`, `prefill`, `dTag` and `draftId` for a composer; its photos deferred again |
 | `draftTitle(formData)` | A draft's name: the form's first text |
 
-## Support pages
-
-How to support a person or project, one addressable event each (kind 30078, d-tag
-`nostr-post-support`), made with `SUPPORT_MANIFEST` (`support-v1`: `intro` in Markdown, `lightning`
-payees, `links` entries). `<nostr-post-support>` in `@nostr-post/web` shows it.
-
-| Export | Does |
-| --- | --- |
-| `SUPPORT_MANIFEST`, `SUPPORT_KIND`, `SUPPORT_D_TAG` | The manifest, the kind and d-tag of a support page |
-| `supportPageAddress(pubkey)` | The page's address, `30078:<pubkey>:nostr-post-support`, e.g. what a zap from it names |
-| `fetchSupportPage(pubkey, relays?)` | The newest version of a person's page (from their relay list by default); undefined without one |
-| `supportPageValues(event, manifest?)` | A page's values by field id |
-| `listRecipients(list)`, `fetchListRecipients(address, relays?)` | The people (`p` tags) of a NIP-51 list, each once, e.g. extra recipients of a support panel |
-
 ## Editing with update comments
 
 | Export | Does |

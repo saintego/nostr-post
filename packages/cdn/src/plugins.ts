@@ -1,6 +1,6 @@
 /**
  * @nostr-post/cdn - plugins: the field plugins' helpers (geohashes, people, link players, dates,
- * Markdown, media upload and galleries, QR codes, Lightning payments and support links). The plugins' inputs and views load on demand without
+ * Markdown, media upload and galleries, QR codes, payments). The plugins' inputs and views load on demand without
  * this; import it for their functions.
  */
 
@@ -16,24 +16,6 @@ export {
   guessTimeZoneOfTags,
   TIMED_EVENT_KIND,
 } from '@nostr-post/plugin-date';
-// Players for links (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp)
-export {
-  checkLink,
-  checkSuggestedLinks,
-  configureEmbedPlugin,
-  type Embed,
-  embedFor,
-  embedPlugin,
-  isCheckableLink,
-  keepKnownLinks,
-  type LinkCheck,
-  linkFromEmbedCode,
-  linkProvider,
-  linksInText,
-  namesMatch,
-  profileLink,
-  profileUrls,
-} from '@nostr-post/plugin-embed';
 // Geo helpers
 export {
   decodeGeohash,
@@ -42,32 +24,30 @@ export {
   type GeoPluginConfig,
   geoPlugin,
 } from '@nostr-post/plugin-geo';
-// Lightning: pay a Lightning address or npub, as a NIP-57 zap or a plain invoice
+// Links: players (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp), sites' buttons, QR codes, by rules
 export {
-  bolt11AmountMsat,
-  buildZapRequest,
-  canZap,
-  fetchPayParams,
-  findZapReceipt,
-  hasWebln,
-  isZapReceiptFor,
-  type LightningTarget,
-  lightningAddressUrl,
-  type Payee,
-  type Payment,
-  parseLightningTarget,
-  payWithWebln,
-  requestInvoice,
-  requestPayment,
-  resolvePayee,
-} from '@nostr-post/plugin-lightning';
-// Support links: tip pages, on-chain Bitcoin addresses, notes
-export {
-  bitcoinAddress,
-  KNOWN_SUPPORT_SITES,
-  type SupportLink,
-  supportLinks,
-  supportSite,
+  checkLink,
+  checkSuggestedLinks,
+  configureLinks,
+  DEFAULT_LINK_RULES,
+  type Embed,
+  embedFor,
+  embedPlugin,
+  isCheckableLink,
+  keepKnownLinks,
+  type LinkCheck,
+  type LinkEntry,
+  type LinkRule,
+  linkEntries,
+  linkFromEmbedCode,
+  linkProvider,
+  linksInText,
+  linksPlugin,
+  namesMatch,
+  normalizeLink,
+  profileLink,
+  profileUrls,
+  viewLink,
 } from '@nostr-post/plugin-links';
 // Markdown as safe HTML (raw HTML shown as text, no script links)
 export { renderMarkdown } from '@nostr-post/plugin-markdown';
@@ -93,6 +73,31 @@ export {
   uploadMedia,
   uploadPrepared,
 } from '@nostr-post/plugin-media/web';
+// Payments: Lightning (LNURL-pay, NIP-57 zaps, WebLN), on-chain Bitcoin, and methods apps add
+export {
+  bitcoinAddress,
+  bolt11AmountMsat,
+  buildZapRequest,
+  canZap,
+  type DetectedPayment,
+  detectPayment,
+  fetchPayParams,
+  findZapReceipt,
+  hasWebln,
+  isZapReceiptFor,
+  type LightningTarget,
+  lightningAddressUrl,
+  type Payee,
+  type Payment,
+  type PaymentMethod,
+  parseLightningTarget,
+  paymentMethods,
+  payWithWebln,
+  registerPaymentMethod,
+  requestInvoice,
+  requestPayment,
+  resolvePayee,
+} from '@nostr-post/plugin-payment';
 // People fields: `p` tags with roles, profile search (NIP-50)
 export {
   DEFAULT_SEARCH_RELAYS,

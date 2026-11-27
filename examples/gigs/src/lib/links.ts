@@ -1,10 +1,10 @@
 /**
- * The links in what an AI read from a post. The checks come from `@nostr-post/plugin-embed`
+ * The links in what an AI read from a post. The checks come from `@nostr-post/plugin-links`
  * (`keepKnownLinks`, `checkSuggestedLinks`): only links the post's text has are kept; the others
  * (performers' links, the gig's own, e.g. its tickets) are offered to confirm.
  */
 
-import { checkSuggestedLinks, type SuggestedLink } from '@nostr-post/plugin-embed';
+import { checkSuggestedLinks, type SuggestedLink } from '@nostr-post/plugin-links';
 import { GIG_MANIFEST } from './manifests';
 
 export type { SuggestedLink };

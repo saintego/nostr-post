@@ -11,7 +11,7 @@ const { wikiEntityPickerPlugin } = await import('./core');
 const { entityItems, entityJsonSchema } = await import('./entityJson');
 const { resolveEntities } = await import('./resolveEntities');
 
-// A link field plugin writing `i` tags for its links (as plugin-embed does for profiles)
+// A link field plugin writing `i` tags for its links (as plugin-links does for profiles)
 pluginRegistry.register({
   id: 'links',
   type: 'string',

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>nostr-post Support Panel</title>
+  <title>nostr-post Support Page</title>
   <!-- The design system's primitives (np-button, np-input), at the Pages root next to the bundle -->
   <link rel="stylesheet" href="../../ui.css" />
   <style>
@@ -16,7 +16,7 @@
     }
 
     main {
-      max-width: 44rem;
+      max-width: 52rem;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
@@ -60,16 +60,27 @@
     code {
       font-family: var(--np-font-family-mono);
     }
+
+    [hidden] {
+      display: none;
+    }
+
+    /* The inline page has no author: no author line */
+    .inline::part(header) {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <main>
     <header>
-      <h1>Support panel</h1>
+      <h1>Support page</h1>
       <p>
-        How to support a person or project, from plugins: Lightning (zaps and invoices, a browser
-        wallet or a QR code), tip pages, on-chain Bitcoin and notes. Each entry is a field of the
-        <code>support-v1</code> manifest shown by its plugin.
+        A support page is a post like any other: one event of its owner (kind 30078) made with a
+        manifest, here <code>support-v1</code> below. Its fields are plugins: a Markdown intro,
+        <code>payment</code> (Lightning zaps and invoices, on-chain Bitcoin) and <code>links</code>
+        (tip pages as their own buttons). <code>viewLayout: 'cards'</code> shows the ways to pay as
+        one grid of cards. Every link and code has a ⋯ menu (QR, copy, share, open).
       </p>
       <div class="row">
         <button type="button" class="np-button np-outlined" id="theme">Dark / light</button>
@@ -77,37 +88,37 @@
     </header>
 
     <section>
-      <h2>WorldTrip's support page (inline)</h2>
+      <h2>WorldTrip's support page</h2>
       <p>
         The options of <a href="https://www.worldtrip.guide/support">worldtrip.guide/support</a>,
-        given to the panel inline (<code>.page</code>): nothing is read from relays. Without an npub
-        the Lightning entry pays with a plain invoice, not a zap.
+        shown by <code>&lt;nostr-post-view&gt;</code> from values given here (nothing published).
+        Without an author, the Lightning address pays with a plain invoice, not a zap.
       </p>
-      <nostr-post-support id="worldtrip"></nostr-post-support>
+      <nostr-post-view id="worldtrip" class="inline" hide-menu></nostr-post-view>
     </section>
 
     <section>
       <h2>Behind a button</h2>
-      <p>
-        <code>&lt;nostr-post-support-button&gt;</code> opens the same panel in a dialog, e.g. for a
-        footer.
-      </p>
-      <nostr-post-support-button id="worldtrip-button" label="♥ Support WorldTrip"></nostr-post-support-button>
+      <p><code>&lt;np-dialog-button&gt;</code> opens anything in a dialog, here the same page.</p>
+      <np-dialog-button label="♥ Support WorldTrip" heading="Support WorldTrip">
+        <nostr-post-view id="worldtrip-dialog" class="inline" hide-menu></nostr-post-view>
+      </np-dialog-button>
     </section>
 
     <section>
-      <h2>Anyone's support page (from relays)</h2>
+      <h2>Anyone's support page</h2>
       <p>
-        A person's support page is one event of theirs (kind 30078, d-tag
-        <code>nostr-post-support</code>). Load it by npub. Signed in with your own npub, you get
-        "Set up your support page" (or Edit) to publish yours.
+        Load a person's page by npub (<code>&lt;nostr-post-address&gt;</code>, d-tag
+        <code>nostr-post-support</code>). Signed in, set up or edit your own with
+        <code>&lt;nostr-post-composer&gt;</code> and this manifest.
       </p>
       <div class="row">
         <input class="np-input" id="npub" placeholder="npub1…" aria-label="npub" />
         <button type="button" class="np-button np-outlined" id="load">Load</button>
-        <button type="button" class="np-button np-filled" id="me">Sign in and load mine</button>
+        <button type="button" class="np-button np-filled" id="mine">Sign in: set up or edit mine</button>
       </div>
-      <nostr-post-support id="by-npub" hidden></nostr-post-support>
+      <nostr-post-address id="by-npub" hidden></nostr-post-address>
+      <nostr-post-composer id="composer" auto-publish hide-header d-tag="nostr-post-support" hidden></nostr-post-composer>
     </section>
   </main>
 
@@ -115,42 +126,109 @@
   <script src="https://saintego.github.io/nostr-shard-signer/nostr-bridge.js" data-layout="floating"></script>
   <script type="module">
     // The CDN bundle at the Pages root; use https://saintego.github.io/nostr-post/nostr-post.js elsewhere
-    import { encodeNpub, getPublicKey } from '../../nostr-post.js';
+    import { decodeProfile, encodeNpub, getPublicKey } from '../../nostr-post.js';
+
+    // The support page's manifest: plain data, here inline (it can also be published and used
+    // by its address)
+    const content = (path) => ({ kind: 30078, target: 'content', path });
+    const SUPPORT_MANIFEST = {
+      id: 'support-v1',
+      version: '1.0.0',
+      publishFormats: [{ id: 'support', label: 'Support page', kinds: [30078], default: true }],
+      viewLayout: 'cards',
+      fields: [
+        {
+          id: 'intro',
+          type: 'string',
+          uiPlugin: 'markdown',
+          mapTo: content('intro'),
+          metadata: { label: 'Intro', description: 'A few words on what support makes possible' },
+        },
+        {
+          id: 'pay',
+          type: 'string',
+          uiPlugin: 'payment',
+          mapTo: content('pay'),
+          metadata: {
+            label: 'Ways to pay',
+            description: 'Lightning addresses (name@wallet.com), npubs, Bitcoin addresses',
+            multiple: true,
+          },
+        },
+        {
+          id: 'links',
+          type: 'object',
+          uiPlugin: 'links',
+          mapTo: content('links'),
+          metadata: {
+            label: 'Tip pages',
+            description: 'Buy Me a Coffee, GitHub Sponsors, Ko-fi or any link',
+            multiple: true,
+          },
+        },
+      ],
+      metadata: { name: 'Support', description: 'How to support a person or project' },
+    };
+    const D_TAG = 'nostr-post-support';
 
     // WorldTrip's options, as on https://www.worldtrip.guide/support
     const worldtrip = {
-      intro:
-        'Help keep **WorldTrip** running and ad-free! Your support means the world to us. ' +
-        'Every contribution helps us keep improving WorldTrip.',
-      lightning: ['ourfood4180@cake.cash'],
-      links: [
-        {
-          type: 'link',
-          value: 'https://coff.ee/worldtripguide',
-          description: 'Quick and easy way to show support',
-        },
-        { type: 'bitcoin', value: 'bc1qs8may66mj4tj5wwd6s7n8ztnc87adh477hctkx' },
-      ],
+      kind: 30078,
+      pubkey: '',
+      created_at: Math.floor(Date.now() / 1000),
+      tags: [['d', D_TAG]],
+      content: JSON.stringify({
+        intro:
+          'Help keep **WorldTrip** running and ad-free! Your support means the world to us. ' +
+          'Every contribution helps us keep improving WorldTrip.',
+        pay: ['ourfood4180@cake.cash', 'bitcoin:bc1qs8may66mj4tj5wwd6s7n8ztnc87adh477hctkx'],
+        links: [
+          {
+            url: 'https://coff.ee/worldtripguide',
+            description: 'Quick and easy way to show support',
+          },
+        ],
+      }),
     };
-    const messages = { heading: () => 'Support WorldTrip' };
-
-    for (const id of ['worldtrip', 'worldtrip-button']) {
-      const panel = document.getElementById(id);
-      panel.page = worldtrip;
-      panel.messages = messages;
+    for (const id of ['worldtrip', 'worldtrip-dialog']) {
+      const view = document.getElementById(id);
+      view.manifest = SUPPORT_MANIFEST;
+      view.event = worldtrip;
     }
 
     const byNpub = document.getElementById('by-npub');
+    const composer = document.getElementById('composer');
     const input = document.getElementById('npub');
-    const load = (npub) => {
-      byNpub.npub = npub;
-      byNpub.hidden = !npub;
+    byNpub.manifest = SUPPORT_MANIFEST;
+    composer.manifest = SUPPORT_MANIFEST;
+
+    const pubkeyOf = (text) => {
+      const value = text.trim().replace(/^nostr:/, '');
+      return /^[0-9a-f]{64}$/.test(value) ? value : decodeProfile(value)?.pubkey;
     };
-    document.getElementById('load').addEventListener('click', () => load(input.value.trim()));
-    document.getElementById('me').addEventListener('click', async () => {
+    const load = (text) => {
+      const pubkey = pubkeyOf(text);
+      byNpub.hidden = !pubkey;
+      if (pubkey) byNpub.address = `30078:${pubkey}:${D_TAG}`;
+      return pubkey;
+    };
+    document.getElementById('load').addEventListener('click', () => load(input.value));
+    document.getElementById('mine').addEventListener('click', async () => {
       const pubkey = await getPublicKey();
       input.value = encodeNpub(pubkey) ?? pubkey;
       load(input.value);
+      byNpub.editable = true;
+      composer.pubkey = pubkey;
+      composer.hidden = false;
+    });
+    composer.addEventListener('nostr-post-published', () => {
+      composer.hidden = true;
+      // Relays may need a moment; read the page again
+      setTimeout(() => {
+        const address = byNpub.address;
+        byNpub.address = '';
+        byNpub.address = address;
+      }, 1500);
     });
 
     document.getElementById('theme').addEventListener('click', () => {

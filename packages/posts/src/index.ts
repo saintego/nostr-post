@@ -165,15 +165,3 @@ export {
   type SaveDraftOptions,
   saveDraftItem,
 } from './drafts';
-
-// Support pages: how to support a person (Lightning, tip pages), one addressable event each
-export {
-  fetchListRecipients,
-  fetchSupportPage,
-  listRecipients,
-  SUPPORT_D_TAG,
-  SUPPORT_KIND,
-  SUPPORT_MANIFEST,
-  supportPageAddress,
-  supportPageValues,
-} from './support';

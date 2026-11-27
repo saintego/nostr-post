@@ -34,17 +34,6 @@ export { NostrPostFeed } from './feed';
 export { NostrPostSections } from './sections';
 export { NostrPostAddress } from './addressView';
 export { DEFAULT_SECTIONS_MESSAGES, type SectionsMessages } from './sectionsMessages';
-// Support panel: how to support a person (Lightning, tip links), inline or behind a button
-export { NostrPostSupport, pubkeyOf } from './support';
-export { NostrPostSupportButton } from './supportButton';
-export { DEFAULT_SUPPORT_MESSAGES, type SupportMessages } from './supportMessages';
-export {
-  fetchSupportPage,
-  SUPPORT_D_TAG,
-  SUPPORT_MANIFEST,
-  supportPageAddress,
-  supportPageValues,
-} from '@nostr-post/posts';
 export { DEFAULT_FEED_MESSAGES, type FeedMessages } from './feedMessages';
 // For feed layouts (`<nostr-post-feed .layout>`, e.g. @nostr-post/calendar's agenda)
 export type { FeedThread } from '@nostr-post/posts';

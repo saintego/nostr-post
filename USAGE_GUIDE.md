@@ -504,43 +504,19 @@ Display a feed of Nostr events. Filters go straight into the relay `REQ` (see
 <nostr-post-feed kinds="[1]" filter-tags="#t:nostr" limit="10"></nostr-post-feed>
 ```
 
-#### `<nostr-post-support>` and `<nostr-post-support-button>`
+#### A support page (a manifest, no special component)
 
-How to support a person or project: their support page, one addressable event of theirs (kind
-30078, d-tag `nostr-post-support`) made with `SUPPORT_MANIFEST` (`support-v1`). Each entry is a field
-shown by its plugin: Lightning addresses and npubs (`lightning`: zaps and invoices, WebLN or a QR
-code), tip links, Bitcoin addresses and notes (`links`), and an intro (`markdown`). The intro comes
-first; every way to pay is a card of one shape (QR codes shown right away, tap for full screen), in
-one grid across fields. Extending `support-v1` with more fields adds entry types; the panel needs
-no change.
+A page of ways to support a person or project is a post like any other: one addressable event of
+theirs (e.g. kind 30078 with a fixed d-tag) made with a manifest whose fields are plugins:
+- a Markdown intro;
+- `payment`: Lightning zaps and invoices, on-chain Bitcoin;
+- `links`: tip pages as their own buttons.
 
-**Attributes:**
-
-- `npub` - Whose page: an npub, nprofile or hex pubkey
-- `recipients` - A NIP-51 list's address (e.g. a follow set `30000:<pubkey>:<d>`): its people are
-  shown too ("Also support"), each payable by their profile's Lightning. Nothing adds recipients on
-  its own
-- `private-context` - In a private conversation: zaps say their receipt shows who paid whom
-- `hide-heading` - Without the "Support <name>" heading (e.g. in a dialog that has one)
-
-**Properties:**
-
-- `relays: string[]` - Where to read the page (default: the person's relay list)
-- `page` - The page's values inline (`{ intro, lightning, links }`): shown without reading relays
-- `manifest` - Another support manifest, e.g. one extending `support-v1`
-- `messages` - Text (`SupportMessages`, defaults `DEFAULT_SUPPORT_MESSAGES`)
-
-The owner, when signed in (`setKnownPublicKey`), sees **Edit** (or "Set up your support page"),
-which opens the composer in a dialog and publishes the page. `<nostr-post-support-button>` takes the
-same attributes (and `label`) and opens the panel in a dialog, e.g. a tip jar in a footer.
-
-```html
-<nostr-post-support npub="npub1…"></nostr-post-support>
-<nostr-post-support-button npub="npub1…" label="☕ Tip"></nostr-post-support-button>
-```
-
-Without a UI: `fetchSupportPage(pubkey)`, `supportPageValues(event)`, `supportPageAddress(pubkey)` in
-`@nostr-post/posts`.
+`viewLayout: 'cards'` shows the ways to pay as one grid of cards; a payment view zaps the event's
+author. Show it with `<nostr-post-address address="30078:<pubkey>:<d-tag>" .manifest>`, and create
+or edit it with `<nostr-post-composer .manifest d-tag="<d-tag>" auto-publish>`.
+`<np-dialog-button label="♥ Support">` (`@nostr-post/ui`) puts it behind a button.
+`examples/support` has the whole page, with a `support-v1` manifest.
 
 ### Advanced Composer Features
 

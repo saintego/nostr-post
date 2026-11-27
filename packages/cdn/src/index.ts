@@ -20,7 +20,7 @@ import '@nostr-post/plugin-stars/web';
 import '@nostr-post/plugin-geo/web';
 import '@nostr-post/plugin-date/web';
 import '@nostr-post/plugin-profile/web';
-import '@nostr-post/plugin-embed/web';
+import '@nostr-post/plugin-links/web';
 import '@nostr-post/plugin-venue/web';
 import '@nostr-post/plugin-media/web';
 import '@nostr-post/plugin-reference/web';

@@ -2,7 +2,7 @@
 
 QR codes for nostr-post: a `lightning:` invoice, a `bitcoin:` address, a `nostr:` link or an
 `https:` link as a QR code, made locally (no requests, no image service). Used by
-`@nostr-post/plugin-lightning` (invoices) and `@nostr-post/plugin-links` (Bitcoin addresses), and as
+`@nostr-post/plugin-payment` (invoices, Bitcoin addresses) and `@nostr-post/plugin-links` (links' QR codes), and as
 the `qr` field plugin.
 
 ## Main entry (no UI)

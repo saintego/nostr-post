@@ -66,15 +66,15 @@ importers:
       '@nostr-post/plugin-date':
         specifier: workspace:*
         version: link:../../packages/plugin-date
-      '@nostr-post/plugin-embed':
-        specifier: workspace:*
-        version: link:../../packages/plugin-embed
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../../packages/plugin-geo
       '@nostr-post/plugin-hashtag':
         specifier: workspace:*
         version: link:../../packages/plugin-hashtag
+      '@nostr-post/plugin-links':
+        specifier: workspace:*
+        version: link:../../packages/plugin-links
       '@nostr-post/plugin-markdown':
         specifier: workspace:*
         version: link:../../packages/plugin-markdown
@@ -278,18 +278,12 @@ importers:
       '@nostr-post/plugin-date':
         specifier: workspace:*
         version: link:../plugin-date
-      '@nostr-post/plugin-embed':
-        specifier: workspace:*
-        version: link:../plugin-embed
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../plugin-geo
       '@nostr-post/plugin-hashtag':
         specifier: workspace:*
         version: link:../plugin-hashtag
-      '@nostr-post/plugin-lightning':
-        specifier: workspace:*
-        version: link:../plugin-lightning
       '@nostr-post/plugin-links':
         specifier: workspace:*
         version: link:../plugin-links
@@ -299,6 +293,9 @@ importers:
       '@nostr-post/plugin-media':
         specifier: workspace:*
         version: link:../plugin-media
+      '@nostr-post/plugin-payment':
+        specifier: workspace:*
+        version: link:../plugin-payment
       '@nostr-post/plugin-profile':
         specifier: workspace:*
         version: link:../plugin-profile
@@ -415,25 +412,6 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
-  packages/plugin-embed:
-    dependencies:
-      '@nostr-post/core':
-        specifier: workspace:*
-        version: link:../core
-      '@nostr-post/plugins':
-        specifier: workspace:*
-        version: link:../plugins
-      '@nostr-post/ui':
-        specifier: workspace:*
-        version: link:../ui
-      lit:
-        specifier: ^3.3.3
-        version: 3.3.3
-    devDependencies:
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-
   packages/plugin-geo:
     dependencies:
       '@nostr-post/core':
@@ -488,33 +466,11 @@ importers:
         specifier: ^7.0.2
         version: 7.0.2
 
-  packages/plugin-lightning:
+  packages/plugin-links:
     dependencies:
       '@nostr-post/core':
         specifier: workspace:*
         version: link:../core
-      '@nostr-post/plugin-qr':
-        specifier: workspace:*
-        version: link:../plugin-qr
-      '@nostr-post/plugins':
-        specifier: workspace:*
-        version: link:../plugins
-      '@nostr-post/signer':
-        specifier: workspace:*
-        version: link:../signer
-      '@nostr-post/ui':
-        specifier: workspace:*
-        version: link:../ui
-      lit:
-        specifier: ^3.3.3
-        version: 3.3.3
-    devDependencies:
-      typescript:
-        specifier: ^7.0.2
-        version: 7.0.2
-
-  packages/plugin-links:
-    dependencies:
       '@nostr-post/plugin-qr':
         specifier: workspace:*
         version: link:../plugin-qr
@@ -584,6 +540,31 @@ importers:
       vitest:
         specifier: ^5.1.0
         version: 5.1.0(@opentelemetry/api@1.10.0)(@types/node@26.6.6)(@vitest/coverage-v8@5.1.0)(@vitest/ui@5.1.0)(happy-dom@21.0.4)(jsdom@31.0.1(@noble/hashes@2.0.1))(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2))
+
+  packages/plugin-payment:
+    dependencies:
+      '@nostr-post/core':
+        specifier: workspace:*
+        version: link:../core
+      '@nostr-post/plugin-qr':
+        specifier: workspace:*
+        version: link:../plugin-qr
+      '@nostr-post/plugins':
+        specifier: workspace:*
+        version: link:../plugins
+      '@nostr-post/signer':
+        specifier: workspace:*
+        version: link:../signer
+      '@nostr-post/ui':
+        specifier: workspace:*
+        version: link:../ui
+      lit:
+        specifier: ^3.3.3
+        version: 3.3.3
+    devDependencies:
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
 
   packages/plugin-profile:
     dependencies:
@@ -829,9 +810,6 @@ importers:
       '@nostr-post/plugin-date':
         specifier: workspace:*
         version: link:../plugin-date
-      '@nostr-post/plugin-embed':
-        specifier: workspace:*
-        version: link:../plugin-embed
       '@nostr-post/plugin-geo':
         specifier: workspace:*
         version: link:../plugin-geo
@@ -841,9 +819,6 @@ importers:
       '@nostr-post/plugin-identifier':
         specifier: workspace:*
         version: link:../plugin-identifier
-      '@nostr-post/plugin-lightning':
-        specifier: workspace:*
-        version: link:../plugin-lightning
       '@nostr-post/plugin-links':
         specifier: workspace:*
         version: link:../plugin-links
@@ -853,6 +828,9 @@ importers:
       '@nostr-post/plugin-media':
         specifier: workspace:*
         version: link:../plugin-media
+      '@nostr-post/plugin-payment':
+        specifier: workspace:*
+        version: link:../plugin-payment
       '@nostr-post/plugin-profile':
         specifier: workspace:*
         version: link:../plugin-profile

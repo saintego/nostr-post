@@ -7,7 +7,7 @@
  */
 
 import { findJsonObject } from '@nostr-post/core/formJson';
-import { keepKnownLinks } from '@nostr-post/plugin-embed';
+import { keepKnownLinks } from '@nostr-post/plugin-links';
 import type { WikiEntityData } from '@nostr-post/plugin-wiki-entity';
 import { formJsonSchema, parseFormJson } from '@nostr-post/plugins/formJson';
 import type { FormJsonSuggestion } from '@nostr-post/plugins/types';

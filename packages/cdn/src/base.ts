@@ -1,8 +1,7 @@
 /**
  * @nostr-post/cdn - base: the components and logic every page needs
  *
- * <nostr-post-composer>, <nostr-post-view>, <nostr-post-feed>, <nostr-post-sections>, the support
- * panel (<nostr-post-support>, <nostr-post-support-button>), the outbox
+ * <nostr-post-composer>, <nostr-post-view>, <nostr-post-feed>, <nostr-post-sections>, the outbox
  * and the design system, for kind-1 notes and NIP-78 manifest posts. Field plugins load when a
  * manifest uses one (their own files in the split build). Re-exports core, signer, posts, web,
  * ui and outbox for programmatic use.
@@ -10,6 +9,9 @@
 
 import '@nostr-post/web';
 import '@nostr-post/outbox/web';
+// Shared components pages use directly: a button opening its content in a dialog, a ⋯ menu
+import '@nostr-post/ui/web/dialog-button';
+import '@nostr-post/ui/web/menu-button';
 
 export { coordinateEvents, validateFormData } from '@nostr-post/core/coordinator';
 export {
@@ -32,6 +34,7 @@ export {
 export {
   decodeLnurl,
   decodeNaddr,
+  decodeProfile,
   encodeLnurl,
   encodeNaddr,
   encodeNevent,
@@ -239,36 +242,3 @@ export { installTokens } from '@nostr-post/ui/web';
 // Drafts and queued posts in the browser outbox (the composer's `drafts`, `schedule`,
 // `upload-later`)
 // Publishing a test-mode post for real (<nostr-dry-run-publish>, the "⋯" menu's item)
-// Support panel: how to support a person (Lightning, tip links), one support page each
-export {
-  type ActivityMessages,
-  type ComposerMessages,
-  type ComposerOutboxDefaults,
-  composerDefaults,
-  DEFAULT_ACTIVITY_MESSAGES,
-  DEFAULT_COMPOSER_MESSAGES,
-  DEFAULT_DRY_RUN_PUBLISH_MESSAGES,
-  DEFAULT_EDIT_MESSAGES,
-  DEFAULT_FEED_MESSAGES,
-  DEFAULT_SUGGESTION_MESSAGES,
-  DEFAULT_SUPPORT_MESSAGES,
-  type DryRunPublishMessages,
-  type EditMessages,
-  type FeedMessages,
-  fetchSupportPage,
-  openDraft,
-  publishOrQueue,
-  removeDraft,
-  runAfterPublish,
-  runBeforePublish,
-  runPublishHooks,
-  SUPPORT_D_TAG,
-  SUPPORT_MANIFEST,
-  type SuggestionMessages,
-  type SupportMessages,
-  saveDraft,
-  setActivityMessages,
-  setComposerDefaults,
-  supportPageAddress,
-  supportPageValues,
-} from '@nostr-post/web';

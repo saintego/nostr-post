@@ -26,6 +26,14 @@
       "types": "./dist/web/lightbox.d.ts",
       "import": "./dist/web/lightbox.js"
     },
+    "./web/menu-button": {
+      "types": "./dist/web/menuButton.d.ts",
+      "import": "./dist/web/menuButton.js"
+    },
+    "./web/dialog-button": {
+      "types": "./dist/web/dialogButton.d.ts",
+      "import": "./dist/web/dialogButton.js"
+    },
     "./tokens.css": "./dist/tokens.css",
     "./ui.css": "./dist/ui.css"
   },

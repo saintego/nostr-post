@@ -38,7 +38,7 @@ players, RSVP, `.ics` import and export.
   (`ensureOutboxRunner`).
 - **Musician** (`#/artist/<d-tag>`, `#/artist-new[/<name>]`, `#/artist-edit/<d-tag>[?add=<JSON>]`):
   a musician's wiki page, its links as players (type
-  `(musician)`); links play (`@nostr-post/plugin-embed`), and its upcoming gigs are listed: those
+  `(musician)`); links play (`@nostr-post/plugin-links`), and its upcoming gigs are listed: those
   that link the page (`a` tag) or one of its profiles (`i` tag), so gigs added before the page show
   too, with "Add" a gig with the musician as a performer. All from the artist page manifest's
   "Gigs" section (`sections`, `ARTIST_PAGE_MANIFEST`); the app has no query of its own.
@@ -76,7 +76,7 @@ The code is in `src/`:
 
 - `lib/`: the logic, without React. The app's own data (the musician and gig manifests, genres)
   in `manifests.ts`; the AI prompt and reading its answer in `ai.ts`; the Claude and Gemini calls
-  (their official SDKs, loaded only when asked) in `aiProviders.ts`; the performers' links in `links.ts` (the checks are `@nostr-post/plugin-embed`'s
+  (their official SDKs, loaded only when asked) in `aiProviders.ts`; the performers' links in `links.ts` (the checks are `@nostr-post/plugin-links`'s
   `keepKnownLinks` and `checkSuggestedLinks`); the browse filter and cities in `filter.ts`; sharing in
   `share.ts`; the draft's preview and duplicates in `draft.ts`; hash routes in `routes.ts`.
 - `pages/`: a component per page, and the add flow's parts (`SuggestedLinks`, `DraftReview`).
