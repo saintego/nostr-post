@@ -11,16 +11,13 @@ export const lightningStyles = css`
     gap: var(--np-space-3);
   }
 
-  .ln-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--np-space-2);
+  .ln np-qr {
+    align-self: center;
   }
 
-  .ln-target {
-    font-weight: 600;
-    overflow-wrap: anywhere;
+  .wide {
+    width: 100%;
+    justify-content: center;
   }
 
   .amounts {
@@ -52,10 +49,26 @@ export const lightningStyles = css`
     align-items: center;
   }
 
+  /* Cards of one shape in a grid; with grid-items they join the parent's grid */
   .lns {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: var(--np-space-4);
+    align-items: start;
+  }
+
+  :host([grid-items]) {
+    display: contents;
+  }
+
+  :host([grid-items]) .lns {
+    display: contents;
+  }
+
+  .ln-rows {
     display: flex;
     flex-direction: column;
-    gap: var(--np-space-4);
+    gap: var(--np-space-3);
   }
 
   .ln-row {

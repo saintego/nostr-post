@@ -3,6 +3,11 @@
  * override any of it with the `messages` property (e.g. translations).
  */
 export interface LightningMessages {
+  /** The card's name and the line under it */
+  title: string;
+  description: string;
+  /** Opens the amount form under the static QR */
+  setAmount: string;
   loading: string;
   retry: string;
   /** Amount buttons: "21 sats" */
@@ -39,6 +44,9 @@ export interface LightningMessages {
 }
 
 export const DEFAULT_LIGHTNING_MESSAGES: LightningMessages = {
+  title: 'Lightning',
+  description: 'Instant Bitcoin payment',
+  setAmount: 'Pay or zap a set amount',
   loading: 'Loading…',
   retry: 'Try again',
   sats: (amount) => `${amount.toLocaleString()} sats`,
@@ -57,7 +65,7 @@ export const DEFAULT_LIGHTNING_MESSAGES: LightningMessages = {
   waiting: 'Waiting for the payment…',
   zapReceived: 'Zap received. Thank you!',
   paid: 'Paid. Thank you!',
-  newPayment: 'Another amount',
+  newPayment: 'Back',
   amountRange: (min, max) => `Amount must be ${min.toLocaleString()}–${max.toLocaleString()} sats`,
   placeholder: 'name@wallet.com or npub1…',
   add: 'Add',

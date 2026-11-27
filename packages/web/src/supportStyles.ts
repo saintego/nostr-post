@@ -5,6 +5,10 @@ export const supportStyles = css`
     display: block;
   }
 
+  :host([hidden]) {
+    display: none;
+  }
+
   .support {
     display: flex;
     flex-direction: column;
@@ -21,6 +25,14 @@ export const supportStyles = css`
     flex: 1;
     margin: 0;
     font-size: var(--np-text-xl);
+  }
+
+  /* Every way to pay as a card, in one grid across fields */
+  .support-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: var(--np-space-4);
+    align-items: start;
   }
 
   .support-section {

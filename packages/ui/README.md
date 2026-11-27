@@ -93,7 +93,7 @@ cascade layer `np.primitives`. Modifiers are extra classes.
 | Button | `np-button` (outlined) + `np-filled`, `np-tonal`, `np-outlined`, `np-text`, `np-danger`, `np-small`; `np-icon-button` |
 | Text field | `np-field` (wrapper), `np-label` (+ `np-required`), `np-input` (input, textarea, select; `aria-invalid` or `np-invalid`), `np-hint`, `np-field-error`, `np-checkbox` |
 | Chip, badge | `np-chip` (+ `np-selected` or `aria-pressed`), `np-badge` + `np-primary`, `np-success`, `np-warning`, `np-error`, `np-info`, `np-tertiary` |
-| Containers | `np-card` (+ `np-outlined`, `np-elevated`), `np-list`, `np-list-item`, `np-divider` |
+| Containers | `np-card` (+ `np-outlined`, `np-elevated`; a header row: `np-card-header` with `np-card-icon`, `np-card-title`, `np-card-subtitle`), `np-list`, `np-list-item`, `np-divider` |
 | Dialog, menu | `np-dialog` (on `<dialog>`), `np-dialog-header`, `np-dialog-title`, `np-dialog-body`, `np-dialog-actions`; `np-menu`, `np-menu-item` |
 | Choice | `np-segmented` + `np-segment`, `np-tabs` + `np-tab` (selected: `aria-pressed`, `aria-selected` or `np-selected`) |
 | Messages | `np-message` + `np-error`, `np-success`, `np-warning`, `np-info`; `np-empty`, `np-loading`, `np-progress` |

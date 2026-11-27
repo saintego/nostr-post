@@ -31,10 +31,11 @@ receipt names the payer, the payee, the amount and the message.
 | `parseLightningTarget(text)` | A Lightning address, LNURL (`lightning:` before them allowed) or npub/nprofile (`nostr:` allowed) as `LightningTarget`; undefined otherwise |
 | `profileLightning(profile)` | A profile's Lightning: `lud16`, else `lud06` |
 | `lightningAddressUrl(address)`, `payUrl(target)` | The LNURL-pay URL (`https://<domain>/.well-known/lnurlp/<user>`) |
+| `payUri(url)` | `lightning:LNURL1…` of a pay URL: a QR any wallet pays without an amount set here |
 | `fetchPayParams(url, fetchJson?)`, `parsePayParams(json)` | The service's parameters (`PayParams`: callback, range in msat, `commentAllowed`, `allowsNostr`, `nostrPubkey`); errors for `status: ERROR` and bad answers |
 | `requestInvoice(params, amountMsat, { comment?, zapRequest?, lnurl?, fetchJson? })`, `invoiceUrl(…)`, `amountAllowed(…)` | An invoice (`{ pr, verify? }`); the amount checked against the range first |
 | `checkSettled(verify, fetchJson?)` | Whether a LUD-21 verify link says the invoice was paid |
-| `resolvePayee(text, owner, deps)`, `canZap(payee)` | A payee ready to pay (`Payee`: target, URL, parameters, pubkey) and whether it can be zapped |
+| `resolvePayee(text, owner, deps)`, `canZap(payee)` | A payee ready to pay (`Payee`: target, URL, parameters, pubkey, Lightning address) and whether it can be zapped |
 | `requestPayment(payee, { amountSats, comment?, zap, address? }, deps)` | The invoice (`Payment`), with the signed zap request and the relays the receipt goes to (up to 6 of the payee's) for a zap. `address`: what is zapped besides the payee (`a` tag), e.g. the support page |
 | `findZapReceipt(payee, payment, deps)` | The payment's zap receipt, if published yet |
 | `buildZapRequest(options)`, `isZapReceiptFor(receipt, check)`, `zapReceiptFilter(recipient, since)` | NIP-57 pieces: the request to sign, the receipt checks (signed by the service's key, for the payee, invoice, request and amount) and the filter |
@@ -54,7 +55,9 @@ import '@nostr-post/plugin-lightning/web';
 html`<np-lightning target="alice@getalby.com" .recipient=${ownerPubkey}></np-lightning>`;
 ```
 
-- `<np-lightning>`: preset amounts and another amount, a message, "Send as a zap" (when possible),
+- `<np-lightning>`: a card with the payee's LNURL as a QR code right away (`payUri(url)`:
+  `lightning:LNURL1…`; any wallet pays it and asks for the amount; tap for full screen), then
+  "Pay or zap a set amount": preset amounts and another amount, a message, "Send as a zap" (when possible),
   then the invoice: paid with WebLN when the browser has a wallet, else a QR code with "Open in
   wallet" (`@nostr-post/plugin-qr`), and "Waiting for the payment…" until the zap receipt (or the
   LUD-21 verify link) says it was paid. Properties: `target`, `recipient` (hex pubkey the target
@@ -62,7 +65,8 @@ html`<np-lightning target="alice@getalby.com" .recipient=${ownerPubkey}></np-lig
   `private-context` (in a private conversation: says the zap's receipt shows who paid whom),
   `messages`, `deps`. Parts: `card`, `button`, `input`.
 - `<np-lightning-view>`, `<np-lightning-input>`: the `lightning` field (`.value`, `.field`;
-  `metadata.multiple`, `metadata.amounts`). A page showing the field passes `.recipient` and
+  `metadata.multiple`, `metadata.amounts`). The view's cards are a grid; with `grid-items` they
+  become items of the parent's grid. A page showing the field passes `.recipient` and
   `.address` to the view.
 - Messages (`LightningMessages`, defaults `DEFAULT_LIGHTNING_MESSAGES`).
 

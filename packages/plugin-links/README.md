@@ -18,7 +18,9 @@ supportLinks([
 supportSite('https://github.com/sponsors/alice'); // { label: 'GitHub Sponsors', icon: '💜' }
 ```
 
-An entry (`SupportLink`) is `{ type: 'link' | 'bitcoin' | 'note', value, label?, icon? }`.
+An entry (`SupportLink`) is `{ type: 'link' | 'bitcoin' | 'note', value, label?, icon?, description? }`
+(`description`: the line under its name). Known sites (`SupportSite`) have a `label`, an `icon` and
+their `brand` colours (`{ background, color }`), so their buttons look like the site's own.
 
 | Export | Does |
 | --- | --- |
@@ -36,9 +38,15 @@ where it stays a list of objects. Field metadata: `sites` adds tip sites (`{ "<h
 
 ## `/web`
 
-- `<np-links-view>`: links as buttons with the site's icon, name and host (new tab,
-  `rel="noopener noreferrer"`), Bitcoin addresses with Copy and a QR code on request
-  (`@nostr-post/plugin-qr`), notes as text. Parts: `list`, `link`, `text`, `button`.
-- `<np-links-input>`: each entry's type, value, icon and label, with Add and Remove; invalid entries
-  are marked and left out of the value. Parts: `card`, `input`, `button`, `error`.
+- `<np-links-view>`: the entries as cards of one shape (icon, name, a line under it):
+  - a link: a button to the site in its own colours for known tip sites (Buy Me a Coffee's yellow,
+    …), opened in a new tab with `rel="noopener noreferrer"`;
+  - a Bitcoin address: its QR code right away (tap for full screen), the address, Copy and Open in
+    wallet (`@nostr-post/plugin-qr`);
+  - a note: its text.
+
+  The cards are a grid; with `grid-items` they become items of the parent's grid (the support
+  panel puts them next to the Lightning cards). Parts: `card`, `link`.
+- `<np-links-input>`: each entry's type, value, icon, label and description, with Add and Remove;
+  invalid entries are marked and left out of the value. Parts: `card`, `input`, `button`, `error`.
 - Messages (`LinksMessages`, defaults `DEFAULT_LINKS_MESSAGES`).

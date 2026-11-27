@@ -40,7 +40,12 @@ export const orderedFields = (manifest: NostrPostManifest): PostField[] => {
 export const hasEntries = (manifest: NostrPostManifest, values: Record<string, unknown>): boolean =>
   manifest.fields.some((field) => hasValue(values[field.id]));
 
-const fieldView = (field: PostField, value: unknown, context: SupportContext) => {
+const fieldView = (
+  field: PostField,
+  value: unknown,
+  context: SupportContext,
+  gridItems: boolean
+) => {
   const tagName = pluginRegistry.get(field.uiPlugin)?.viewTagName;
   if (!tagName) return html`<p>${String(value)}</p>`;
   const tag = unsafeStatic(tagName);
@@ -50,25 +55,37 @@ const fieldView = (field: PostField, value: unknown, context: SupportContext) =>
     .recipient=${context.owner}
     .address=${context.address}
     .privateContext=${context.privateContext}
+    ?grid-items=${gridItems}
   ></${tag}>`;
 };
 
+/** Fields shown as text above the ways to pay (the intro), not as cards */
+const isText = (field: PostField): boolean => field.uiPlugin === 'markdown';
+
 /**
- * The page's fields with values: the markdown intro as it is, the others under their label
+ * The page's fields with values: the intro as text, then every way to pay (Lightning, tip links,
+ * Bitcoin, …) as cards of one shape in one grid, whichever field they come from (`grid-items`)
  */
 export const renderEntries = (
   manifest: NostrPostManifest,
   values: Record<string, unknown>,
   context: SupportContext
-) =>
-  orderedFields(manifest)
-    .filter((field) => hasValue(values[field.id]))
-    .map((field) => {
-      const view = fieldView(field, values[field.id], context);
-      if (field.uiPlugin === 'markdown') return html`<div class="support-section">${view}</div>`;
-      const label = (field.metadata?.label as string | undefined) ?? field.id;
-      return html`<section class="support-section"><h3>${label}</h3>${view}</section>`;
-    });
+) => {
+  const fields = orderedFields(manifest).filter((field) => hasValue(values[field.id]));
+  const texts = fields.filter(isText);
+  const methods = fields.filter((field) => !isText(field));
+  return html`${texts.map(
+    (field) =>
+      html`<div class="support-section">${fieldView(field, values[field.id], context, false)}</div>`
+  )}
+    ${
+      methods.length > 0
+        ? html`<div class="support-methods">
+            ${methods.map((field) => fieldView(field, values[field.id], context, true))}
+          </div>`
+        : nothing
+    }`;
+};
 
 /** The people of the extra recipients list, each payable by their profile's Lightning */
 export const renderRecipients = (
@@ -80,7 +97,9 @@ export const renderRecipients = (
   if (npubs.length === 0 || !pluginRegistry.get('lightning')?.viewTagName) return nothing;
   return html`<section class="support-section">
     <h3>${m.alsoSupport}</h3>
-    <np-lightning-view .value=${npubs} .privateContext=${privateContext}></np-lightning-view>
+    <div class="support-methods">
+      <np-lightning-view .value=${npubs} .privateContext=${privateContext} grid-items></np-lightning-view>
+    </div>
   </section>`;
 };
 

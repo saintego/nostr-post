@@ -19,12 +19,16 @@ export interface SupportLink {
   label?: string;
   /** An emoji shown before the label instead of the default */
   icon?: string;
+  /** A line under the label, e.g. "Quick and easy way to show support" */
+  description?: string;
 }
 
-/** A site people tip on: its name and icon, for links without their own label */
+/** A site people tip on: its name, icon and button colours, for links without their own label */
 export interface SupportSite {
   label: string;
   icon: string;
+  /** The site's button colours (its brand), for a button that looks like the site's own */
+  brand?: { background: string; color: string };
 }
 
 /**
@@ -32,15 +36,39 @@ export interface SupportSite {
  * `metadata.sites` adds to them or replaces them, keyed the same way.
  */
 export const KNOWN_SUPPORT_SITES: Readonly<Record<string, SupportSite>> = {
-  'buymeacoffee.com': { label: 'Buy Me a Coffee', icon: '☕' },
+  'buymeacoffee.com': {
+    label: 'Buy Me a Coffee',
+    icon: '☕',
+    brand: { background: '#ffdd00', color: '#000000' },
+  },
   // Buy Me a Coffee's short links
-  'coff.ee': { label: 'Buy Me a Coffee', icon: '☕' },
-  'github.com/sponsors': { label: 'GitHub Sponsors', icon: '💜' },
-  'ko-fi.com': { label: 'Ko-fi', icon: '☕' },
-  'patreon.com': { label: 'Patreon', icon: '🎨' },
-  'liberapay.com': { label: 'Liberapay', icon: '🤝' },
-  'opencollective.com': { label: 'Open Collective', icon: '🤝' },
-  'paypal.me': { label: 'PayPal', icon: '💳' },
+  'coff.ee': {
+    label: 'Buy Me a Coffee',
+    icon: '☕',
+    brand: { background: '#ffdd00', color: '#000000' },
+  },
+  'github.com/sponsors': {
+    label: 'GitHub Sponsors',
+    icon: '💜',
+    brand: { background: '#bf3989', color: '#ffffff' },
+  },
+  'ko-fi.com': { label: 'Ko-fi', icon: '☕', brand: { background: '#29abe0', color: '#ffffff' } },
+  'patreon.com': {
+    label: 'Patreon',
+    icon: '🎨',
+    brand: { background: '#ff424d', color: '#ffffff' },
+  },
+  'liberapay.com': {
+    label: 'Liberapay',
+    icon: '🤝',
+    brand: { background: '#f6c915', color: '#1a171b' },
+  },
+  'opencollective.com': {
+    label: 'Open Collective',
+    icon: '🤝',
+    brand: { background: '#1f87ff', color: '#ffffff' },
+  },
+  'paypal.me': { label: 'PayPal', icon: '💳', brand: { background: '#003087', color: '#ffffff' } },
 };
 
 export interface LinkError {
@@ -177,13 +205,15 @@ export const parseSupportLink = (raw: unknown): SupportLink | undefined => {
     }
   }
   if (!item || typeof item !== 'object') return undefined;
-  const { type, value, label, icon } = item as Record<string, unknown>;
+  const { type, value, label, icon, description } = item as Record<string, unknown>;
   if (!isType(type) || typeof value !== 'string') return undefined;
+  const text = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : undefined);
   return {
     type,
     value,
-    ...(typeof label === 'string' && label.trim() ? { label: label.trim() } : {}),
-    ...(typeof icon === 'string' && icon.trim() ? { icon: icon.trim() } : {}),
+    ...(text(label) ? { label: text(label) } : {}),
+    ...(text(icon) ? { icon: text(icon) } : {}),
+    ...(text(description) ? { description: text(description) } : {}),
   };
 };
 

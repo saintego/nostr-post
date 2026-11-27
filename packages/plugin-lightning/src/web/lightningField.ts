@@ -27,6 +27,8 @@ export class NpLightningView extends NpElement {
   /** What is zapped besides the payee, e.g. the page's address */
   @property({ attribute: false }) address?: string;
   @property({ type: Boolean, attribute: 'private-context' }) privateContext = false;
+  /** The cards are items of the parent's grid instead of a grid of their own */
+  @property({ type: Boolean, reflect: true, attribute: 'grid-items' }) gridItems = false;
   @property({ attribute: false }) messages: Partial<LightningMessages> = {};
 
   override render() {
@@ -88,7 +90,7 @@ export class NpLightningInput extends NpElement {
   override render() {
     const m = this._m;
     const rows = this._rows;
-    return html`<div class="lns">
+    return html`<div class="ln-rows">
       ${rows.map((row, index) => {
         const invalid = row.trim() !== '' && !parseLightningTarget(row);
         return html`<div>

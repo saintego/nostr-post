@@ -1,6 +1,7 @@
 /**
- * <np-lightning>: pay one payee (`target`: a Lightning address, an LNURL or an npub). The payer
- * picks a preset amount or types one, adds a message, and pays: as a NIP-57 zap when the payee's
+ * <np-lightning>: pay one payee (`target`: a Lightning address, an LNURL or an npub), as a card.
+ * It shows the payee's LNURL as a QR code right away (any wallet pays it, asking for the amount);
+ * "Pay a set amount" lets the payer pick a preset amount or type one, add a message, and pay: as a NIP-57 zap when the payee's
  * service allows it, the payee's pubkey is known (`recipient`, or the npub's) and the payer has a
  * signer, else a plain invoice. The invoice is paid with the browser's WebLN wallet when there is
  * one, else shown as a QR code with a `lightning:` link; then the zap receipt (or LUD-21 verify
@@ -9,13 +10,12 @@
  */
 
 import '@nostr-post/plugin-qr/web';
-import '@nostr-post/ui/web/copy';
 import type { Result } from '@nostr-post/plugins/types';
 import { NpElement, npStyles } from '@nostr-post/ui/web';
 import { html, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { DEFAULT_AMOUNTS } from '../core';
-import { checkSettled, type LightningError } from '../lnurl';
+import { checkSettled, type LightningError, parseLightningTarget, payUri, payUrl } from '../lnurl';
 import {
   canZap,
   defaultPayDeps,
@@ -63,6 +63,8 @@ export class NpLightning extends NpElement {
   @state() _status: PaymentStatus = 'idle';
   @state() _payment?: Payment;
   @state() _error?: string;
+  /** The amount form is open (else the "Pay a set amount" button under the static QR) */
+  @state() _amountOpen = false;
 
   _timer?: ReturnType<typeof setInterval>;
   _loaded?: string;
@@ -226,31 +228,60 @@ export class NpLightning extends NpElement {
     `;
   }
 
-  override render() {
+  /** The QR any wallet pays without an amount: the payee's LNURL, and what it shows and copies */
+  _staticQr(target: string) {
+    const payee = this._payee?.success ? this._payee.data : undefined;
+    const parsed = parseLightningTarget(target);
+    const url = payee?.url ?? (parsed ? payUrl(parsed) : undefined);
+    if (!url) return html`<p class="np-hint">${this._m.loading}</p>`;
+    const address = payee?.address ?? (parsed?.type === 'address' ? parsed.address : undefined);
+    return html`<np-qr .text=${payUri(url)} .caption=${address ?? targetLabel(target)}></np-qr>`;
+  }
+
+  _amountPart() {
     const m = this._m;
-    const target = this.target.trim();
-    if (!target) return nothing;
     const payee = this._payee;
-    let body: unknown;
-    if (!payee) body = html`<p class="np-hint">${m.loading}</p>`;
-    else if (!payee.success) {
-      body = html`<p class="np-message np-error">${payee.error.message}</p>
+    if (payee && !payee.success) {
+      return html`<p class="np-message np-error">${payee.error.message}</p>
         <div>
           <button type="button" class="np-button np-small" part="button" @click=${() => this._load()}>
             ${m.retry}
           </button>
         </div>`;
-    } else if (this._payment) {
-      body = renderInvoice(this._payment, this._status, m, {
-        onWallet: hasWebln() ? () => this._payWithWallet() : undefined,
-        onNew: () => this._reset(),
-      });
-    } else body = this._form(payee.data);
-    return html`<div class="ln np-card" part="card">
-      <div class="ln-head">
-        <span aria-hidden="true">⚡</span>
-        <span class="ln-target" title=${target}>${targetLabel(target)}</span>
-        <np-copy .text=${target} exportparts="button"></np-copy>
+    }
+    if (!this._amountOpen) {
+      return html`<button
+        type="button"
+        class="np-button np-tonal wide"
+        part="button"
+        ?disabled=${!payee}
+        @click=${() => {
+          this._amountOpen = true;
+        }}
+      >
+        ${m.setAmount}
+      </button>`;
+    }
+    return payee ? this._form(payee.data) : nothing;
+  }
+
+  override render() {
+    const m = this._m;
+    const target = this.target.trim();
+    if (!target) return nothing;
+    const body = this._payment
+      ? renderInvoice(this._payment, this._status, m, {
+          onWallet: hasWebln() ? () => this._payWithWallet() : undefined,
+          onNew: () => this._reset(),
+        })
+      : html`${this._staticQr(target)}${this._amountPart()}`;
+    return html`<div class="ln np-card np-outlined" part="card">
+      <div class="np-card-header">
+        <span class="np-card-icon" aria-hidden="true">⚡</span>
+        <div>
+          <p class="np-card-title">${m.title}</p>
+          <p class="np-card-subtitle">${m.description}</p>
+        </div>
       </div>
       ${body}
       ${this._error ? html`<p class="np-message np-error">${this._error}</p>` : nothing}

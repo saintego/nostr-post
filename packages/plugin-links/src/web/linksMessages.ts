@@ -10,8 +10,10 @@ export interface LinksMessages {
   typeNote: string;
   /** Default label of a Bitcoin address */
   bitcoin: string;
-  showQr: string;
-  hideQr: string;
+  /** Line under the Bitcoin name */
+  bitcoinDescription: string;
+  /** A link's button: opens the site */
+  open: (site: string) => string;
   add: string;
   remove: string;
   /** Placeholders of the input's boxes */
@@ -20,6 +22,7 @@ export interface LinksMessages {
   notePlaceholder: string;
   labelPlaceholder: string;
   iconPlaceholder: string;
+  descriptionPlaceholder: string;
   /** Errors of an entry */
   notHttps: string;
   badAddress: string;
@@ -30,9 +33,9 @@ export const DEFAULT_LINKS_MESSAGES: LinksMessages = {
   typeLink: 'Link',
   typeBitcoin: 'Bitcoin address',
   typeNote: 'Note',
-  bitcoin: 'Bitcoin (on-chain)',
-  showQr: 'Show QR code',
-  hideQr: 'Hide QR code',
+  bitcoin: 'Bitcoin',
+  bitcoinDescription: 'On-chain payment',
+  open: (site) => `${site} ↗`,
   add: 'Add',
   remove: 'Remove',
   linkPlaceholder: 'https://…',
@@ -40,6 +43,7 @@ export const DEFAULT_LINKS_MESSAGES: LinksMessages = {
   notePlaceholder: 'e.g. Bank transfer details on request',
   labelPlaceholder: 'Label (optional)',
   iconPlaceholder: 'Emoji',
+  descriptionPlaceholder: 'Description (optional)',
   notHttps: 'Only https:// links',
   badAddress: 'Not a Bitcoin address',
 };

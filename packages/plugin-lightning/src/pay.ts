@@ -74,6 +74,8 @@ export interface Payee {
   params: PayParams;
   /** Hex pubkey of the payee: the npub's, or the page owner's for an address on their page */
   pubkey?: string;
+  /** The Lightning address paid, when it is one (also an npub's `lud16`) */
+  address?: string;
 }
 
 const fail = (code: LightningError['code'], message: string): Result<never, LightningError> => ({
@@ -103,9 +105,16 @@ export const resolvePayee = async (
   if (!url) return fail('invalid-target', 'Not a Lightning address, LNURL or npub');
   const params = await fetchPayParams(url, deps.fetchJson);
   if (!params.success) return params;
+  const address = payTarget.type === 'address' ? payTarget.address : undefined;
   return {
     success: true,
-    data: { target, url, params: params.data, ...(pubkey ? { pubkey } : {}) },
+    data: {
+      target,
+      url,
+      params: params.data,
+      ...(pubkey ? { pubkey } : {}),
+      ...(address ? { address } : {}),
+    },
   };
 };
 

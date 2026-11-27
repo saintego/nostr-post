@@ -42,6 +42,7 @@ export const linksPlugin: NostrUIPlugin = {
         value: { type: 'string', description: 'An https:// link, a Bitcoin address or a note' },
         label: { type: 'string' },
         icon: { type: 'string', description: 'An emoji' },
+        description: { type: 'string', description: 'A line under the label' },
       },
       required: ['type', 'value'],
     },

@@ -7,7 +7,7 @@
  * request and a verify link (LUD-21). Requests go through a `fetch` the caller can replace.
  */
 
-import { decodeLnurl, decodeProfile } from '@nostr-post/core/nip19';
+import { decodeLnurl, decodeProfile, encodeLnurl } from '@nostr-post/core/nip19';
 import type { Result } from '@nostr-post/plugins/types';
 
 /** Who a payment goes to, as written in a field or profile */
@@ -76,6 +76,12 @@ export const payUrl = (target: LightningTarget): string | undefined => {
   if (target.type === 'lnurl') return target.url;
   return undefined;
 };
+
+/**
+ * A `lightning:` URI of an LNURL-pay URL, for a QR code any wallet can pay without an amount set
+ * here (the wallet asks for it): `lightning:LNURL1…`
+ */
+export const payUri = (url: string): string => `lightning:${encodeLnurl(url)}`;
 
 /** What a receiving service accepts (LUD-06), with its zap support (NIP-57) */
 export interface PayParams {

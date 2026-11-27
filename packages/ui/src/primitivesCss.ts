@@ -298,6 +298,36 @@ ${toneRules(`.${c.badge}`)}
   background: var(--np-color-surface-container-low);
   box-shadow: var(--np-elevation-1);
 }
+.${c.cardHeader} {
+  display: flex;
+  align-items: center;
+  gap: var(--np-space-3);
+  min-width: 0;
+}
+.${c.cardIcon} {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--np-radius-full);
+  background: var(--np-color-primary-container);
+  color: var(--np-color-on-primary-container);
+  font-size: var(--np-text-xl);
+  line-height: 1;
+}
+.${c.cardTitle} {
+  margin: 0;
+  font-size: var(--np-text-lg);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.${c.cardSubtitle} {
+  margin: 0;
+  color: var(--np-color-on-surface-variant);
+  font-size: var(--np-text-sm);
+  overflow-wrap: anywhere;
+}
 .${c.list} {
   display: flex;
   flex-direction: column;

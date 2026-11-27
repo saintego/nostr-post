@@ -509,8 +509,10 @@ Display a feed of Nostr events. Filters go straight into the relay `REQ` (see
 How to support a person or project: their support page, one addressable event of theirs (kind
 30078, d-tag `nostr-post-support`) made with `SUPPORT_MANIFEST` (`support-v1`). Each entry is a field
 shown by its plugin: Lightning addresses and npubs (`lightning`: zaps and invoices, WebLN or a QR
-code), tip links, Bitcoin addresses and notes (`links`), and an intro (`markdown`). Extending
-`support-v1` with more fields adds entry types; the panel needs no change.
+code), tip links, Bitcoin addresses and notes (`links`), and an intro (`markdown`). The intro comes
+first; every way to pay is a card of one shape (QR codes shown right away, tap for full screen), in
+one grid across fields. Extending `support-v1` with more fields adds entry types; the panel needs
+no change.
 
 **Attributes:**
 

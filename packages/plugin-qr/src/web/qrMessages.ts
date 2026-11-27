@@ -5,6 +5,8 @@
 export interface QrMessages {
   /** The image's accessible name */
   qrCode: string;
+  /** Opens the code large, for scanning */
+  fullScreen: string;
   /** Opens a `lightning:`, `bitcoin:` or `nostr:` URI in the app that handles it (a wallet) */
   openInApp: string;
   /** Opens an `https:` link */
@@ -18,6 +20,7 @@ export interface QrMessages {
 
 export const DEFAULT_QR_MESSAGES: QrMessages = {
   qrCode: 'QR code',
+  fullScreen: 'Show the QR code full screen',
   openInApp: 'Open in wallet',
   openLink: 'Open link',
   tooLong: 'Too long for a QR code',

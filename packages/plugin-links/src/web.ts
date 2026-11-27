@@ -10,6 +10,7 @@ import { pluginRegistry } from '@nostr-post/plugins/registry';
 import { linksPlugin } from './core';
 
 import './web/linksField';
+import './web/linksView';
 
 pluginRegistry.register({
   ...linksPlugin,
@@ -18,5 +19,6 @@ pluginRegistry.register({
 });
 
 export { linksPlugin } from './core';
-export { NpLinksInput, NpLinksView } from './web/linksField';
+export { NpLinksInput } from './web/linksField';
+export { NpLinksView } from './web/linksView';
 export { DEFAULT_LINKS_MESSAGES, type LinksMessages } from './web/linksMessages';

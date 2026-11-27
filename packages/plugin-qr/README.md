@@ -34,10 +34,12 @@ html`<np-qr .text=${'bitcoin:bc1q…'}></np-qr>`;
 - `<np-qr>`: the code, the text under it (long ones, like invoices, shortened in the middle; Copy
   copies all of it), Copy (`<np-copy>` of `@nostr-post/ui`) and a link that opens it: "Open in
   wallet" for `lightning:`, `bitcoin:` and `nostr:` URIs, "Open link" for `https:` (new tab,
-  `rel="noopener noreferrer"`). Properties: `text`, `show-text`, `show-link` (default true),
-  `messages`. The image is a quarter rem a module, at least 12rem, so long invoices stay scannable.
+  `rel="noopener noreferrer"`). A tap on the code opens it full screen (large, on white) for
+  scanning with another phone. Properties: `text`, `caption` (shown and copied instead of the
+  text, e.g. the address of a `bitcoin:` URI), `show-text`, `show-link` (default true), `messages`.
+  The image is a quarter rem a module, at least 12rem, so long invoices stay scannable.
   Parts: `image`, `text`, `button`, `link`.
 - `<np-qr-view>`, `<np-qr-input>`: the `qr` field (`.value`, `.field`; `metadata.multiple` for
   several codes). The input shows each code under its text box.
-- Messages (`QrMessages`, defaults `DEFAULT_QR_MESSAGES`): `qrCode`, `openInApp`, `openLink`,
+- Messages (`QrMessages`, defaults `DEFAULT_QR_MESSAGES`): `qrCode`, `fullScreen`, `openInApp`, `openLink`,
   `tooLong`, `placeholder`, `add`, `remove`.

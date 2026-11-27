@@ -6,44 +6,46 @@ export const linksStyles = css`
   }
 
   .links {
-    list-style: none;
-    margin: 0;
-    padding: 0;
     display: flex;
     flex-direction: column;
     gap: var(--np-space-2);
   }
 
-  .link-entry {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--np-space-2);
-    max-width: 100%;
+  /* Cards of one shape in a grid; with grid-items they join the parent's grid */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: var(--np-space-4);
+    align-items: start;
+  }
+
+  :host([grid-items]) {
+    display: contents;
+  }
+
+  :host([grid-items]) .cards {
+    display: contents;
+  }
+
+  .method np-qr {
+    align-self: center;
+  }
+
+  .link-button {
+    justify-content: center;
     text-decoration: none;
+    font-weight: 600;
   }
 
-  .host {
-    color: var(--np-color-on-surface-variant);
-    font-size: var(--np-text-sm);
+  /* A known site's own colours (its data, e.g. Buy Me a Coffee's yellow) */
+  .link-button.brand {
+    background: var(--np-brand-background);
+    color: var(--np-brand-color);
+    border-color: transparent;
   }
 
-  .bitcoin {
-    display: flex;
-    flex-direction: column;
-    gap: var(--np-space-2);
-  }
-
-  .bitcoin-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: var(--np-space-2);
-  }
-
-  .address {
-    font-family: var(--np-font-family-mono);
-    font-size: var(--np-text-sm);
-    overflow-wrap: anywhere;
+  .link-button.brand:hover {
+    filter: brightness(0.95);
   }
 
   .note {
