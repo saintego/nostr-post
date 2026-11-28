@@ -40,7 +40,7 @@ export const ARTIST_MANIFEST: WikiManifest = {
     {
       id: 'media',
       type: 'string',
-      uiPlugin: 'embed',
+      uiPlugin: 'links',
       mapTo: { kind: 30818, target: 'tag', tagName: 'r' },
       metadata: {
         label: 'Listen',

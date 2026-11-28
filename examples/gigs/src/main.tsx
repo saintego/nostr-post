@@ -10,7 +10,7 @@ import '@nostr-post/web';
 import '@nostr-post/calendar/web';
 import '@nostr-post/wiki/web';
 import '@nostr-post/plugin-wiki-entity/web';
-import '@nostr-post/plugin-embed/web';
+import '@nostr-post/plugin-links/web';
 import { onSignInNeeded } from '@nostr-post/plugins/signIn';
 import { setKnownPublicKey } from '@nostr-post/signer';
 import { StrictMode } from 'react';

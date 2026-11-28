@@ -61,7 +61,9 @@ export type FieldType =
   | 'geo'
   | 'ref'
   | 'date'
-  | 'profile';
+  | 'profile'
+  /** A plugin's structured value: an object or a list of them, checked by the plugin's `validate` */
+  | 'object';
 
 /**
  * Defines a single field in a post manifest.
@@ -205,6 +207,12 @@ export interface NostrPostManifest {
    * listed follow in manifest order. Without it, views follow the manifest's field order.
    */
   viewOrder?: string[];
+  /**
+   * How views lay out the fields: `list` (default: each field a row with its label) or `cards`
+   * (text fields such as Markdown first, without labels; the other plugin fields as one grid of
+   * cards, e.g. a support page's ways to pay)
+   */
+  viewLayout?: 'list' | 'cards';
   /**
    * What the page of an event made with this manifest lists besides the event itself (a wiki
    * page, a calendar event's page): posts referencing it, filtered and shown each its way, e.g.

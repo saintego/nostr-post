@@ -155,6 +155,25 @@ export function validateFieldType(field: PostField, value: unknown): Result<void
       }
       break;
     }
+
+    case 'object': {
+      // A plugin's structured value (e.g. support links): objects, one or a list; the plugin
+      // checks what's in them (its validate hook)
+      const items = Array.isArray(value) ? value : [value];
+      if (
+        !items.every((item) => typeof item === 'object' && item !== null && !Array.isArray(item))
+      ) {
+        return {
+          success: false,
+          error: {
+            field: field.id,
+            message: `Field "${field.id}" must be an object or a list of objects`,
+            code: 'INVALID_TYPE',
+          },
+        };
+      }
+      break;
+    }
   }
 
   return { success: true, data: undefined };

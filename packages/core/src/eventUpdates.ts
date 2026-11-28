@@ -70,6 +70,7 @@ const parseFieldValue = (
     case 'ref':
     case 'date':
     case 'profile':
+    case 'object':
       return rawValue;
   }
 };

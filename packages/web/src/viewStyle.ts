@@ -164,6 +164,19 @@ export const viewStyle = css`
     margin-bottom: 0.5rem;
   }
 
+  /* viewLayout: 'cards': plugin fields as one grid of cards; text fields above without labels */
+  .view-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+    gap: var(--np-space-4);
+    align-items: start;
+    margin: var(--np-space-3) 0;
+  }
+
+  .linked-text {
+    margin-bottom: var(--np-space-3);
+  }
+
   .linked-field {
     display: flex;
     align-items: center;

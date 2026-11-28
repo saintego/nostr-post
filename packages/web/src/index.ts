@@ -50,7 +50,7 @@ export { type NostrPostSubmitDetail, withTags } from '@nostr-post/posts';
 
 // An event's values as form data, e.g. to edit it in your own composer
 export { extractPrefillFromEvent } from '@nostr-post/posts';
-export { ensurePluginsForManifest } from './pluginAutoLoad';
+export { ensurePlugins, ensurePluginsForManifest } from './pluginAutoLoad';
 
 // Standard manifests
 export { STANDARD_KIND1_POST_MANIFEST } from '@nostr-post/core/types';

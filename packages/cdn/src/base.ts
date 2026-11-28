@@ -9,6 +9,9 @@
 
 import '@nostr-post/web';
 import '@nostr-post/outbox/web';
+// Shared components pages use directly: a button opening its content in a dialog, a ⋯ menu
+import '@nostr-post/ui/web/dialog-button';
+import '@nostr-post/ui/web/menu-button';
 
 export { coordinateEvents, validateFormData } from '@nostr-post/core/coordinator';
 export {
@@ -27,8 +30,16 @@ export {
   getUsedKinds,
   validateManifest,
 } from '@nostr-post/core/manifest';
-// NIP-19 addresses (`kind:pubkey:d-tag` ↔ `naddr1…`), e.g. for links to an event
-export { decodeNaddr, encodeNaddr, encodeNevent } from '@nostr-post/core/nip19';
+// NIP-19 addresses (`kind:pubkey:d-tag` ↔ `naddr1…`), e.g. for links to an event; LNURLs (LUD-01)
+export {
+  decodeLnurl,
+  decodeNaddr,
+  decodeProfile,
+  encodeLnurl,
+  encodeNaddr,
+  encodeNevent,
+  encodeNpub,
+} from '@nostr-post/core/nip19';
 // Where an event comes from (NIP-48 proxy tags): imported and bridged events
 export {
   PROXY_PROTOCOLS,
@@ -231,28 +242,3 @@ export { installTokens } from '@nostr-post/ui/web';
 // Drafts and queued posts in the browser outbox (the composer's `drafts`, `schedule`,
 // `upload-later`)
 // Publishing a test-mode post for real (<nostr-dry-run-publish>, the "⋯" menu's item)
-export {
-  type ActivityMessages,
-  type ComposerMessages,
-  type ComposerOutboxDefaults,
-  composerDefaults,
-  DEFAULT_ACTIVITY_MESSAGES,
-  DEFAULT_COMPOSER_MESSAGES,
-  DEFAULT_DRY_RUN_PUBLISH_MESSAGES,
-  DEFAULT_EDIT_MESSAGES,
-  DEFAULT_FEED_MESSAGES,
-  DEFAULT_SUGGESTION_MESSAGES,
-  type DryRunPublishMessages,
-  type EditMessages,
-  type FeedMessages,
-  openDraft,
-  publishOrQueue,
-  removeDraft,
-  runAfterPublish,
-  runBeforePublish,
-  runPublishHooks,
-  type SuggestionMessages,
-  saveDraft,
-  setActivityMessages,
-  setComposerDefaults,
-} from '@nostr-post/web';

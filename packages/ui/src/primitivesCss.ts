@@ -9,6 +9,7 @@
  * Modifiers are extra classes: `np-button np-filled`, `np-message np-error`, `np-badge np-success`.
  */
 
+import { cardRules } from './cardCss';
 import { npClass } from './names';
 
 /** Name of the cascade layer the primitives live in */
@@ -280,24 +281,7 @@ a.${c.chip}:hover {
 }
 ${toneRules(`.${c.badge}`)}
 
-.${c.card} {
-  display: flex;
-  flex-direction: column;
-  gap: var(--np-space-3);
-  padding: var(--np-space-4);
-  border: 1px solid transparent;
-  border-radius: var(--np-radius-md);
-  background: var(--np-color-surface-container-low);
-  color: var(--np-color-on-surface);
-}
-.${c.card}.np-outlined {
-  background: var(--np-color-surface);
-  border-color: var(--np-color-outline-variant);
-}
-.${c.card}.np-elevated {
-  background: var(--np-color-surface-container-low);
-  box-shadow: var(--np-elevation-1);
-}
+${cardRules()}
 .${c.list} {
   display: flex;
   flex-direction: column;

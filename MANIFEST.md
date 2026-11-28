@@ -46,6 +46,7 @@ Types: `NostrPostManifest`, `PostField` and `FieldMetadata` in `@nostr-post/core
 | `metadata`       | `name`, `description` (shown in the composer's header), `author`, `tags`                                                                                 |
 | `lists`          | Lists people save events made with it to, e.g. a venue type's "Want to go", see [lists](#lists)                                                         |
 | `listType`       | The type part of those lists' d-tags; default the manifest's `id`, see [lists](#lists)                                                                   |
+| `viewLayout`     | `list` (default: each field a row with its label) or `cards`: text fields (Markdown) first without labels, the other plugin fields as one grid of cards, e.g. a support page's ways to pay |
 | `viewOrder`      | Field ids in the order views show them, e.g. `["rating", "review"]` for the stars above the text; fields not listed follow in manifest order. Without it, views follow the field order. A manifest extending another replaces it |
 | `sections`       | What the page of an event made with it lists: reviews, photos and videos, gigs…, each its way and with "Add", see [sections](#sections)                  |
 | `wikiConfig`     | Wiki entity manifests only, see [below](#wiki-entity-manifests)                                                                                          |
@@ -176,7 +177,7 @@ up to 500 posts, and still lists `limit`; numbers are computed when shown, never
 ```typescript
 {
   id: "rating",
-  type: "number",                 // string | number | boolean | enum | geo | ref | date | profile
+  type: "number",                 // string | number | boolean | enum | geo | ref | date | profile | object
   uiPlugin: "stars",              // the input/view: a plugin id or a built-in input
   mapTo: { kind: 1, target: "tag", tagName: "rating" },
   required: true,
@@ -187,7 +188,7 @@ up to 500 posts, and still lists `limit`; numbers are computed when shown, never
 | Key            | Description                                                                                                                                       |
 | -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`           | Unique within the manifest; the key in form data                                                                                                  |
-| `type`         | Value type for validation                                                                                                                         |
+| `type`         | Value type for validation. `object`: a plugin's structured value, an object or a list of them (e.g. `links` entries with a label), checked by the plugin |
 | `uiPlugin`     | Built-in inputs: `text`, `textarea`, `number` (`metadata.min`/`max`/`step`), `select` (with `options`). Plugins: see [below](#plugin-metadata). The view shows a built-in input's tag as text: `title` as the heading, others as "label: value", web links clickable |
 | `mapTo`        | Where the value is stored, or an array of places (one per kind)                                                                                   |
 | `mapBehavior`  | With several `mapTo` entries: `first-active` (default) or `all-active` (write to every published kind)                                            |
@@ -266,7 +267,9 @@ styles, mapped to `t` for posts and wiki entities; the beer entity extends it an
 | `identifier`         | `string` | `prefix` (`i` tag namespace, e.g. NIP-73 `isbn`; others are [our own](./NOSTR_CONVENTIONS.md#external-ids-i-tags))                                                                                                                                                                                       |
 | `geo`                | `geo`    | `precision` (geohash length, default 6), `defaultZoom`, `allowSearch`                                                                                                                                                          |
 | `date`               | `date`   | `precision` (`'day'` default \| `'time'`), on kinds other than NIP-52 calendar events; `defaultNow: true`: left empty, the value is the time of publishing (an article's `published_at`; an edit keeps the value it opened with), see [dates](#dates) |
-| `embed`              | `string` | `multiple` (several links); `showUrl: false` (players without their link under them; default: the app's `configureEmbedPlugin`, else shown). Links show as players (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp player links), others as links |
+| `links`              | `string` / `object` | `multiple` (several links); `rules` (the field's own link rules: buttons, QR codes, links, and players from the app's allowed hosts, see [plugin-links](./packages/plugin-links/README.md#rules)); `layout: 'cards'` (each link a card); `showUrl: false` (players without their link under them; default: the app's `configureLinks`, else shown). A link shows as its rule says: a player (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp), a site's button, a QR code or a link. Values are links, or entries `{ url, label?, icon?, description? }` (`type: 'object'`, in a NIP-78 post's content) |
+| `qr`                 | `string` | `multiple` (several codes). Each value (a `lightning:`, `bitcoin:` or `nostr:` URI, or an `https:` link) shows as a QR code made locally, with Copy and an Open link |
+| `payment`            | `string` | `multiple` (several ways to pay); `amounts` (preset amounts in sats, default `[21, 100, 1000, 5000]`). A value is what a payment method recognises: a Lightning address, an LNURL or an npub (zaps or invoices), an on-chain Bitcoin address (a QR code, with an amount when set), or an app's method. The view zaps the event's author |
 | `profile`            | `profile` | `roles` (role suggestions, e.g. `['host', 'speaker']`), `max` (most people), `searchRelays` (NIP-50 relays to search profiles; default `DEFAULT_SEARCH_RELAYS`). The value: `{ pubkey, role?, relay? }[]`, written as `["p", pubkey, relay, role]`. With `attachTo` a text field: `@` mentions in it (`nostr:npub…`), the people mentioned get `p` tags |
 | `venue`              | `geo`    | Like `geo`, plus `providers` (`['osm']`, `'google'` with `googleApiKey`) and `levels` (`['country', 'city', 'place']`, default exact places, see [location levels](#location-levels)), `wikiEntity`: the venue's wiki page, see [venue hub](#venue-hub), `requirePage` (no opt-out from it) and `createPage: false` (its checkbox starts unticked); `linkOnly` (only the page's `a` tag and role, no venue tags, see [roles in posts](#references-with-a-role-in-posts)); `multiple` (several venues, a list)                                                                                  |
 | `list`               | `string` | `saveField`: the field whose wiki entity is saved (a `venue` field's page, a `wiki-entity-picker`'s entity); without it, the post itself. `relays`. The value: list addresses and `new:<title>`. See [lists](#lists) |

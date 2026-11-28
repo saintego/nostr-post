@@ -1,0 +1,45 @@
+{
+  "name": "@nostr-post/plugin-links",
+  "version": "0.1.0",
+  "description": "Links for nostr-post: each link as a player (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp), a branded button, a QR code or a plain link, chosen by JSON rules apps and manifests can extend",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./web": {
+      "types": "./dist/web.d.ts",
+      "import": "./dist/web.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --dir src",
+    "test:watch": "vitest --dir src",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "nostr",
+    "plugin",
+    "links",
+    "embed",
+    "youtube",
+    "spotify",
+    "qr"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@nostr-post/core": "workspace:*",
+    "@nostr-post/plugin-qr": "workspace:*",
+    "@nostr-post/plugins": "workspace:*",
+    "@nostr-post/ui": "workspace:*",
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

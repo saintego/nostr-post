@@ -504,6 +504,20 @@ Display a feed of Nostr events. Filters go straight into the relay `REQ` (see
 <nostr-post-feed kinds="[1]" filter-tags="#t:nostr" limit="10"></nostr-post-feed>
 ```
 
+#### A support page (a manifest, no special component)
+
+A page of ways to support a person or project is a post like any other: one addressable event of
+theirs (e.g. kind 30078 with a fixed d-tag) made with a manifest whose fields are plugins:
+- a Markdown intro;
+- `payment`: Lightning zaps and invoices, on-chain Bitcoin;
+- `links`: tip pages as their own buttons.
+
+`viewLayout: 'cards'` shows the ways to pay as one grid of cards; a payment view zaps the event's
+author. Show it with `<nostr-post-address address="30078:<pubkey>:<d-tag>" .manifest>`, and create
+or edit it with `<nostr-post-composer .manifest d-tag="<d-tag>" auto-publish>`.
+`<np-dialog-button label="♥ Support">` (`@nostr-post/ui`) puts it behind a button.
+`examples/support` has the whole page, with a `support-v1` manifest.
+
 ### Advanced Composer Features
 
 #### Field-Level Controls

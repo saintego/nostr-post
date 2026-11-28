@@ -88,7 +88,6 @@ This keeps relay I/O in one place and avoids duplicate network requests.
 | **@nostr-post/cdn**     | ✅ **Complete** | Single-file CDN bundle (ESM + IIFE, no npm required)                  |
 | **plugin-stars**        | ✅ **Complete** | Star rating (1-5 scale, customizable)                                 |
 | **plugin-geo**          | ✅ **Complete** | Geohash location picker with NIP-52 prefix tags                       |
-| **plugin-embed**        | ✅ **Complete** | Players for links: YouTube, Spotify, SoundCloud, Vimeo, Bandcamp       |
 | **plugin-profile**      | ✅ **Complete** | People picker: profile search or npub, `p` tags with roles             |
 | **plugin-date**         | ✅ **Complete** | Date / date-time input; NIP-52 date and `D` day tags                  |
 | **calendar**            | ✅ **Complete** | NIP-52 calendars: agenda/month, RSVP, calendars, iCalendar            |
@@ -98,6 +97,9 @@ This keeps relay I/O in one place and avoids duplicate network requests.
 | **plugin-markdown**     | ✅ **Complete** | Markdown editor and view; `renderMarkdown`: safe HTML of text from anyone |
 | **plugin-hashtag**      | ✅ **Complete** | Hashtag array input with optional auto-extraction via `attachTo`      |
 | **plugin-reference**    | ✅ **Complete** | URL/nostr reference list with optional auto-extraction via `attachTo` |
+| **plugin-qr**           | ✅ **Complete** | QR codes of payment and share URIs, made locally — [README](./packages/plugin-qr/README.md) |
+| **plugin-payment**      | ✅ **Complete** | Ways to pay: Lightning (NIP-57 zaps, WebLN, invoices as QR codes), on-chain Bitcoin, methods apps add — [README](./packages/plugin-payment/README.md) |
+| **plugin-links**        | ✅ **Complete** | Links as players (YouTube, Spotify, SoundCloud, Vimeo, Bandcamp), sites' buttons, QR codes or links, by JSON rules; ⋯ menu per link — [README](./packages/plugin-links/README.md) |
 
 ## � Key Features
 
@@ -185,6 +187,9 @@ Ready-to-use UI components via Web Components or React:
 - **plugin-hashtag** - Tag arrays with optional auto-extraction via `attachTo`
 - **plugin-reference** - URL/nostr reference list with optional auto-extraction via `attachTo`
 - **plugin-stars** - Customizable rating (1-5 scale)
+- **plugin-qr** - QR codes of `lightning:`, `bitcoin:`, `nostr:` and web links, made locally
+- **plugin-payment** - Ways to pay: Lightning zaps (NIP-57) and invoices, on-chain Bitcoin, extensible methods
+- **plugin-links** - Links as players, sites' buttons, QR codes or links, by JSON rules
 
 ### 5. **Field-Level Controls**
 

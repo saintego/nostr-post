@@ -61,7 +61,7 @@ export function kindViewFor(kind: number): KindView | undefined {
 
 /**
  * A plugin's element for links in note text it shows richer than a link, e.g.
- * `@nostr-post/plugin-embed`'s player for YouTube, Spotify or SoundCloud links. A custom element
+ * `@nostr-post/plugin-links`' player for YouTube, Spotify or SoundCloud links. A custom element
  * with a `url` property.
  */
 export interface LinkView {

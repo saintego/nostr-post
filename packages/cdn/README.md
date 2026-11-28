@@ -40,14 +40,14 @@ with a map field):
 
 | Module | Contains | Loads at start (gzipped) |
 | --- | --- | --- |
-| `split/base.js` | composer, view, feed, sections, outbox, post menu; core, signer, posts, ui (kind-1 notes and NIP-78 manifest posts) | about 76 KB |
-| `split/plugins.js` | the field plugins' functions (geohashes, people, link players, dates, `renderMarkdown`, media upload and galleries); their inputs and views load on demand without it | +84 KB |
-| `split/wiki.js` | wiki pages (NIP-54), the entity picker, venues | +72 KB |
-| `split/calendar.js` | calendars (NIP-52): agenda, event, RSVP, iCalendar | +52 KB |
+| `split/base.js` | composer, view, feed, sections, outbox, post menu, dialog and menu buttons; core, signer, posts, ui (kind-1 notes and NIP-78 manifest posts) | about 82 KB |
+| `split/plugins.js` | the field plugins' functions (geohashes, people, link players, dates, `renderMarkdown`, media upload and galleries, QR codes, payments, links); their inputs and views load on demand without it | +82 KB |
+| `split/wiki.js` | wiki pages (NIP-54), the entity picker, venues | +75 KB |
+| `split/calendar.js` | calendars (NIP-52): agenda, event, RSVP, iCalendar | +53 KB |
 | `split/article.js` | long-form articles (NIP-23) | +2 KB |
 | `split/list.js` | bookmark lists (NIP-51) | +9 KB |
 
-The all-in-one `nostr-post.js` is about 340 KB gzipped. Each part exports its own names (the
+The all-in-one `nostr-post.js` is about 345 KB gzipped. Each part exports its own names (the
 lists below, by part); `nostr-post.js` exports all of them. Use either the all-in-one file or the
 split modules on a page, not both: the components would be defined twice. The IIFE build stays
 all-in-one (classic scripts can't share code).
@@ -82,6 +82,13 @@ The plugins and their UI elements are also registered:
 - **Media** — `@nostr-post/plugin-media`
 - **Markdown** — `@nostr-post/plugin-markdown`
 - **Hashtag** — `@nostr-post/plugin-hashtag`
+- **QR** — `@nostr-post/plugin-qr`: `<np-qr text="lightning:…">`, QR codes made locally
+- **Payment** — `@nostr-post/plugin-payment`: `<np-lightning target="alice@getalby.com">` (zaps,
+  NIP-57, and invoices, WebLN or a QR code), on-chain Bitcoin QR codes, methods apps add
+- **Links** — `@nostr-post/plugin-links`: `<np-link url="…">`, links as players, sites' buttons, QR
+  codes or links by JSON rules, with a ⋯ menu
+- **Shared components** — `<np-dialog-button label="…">` (its children in a dialog),
+  `<np-menu-button>` (a ⋯ menu of its children), from `@nostr-post/ui`
 - **Lists** — `@nostr-post/list`: the `list` field, `<np-list-save target="30818:<pubkey>:<d-tag>">`
   (Save to the user's lists; also on events made with manifests that have `lists`) and
   `<np-list-view>` (the user's lists, or one list by `address`)
@@ -153,8 +160,12 @@ The bundle re-exports utilities for advanced usage:
 
 **People helpers** (see [plugin-profile](../plugin-profile/README.md))
 
-- Embeds: `embedFor(link)` (a link's player), `linkProvider(link)`, `embedPlugin`, `Embed`;
-  `configureEmbedPlugin({ showUrl: false })`: players without their link under them;
+- Links: `viewLink(link, rules)` (how a link shows: player, button, QR code, link),
+  `linkRules(field?)`, `DEFAULT_LINK_RULES`, `configureLinks({ rules, showUrl, embedHosts })` (the
+  app's link rules; `showUrl: false`: players without their link under them; `embedHosts`: hosts
+  whose players manifests may use, default `DEFAULT_EMBED_HOSTS`), `normalizeLink(text)`,
+  `linkEntries(value)`, `LinkEntry`, `LinkRule`; `embedFor(link)` (a link's player),
+  `linkProvider(link)`, `linksPlugin`, `Embed`;
   `profileLink(link)`, `profileUrls(links)`: profile links in canonical form (NIP-73 `i` tags);
   `linkFromEmbedCode(text)`; `checkLink(link)`, `isCheckableLink(link)`, `namesMatch(name, names)`:
   whether a Spotify, SoundCloud or YouTube link exists, and whose it is; `linksInText(text)`,
@@ -164,6 +175,18 @@ The bundle re-exports utilities for advanced usage:
 - `mentionsIn(text)`: the people in a text's `nostr:npub…` mentions; the composer completes `@name` in
   text fields with an attached `profile` field (the standard kind 1 post has one)
 - `searchProfiles(query, { relays? })`, `profileName(pubkey, profile?)`, `DEFAULT_SEARCH_RELAYS`, `FoundProfile`
+
+**Payments** (see [plugin-payment](../plugin-payment/README.md), [plugin-qr](../plugin-qr/README.md))
+
+- `qrSvg(text, options?)`: a QR code as SVG, made locally; `isQrPayload(text)`, `QR_SCHEMES`
+- Methods: `detectPayment(text)`, `paymentMethods()`, `registerPaymentMethod(method)`,
+  `PaymentMethod`, `DetectedPayment`; `bitcoinAddress(text)`
+- Lightning: `parseLightningTarget(text)`, `lightningAddressUrl(address)`,
+  `resolvePayee(text, owner, deps)`, `requestPayment(payee, request, deps)`,
+  `findZapReceipt(payee, payment, deps)`, `canZap(payee)`, `fetchPayParams(url)`,
+  `requestInvoice(params, amountMsat, options)`, `buildZapRequest(options)`,
+  `isZapReceiptFor(receipt, check)`, `bolt11AmountMsat(invoice)`, `hasWebln()`,
+  `payWithWebln(invoice)`, `LightningTarget`, `Payee`, `Payment`
 
 **Date field** (see [plugin-date](../plugin-date/README.md))
 
@@ -214,6 +237,8 @@ The bundle re-exports utilities for advanced usage:
 
 - `encodeNaddr(address, relays?)`, `decodeNaddr(naddr)`: an address (`kind:pubkey:d-tag`) as `naddr1…` and back
 - `encodeNevent(id, { relays, author, kind })`: an event id as `nevent1…`
+- `encodeNpub(pubkey)`, `decodeProfile(npubOrNprofile)`: a hex pubkey as `npub1…` and back (`{ pubkey, relays }`)
+- `decodeLnurl(lnurl)`, `encodeLnurl(url)`: an LNURL (LUD-01, e.g. a profile's `lud06`) as its `https:` URL and back
 
 **Imported events (NIP-48)**
 

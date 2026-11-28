@@ -58,6 +58,8 @@ mkdirSync(join(deployDir, 'examples'), { recursive: true });
 
 copyDir(join(root, 'packages/cdn/dist'), deployDir);
 cpSync(join(root, 'packages/cdn/index.html'), join(deployDir, 'index.html'));
+// The design system's stylesheet (np-button, np-input…) for the plain HTML examples
+cpSync(join(root, 'packages/ui/dist/ui.css'), join(deployDir, 'ui.css'));
 cpSync(join(root, 'packages/cdn/examples-index.html'), join(deployDir, 'examples/index.html'));
 copyDir(join(root, 'examples/basic/dist'), join(deployDir, 'examples/basic'));
 cpSync(join(root, 'examples/pwa-share'), join(deployDir, 'examples/pwa-share'), {
@@ -68,6 +70,7 @@ copyDir(join(root, 'examples/nextjs-demo/out'), join(deployDir, 'examples/nextjs
 cpSync(join(root, 'examples/wiki-demo'), join(deployDir, 'examples/wiki-demo'), {
   recursive: true,
 });
+cpSync(join(root, 'examples/support'), join(deployDir, 'examples/support'), { recursive: true });
 copyDir(join(root, 'examples/gigs/dist'), join(deployDir, 'examples/gigs'));
 copyDir(join(root, 'tools/manifest-creator/out'), join(deployDir, 'manifest-creator'));
 

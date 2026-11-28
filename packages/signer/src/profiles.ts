@@ -16,6 +16,10 @@ export type NostrProfile = {
   picture?: string;
   about?: string;
   nip05?: string;
+  /** Lightning address (LUD-16), e.g. `alice@getalby.com` */
+  lud16?: string;
+  /** LNURL-pay (LUD-06) as a bech32 `lnurl…` */
+  lud06?: string;
 };
 
 export type ProfileOptions = {

@@ -13,6 +13,9 @@ No UI library dependency: the main entry has no dependencies at all, `/web` need
 | `@nostr-post/ui/web` | Lit styles for shadow DOM (`npStyles`), `NpElement` (the components' base class), `installTokens`, `followColorScheme`. |
 | `@nostr-post/ui/web/dialog` | `<np-dialog>`: a modal dialog with a title, Close and its content. |
 | `@nostr-post/ui/web/lightbox` | `<np-lightbox>`: photos and videos large, one at a time, with previous and next. |
+| `@nostr-post/ui/web/copy` | `<np-copy>`: a button that copies text and says so; `copyText(text)`. |
+| `@nostr-post/ui/web/dialog-button` | `<np-dialog-button>`: a button that opens its children in a dialog. |
+| `@nostr-post/ui/web/menu-button` | `<np-menu-button>`: a ⋯ button that opens a menu of its children. |
 | `@nostr-post/ui/tokens.css` | The tokens, for any page. |
 | `@nostr-post/ui/ui.css` | Tokens and primitives, for apps and plain HTML. |
 
@@ -92,7 +95,7 @@ cascade layer `np.primitives`. Modifiers are extra classes.
 | Button | `np-button` (outlined) + `np-filled`, `np-tonal`, `np-outlined`, `np-text`, `np-danger`, `np-small`; `np-icon-button` |
 | Text field | `np-field` (wrapper), `np-label` (+ `np-required`), `np-input` (input, textarea, select; `aria-invalid` or `np-invalid`), `np-hint`, `np-field-error`, `np-checkbox` |
 | Chip, badge | `np-chip` (+ `np-selected` or `aria-pressed`), `np-badge` + `np-primary`, `np-success`, `np-warning`, `np-error`, `np-info`, `np-tertiary` |
-| Containers | `np-card` (+ `np-outlined`, `np-elevated`), `np-list`, `np-list-item`, `np-divider` |
+| Containers | `np-card` (+ `np-outlined`, `np-elevated`; a header row: `np-card-header` with `np-card-icon`, `np-card-title`, `np-card-subtitle`), `np-list`, `np-list-item`, `np-divider` |
 | Dialog, menu | `np-dialog` (on `<dialog>`), `np-dialog-header`, `np-dialog-title`, `np-dialog-body`, `np-dialog-actions`; `np-menu`, `np-menu-item` |
 | Choice | `np-segmented` + `np-segment`, `np-tabs` + `np-tab` (selected: `aria-pressed`, `aria-selected` or `np-selected`) |
 | Messages | `np-message` + `np-error`, `np-success`, `np-warning`, `np-info`; `np-empty`, `np-loading`, `np-progress` |
@@ -225,3 +228,50 @@ lightbox.open(1);
 - Parts: `dialog`, `button`.
 - Messages (`LightboxMessages`): `label`, `previous`, `next`, `position(current, count)`,
   `fullScreen`, `close`.
+
+### `<np-copy>` (`@nostr-post/ui/web/copy`)
+
+```ts
+import '@nostr-post/ui/web/copy';
+
+html`<np-copy .text=${address}></np-copy>`;
+```
+
+- `text`: what it copies; `label`: the button's text instead of "Copy".
+- Says "Copied" (or "Couldn't copy" when the browser refuses) for a moment; fires `np-copied` with
+  `{ ok }`. `copyText(text)` copies without the button (`Promise<boolean>`).
+- Part: `button`.
+- Messages (`CopyMessages`): `copy`, `copied`, `failed`.
+
+### `<np-dialog-button>` (`@nostr-post/ui/web/dialog-button`)
+
+```html
+<np-dialog-button label="♥ Support" heading="Support us">
+  <nostr-post-address address="30078:<pubkey>:nostr-post-support"></nostr-post-address>
+</np-dialog-button>
+```
+
+- `label`: the button's text; `heading`: the dialog's title (default: the label); `variant`: the
+  button's look (`tonal` default, `filled`, `outlined`, `text`).
+- The children are its content. They are in the page from the start, hidden while it's closed.
+- `open()`, `close()`; fires `np-open` and `close`.
+- Parts: `button`, `dialog`, `header`.
+
+### `<np-menu-button>` (`@nostr-post/ui/web/menu-button`)
+
+```ts
+html`<np-menu-button>
+  <button class="np-menu-item" role="menuitem" @click=${copy}>Copy link</button>
+  <a class="np-menu-item" role="menuitem" href=${url}>Open</a>
+</np-menu-button>`;
+```
+
+- A ⋯ button; its children (`np-menu-item` buttons or links, styled where they are written) are
+  the menu.
+- It opens under the button, placed against the window, so a card or scrolling box around it
+  doesn't cut it off.
+- It closes on a choice, a click elsewhere, Escape, scrolling and resizing.
+- `label`: the button's accessible name (default "More").
+- Parts: `button`, `menu`.
+- Messages (`MenuButtonMessages`): `more`.
+

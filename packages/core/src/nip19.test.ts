@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { decodeNaddr, decodeProfile, encodeNaddr, encodeNevent } from './nip19';
+import {
+  decodeLnurl,
+  decodeNaddr,
+  decodeProfile,
+  encodeLnurl,
+  encodeNaddr,
+  encodeNevent,
+} from './nip19';
 
 const pubkey = '6a19c89b2694b307aae6dc40256264071a47bdad89d8ddae6d1ab7139a94015d';
 const npub = 'npub1dgvu3xexjjes02hxm3qz2cnyqudy00dd38vdmtndr2m38x55q9wss4r3ue';
@@ -53,5 +60,30 @@ describe('nevent / naddr with relays', () => {
       'naddr1qqpkw6t8qyxhwumn8ghj7u3w0qhxxmmdqgsx5xwgnvnffvc84tndcsp9vfjqwxj8hkkcnkxa4ek34dcnn22qzhgrqsqqql9nrapam2'
     );
     expect(decodeNaddr(naddr ?? '')).toBe(`31923:${pubkey}:gig`);
+  });
+});
+
+describe('LNURL', () => {
+  // The example of LUD-01
+  const lnurl =
+    'LNURL1DP68GURN8GHJ7UM9WFMXJCM99E3K7MF0V9CXJ0M385EKVCENXC6R2C35XVUKXEFCV5MKVV34X5EKZD3EV56NYD3HXQURZEPEXEJXXEPNXSCRVWFNV9NXZCN9XQ6XYEFHVGCXXCMYXYMNSERXFQ5FNS';
+  const url =
+    'https://service.com/api?q=3fc3645b439ce8e7f2553a69e5267081d96dcd340693afabe04be7b0ccd178df';
+
+  it('decodes an LNURL, also with lightning: before it', () => {
+    expect(decodeLnurl(lnurl)).toBe(url);
+    expect(decodeLnurl(`lightning:${lnurl.toLowerCase()}`)).toBe(url);
+  });
+
+  it('encodes a URL as an LNURL', () => {
+    expect(encodeLnurl(url)).toBe(lnurl);
+  });
+
+  it('rejects other entities and http URLs', () => {
+    expect(
+      decodeLnurl('npub1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq')
+    ).toBeUndefined();
+    expect(decodeLnurl(encodeLnurl('http://service.com/api'))).toBeUndefined();
+    expect(decodeLnurl(encodeLnurl('http://abc.onion/api'))).toBe('http://abc.onion/api');
   });
 });
