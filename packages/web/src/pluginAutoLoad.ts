@@ -43,12 +43,6 @@ const ensurePluginLoaded = async (pluginId: string) => {
   await pending;
 };
 
-/** Loads field plugins by id (their web entries, which register them), e.g. for an element's own use */
-export const ensurePlugins = async (pluginIds: readonly string[]) => {
-  if (typeof window === 'undefined') return;
-  await Promise.all(Array.from(new Set(pluginIds)).map((pluginId) => ensurePluginLoaded(pluginId)));
-};
-
 /**
  * Loads the field plugins a manifest uses (their web entries, which register them), e.g. before
  * reading form JSON or building its schema when no composer has loaded them yet

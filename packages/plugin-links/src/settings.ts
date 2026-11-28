@@ -5,7 +5,6 @@
  *   built-in rule): players of other sites, more tip sites, other formats.
  * - `showUrl`: a link with a player shows its URL under the player too (default); a field turns
  *   it off with `metadata.showUrl: false`.
- *
  * - `embedHosts`: the hosts whose players a manifest's field may use (default
  *   `DEFAULT_EMBED_HOSTS`, the built-in players'), to allow players we don't list.
  *
